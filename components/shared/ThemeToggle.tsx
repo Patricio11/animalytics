@@ -6,8 +6,10 @@ import { useState, useEffect } from "react";
 
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const stored = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const theme = stored || (prefersDark ? 'dark' : 'light');
@@ -23,6 +25,21 @@ export function ThemeToggle() {
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
     console.log(`Theme switched to ${newTheme}`);
   };
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        disabled
+        className="hover-elevate"
+      >
+        <Moon className="h-4 w-4" />
+        <span className="sr-only">Loading theme toggle</span>
+      </Button>
+    );
+  }
 
   return (
     <Button

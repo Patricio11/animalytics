@@ -69,26 +69,26 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="p-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Heart className="w-5 h-5 text-primary-foreground" />
+        <div className="p-6 group-data-[collapsible=icon]:p-2">
+          <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
+              <Heart className="w-5 h-5 text-primary-foreground group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6" />
             </div>
-            <span className="text-xl font-bold text-foreground">Animalytics</span>
+            <span className="text-xl font-bold text-foreground group-data-[collapsible=icon]:hidden">Animalytics</span>
           </div>
         </div>
 
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="group-data-[collapsible=icon]:gap-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
-                      <item.icon className="w-4 h-4" />
+                      <item.icon className="w-4 h-4 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -101,12 +101,12 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Tools</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="group-data-[collapsible=icon]:gap-2">
               {secondaryItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
-                      <item.icon className="w-4 h-4" />
+                      <item.icon className="w-4 h-4 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Development**: `npm run dev` - Start Next.js development server on http://localhost:3000
 - **Build**: `npm run build` - Create production build
 - **Production**: `npm start` - Start production server (requires build first)
-- **Lint**: `npm run lint` - Run ESLint code quality checks
+- **Lint**: `npm run lint` - Run ESLint code quality checks (currently incomplete in package.json)
 
 ## Architecture Overview
 
@@ -118,6 +118,8 @@ Successfully migrated the complete design system and all page components from th
 - Strict TypeScript configuration with proper component prop typing
 - Radix UI component integration requires careful type management
 - Permission system uses strongly-typed role and resource definitions
+- Path mapping configured with `@/*` alias pointing to project root
+- ESLint configured with Next.js and TypeScript rules via flat config
 
 ### Build Considerations
 - Chart components may require TypeScript workarounds for Recharts compatibility
@@ -130,3 +132,9 @@ The design system uses a hybrid approach:
 - Tailwind utilities for responsive design and spacing
 - Component-level styling for complex interactions
 - Chart theming integration for data visualization consistency
+- PostCSS configuration uses CommonJS format for compatibility
+
+## Project Status
+- **Current Focus**: Breeder role implementation (fully completed)
+- **Next Phases**: Admin, Veterinarian, and Event Organizer role implementations
+- **Architecture**: Ready for multi-role expansion with established patterns

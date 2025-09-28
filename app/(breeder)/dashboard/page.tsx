@@ -50,7 +50,7 @@ export default function Dashboard() {
       breed: "Golden Retriever",
       gender: 'female' as const,
       dateOfBirth: new Date('2020-03-15'),
-      imageUrl: "/images/golden-retriever.jpg",
+      imageUrl: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
       status: 'available' as const,
       lastMating: new Date('2024-01-15'),
     },
@@ -60,7 +60,7 @@ export default function Dashboard() {
       breed: "German Shepherd",
       gender: 'male' as const,
       dateOfBirth: new Date('2019-08-22'),
-      imageUrl: "/images/german-shepherd.jpg",
+      imageUrl: "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face",
       status: 'breeding' as const,
       lastMating: new Date('2024-02-01'),
     }
