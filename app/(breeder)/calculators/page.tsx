@@ -1,18 +1,21 @@
 "use client";
 
 import { CalculatorCard } from "@/components/breeder/CalculatorCard";
+import { ProgesteroneInputForm } from "@/components/breeder/calculators/ProgesteroneInputForm";
 import { AnimalCard } from "@/components/breeder/AnimalCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, TrendingUp, Heart, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calculator, TrendingUp, Heart, Calendar, Activity } from "lucide-react";
 import { useState } from "react";
 
 export default function CalculatorPage() {
   const [selectedMale, setSelectedMale] = useState<string>("");
   const [selectedFemale, setSelectedFemale] = useState<string>("");
   const [showResults, setShowResults] = useState(false);
+  const [activeTab, setActiveTab] = useState("mating");
 
   // todo: remove mock functionality
   const mockAnimals = [
@@ -68,10 +71,24 @@ export default function CalculatorPage() {
           </p>
         </div>
 
-      {/* Main Calculator */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Animal Selection */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Calculator Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2 mx-auto">
+          <TabsTrigger value="mating" className="gap-2">
+            <Heart className="w-4 h-4" />
+            Mating Calculator
+          </TabsTrigger>
+          <TabsTrigger value="progesterone" className="gap-2">
+            <Activity className="w-4 h-4" />
+            Progesterone
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Mating Calculator Tab */}
+        <TabsContent value="mating">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Animal Selection */}
+            <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -187,10 +204,10 @@ export default function CalculatorPage() {
               </CardContent>
             </Card>
           )}
-        </div>
+            </div>
 
-        {/* Individual Calculators */}
-        <div className="space-y-6">
+            {/* Individual Calculators */}
+            <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Individual Calculators</CardTitle>
@@ -246,8 +263,15 @@ export default function CalculatorPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Progesterone Calculator Tab */}
+        <TabsContent value="progesterone">
+          <ProgesteroneInputForm />
+        </TabsContent>
+      </Tabs>
       </div>
     </div>
   );
