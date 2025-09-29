@@ -20,8 +20,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [isTablet]);
 
   const style = {
-    "--sidebar-width": "20rem",
-    "--sidebar-width-icon": "3.5rem",
+    "--sidebar-width": "16rem",
+    "--sidebar-width-icon": "3.8rem",
   };
 
   return (

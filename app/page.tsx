@@ -1,253 +1,283 @@
 "use client";
 
-import { StatsCard } from "@/components/breeder/StatsCard";
-import { AnimalCard } from "@/components/breeder/AnimalCard";
-import { CalculatorCard } from "@/components/breeder/CalculatorCard";
-import { ActivityCard } from "@/components/breeder/ActivityCard";
-import { TaskCard } from "@/components/breeder/TaskCard";
 import { Button } from "@/components/ui/button";
-import { Heart, Calendar, Trophy, DollarSign, Plus, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  PawPrint,
+  Heart,
+  BarChart3,
+  Calendar,
+  Trophy,
+  ArrowRight,
+  Star,
+  Sparkles
+} from "lucide-react";
 import Link from "next/link";
-import { addDays, subDays } from "date-fns";
 
-export default function Dashboard() {
-  // todo: remove mock functionality
-  const mockStats = [
+export default function LandingPage() {
+  const features = [
     {
-      title: "Total Animals",
-      value: 24,
-      description: "Actively managed",
-      icon: <Heart className="w-4 h-4" />,
-      trend: { value: 12, isPositive: true }
+      icon: PawPrint,
+      title: "Animal Management",
+      description: "Complete profiles, health records, and lineage tracking for your animals"
     },
     {
-      title: "Recent Matings",
-      value: 8,
-      description: "This month",
-      icon: <Calendar className="w-4 h-4" />,
-      trend: { value: 25, isPositive: true }
+      icon: Heart,
+      title: "Breeding Analytics",
+      description: "Smart breeding recommendations and conception rate predictions"
     },
     {
-      title: "Success Rate",
-      value: "87.5%",
-      description: "Conception rate",
-      icon: <Trophy className="w-4 h-4" />,
-      trend: { value: 5, isPositive: true }
+      icon: BarChart3,
+      title: "Performance Insights",
+      description: "Detailed analytics and reporting to optimize your breeding program"
     },
     {
-      title: "Portfolio Value",
-      value: "$125,000",
-      description: "Market value",
-      icon: <DollarSign className="w-4 h-4" />,
-      trend: { value: 8, isPositive: true }
+      icon: Calendar,
+      title: "Schedule Management",
+      description: "Never miss important dates with automated reminders and planning"
     }
   ];
 
-  const mockRecentAnimals = [
+  const testimonials = [
     {
-      id: "1",
-      name: "Bella",
-      breed: "Golden Retriever",
-      gender: 'female' as const,
-      dateOfBirth: new Date('2020-03-15'),
-      imageUrl: "/images/golden-retriever.jpg",
-      status: 'available' as const,
-      lastMating: new Date('2024-01-15'),
+      name: "Sarah Johnson",
+      role: "Professional Dog Breeder",
+      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+      content: "Animalytics transformed how I manage my breeding program. The insights are incredible!",
+      rating: 5
     },
     {
-      id: "2",
-      name: "Max",
-      breed: "German Shepherd",
-      gender: 'male' as const,
-      dateOfBirth: new Date('2019-08-22'),
-      imageUrl: "/images/german-shepherd.jpg",
-      status: 'breeding' as const,
-      lastMating: new Date('2024-02-01'),
+      name: "Mike Chen",
+      role: "Kennel Owner",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      content: "The best investment I've made for my business. Everything is so organized now.",
+      rating: 5
+    },
+    {
+      name: "Emma Davis",
+      role: "Hobby Breeder",
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+      content: "User-friendly and powerful. Perfect for both beginners and professionals.",
+      rating: 5
     }
   ];
 
-  const mockRecentActivities = [
-    {
-      id: "1",
-      type: 'feeding' as const,
-      animalName: "Bella",
-      title: "Morning Feeding",
-      description: "Regular feeding schedule",
-      date: new Date('2024-02-20'),
-      data: { food: "Premium kibble", amount: "2 cups" }
-    },
-    {
-      id: "2",
-      type: 'exercise' as const,
-      animalName: "Max",
-      title: "Daily Walk",
-      description: "Regular exercise routine",
-      date: new Date('2024-02-19'),
-      data: { duration: "45 mins", distance: "2.5 km" }
-    }
+  const stats = [
+    { value: "10K+", label: "Happy Breeders" },
+    { value: "50K+", label: "Animals Tracked" },
+    { value: "98%", label: "Success Rate" },
+    { value: "24/7", label: "Support" }
   ];
-
-  const mockUpcomingTasks = [
-    {
-      id: "1",
-      title: "Schedule vet checkup",
-      description: "Annual health examination for Bella",
-      dueDate: addDays(new Date(), 2),
-      priority: 'high' as const,
-      category: 'health' as const,
-      animalName: "Bella",
-      completed: false,
-    },
-    {
-      id: "2",
-      title: "Update breeding records",
-      description: "Record recent mating details",
-      dueDate: subDays(new Date(), 1),
-      priority: 'medium' as const,
-      category: 'breeding' as const,
-      animalName: "Luna",
-      completed: false,
-    }
-  ];
-
-  const mockCalculatorResult = {
-    progesteroneRating: 95.0,
-    conceptionRating: 42.7,
-    overallRating: 67.5,
-    accuracyStars: 4
-  };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your animals.</p>
-        </div>
-        <Button data-testid="button-add-animal">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Animal
-        </Button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {mockStats.map((stat, index) => (
-          <StatsCard key={index} {...stat} />
-        ))}
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Recent Animals */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Recent Animals</h2>
-              <Link href="/animals">
-                <Button variant="ghost" size="sm" data-testid="link-view-all-animals">
-                  View all
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {mockRecentAnimals.map((animal) => (
-                <AnimalCard key={animal.id} {...animal} />
-              ))}
-            </div>
-          </section>
-
-          {/* Recent Mating Calculator */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Recent Mating</h2>
-              <Link href="/calculator">
-                <Button variant="ghost" size="sm" data-testid="link-view-calculators">
-                  View calculators
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CalculatorCard
-                title="Bella x Max Mating"
-                description="Recent calculation from Feb 15, 2024"
-                result={mockCalculatorResult}
-              />
-              <CalculatorCard
-                title="New Calculation"
-                description="Calculate ratings for a new mating event"
+      <header className="border-b bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60 sticky top-0 z-50">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-40 h-auto flex items-center justify-center">
+              <img
+                src="/animalytics.png"
+                alt="Animalytics Logo"
+                className="w-full h-auto object-contain"
               />
             </div>
-          </section>
+          </div>
+          <nav className="hidden md:flex items-center space-x-6">
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Features
+            </a>
+            <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Reviews
+            </a>
+            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Pricing
+            </a>
+          </nav>
+          <div className="flex items-center space-x-3">
+            <Link href="/auth/signin">
+              <Button variant="ghost">Sign In</Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button className="bg-gradient-brand hover:opacity-90">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
 
-          {/* Recent Activity */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
-              <Link href="/reports">
-                <Button variant="ghost" size="sm" data-testid="link-view-reports">
-                  View reports
-                  <ArrowRight className="w-3 h-3 ml-1" />
+      {/* Hero Section */}
+      <section className="relative py-20 lg:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-subtle opacity-50" />
+        <div className="container relative">
+          <div className="text-center max-w-4xl mx-auto">
+            <Badge variant="secondary" className="mb-6 bg-primary-blue-light text-primary-blue">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Trusted by 10,000+ Professional Breeders
+            </Badge>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+              The Ultimate
+              <span className="bg-gradient-brand bg-clip-text text-transparent"> Breeding </span>
+              Management Platform
+            </h1>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Transform your breeding program with AI-powered analytics, comprehensive animal management,
+              and data-driven insights that help you achieve better results.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+              <Link href="/auth/signup">
+                <Button size="lg" className="bg-gradient-brand hover:opacity-90 text-lg px-8">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
+              <Button size="lg" variant="outline" className="text-lg px-8">
+                Watch Demo
+              </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {mockRecentActivities.map((activity) => (
-                <ActivityCard key={activity.id} {...activity} />
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {stats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-3xl font-bold text-primary">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </div>
               ))}
             </div>
-          </section>
+          </div>
         </div>
+      </section>
 
-        {/* Right Column - Tasks */}
-        <div className="space-y-6">
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Upcoming Tasks</h2>
-              <Link href="/tasks">
-                <Button variant="ghost" size="sm" data-testid="link-view-tasks">
-                  View all
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-            <div className="space-y-4">
-              {mockUpcomingTasks.map((task) => (
-                <TaskCard key={task.id} {...task} />
-              ))}
-            </div>
-          </section>
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-surface-secondary">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Everything You Need to Excel
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Comprehensive tools designed by breeders, for breeders.
+              Manage every aspect of your operation with confidence.
+            </p>
+          </div>
 
-          {/* Quick Actions */}
-          <section>
-            <h2 className="text-xl font-semibold text-foreground mb-6">Quick Actions</h2>
-            <div className="space-y-3">
-              <Link href="/animals/new">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-add-new-animal">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add New Animal
-                </Button>
-              </Link>
-              <Link href="/calculator">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-new-calculation">
-                  <Trophy className="w-4 h-4 mr-2" />
-                  New Calculation
-                </Button>
-              </Link>
-              <Link href="/reports/new">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-log-activity">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Log Activity
-                </Button>
-              </Link>
-            </div>
-          </section>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1">
+                <CardHeader>
+                  <div className="mb-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-brand">
+                      <feature.icon className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  <CardDescription>{feature.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-16 text-center">
+            <Link href="/auth/signup">
+              <Button size="lg" className="bg-gradient-brand hover:opacity-90">
+                Explore All Features
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-20">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Loved by Breeders Worldwide
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              See what our community has to say about their experience
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="shadow-card">
+                <CardContent className="p-6">
+                  <div className="flex mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-warning text-warning" />
+                    ))}
+                  </div>
+                  <p className="text-muted-foreground mb-6">&quot;{testimonial.content}&quot;</p>
+                  <div className="flex items-center">
+                    <Avatar className="h-10 w-10 mr-3">
+                      <AvatarImage src={testimonial.avatar} />
+                      <AvatarFallback>{testimonial.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-semibold">{testimonial.name}</div>
+                      <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-brand">
+        <div className="container text-center text-white">
+          <Trophy className="h-16 w-16 mx-auto mb-6 opacity-90" />
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Ready to Transform Your Breeding Program?
+          </h2>
+          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+            Join thousands of successful breeders who trust Animalytics for their operations.
+            Start your free trial today and see the difference.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/auth/signup">
+              <Button size="lg" variant="secondary" className="text-lg px-8 bg-white text-primary hover:bg-white/90">
+                Start Free Trial
+              </Button>
+            </Link>
+            <Button size="lg" variant="outline" className="text-lg px-8 border-white text-white hover:bg-white/10">
+              Contact Sales
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 border-t bg-surface">
+        <div className="container">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center mb-4 md:mb-0">
+              <div className="w-32 h-auto flex items-center justify-center">
+                <img
+                  src="/animalytics.png"
+                  alt="Animalytics Logo"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
+            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+              <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-foreground transition-colors">Support</a>
+            </div>
+          </div>
+          <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
+            © 2024 Animalytics. All rights reserved. Made with ❤️ for breeders.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

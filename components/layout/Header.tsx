@@ -19,13 +19,13 @@ export function Header() {
   const [notificationCount] = useState(3); // Static for now to avoid hydration issues
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between p-4 border-b border-border/30 backdrop-blur-md bg-background/50 supports-[backdrop-filter]:bg-background/30">
-      <SidebarTrigger data-testid="button-sidebar-toggle" />
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative">
+    <header className="sticky top-0 z-40 flex items-center justify-between p-4 border-b bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60 shadow-card">
+      <SidebarTrigger data-testid="button-sidebar-toggle" className="hover-elevate" />
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" className="relative hover-elevate">
           <Bell className="h-4 w-4" />
           {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-brand rounded-full flex items-center justify-center shadow-elevated">
               <span className="text-xs text-white font-medium">{notificationCount}</span>
             </span>
           )}
@@ -33,17 +33,17 @@ export function Header() {
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full hover-elevate">
+              <Avatar className="h-9 w-9 shadow-card">
                 <AvatarImage
                   src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
                   alt="Profile"
                 />
-                <AvatarFallback>AB</AvatarFallback>
+                <AvatarFallback className="bg-gradient-brand text-white font-medium">AB</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuContent className="w-56 shadow-elevated" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">Alex Breeder</p>
@@ -51,11 +51,11 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-            <DropdownMenuItem>Account</DropdownMenuItem>
-            <DropdownMenuItem>Preferences</DropdownMenuItem>
+            <DropdownMenuItem className="hover-elevate">Profile Settings</DropdownMenuItem>
+            <DropdownMenuItem className="hover-elevate">Account</DropdownMenuItem>
+            <DropdownMenuItem className="hover-elevate">Preferences</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">Sign Out</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive hover-elevate">Sign Out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <ThemeToggle />

@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Heart, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings } from "lucide-react";
+import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -23,7 +23,7 @@ const menuItems = [
   {
     title: "My Animals",
     url: "/animals",
-    icon: Heart,
+    icon: PawPrint,
   },
   {
     title: "Mating Calculator",
@@ -69,21 +69,24 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
-        <div className="p-6 group-data-[collapsible=icon]:p-2">
-          <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
-              <Heart className="w-5 h-5 text-primary-foreground group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6" />
+    <Sidebar collapsible="icon" className="border-r bg-surface shadow-card">
+      <SidebarContent className="bg-surface">
+        <div className="p-4 group-data-[collapsible=icon]:p-2 border-b border-primary/10">
+          <Link href="/" className="flex items-center justify-start group-data-[collapsible=icon]:justify-center hover:opacity-90 transition-all duration-200">
+            <div className="w-40 h-auto flex items-center justify-start group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 overflow-hidden">
+              <img
+                src="/animalytics.png"
+                alt="Animalytics Logo"
+                className="w-full h-auto object-contain object-left group-data-[collapsible=icon]:scale-[9] group-data-[collapsible=icon]:translate-x-[395%]"
+              />
             </div>
-            <span className="text-xl font-bold text-foreground group-data-[collapsible=icon]:hidden">Animalytics</span>
-          </div>
+          </Link>
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3 py-2 uppercase tracking-wider">Main</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="group-data-[collapsible=icon]:gap-2">
+            <SidebarMenu className="space-y-1 group-data-[collapsible=icon]:gap-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
@@ -98,10 +101,10 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Tools</SidebarGroupLabel>
+        <SidebarGroup className="border-t border-primary/10 pt-4">
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3 py-2 uppercase tracking-wider">Tools</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="group-data-[collapsible=icon]:gap-2">
+            <SidebarMenu className="space-y-1 group-data-[collapsible=icon]:gap-2">
               {secondaryItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
