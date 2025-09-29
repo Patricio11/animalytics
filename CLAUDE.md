@@ -166,10 +166,11 @@ The design system uses a hybrid approach:
 
 ## Breeding Calculator Implementation (Animalyzer Feature)
 
-### Progesterone Calculator System
-The application includes a comprehensive progesterone calculator for breeding optimization:
+### Phase 1: Progesterone Calculator Foundation (COMPLETED ✅)
 
-**Core Calculation Engine (`lib/calculations/`):**
+The application includes a comprehensive progesterone calculator system with mating record management.
+
+#### Core Calculation Engine (`lib/calculations/`)
 - `types.ts` - TypeScript definitions for Laboratory, Unit, BreedingMethod, and calculations
 - `progesterone-matrices.ts` - 4 calculation matrices covering all lab/unit combinations:
   - VIDAS Nanograms (Natural AI/TCI, Surgical AI, Frozen)
@@ -179,13 +180,22 @@ The application includes a comprehensive progesterone calculator for breeding op
 - `progesterone-calculator.ts` - Pattern matching algorithms, trend analysis, breeding recommendations
 - `index.ts` - Clean module exports
 
-**Calculator UI Components (`components/breeder/calculators/`):**
+#### Progesterone Input Components (`components/breeder/calculators/`)
 - `ProgesteroneInputForm.tsx` - Main orchestrating component with real-time calculations
 - `LabSelectorCard.tsx` - Laboratory, unit, and breeding method selection with tooltips
 - `DailyReadingInput.tsx` - Individual day inputs (Day 0-5) with date pickers and validation
 - `ProgesteroneRatingDisplay.tsx` - Visual rating display with trend analysis and recommendations
 
-**Key Features:**
+#### Mating Calculator Components (`components/breeder/calculators/`)
+- `MatingCard.tsx` - Mating summary card with ratings and animal previews
+- `MatingEmptyState.tsx` - Beautiful empty state with CTA
+- `AnimalPickerDialog.tsx` - Two-step animal selection (bitch → dog/frozen semen)
+
+#### Mating Calculator Pages (`app/(breeder)/calculators/mating/`)
+- `page.tsx` - Main mating dashboard with stats, search, and mating list
+- `[id]/page.tsx` - Individual mating detail view with progesterone form integration
+
+#### Key Features Implemented
 - Real-time calculation as readings are entered (6 days: Day 0-5)
 - Inline validation with range checking based on laboratory and unit
 - Color-coded visual feedback (red/yellow/green)
@@ -193,22 +203,29 @@ The application includes a comprehensive progesterone calculator for breeding op
 - Trend analysis (rising/falling/stable)
 - Optimal breeding window calculation
 - Breeding recommendations with confidence scoring
+- Mating record management with ratings display
+- Animal picker with search and filtering
+- Empty state handling
 - Data persistence to localStorage (backend integration ready)
 - Beautiful BreedBook Pro styling with responsive design
 
-**Integration:**
-- Accessible via `/calculators` route under "Progesterone" tab
-- Tab-based interface: "Mating Calculator" | "Progesterone"
-- Sticky rating display on desktop for real-time feedback
-- Toast notifications for save/reset actions
+#### Routes Available
+- `/calculators` - Main calculator hub with tabs (Mating | Progesterone)
+- `/calculators/mating` - Mating calculator dashboard
+- `/calculators/mating/[id]` - Individual mating detail view
+
+### Phase 2: Conception Rating Calculator Wizard (IN PROGRESS 🔄)
+Multi-step wizard framework for comprehensive conception calculations.
 
 ## Project Status
 - **Design System**: BreedBook Pro design migration completed with professional styling throughout
 - **Current Focus**: Breeder role implementation with beautiful UI/UX (actively being enhanced)
-- **Completed Pages**: Landing page, auth pages, sidebar, animals, calculators (with progesterone calculator), activities (partial), dashboard
-- **Calculator Implementation**: Phase 1 Task 1.1 & 1.2 completed - Core calculation engine and UI components operational
+- **Completed Pages**: Landing page, auth pages, sidebar, animals, calculators (with full progesterone & mating system), activities (partial), dashboard
+- **Calculator Implementation**:
+  - ✅ Phase 1 COMPLETE (Tasks 1.1, 1.2, 1.3) - Core calculation engine, progesterone UI, mating calculator dashboard
+  - 🔄 Phase 2 IN PROGRESS - Conception rating calculator wizard framework
 - **Remaining Pages**: Tasks, marketplace, breeders, documents, settings pages need BreedBook Pro styling
-- **Next Phases**: Complete progesterone calculator integration (Task 1.3+), then expand to other breeder pages and user roles
+- **Next Phases**: Complete conception calculator wizard (Phase 2), then expand to other breeder pages and user roles
 - **Architecture**: Ready for multi-role expansion with established BreedBook Pro design patterns
 
 ## Current Development Server
