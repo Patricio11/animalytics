@@ -56,57 +56,81 @@ export function AnimalCard({
   };
 
   return (
-    <Card className="hover-elevate" data-testid={`card-animal-${id}`}>
+    <Card className="group overflow-hidden bg-surface border border-primary/10 shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:-translate-y-2 hover:border-primary/30" data-testid={`card-animal-${id}`}>
       <CardHeader className="p-0">
-        <div className="relative">
-          <div className="aspect-square w-full bg-muted rounded-t-lg overflow-hidden">
+        <div className="relative overflow-hidden">
+          <div className="aspect-square w-full bg-gradient-subtle rounded-t-lg overflow-hidden border-b border-primary/10">
             {imageUrl ? (
               <img
                 src={imageUrl}
                 alt={name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Heart className="w-12 h-12 text-muted-foreground" />
+              <div className="w-full h-full flex items-center justify-center bg-gradient-subtle">
+                <Heart className="w-12 h-12 text-primary/60 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
               </div>
             )}
+            {/* Gradient overlay for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Inner shadow for depth */}
+            <div className="absolute inset-0 shadow-inner pointer-events-none" />
           </div>
-          <div className="absolute top-2 right-2 flex gap-1">
-            <Badge className={statusColors[status]} variant="secondary">
+
+          {/* Status and Gender badges with enhanced styling */}
+          <div className="absolute top-3 right-3 flex gap-2">
+            <Badge className={`${statusColors[status]} shadow-lg border border-white/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl`} variant="secondary">
               {status}
             </Badge>
           </div>
-          <div className="absolute top-2 left-2">
-            <Badge variant="outline" className="bg-background/80 backdrop-blur-sm">
+          <div className="absolute top-3 left-3">
+            <Badge variant="outline" className="bg-background/95 backdrop-blur-md border-primary/20 shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:bg-background group-hover:border-primary/30 group-hover:shadow-xl">
               {gender === 'male' ? 'Dog' : 'Bitch'}
             </Badge>
           </div>
+
+          {/* Floating action buttons that appear on hover */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-500 flex gap-3">
+            <Button
+              size="sm"
+              className="bg-background/95 backdrop-blur-md text-foreground hover:bg-background shadow-xl border border-primary/20 hover:border-primary/40 hover:shadow-2xl transition-all duration-300"
+              onClick={handleEdit}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              className="bg-background/95 backdrop-blur-md text-foreground hover:bg-background shadow-xl border border-primary/20 hover:border-primary/40 hover:shadow-2xl transition-all duration-300"
+              onClick={handleFavorite}
+            >
+              <Heart className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          <div>
-            <h3 className="font-semibold text-lg text-foreground" data-testid={`text-animal-name-${id}`}>
+      <CardContent className="p-5">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h3 className="font-semibold text-xl text-foreground group-hover:text-primary transition-colors duration-300" data-testid={`text-animal-name-${id}`}>
               {name}
             </h3>
-            <p className="text-sm text-muted-foreground">{breed}</p>
+            <p className="text-sm text-muted-foreground font-medium">{breed}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-muted-foreground">Age:</span>
-              <span className="ml-1 text-foreground">{age} years</span>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex flex-col space-y-1">
+              <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Age</span>
+              <span className="text-foreground font-semibold">{age} years</span>
             </div>
-            <div>
-              <span className="text-muted-foreground">DOB:</span>
-              <span className="ml-1 text-foreground">{format(dateOfBirth, 'MMM yyyy')}</span>
+            <div className="flex flex-col space-y-1">
+              <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Born</span>
+              <span className="text-foreground font-semibold">{format(dateOfBirth, 'MMM yyyy')}</span>
             </div>
           </div>
 
           {lastMating && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Calendar className="w-3 h-3" />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg p-2 transition-colors duration-300 group-hover:bg-muted/50">
+              <Calendar className="w-4 h-4 text-primary" />
               <span>Last mating: {format(lastMating, 'MMM dd, yyyy')}</span>
             </div>
           )}
@@ -117,9 +141,9 @@ export function AnimalCard({
               variant="outline"
               onClick={handleEdit}
               data-testid={`button-edit-${id}`}
-              className="flex-1"
+              className="flex-1 hover:bg-primary/10 hover:border-primary border-primary/20 shadow-md hover:shadow-lg transition-all duration-300"
             >
-              <Edit className="w-3 h-3 mr-1" />
+              <Edit className="w-3 h-3 mr-2" />
               Edit
             </Button>
             <Button
@@ -127,16 +151,18 @@ export function AnimalCard({
               variant="ghost"
               onClick={handleShare}
               data-testid={`button-share-${id}`}
+              className="hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 shadow-md hover:shadow-lg transition-all duration-300"
             >
-              <Share2 className="w-3 h-3" />
+              <Share2 className="w-4 h-4" />
             </Button>
             <Button
               size="sm"
               variant="ghost"
               onClick={handleFavorite}
               data-testid={`button-favorite-${id}`}
+              className="hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 shadow-md hover:shadow-lg transition-all duration-300"
             >
-              <Heart className="w-3 h-3" />
+              <Heart className="w-4 h-4" />
             </Button>
           </div>
         </div>

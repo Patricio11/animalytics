@@ -62,6 +62,16 @@ export default function Dashboard() {
       imageUrl: "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face",
       status: 'breeding' as const,
       lastMating: new Date('2024-02-01'),
+    },
+    {
+      id: "3",
+      name: "Luna",
+      breed: "Border Collie",
+      gender: 'female' as const,
+      dateOfBirth: new Date('2021-06-10'),
+      imageUrl: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop&crop=face",
+      status: 'pregnant' as const,
+      lastMating: new Date('2024-02-10'),
     }
   ];
 
@@ -153,7 +163,7 @@ export default function Dashboard() {
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mockRecentAnimals.map((animal) => (
                 <AnimalCard key={animal.id} {...animal} />
               ))}
