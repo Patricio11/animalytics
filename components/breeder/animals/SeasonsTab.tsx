@@ -8,42 +8,58 @@ import { Season } from "@/lib/mock-data/animal-profile-details";
 import { format, differenceInDays } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { SeasonDialog } from "./SeasonDialog";
+import { SeasonCard } from "./SeasonCard";
 
 interface SeasonsTabProps {
   animalId: string;
   seasons: Season[];
 }
 
-export function SeasonsTab({ animalId, seasons }: SeasonsTabProps) {
-  const [expandedSeasons, setExpandedSeasons] = useState<Set<string>>(new Set());
+export function SeasonsTab({ animalId, seasons: initialSeasons }: SeasonsTabProps) {
+  const [seasons, setSeasons] = useState<Season[]>(initialSeasons);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingSeason, setEditingSeason] = useState<Season | undefined>();
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
 
   const sortedSeasons = [...seasons].sort(
     (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
   );
 
-  const toggleSeason = (seasonId: string) => {
-    setExpandedSeasons((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(seasonId)) {
-        newSet.delete(seasonId);
-      } else {
-        newSet.add(seasonId);
-      }
-      return newSet;
-    });
+  const handleCreateNew = () => {
+    setEditingSeason(undefined);
+    setDialogMode('create');
+    setDialogOpen(true);
   };
 
-  const getSeasonDuration = (season: Season) => {
-    if (!season.endDate) return 'Ongoing';
-    const days = differenceInDays(new Date(season.endDate), new Date(season.startDate));
-    return `${days} days`;
+  const handleEdit = (season: Season) => {
+    setEditingSeason(season);
+    setDialogMode('edit');
+    setDialogOpen(true);
   };
 
-  const getSeasonStatus = (season: Season) => {
-    if (!season.endDate) return { label: 'Active', color: 'bg-chart-3 text-white' };
-    const daysSince = differenceInDays(new Date(), new Date(season.endDate));
-    if (daysSince < 30) return { label: 'Recent', color: 'bg-chart-4 text-white' };
-    return { label: 'Completed', color: 'bg-muted text-muted-foreground' };
+  const handleSave = (newSeason: Omit<Season, 'id'>) => {
+    if (dialogMode === 'create') {
+      // Add new season
+      const season: Season = {
+        ...newSeason,
+        id: `season-${Date.now()}`,
+      };
+      setSeasons([...seasons, season]);
+    } else if (editingSeason) {
+      // Update existing season
+      setSeasons(
+        seasons.map((s) =>
+          s.id === editingSeason.id ? { ...newSeason, id: s.id } : s
+        )
+      );
+    }
+  };
+
+  const handleDelete = (seasonId: string) => {
+    if (confirm('Are you sure you want to delete this heat cycle? This action cannot be undone.')) {
+      setSeasons(seasons.filter((s) => s.id !== seasonId));
+    }
   };
 
   // Calculate average cycle length
@@ -100,6 +116,7 @@ export function SeasonsTab({ animalId, seasons }: SeasonsTabProps) {
               variant="outline"
               size="sm"
               className="hover:bg-primary/10 hover:border-primary"
+              onClick={handleCreateNew}
             >
               <Plus className="w-3 h-3 mr-2" />
               Record New Season
@@ -108,105 +125,25 @@ export function SeasonsTab({ animalId, seasons }: SeasonsTabProps) {
         </CardHeader>
         <CardContent>
           {sortedSeasons.length > 0 ? (
-            <div className="space-y-3">
-              {sortedSeasons.map((season) => {
-                const status = getSeasonStatus(season);
-                const duration = getSeasonDuration(season);
-                const isExpanded = expandedSeasons.has(season.id);
-                const hasProgesterone = season.progesteroneReadings && season.progesteroneReadings.length > 0;
-
-                return (
-                  <div
-                    key={season.id}
-                    className="rounded-lg border border-primary/10 bg-background hover:shadow-card transition-all duration-200"
-                  >
-                    {/* Season Header */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="font-semibold text-foreground">
-                              {format(new Date(season.startDate), 'MMM dd, yyyy')}
-                              {season.endDate && ` - ${format(new Date(season.endDate), 'MMM dd, yyyy')}`}
-                            </div>
-                            <Badge className={cn(status.color)}>
-                              {status.label}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {duration}
-                            </Badge>
-                          </div>
-
-                          {season.notes && (
-                            <p className="text-sm text-muted-foreground">{season.notes}</p>
-                          )}
-
-                          {hasProgesterone && (
-                            <div className="mt-3 flex items-center gap-2 text-sm text-primary">
-                              <Activity className="w-4 h-4" />
-                              <span>{season.progesteroneReadings!.length} progesterone readings</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {hasProgesterone && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleSeason(season.id)}
-                            className="hover:bg-primary/10"
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Progesterone Readings (Expandable) */}
-                    {hasProgesterone && isExpanded && (
-                      <div className="px-4 pb-4 border-t border-primary/10 bg-surface-secondary/50">
-                        <div className="pt-4 space-y-3">
-                          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                            <TrendingUp className="w-4 h-4 text-chart-3" />
-                            Progesterone Readings
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {season.progesteroneReadings!.map((reading, idx) => (
-                              <div
-                                key={idx}
-                                className="p-3 rounded-lg bg-background border border-primary/10"
-                              >
-                                <div className="text-xs text-muted-foreground mb-1">
-                                  {format(new Date(reading.date), 'MMM dd, yyyy')}
-                                </div>
-                                <div className="flex items-baseline gap-2">
-                                  <div className="text-xl font-bold text-chart-3">
-                                    {reading.value}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {reading.unit}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="space-y-4">
+              {sortedSeasons.map((season) => (
+                <SeasonCard
+                  key={season.id}
+                  season={season}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
             </div>
           ) : (
             <div className="text-center py-12 border-2 border-dashed border-primary/20 rounded-lg">
               <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <p className="text-muted-foreground mb-4">No heat cycles recorded yet</p>
-              <Button variant="outline" className="hover:bg-primary/10 hover:border-primary">
+              <Button
+                variant="outline"
+                className="hover:bg-primary/10 hover:border-primary"
+                onClick={handleCreateNew}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Record First Season
               </Button>
@@ -227,6 +164,15 @@ export function SeasonsTab({ animalId, seasons }: SeasonsTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Season Dialog */}
+      <SeasonDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSave}
+        existingSeason={editingSeason}
+        mode={dialogMode}
+      />
     </div>
   );
 }
