@@ -86,84 +86,87 @@ export default function Marketplace() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Marketplace</h1>
-          <p className="text-muted-foreground">Buy and sell quality breeding animals</p>
+    <div className="min-h-screen bg-surface-secondary">
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Marketplace</h1>
+            <p className="text-muted-foreground">Buy and sell quality breeding animals</p>
+          </div>
+          <Button className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-create-listing">
+            <Plus className="w-4 h-4 mr-2" />
+            Create Listing
+          </Button>
         </div>
-        <Button data-testid="button-create-listing">
-          <Plus className="w-4 h-4 mr-2" />
-          Create Listing
-        </Button>
+
+        {/* Filters */}
+        <div className="bg-surface shadow-card rounded-lg p-6 border-0">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by breed, name..."
+                className="pl-10 bg-background border-primary/20 focus:border-primary"
+                data-testid="input-search-listings"
+              />
+            </div>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Location"
+                className="pl-10 w-full sm:w-[160px] bg-background border-primary/20 focus:border-primary"
+                data-testid="input-location"
+              />
+            </div>
+            <Select>
+              <SelectTrigger className="w-full sm:w-[140px] bg-background border-primary/20 focus:border-primary" data-testid="select-price-range">
+                <SelectValue placeholder="Price Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Prices</SelectItem>
+                <SelectItem value="0-5000">$0 - $5,000</SelectItem>
+                <SelectItem value="5000-10000">$5,000 - $10,000</SelectItem>
+                <SelectItem value="10000-20000">$10,000 - $20,000</SelectItem>
+                <SelectItem value="20000+">$20,000+</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select>
+              <SelectTrigger className="w-full sm:w-[120px] bg-background border-primary/20 focus:border-primary" data-testid="select-gender">
+                <SelectValue placeholder="Gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-advanced-filter">
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+            </Button>
+          </div>
+        </div>
+
+        {/* Featured Section */}
+        <section>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {mockListings.filter(listing => listing.isFeatured).map((listing) => (
+              <MarketplaceCard key={listing.id} {...listing} />
+            ))}
+          </div>
+        </section>
+
+        {/* All Listings */}
+        <section>
+          <h2 className="text-xl font-semibold text-foreground mb-4">All Listings</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {mockListings.map((listing) => (
+              <MarketplaceCard key={listing.id} {...listing} />
+            ))}
+          </div>
+        </section>
       </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by breed, name..."
-            className="pl-10"
-            data-testid="input-search-listings"
-          />
-        </div>
-        <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Location"
-            className="pl-10 w-full sm:w-[160px]"
-            data-testid="input-location"
-          />
-        </div>
-        <Select>
-          <SelectTrigger className="w-full sm:w-[140px]" data-testid="select-price-range">
-            <SelectValue placeholder="Price Range" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Prices</SelectItem>
-            <SelectItem value="0-5000">$0 - $5,000</SelectItem>
-            <SelectItem value="5000-10000">$5,000 - $10,000</SelectItem>
-            <SelectItem value="10000-20000">$10,000 - $20,000</SelectItem>
-            <SelectItem value="20000+">$20,000+</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select>
-          <SelectTrigger className="w-full sm:w-[120px]" data-testid="select-gender">
-            <SelectValue placeholder="Gender" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="male">Male</SelectItem>
-            <SelectItem value="female">Female</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="outline" data-testid="button-advanced-filter">
-          <Filter className="w-4 h-4 mr-2" />
-          Filter
-        </Button>
-      </div>
-
-      {/* Featured Section */}
-      <section>
-        <h2 className="text-xl font-semibold text-foreground mb-4">Featured Listings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {mockListings.filter(listing => listing.isFeatured).map((listing) => (
-            <MarketplaceCard key={listing.id} {...listing} />
-          ))}
-        </div>
-      </section>
-
-      {/* All Listings */}
-      <section>
-        <h2 className="text-xl font-semibold text-foreground mb-4">All Listings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {mockListings.map((listing) => (
-            <MarketplaceCard key={listing.id} {...listing} />
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

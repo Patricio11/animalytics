@@ -86,74 +86,75 @@ export default function Breeders() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Breeder Network</h1>
-          <p className="text-muted-foreground">Connect with professional breeders and expand your network</p>
-        </div>
-        <Button data-testid="button-join-network">
-          <Plus className="w-4 h-4 mr-2" />
-          Join Network
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search breeders, kennels, or breeds..."
-                className="pl-10"
-                data-testid="input-search-breeders"
-              />
-            </div>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Location"
-                className="pl-10 w-full sm:w-[160px]"
-                data-testid="input-location"
-              />
-            </div>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[140px]" data-testid="select-breed">
-                <SelectValue placeholder="Breed" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Breeds</SelectItem>
-                <SelectItem value="golden-retriever">Golden Retriever</SelectItem>
-                <SelectItem value="german-shepherd">German Shepherd</SelectItem>
-                <SelectItem value="labrador">Labrador</SelectItem>
-                <SelectItem value="border-collie">Border Collie</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[120px]" data-testid="select-rating">
-                <SelectValue placeholder="Rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Ratings</SelectItem>
-                <SelectItem value="4.5+">4.5+ Stars</SelectItem>
-                <SelectItem value="4.0+">4.0+ Stars</SelectItem>
-                <SelectItem value="3.5+">3.5+ Stars</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" data-testid="button-advanced-filter">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
+    <div className="min-h-screen bg-surface-secondary">
+      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Breeder Network</h1>
+            <p className="text-muted-foreground">Connect with professional breeders and expand your network</p>
           </div>
-        </CardContent>
-      </Card>
+          <Button className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-join-network">
+            <Plus className="w-4 h-4 mr-2" />
+            Join Network
+          </Button>
+        </div>
 
-      {/* Breeders Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {mockBreeders.map((breeder) => (
-          <Card key={breeder.id} className="hover-elevate" data-testid={`card-breeder-${breeder.id}`}>
+        {/* Filters */}
+        <Card className="shadow-card bg-surface border-0">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search breeders, kennels, or breeds..."
+                  className="pl-10 bg-background border-primary/20 focus:border-primary"
+                  data-testid="input-search-breeders"
+                />
+              </div>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Location"
+                  className="pl-10 w-full sm:w-[160px] bg-background border-primary/20 focus:border-primary"
+                  data-testid="input-location"
+                />
+              </div>
+              <Select>
+                <SelectTrigger className="w-full sm:w-[140px] bg-background border-primary/20 focus:border-primary" data-testid="select-breed">
+                  <SelectValue placeholder="Breed" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Breeds</SelectItem>
+                  <SelectItem value="golden-retriever">Golden Retriever</SelectItem>
+                  <SelectItem value="german-shepherd">German Shepherd</SelectItem>
+                  <SelectItem value="labrador">Labrador</SelectItem>
+                  <SelectItem value="border-collie">Border Collie</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select>
+                <SelectTrigger className="w-full sm:w-[120px] bg-background border-primary/20 focus:border-primary" data-testid="select-rating">
+                  <SelectValue placeholder="Rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ratings</SelectItem>
+                  <SelectItem value="4.5+">4.5+ Stars</SelectItem>
+                  <SelectItem value="4.0+">4.0+ Stars</SelectItem>
+                  <SelectItem value="3.5+">3.5+ Stars</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-advanced-filter">
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Breeders Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {mockBreeders.map((breeder) => (
+            <Card key={breeder.id} className="hover-elevate shadow-card bg-surface border-0" data-testid={`card-breeder-${breeder.id}`}>
             <CardHeader>
               <div className="flex items-start gap-4">
                 <Avatar className="w-16 h-16">
@@ -226,12 +227,12 @@ export default function Breeders() {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2 border-t">
+              <div className="flex gap-2 pt-2 border-t border-primary/10">
                 <Button
                   size="sm"
                   onClick={() => handleContact(breeder)}
                   data-testid={`button-contact-${breeder.id}`}
-                  className="flex-1"
+                  className="flex-1 bg-gradient-brand hover:opacity-90 shadow-card"
                 >
                   <Phone className="w-3 h-3 mr-1" />
                   Contact
@@ -241,7 +242,7 @@ export default function Breeders() {
                   variant="outline"
                   onClick={() => handleMessage(breeder)}
                   data-testid={`button-message-${breeder.id}`}
-                  className="flex-1"
+                  className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card"
                 >
                   <MessageCircle className="w-3 h-3 mr-1" />
                   Message
@@ -250,22 +251,23 @@ export default function Breeders() {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      {/* Empty State for No Results */}
-      {mockBreeders.length === 0 && (
-        <div className="text-center py-12">
-          <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No breeders found</h3>
-          <p className="text-muted-foreground">Try adjusting your filters or search terms.</p>
         </div>
-      )}
 
-      {/* Pagination would go here in a real app */}
-      <div className="flex justify-center pt-6">
-        <Button variant="outline" data-testid="button-load-more">
-          Load More Breeders
-        </Button>
+        {/* Empty State for No Results */}
+        {mockBreeders.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">No breeders found</h3>
+            <p className="text-muted-foreground">Try adjusting your filters or search terms.</p>
+          </div>
+        )}
+
+        {/* Pagination would go here in a real app */}
+        <div className="flex justify-center pt-6">
+          <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-load-more">
+            Load More Breeders
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -337,8 +337,8 @@ export default function Documents() {
               <p className="text-muted-foreground">Upload your first document to get started.</p>
             </div>
           )}
-        </TabsContent>
-      </Tabs>
-    </div>
+          </TabsContent>
+        </Tabs>
+      </div>
   );
 }

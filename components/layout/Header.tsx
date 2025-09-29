@@ -19,7 +19,7 @@ export function Header() {
   const [notificationCount] = useState(3); // Static for now to avoid hydration issues
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between p-4 border-b bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60 shadow-card">
+    <header className="border-b bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60 sticky top-0 z-50 flex items-center justify-between p-4">
       <SidebarTrigger data-testid="button-sidebar-toggle" className="hover-elevate" />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" className="relative hover-elevate">

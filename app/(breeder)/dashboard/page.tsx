@@ -8,7 +8,6 @@ import { TaskCard } from "@/components/breeder/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Heart, Calendar, Trophy, DollarSign, Plus, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { addDays, subDays } from "date-fns";
 
 export default function Dashboard() {
   // todo: remove mock functionality
@@ -92,7 +91,7 @@ export default function Dashboard() {
       id: "1",
       title: "Schedule vet checkup",
       description: "Annual health examination for Bella",
-      dueDate: addDays(new Date(), 2),
+      dueDate: new Date('2024-03-02'),
       priority: 'high' as const,
       category: 'health' as const,
       animalName: "Bella",
@@ -102,7 +101,7 @@ export default function Dashboard() {
       id: "2",
       title: "Update breeding records",
       description: "Record recent mating details",
-      dueDate: subDays(new Date(), 1),
+      dueDate: new Date('2024-02-28'),
       priority: 'medium' as const,
       category: 'breeding' as const,
       animalName: "Luna",
@@ -118,18 +117,19 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your animals.</p>
+    <div className="min-h-screen bg-surface-secondary">
+      <div className="p-6 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your animals.</p>
+          </div>
+          <Button className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-add-animal">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Animal
+          </Button>
         </div>
-        <Button data-testid="button-add-animal">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Animal
-        </Button>
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -227,19 +227,19 @@ export default function Dashboard() {
             <h2 className="text-xl font-semibold text-foreground mb-6">Quick Actions</h2>
             <div className="space-y-3">
               <Link href="/animals/new">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-add-new-animal">
+                <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-add-new-animal">
                   <Plus className="w-4 h-4 mr-2" />
                   Add New Animal
                 </Button>
               </Link>
               <Link href="/calculators">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-new-calculation">
+                <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-new-calculation">
                   <Trophy className="w-4 h-4 mr-2" />
                   New Calculation
                 </Button>
               </Link>
               <Link href="/activities/new">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-log-activity">
+                <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-log-activity">
                   <Calendar className="w-4 h-4 mr-2" />
                   Log Activity
                 </Button>
@@ -248,6 +248,7 @@ export default function Dashboard() {
           </section>
         </div>
       </div>
+    </div>
     </div>
   );
 }

@@ -43,15 +43,16 @@ export default function Settings() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and application preferences</p>
-      </div>
+    <div className="min-h-screen bg-surface-secondary">
+      <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Settings</h1>
+          <p className="text-muted-foreground">Manage your account and application preferences</p>
+        </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1">
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 bg-surface shadow-card">
           <TabsTrigger value="profile" data-testid="tab-profile" className="text-xs sm:text-sm">
             <User className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Profile</span>
@@ -74,9 +75,9 @@ export default function Settings() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Profile Settings */}
-        <TabsContent value="profile" className="space-y-6">
-          <Card>
+          {/* Profile Settings */}
+          <TabsContent value="profile" className="space-y-6">
+            <Card className="shadow-card bg-surface border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5 text-primary" />
@@ -93,7 +94,7 @@ export default function Settings() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
-                  <Button size="sm" data-testid="button-change-photo">
+                  <Button size="sm" className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-change-photo">
                     <Camera className="w-3 h-3 mr-2" />
                     Change Photo
                   </Button>
@@ -111,6 +112,7 @@ export default function Settings() {
                     id="name"
                     value={profile.name}
                     onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
+                    className="bg-background border-primary/20 focus:border-primary"
                     data-testid="input-profile-name"
                   />
                 </div>
@@ -120,6 +122,7 @@ export default function Settings() {
                     id="kennel"
                     value={profile.kennel}
                     onChange={(e) => setProfile(prev => ({ ...prev, kennel: e.target.value }))}
+                    className="bg-background border-primary/20 focus:border-primary"
                     data-testid="input-kennel-name"
                   />
                 </div>
@@ -130,6 +133,7 @@ export default function Settings() {
                     type="email"
                     value={profile.email}
                     onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
+                    className="bg-background border-primary/20 focus:border-primary"
                     data-testid="input-profile-email"
                   />
                 </div>
@@ -139,6 +143,7 @@ export default function Settings() {
                     id="phone"
                     value={profile.phone}
                     onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                    className="bg-background border-primary/20 focus:border-primary"
                     data-testid="input-profile-phone"
                   />
                 </div>
@@ -148,6 +153,7 @@ export default function Settings() {
                     id="location"
                     value={profile.location}
                     onChange={(e) => setProfile(prev => ({ ...prev, location: e.target.value }))}
+                    className="bg-background border-primary/20 focus:border-primary"
                     data-testid="input-profile-location"
                   />
                 </div>
@@ -157,6 +163,7 @@ export default function Settings() {
                     id="website"
                     value={profile.website}
                     onChange={(e) => setProfile(prev => ({ ...prev, website: e.target.value }))}
+                    className="bg-background border-primary/20 focus:border-primary"
                     data-testid="input-profile-website"
                   />
                 </div>
@@ -169,23 +176,24 @@ export default function Settings() {
                   placeholder="Tell us about your breeding experience..."
                   value={profile.bio}
                   onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                  className="bg-background border-primary/20 focus:border-primary"
                   data-testid="textarea-profile-bio"
                 />
               </div>
 
-              <div className="flex gap-2 pt-4 border-t">
-                <Button onClick={() => handleSave('profile')} data-testid="button-save-profile">
+              <div className="flex gap-2 pt-4 border-t border-primary/10">
+                <Button onClick={() => handleSave('profile')} className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-save-profile">
                   Save Changes
                 </Button>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card">Cancel</Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Notification Settings */}
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
+          {/* Notification Settings */}
+          <TabsContent value="notifications" className="space-y-6">
+            <Card className="shadow-card bg-surface border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="w-5 h-5 text-primary" />
@@ -273,19 +281,19 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t">
-                <Button onClick={() => handleSave('notifications')} data-testid="button-save-notifications">
+              <div className="flex gap-2 pt-4 border-t border-primary/10">
+                <Button onClick={() => handleSave('notifications')} className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-save-notifications">
                   Save Changes
                 </Button>
-                <Button variant="outline">Reset to Default</Button>
+                <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card">Reset to Default</Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Privacy Settings */}
-        <TabsContent value="privacy" className="space-y-6">
-          <Card>
+          {/* Privacy Settings */}
+          <TabsContent value="privacy" className="space-y-6">
+            <Card className="shadow-card bg-surface border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
@@ -299,7 +307,7 @@ export default function Settings() {
                   <div className="space-y-2">
                     <Label htmlFor="profile-visibility">Who can see your profile?</Label>
                     <Select defaultValue="public">
-                      <SelectTrigger data-testid="select-profile-visibility">
+                      <SelectTrigger className="bg-background border-primary/20 focus:border-primary" data-testid="select-profile-visibility">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -312,7 +320,7 @@ export default function Settings() {
                   <div className="space-y-2">
                     <Label htmlFor="contact-info">Show contact information?</Label>
                     <Select defaultValue="verified">
-                      <SelectTrigger data-testid="select-contact-visibility">
+                      <SelectTrigger className="bg-background border-primary/20 focus:border-primary" data-testid="select-contact-visibility">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -348,17 +356,17 @@ export default function Settings() {
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="font-medium text-foreground">Account Security</h3>
                 <div className="space-y-2">
-                  <Button variant="outline" data-testid="button-change-password">
+                  <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-change-password">
                     Change Password
                   </Button>
-                  <Button variant="outline" data-testid="button-enable-2fa">
+                  <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-enable-2fa">
                     Enable Two-Factor Authentication
                   </Button>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t">
-                <Button onClick={() => handleSave('privacy')} data-testid="button-save-privacy">
+              <div className="flex gap-2 pt-4 border-t border-primary/10">
+                <Button onClick={() => handleSave('privacy')} className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-save-privacy">
                   Save Changes
                 </Button>
               </div>
@@ -366,9 +374,9 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        {/* Appearance Settings */}
-        <TabsContent value="appearance" className="space-y-6">
-          <Card>
+          {/* Appearance Settings */}
+          <TabsContent value="appearance" className="space-y-6">
+            <Card className="shadow-card bg-surface border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="w-5 h-5 text-primary" />
@@ -380,7 +388,7 @@ export default function Settings() {
                 <div className="space-y-2">
                   <Label htmlFor="theme">Theme</Label>
                   <Select defaultValue="system">
-                    <SelectTrigger data-testid="select-theme">
+                    <SelectTrigger className="bg-background border-primary/20 focus:border-primary" data-testid="select-theme">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -393,7 +401,7 @@ export default function Settings() {
                 <div className="space-y-2">
                   <Label htmlFor="language">Language</Label>
                   <Select defaultValue="en">
-                    <SelectTrigger data-testid="select-language">
+                    <SelectTrigger className="bg-background border-primary/20 focus:border-primary" data-testid="select-language">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -407,7 +415,7 @@ export default function Settings() {
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Timezone</Label>
                   <Select defaultValue="australia/melbourne">
-                    <SelectTrigger data-testid="select-timezone">
+                    <SelectTrigger className="bg-background border-primary/20 focus:border-primary" data-testid="select-timezone">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -420,8 +428,8 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t">
-                <Button onClick={() => handleSave('appearance')} data-testid="button-save-appearance">
+              <div className="flex gap-2 pt-4 border-t border-primary/10">
+                <Button onClick={() => handleSave('appearance')} className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-save-appearance">
                   Save Changes
                 </Button>
               </div>
@@ -429,9 +437,9 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        {/* Data Settings */}
-        <TabsContent value="data" className="space-y-6">
-          <Card>
+          {/* Data Settings */}
+          <TabsContent value="data" className="space-y-6">
+            <Card className="shadow-card bg-surface border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Database className="w-5 h-5 text-primary" />
@@ -445,7 +453,7 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Download a copy of all your data including animals, reports, and documents.
                   </p>
-                  <Button variant="outline" data-testid="button-export-data">
+                  <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-export-data">
                     Export All Data
                   </Button>
                 </div>
@@ -466,7 +474,7 @@ export default function Settings() {
                 <div className="pt-4 border-t">
                   <h3 className="font-medium text-destructive mb-2">Danger Zone</h3>
                   <div className="space-y-2">
-                    <Button variant="outline" className="text-destructive border-destructive" data-testid="button-delete-account">
+                    <Button variant="outline" className="text-destructive border-destructive hover:bg-destructive/10 shadow-card" data-testid="button-delete-account">
                       Delete Account
                     </Button>
                     <p className="text-xs text-muted-foreground">
@@ -477,8 +485,9 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

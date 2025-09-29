@@ -58,14 +58,15 @@ export default function CalculatorPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="text-center sm:text-left">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mating Calculator</h1>
-        <p className="text-muted-foreground mt-2">
-          Calculate progesterone cycle ratings and conception probabilities for your breeding program
-        </p>
-      </div>
+    <div className="min-h-screen bg-surface-secondary">
+      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center sm:text-left">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mating Calculator</h1>
+          <p className="text-muted-foreground mt-2">
+            Calculate progesterone cycle ratings and conception probabilities for your breeding program
+          </p>
+        </div>
 
       {/* Main Calculator */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -83,7 +84,7 @@ export default function CalculatorPage() {
               <div className="space-y-3">
                 <h3 className="font-medium text-foreground">Select Male (Dog)</h3>
                 <Select value={selectedMale} onValueChange={setSelectedMale}>
-                  <SelectTrigger data-testid="select-male-animal" className="w-full">
+                  <SelectTrigger data-testid="select-male-animal" className="w-full bg-background border-primary/20 focus:border-primary">
                     <SelectValue placeholder="Choose a male animal" />
                   </SelectTrigger>
                   <SelectContent>
@@ -114,7 +115,7 @@ export default function CalculatorPage() {
               <div className="space-y-3">
                 <h3 className="font-medium text-foreground">Select Female (Bitch)</h3>
                 <Select value={selectedFemale} onValueChange={setSelectedFemale}>
-                  <SelectTrigger data-testid="select-female-animal" className="w-full">
+                  <SelectTrigger data-testid="select-female-animal" className="w-full bg-background border-primary/20 focus:border-primary">
                     <SelectValue placeholder="Choose a female animal" />
                   </SelectTrigger>
                   <SelectContent>
@@ -147,7 +148,7 @@ export default function CalculatorPage() {
                   onClick={handleCalculate}
                   disabled={!selectedMale || !selectedFemale}
                   data-testid="button-calculate-mating"
-                  className="flex-1 sm:flex-none"
+                  className="flex-1 sm:flex-none bg-gradient-brand hover:opacity-90 shadow-card"
                 >
                   <Calculator className="w-4 h-4 mr-2" />
                   Calculate Mating
@@ -156,7 +157,7 @@ export default function CalculatorPage() {
                   variant="outline"
                   onClick={handleReset}
                   data-testid="button-reset-calculator"
-                  className="flex-1 sm:flex-none"
+                  className="flex-1 sm:flex-none hover:bg-primary/10 hover:border-primary shadow-card"
                 >
                   Reset
                 </Button>
@@ -238,7 +239,7 @@ export default function CalculatorPage() {
               </div>
 
               <div className="pt-3 border-t">
-                <Button variant="outline" size="sm" className="w-full" data-testid="button-view-history">
+                <Button variant="outline" size="sm" className="w-full hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-view-history">
                   <Calendar className="w-3 h-3 mr-2" />
                   View History
                 </Button>
@@ -246,6 +247,7 @@ export default function CalculatorPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );

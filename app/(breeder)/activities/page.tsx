@@ -122,39 +122,40 @@ export default function Activities() {
   });
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Activity Reports</h1>
-          <p className="text-muted-foreground">Track and analyze your animal care activities</p>
+    <div className="min-h-screen bg-surface-secondary">
+      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Activity Reports</h1>
+            <p className="text-muted-foreground">Track and analyze your animal care activities</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-export-reports">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+            <Button className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-new-activity">
+              <Plus className="w-4 h-4 mr-2" />
+              Log Activity
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" data-testid="button-export-reports">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button data-testid="button-new-activity">
-            <Plus className="w-4 h-4 mr-2" />
-            Log Activity
-          </Button>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4 sm:p-6">
+        {/* Filters */}
+        <Card className="shadow-card bg-surface border-0">
+          <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search activities..."
-                className="pl-10"
+                className="pl-10 bg-background border-primary/20 focus:border-primary"
                 data-testid="input-search-activities"
               />
             </div>
             <Select value={selectedAnimal} onValueChange={setSelectedAnimal}>
-              <SelectTrigger className="w-full sm:w-[180px]" data-testid="select-filter-animal">
+              <SelectTrigger className="w-full sm:w-[180px] bg-background border-primary/20 focus:border-primary" data-testid="select-filter-animal">
                 <SelectValue placeholder="All Animals" />
               </SelectTrigger>
               <SelectContent>
@@ -166,7 +167,7 @@ export default function Activities() {
               </SelectContent>
             </Select>
             <Select>
-              <SelectTrigger className="w-full sm:w-[160px]" data-testid="select-date-range">
+              <SelectTrigger className="w-full sm:w-[160px] bg-background border-primary/20 focus:border-primary" data-testid="select-date-range">
                 <SelectValue placeholder="Date Range" />
               </SelectTrigger>
               <SelectContent>
@@ -176,7 +177,7 @@ export default function Activities() {
                 <SelectItem value="all">All time</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" data-testid="button-advanced-filter">
+            <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-advanced-filter">
               <Filter className="w-4 h-4 mr-2" />
               Filter
             </Button>
@@ -282,6 +283,7 @@ export default function Activities() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
