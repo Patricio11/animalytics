@@ -61,72 +61,75 @@ export function TaskCard({
 
   return (
     <Card
-      className={`hover-elevate ${completed ? 'opacity-75' : ''} ${isOverdue ? 'border-destructive' : ''}`}
+      className={`group overflow-hidden bg-surface border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+        completed ? 'opacity-75 border-primary/20' : 'border-primary/10 hover:border-primary/30'
+      } ${isOverdue ? 'border-destructive/40 shadow-destructive/20' : ''}`}
       data-testid={`card-task-${id}`}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
+      <CardHeader className="pb-4">
+        <div className="flex items-start gap-4">
           <Checkbox
             checked={completed}
             onCheckedChange={handleToggleComplete}
             data-testid={`checkbox-task-${id}`}
-            className="mt-1"
+            className="mt-1 shadow-sm"
           />
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className={`font-medium text-foreground ${completed ? 'line-through' : ''}`} data-testid={`text-task-title-${id}`}>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className={`font-semibold text-lg text-foreground transition-colors duration-300 group-hover:text-primary ${completed ? 'line-through' : ''}`} data-testid={`text-task-title-${id}`}>
                 {title}
               </h3>
-              <div className="flex gap-1 flex-shrink-0">
-                <Badge className={priorityColors[priority]} variant="secondary">
+              <div className="flex gap-2 flex-shrink-0">
+                <Badge className={`${priorityColors[priority]} shadow-md border border-white/20 transition-all duration-300 group-hover:scale-105`} variant="secondary">
                   {priority}
                 </Badge>
-                <Badge className={categoryColors[category]} variant="secondary">
+                <Badge className={`${categoryColors[category]} shadow-md border border-white/20 transition-all duration-300 group-hover:scale-105`} variant="secondary">
                   {category}
                 </Badge>
               </div>
             </div>
             {animalName && (
-              <p className="text-sm text-muted-foreground mt-1">{animalName}</p>
+              <p className="text-sm text-muted-foreground mt-2 font-medium">{animalName}</p>
             )}
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
         {description && (
-          <p className="text-sm text-muted-foreground mb-3">{description}</p>
+          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{description}</p>
         )}
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
             {completed ? (
-              <div className="flex items-center gap-1 text-chart-3">
-                <CheckCircle className="w-3 h-3" />
-                <span>Completed</span>
+              <div className="flex items-center gap-2 text-chart-3 bg-chart-3/10 px-3 py-1.5 rounded-lg">
+                <CheckCircle className="w-4 h-4" />
+                <span className="font-medium">Completed</span>
               </div>
             ) : isOverdue ? (
-              <div className="flex items-center gap-1 text-destructive">
-                <AlertTriangle className="w-3 h-3" />
-                <span>Overdue</span>
+              <div className="flex items-center gap-2 text-destructive bg-destructive/10 px-3 py-1.5 rounded-lg">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="font-medium">Overdue</span>
               </div>
             ) : isDueSoon ? (
-              <div className="flex items-center gap-1 text-chart-4">
-                <Clock className="w-3 h-3" />
-                <span>Due soon</span>
+              <div className="flex items-center gap-2 text-chart-4 bg-chart-4/10 px-3 py-1.5 rounded-lg">
+                <Clock className="w-4 h-4" />
+                <span className="font-medium">Due soon</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Calendar className="w-3 h-3" />
-                <span>Due {format(dueDate, 'MMM dd')}</span>
+              <div className="flex items-center gap-2 text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-lg">
+                <Calendar className="w-4 h-4" />
+                <span className="font-medium">Due {format(dueDate, 'MMM dd')}</span>
               </div>
             )}
           </div>
 
           <Button
             size="sm"
-            variant="ghost"
+            variant="outline"
             onClick={handleEdit}
             data-testid={`button-edit-task-${id}`}
+            className="shadow-sm hover:bg-primary/10 hover:border-primary transition-all duration-300"
           >
             Edit
           </Button>

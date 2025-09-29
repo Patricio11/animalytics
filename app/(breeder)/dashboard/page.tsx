@@ -231,31 +231,6 @@ export default function Dashboard() {
               ))}
             </div>
           </section>
-
-          {/* Quick Actions */}
-          <section>
-            <h2 className="text-xl font-semibold text-foreground mb-6">Quick Actions</h2>
-            <div className="space-y-3">
-              <Link href="/animals/new">
-                <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-add-new-animal">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add New Animal
-                </Button>
-              </Link>
-              <Link href="/calculators">
-                <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-new-calculation">
-                  <Trophy className="w-4 h-4 mr-2" />
-                  New Calculation
-                </Button>
-              </Link>
-              <Link href="/activities/new">
-                <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-log-activity">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Log Activity
-                </Button>
-              </Link>
-            </div>
-          </section>
         </div>
       </div>
     </div>

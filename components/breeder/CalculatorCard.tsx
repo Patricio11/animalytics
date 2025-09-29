@@ -50,56 +50,58 @@ export function CalculatorCard({
   };
 
   return (
-    <Card className="hover-elevate" data-testid={`card-calculator-${title.toLowerCase().replace(/\s+/g, '-')}`}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-primary" />
-          {title}
+    <Card className="group overflow-hidden bg-surface border border-primary/10 shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30" data-testid={`card-calculator-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-3 text-lg">
+          <div className="p-2 rounded-lg bg-gradient-brand shadow-md">
+            <Calculator className="w-5 h-5 text-white" />
+          </div>
+          <span className="group-hover:text-primary transition-colors duration-300">{title}</span>
         </CardTitle>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">{description}</p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         {result ? (
           <>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-muted-foreground">Progesterone Cycle</span>
-                  <span className={`text-sm font-semibold ${getRatingColor(result.progesteroneRating)}`}>
+            <div className="space-y-4">
+              <div className="bg-muted/30 rounded-lg p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-muted-foreground">Progesterone Cycle</span>
+                  <span className={`text-sm font-bold ${getRatingColor(result.progesteroneRating)}`}>
                     {result.progesteroneRating.toFixed(1)}%
                   </span>
                 </div>
-                <Progress value={result.progesteroneRating} className="h-2" />
+                <Progress value={result.progesteroneRating} className="h-3 shadow-sm" />
               </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-muted-foreground">Conception Rating</span>
-                  <span className={`text-sm font-semibold ${getRatingColor(result.conceptionRating)}`}>
+              <div className="bg-muted/30 rounded-lg p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-muted-foreground">Conception Rating</span>
+                  <span className={`text-sm font-bold ${getRatingColor(result.conceptionRating)}`}>
                     {result.conceptionRating.toFixed(1)}%
                   </span>
                 </div>
-                <Progress value={result.conceptionRating} className="h-2" />
+                <Progress value={result.conceptionRating} className="h-3 shadow-sm" />
               </div>
 
-              <div className="pt-2 border-t">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-base font-medium">Overall Rating</span>
-                  <Badge className={`${getRatingBg(result.overallRating)} text-white`}>
+              <div className="pt-3 border-t border-primary/10 bg-gradient-subtle/30 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-base font-semibold">Overall Rating</span>
+                  <Badge className={`${getRatingBg(result.overallRating)} text-white shadow-md border border-white/20`}>
                     {result.overallRating.toFixed(1)}%
                   </Badge>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Accuracy:</span>
-                  <div className="flex">
+                  <span className="text-sm font-medium text-muted-foreground">Accuracy:</span>
+                  <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-3 h-3 ${
+                        className={`w-4 h-4 transition-colors duration-200 ${
                           i < result.accuracyStars
                             ? 'text-chart-4 fill-current'
-                            : 'text-muted'
+                            : 'text-muted-foreground/30'
                         }`}
                       />
                     ))}
@@ -113,7 +115,7 @@ export function CalculatorCard({
               size="sm"
               onClick={handleViewDetails}
               data-testid="button-view-details"
-              className="w-full"
+              className="w-full shadow-sm hover:bg-primary/10 hover:border-primary transition-all duration-300"
             >
               View Details
             </Button>
@@ -122,7 +124,7 @@ export function CalculatorCard({
           <Button
             onClick={handleCalculate}
             data-testid="button-calculate"
-            className="w-full"
+            className="w-full bg-gradient-brand hover:opacity-90 shadow-md hover:shadow-lg transition-all duration-300"
           >
             <Calculator className="w-4 h-4 mr-2" />
             Calculate
