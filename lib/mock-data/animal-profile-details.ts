@@ -53,8 +53,10 @@ export interface Litter {
   whelpingDate?: string;
   expectedWhelpingDate: string;
   puppyCount?: number;
+  survivingPuppies?: number;
   complications: boolean;
   complicationNotes?: string;
+  notes?: string;
   status: 'expected' | 'whelped' | 'archived';
   puppies?: {
     id: string;
@@ -227,7 +229,9 @@ export const mockAnimalProfileDetails: Record<string, AnimalProfileDetails> = {
         whelpingDate: '2023-04-15',
         expectedWhelpingDate: '2023-04-15',
         puppyCount: 7,
+        survivingPuppies: 7,
         complications: false,
+        notes: 'All puppies healthy, smooth whelping process',
         status: 'archived',
         puppies: [
           { id: 'pup1', name: 'Buddy', sex: 'male', weight: 0.45, color: 'Golden', status: 'sold' },
@@ -247,7 +251,9 @@ export const mockAnimalProfileDetails: Record<string, AnimalProfileDetails> = {
         whelpingDate: '2022-05-22',
         expectedWhelpingDate: '2022-05-22',
         puppyCount: 5,
+        survivingPuppies: 5,
         complications: false,
+        notes: 'Excellent litter, strong puppies',
         status: 'archived',
       },
     ],
