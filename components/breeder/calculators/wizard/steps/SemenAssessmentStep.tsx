@@ -1,45 +1,43 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { WizardStep } from "../WizardStep";
 import { Microscope, AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
 interface SemenAssessmentStepProps {
   data: any;
-  onChange: (updates: any) => void;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
-export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps) {
-  const assessmentType = data.semenAssessment?.type || 'visual';
-  const quality = data.semenQuality?.quality || 'good';
-  const volume = data.semenQuality?.volume || '';
-  const concentration = data.semenQuality?.concentration || '';
-  const motility = data.semenQuality?.motility || '';
-  const morphology = data.semenQuality?.morphology || '';
-  const visualNotes = data.semenQuality?.visualNotes || '';
+export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: SemenAssessmentStepProps) {
+  const [assessmentType, setAssessmentType] = useState(data.type || 'visual');
+  const [quality, setQuality] = useState(data.quality || 'good');
+  const [volume, setVolume] = useState(data.volume || '');
+  const [concentration, setConcentration] = useState(data.concentration || '');
+  const [motility, setMotility] = useState(data.motility || '');
+  const [morphology, setMorphology] = useState(data.morphology || '');
+  const [visualNotes, setVisualNotes] = useState(data.visualNotes || '');
 
-  const handleAssessmentChange = (field: string, value: any) => {
-    onChange({
-      semenAssessment: {
-        ...data.semenAssessment,
-        [field]: value
-      }
+  const handleContinue = () => {
+    onUpdate({
+      type: assessmentType,
+      quality,
+      volume: assessmentType === 'full' ? volume : '',
+      concentration: assessmentType === 'full' ? concentration : '',
+      motility: assessmentType === 'full' ? motility : '',
+      morphology: assessmentType === 'full' ? morphology : '',
+      visualNotes: assessmentType === 'visual' ? visualNotes : ''
     });
-  };
-
-  const handleQualityChange = (field: string, value: any) => {
-    onChange({
-      semenQuality: {
-        ...data.semenQuality,
-        [field]: value
-      }
-    });
+    onNext();
   };
 
   const getQualityColor = (qual: string) => {
@@ -53,11 +51,7 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
   };
 
   return (
-    <WizardStep
-      title="Semen Assessment"
-      description="Evaluate semen quality and characteristics"
-      icon={<Microscope className="w-5 h-5 text-white" />}
-    >
+    <div className="space-y-6">
       {/* Assessment Type */}
       <Card className="shadow-card border-primary/10">
         <CardHeader>
@@ -66,7 +60,7 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>What type of semen assessment was performed?</Label>
-            <RadioGroup value={assessmentType} onValueChange={(value) => handleAssessmentChange('type', value)}>
+            <RadioGroup value={assessmentType} onValueChange={setAssessmentType}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="full" id="assessment-full" />
                 <Label htmlFor="assessment-full" className="flex-1 cursor-pointer">
@@ -112,7 +106,7 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
                   max="30"
                   step="0.1"
                   value={volume}
-                  onChange={(e) => handleQualityChange('volume', parseFloat(e.target.value) || '')}
+                  onChange={(e) => setVolume(parseFloat(e.target.value) || '')}
                   placeholder="Enter volume"
                   className="bg-background border-primary/20"
                 />
@@ -127,7 +121,7 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
                   min="0"
                   max="2000"
                   value={concentration}
-                  onChange={(e) => handleQualityChange('concentration', parseInt(e.target.value) || '')}
+                  onChange={(e) => setConcentration(parseInt(e.target.value) || '')}
                   placeholder="Enter concentration"
                   className="bg-background border-primary/20"
                 />
@@ -142,7 +136,7 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
                   min="0"
                   max="100"
                   value={motility}
-                  onChange={(e) => handleQualityChange('motility', parseInt(e.target.value) || '')}
+                  onChange={(e) => setMotility(parseInt(e.target.value) || '')}
                   placeholder="Enter motility"
                   className="bg-background border-primary/20"
                 />
@@ -157,7 +151,7 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
                   min="0"
                   max="100"
                   value={morphology}
-                  onChange={(e) => handleQualityChange('morphology', parseInt(e.target.value) || '')}
+                  onChange={(e) => setMorphology(parseInt(e.target.value) || '')}
                   placeholder="Enter morphology"
                   className="bg-background border-primary/20"
                 />
@@ -199,7 +193,7 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
               <Textarea
                 id="visual-notes"
                 value={visualNotes}
-                onChange={(e) => handleQualityChange('visualNotes', e.target.value)}
+                onChange={(e) => setVisualNotes(e.target.value)}
                 placeholder="Describe the appearance, color, consistency, and any notable characteristics..."
                 rows={4}
                 className="bg-background border-primary/20"
@@ -237,7 +231,7 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>Based on your assessment, how would you rate the overall semen quality?</Label>
-            <RadioGroup value={quality} onValueChange={(value) => handleQualityChange('quality', value)}>
+            <RadioGroup value={quality} onValueChange={setQuality}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="excellent" id="quality-excellent" />
                 <Label htmlFor="quality-excellent" className="flex-1 cursor-pointer">
@@ -293,6 +287,16 @@ export function SemenAssessmentStep({ data, onChange }: SemenAssessmentStepProps
           </div>
         </CardContent>
       </Card>
-    </WizardStep>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrevious}>
+          Previous
+        </Button>
+        <Button onClick={handleContinue} className="bg-gradient-brand hover:opacity-90 shadow-card">
+          Continue
+        </Button>
+      </div>
+    </div>
   );
 }

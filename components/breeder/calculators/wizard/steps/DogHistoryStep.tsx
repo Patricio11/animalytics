@@ -1,39 +1,39 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { WizardStep } from "../WizardStep";
 import { Dog, AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DogHistoryStepProps {
   data: any;
-  onChange: (updates: any) => void;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
-export function DogHistoryStep({ data, onChange }: DogHistoryStepProps) {
-  const hasBeenUsed = data.dogHistory?.hasBeenUsed || 'no';
-  const previousLitters = data.dogHistory?.previousLitters || 0;
-  const successRate = data.dogHistory?.successRate || '';
-  const ageAtFirstUse = data.dogHistory?.ageAtFirstUse || '';
+export function DogHistoryStep({ data, onUpdate, onNext, onPrevious }: DogHistoryStepProps) {
+  const [hasBeenUsed, setHasBeenUsed] = useState(data.hasBeenUsed || 'no');
+  const [previousLitters, setPreviousLitters] = useState(data.previousLitters || 0);
+  const [successRate, setSuccessRate] = useState(data.successRate || '');
+  const [ageAtFirstUse, setAgeAtFirstUse] = useState(data.ageAtFirstUse || '');
 
-  const handleChange = (field: string, value: any) => {
-    onChange({
-      dogHistory: {
-        ...data.dogHistory,
-        [field]: value
-      }
+  const handleContinue = () => {
+    onUpdate({
+      hasBeenUsed,
+      previousLitters: hasBeenUsed === 'yes' ? previousLitters : 0,
+      successRate: hasBeenUsed === 'yes' ? successRate : '',
+      ageAtFirstUse: hasBeenUsed === 'yes' ? ageAtFirstUse : ''
     });
+    onNext();
   };
 
   return (
-    <WizardStep
-      title="Dog Breeding History"
-      description="Information about the stud's breeding experience"
-      icon={<Dog className="w-5 h-5 text-white" />}
-    >
+    <div className="space-y-6">
       {/* Has Been Used for Breeding */}
       <Card className="shadow-card border-primary/10">
         <CardHeader>
@@ -42,7 +42,7 @@ export function DogHistoryStep({ data, onChange }: DogHistoryStepProps) {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>Has this dog been used for breeding before?</Label>
-            <RadioGroup value={hasBeenUsed} onValueChange={(value) => handleChange('hasBeenUsed', value)}>
+            <RadioGroup value={hasBeenUsed} onValueChange={setHasBeenUsed}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="yes" id="used-yes" />
                 <Label htmlFor="used-yes" className="flex-1 cursor-pointer font-medium">
@@ -78,7 +78,7 @@ export function DogHistoryStep({ data, onChange }: DogHistoryStepProps) {
                     min="0"
                     max="100"
                     value={previousLitters}
-                    onChange={(e) => handleChange('previousLitters', parseInt(e.target.value) || 0)}
+                    onChange={(e) => setPreviousLitters(parseInt(e.target.value) || 0)}
                     placeholder="Enter number of litters"
                     className="bg-background border-primary/20"
                   />
@@ -92,7 +92,7 @@ export function DogHistoryStep({ data, onChange }: DogHistoryStepProps) {
                     min="0"
                     max="100"
                     value={successRate}
-                    onChange={(e) => handleChange('successRate', parseInt(e.target.value) || '')}
+                    onChange={(e) => setSuccessRate(parseInt(e.target.value) || '')}
                     placeholder="Enter success rate"
                     className="bg-background border-primary/20"
                   />
@@ -111,7 +111,7 @@ export function DogHistoryStep({ data, onChange }: DogHistoryStepProps) {
                   max="15"
                   step="0.1"
                   value={ageAtFirstUse}
-                  onChange={(e) => handleChange('ageAtFirstUse', parseFloat(e.target.value) || '')}
+                  onChange={(e) => setAgeAtFirstUse(parseFloat(e.target.value) || '')}
                   placeholder="Enter age at first breeding"
                   className="bg-background border-primary/20"
                 />
@@ -151,6 +151,16 @@ export function DogHistoryStep({ data, onChange }: DogHistoryStepProps) {
           </AlertDescription>
         </Alert>
       )}
-    </WizardStep>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrevious}>
+          Previous
+        </Button>
+        <Button onClick={handleContinue} className="bg-gradient-brand hover:opacity-90 shadow-card">
+          Continue
+        </Button>
+      </div>
+    </div>
   );
 }

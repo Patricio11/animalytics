@@ -4,31 +4,61 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { WizardStep } from "../WizardStep";
-import { TrendingUp, Star, CheckCircle2, AlertCircle, Info, FileText } from "lucide-react";
+import { Star, CheckCircle2, AlertCircle, Info, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { calculateConceptionRating } from "@/lib/calculations/conception-rating";
 import { Progress } from "@/components/ui/progress";
 
 interface ConceptionRatingStepProps {
   data: any;
-  bitch: any;
-  dog: any;
+  onUpdate: (data: any) => void;
+  onPrevious: () => void;
 }
 
-export function ConceptionRatingStep({ data, bitch, dog }: ConceptionRatingStepProps) {
+export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionRatingStepProps) {
+  // Use mock breed data from earlier steps
+  const bitchBreed = data.bitchBreed || "Golden Retriever";
+  const dogBreed = data.dogBreed || "Golden Retriever";
+
   // Calculate conception rating based on all collected data
   const fullData = {
-    breed: bitch.breed,
-    dogBreed: dog.breed,
-    bitchInformation: data.bitchInformation,
-    bitchHistory: data.bitchHistory,
-    litterHistory: data.litterHistory,
-    dogHistory: data.dogHistory,
-    breederHistory: data.breederHistory,
-    semenInformation: data.semenInformation,
-    semenQuality: data.semenQuality,
-    semenAssessment: data.semenAssessment,
+    breed: bitchBreed,
+    dogBreed: dogBreed,
+    bitchInformation: {
+      age: data.bitchAge,
+      weight: data.bitchWeight,
+      bodyConditionScore: data.bodyConditionScore,
+      healthStatus: data.generalHealth
+    },
+    bitchHistory: {
+      hasBeenBred: data.hasBeenBred === 'yes',
+      previousLitters: data.previousLitters || 0,
+      monthsSinceLastLitter: data.lastLitterDate ? parseInt(data.lastLitterDate) : null,
+      hasComplications: data.complications || false
+    },
+    litterHistory: data.litters || [],
+    dogHistory: {
+      hasBeenUsed: data.hasBeenUsed === 'yes',
+      previousLitters: data.previousLitters || 0,
+      successRate: data.successRate ? parseFloat(data.successRate) : null
+    },
+    breederHistory: {
+      yearsExperience: data.yearsExperience ? parseFloat(data.yearsExperience) : 0,
+      totalLitters: data.totalLitters || 0,
+      breedFamiliarity: data.breedFamiliarity || 'moderate'
+    },
+    semenInformation: {
+      type: data.type || 'fresh',
+      collectionDate: data.collectionDate
+    },
+    semenAssessment: {
+      type: data.type || 'visual',
+      quality: data.quality || 'good',
+      volume: data.volume,
+      concentration: data.concentration,
+      motility: data.motility,
+      morphology: data.morphology
+    }
   };
 
   const rating = calculateConceptionRating(fullData);
@@ -62,11 +92,7 @@ export function ConceptionRatingStep({ data, bitch, dog }: ConceptionRatingStepP
   };
 
   return (
-    <WizardStep
-      title="Conception Rating"
-      description="Your comprehensive breeding assessment results"
-      icon={<TrendingUp className="w-5 h-5 text-white" />}
-    >
+    <div className="space-y-6">
       {/* Overall Rating Card */}
       <Card className="shadow-card border-primary/10 bg-gradient-subtle">
         <CardContent className="pt-6">
@@ -174,37 +200,35 @@ export function ConceptionRatingStep({ data, bitch, dog }: ConceptionRatingStepP
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Bitch</div>
-              <div className="font-semibold text-foreground">{bitch.name}</div>
-              <div className="text-xs text-muted-foreground">{bitch.breed}</div>
+              <div className="text-sm text-muted-foreground mb-1">Bitch Breed</div>
+              <div className="font-semibold text-foreground">{bitchBreed}</div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Dog</div>
-              <div className="font-semibold text-foreground">{dog.name}</div>
-              <div className="text-xs text-muted-foreground">{dog.breed}</div>
+              <div className="text-sm text-muted-foreground mb-1">Dog Breed</div>
+              <div className="font-semibold text-foreground">{dogBreed}</div>
             </div>
           </div>
 
-          {data.semenInformation?.type && (
+          {data.type && (
             <div className="pt-3 border-t border-primary/10">
               <div className="text-sm text-muted-foreground mb-1">Semen Type</div>
               <Badge variant="outline" className="capitalize">
-                {data.semenInformation.type}
+                {data.type}
               </Badge>
             </div>
           )}
 
-          {data.semenQuality?.quality && (
+          {data.quality && (
             <div>
               <div className="text-sm text-muted-foreground mb-1">Semen Quality</div>
               <Badge className={cn(
-                data.semenQuality.quality === 'excellent' ? 'bg-chart-3' :
-                data.semenQuality.quality === 'good' ? 'bg-chart-4' :
-                data.semenQuality.quality === 'fair' ? 'bg-chart-2' :
+                data.quality === 'excellent' ? 'bg-chart-3' :
+                data.quality === 'good' ? 'bg-chart-4' :
+                data.quality === 'fair' ? 'bg-chart-2' :
                 'bg-destructive',
                 'text-white capitalize'
               )}>
-                {data.semenQuality.quality}
+                {data.quality}
               </Badge>
             </div>
           )}
@@ -226,7 +250,7 @@ export function ConceptionRatingStep({ data, bitch, dog }: ConceptionRatingStepP
             </div>
           )}
 
-          {data.bitchInformation?.age && (data.bitchInformation.age < 2 || data.bitchInformation.age > 7) && (
+          {data.bitchAge && (data.bitchAge < 2 || data.bitchAge > 7) && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-chart-2/10 border border-chart-2/20">
               <AlertCircle className="w-5 h-5 text-chart-2 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
@@ -235,7 +259,7 @@ export function ConceptionRatingStep({ data, bitch, dog }: ConceptionRatingStepP
             </div>
           )}
 
-          {data.bitchHistory?.monthsSinceLastLitter && data.bitchHistory.monthsSinceLastLitter < 12 && (
+          {data.lastLitterDate && data.lastLitterDate < 12 && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
               <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
               <div className="text-sm">
@@ -244,7 +268,7 @@ export function ConceptionRatingStep({ data, bitch, dog }: ConceptionRatingStepP
             </div>
           )}
 
-          {data.semenQuality?.quality === 'poor' && (
+          {data.quality === 'poor' && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
               <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
               <div className="text-sm">
@@ -262,6 +286,16 @@ export function ConceptionRatingStep({ data, bitch, dog }: ConceptionRatingStepP
           <strong>Next Steps:</strong> Save this assessment to track your mating. You can update progesterone readings and monitor the breeding cycle in the mating dashboard.
         </AlertDescription>
       </Alert>
-    </WizardStep>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrevious}>
+          Previous
+        </Button>
+        <Button className="bg-gradient-brand hover:opacity-90 shadow-card">
+          Save Assessment
+        </Button>
+      </div>
+    </div>
   );
 }

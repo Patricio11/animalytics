@@ -1,41 +1,42 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { WizardStep } from "../WizardStep";
-import { FileText, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BitchHistoryStepProps {
   data: any;
-  onChange: (updates: any) => void;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
-export function BitchHistoryStep({ data, onChange }: BitchHistoryStepProps) {
-  const hasBeenBred = data.bitchHistory?.hasBeenBred || 'no';
-  const previousLitters = data.bitchHistory?.previousLitters || 0;
-  const monthsSinceLastLitter = data.bitchHistory?.monthsSinceLastLitter || '';
-  const complications = data.bitchHistory?.complications || '';
-  const hasComplications = data.bitchHistory?.hasComplications || 'no';
+export function BitchHistoryStep({ data, onUpdate, onNext, onPrevious }: BitchHistoryStepProps) {
+  const [hasBeenBred, setHasBeenBred] = useState(data.hasBeenBred || 'no');
+  const [previousLitters, setPreviousLitters] = useState(data.previousLitters || 0);
+  const [monthsSinceLastLitter, setMonthsSinceLastLitter] = useState(data.lastLitterDate || '');
+  const [hasComplications, setHasComplications] = useState(data.complications ? 'yes' : 'no');
+  const [complications, setComplications] = useState(data.complicationDetails || '');
 
-  const handleChange = (field: string, value: any) => {
-    onChange({
-      bitchHistory: {
-        ...data.bitchHistory,
-        [field]: value
-      }
+  const handleContinue = () => {
+    onUpdate({
+      hasBeenBred,
+      previousLitters: hasBeenBred === 'yes' ? previousLitters : 0,
+      lastLitterDate: hasBeenBred === 'yes' ? monthsSinceLastLitter : '',
+      complications: hasBeenBred === 'yes' && hasComplications === 'yes',
+      complicationDetails: hasBeenBred === 'yes' && hasComplications === 'yes' ? complications : ''
     });
+    onNext();
   };
 
   return (
-    <WizardStep
-      title="Bitch Breeding History"
-      description="Information about previous breeding experiences"
-      icon={<FileText className="w-5 h-5 text-white" />}
-    >
+    <div className="space-y-6">
       {/* Has Been Bred */}
       <Card className="shadow-card border-primary/10">
         <CardHeader>
@@ -44,7 +45,7 @@ export function BitchHistoryStep({ data, onChange }: BitchHistoryStepProps) {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>Has this bitch been bred before?</Label>
-            <RadioGroup value={hasBeenBred} onValueChange={(value) => handleChange('hasBeenBred', value)}>
+            <RadioGroup value={hasBeenBred} onValueChange={setHasBeenBred}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="yes" id="bred-yes" />
                 <Label htmlFor="bred-yes" className="flex-1 cursor-pointer font-medium">
@@ -80,7 +81,7 @@ export function BitchHistoryStep({ data, onChange }: BitchHistoryStepProps) {
                     min="0"
                     max="20"
                     value={previousLitters}
-                    onChange={(e) => handleChange('previousLitters', parseInt(e.target.value) || 0)}
+                    onChange={(e) => setPreviousLitters(parseInt(e.target.value) || 0)}
                     placeholder="Enter number of litters"
                     className="bg-background border-primary/20"
                   />
@@ -94,7 +95,7 @@ export function BitchHistoryStep({ data, onChange }: BitchHistoryStepProps) {
                     min="0"
                     max="120"
                     value={monthsSinceLastLitter}
-                    onChange={(e) => handleChange('monthsSinceLastLitter', parseInt(e.target.value) || '')}
+                    onChange={(e) => setMonthsSinceLastLitter(parseInt(e.target.value) || '')}
                     placeholder="Enter months"
                     className="bg-background border-primary/20"
                   />
@@ -123,10 +124,7 @@ export function BitchHistoryStep({ data, onChange }: BitchHistoryStepProps) {
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <Label>Were there any complications in previous breedings?</Label>
-                <RadioGroup
-                  value={hasComplications}
-                  onValueChange={(value) => handleChange('hasComplications', value)}
-                >
+                <RadioGroup value={hasComplications} onValueChange={setHasComplications}>
                   <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                     <RadioGroupItem value="no" id="complications-no" />
                     <Label htmlFor="complications-no" className="flex-1 cursor-pointer font-medium">
@@ -149,7 +147,7 @@ export function BitchHistoryStep({ data, onChange }: BitchHistoryStepProps) {
                   <Textarea
                     id="complications-detail"
                     value={complications}
-                    onChange={(e) => handleChange('complications', e.target.value)}
+                    onChange={(e) => setComplications(e.target.value)}
                     placeholder="Please describe any complications experienced during previous breedings..."
                     rows={4}
                     className="bg-background border-primary/20"
@@ -173,6 +171,16 @@ export function BitchHistoryStep({ data, onChange }: BitchHistoryStepProps) {
           </AlertDescription>
         </Alert>
       )}
-    </WizardStep>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrevious}>
+          Previous
+        </Button>
+        <Button onClick={handleContinue} className="bg-gradient-brand hover:opacity-90 shadow-card">
+          Continue
+        </Button>
+      </div>
+    </div>
   );
 }

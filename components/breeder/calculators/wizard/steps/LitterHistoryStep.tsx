@@ -1,18 +1,18 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { WizardStep } from "../WizardStep";
-import { Baby, ExternalLink, Plus } from "lucide-react";
-import { Animal } from "@/types";
+import { Baby } from "lucide-react";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LitterHistoryStepProps {
-  bitch: Animal;
   data: any;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
 // Mock litter data - in production this would come from the animal profile
@@ -35,15 +35,18 @@ const mockLitters = [
   }
 ];
 
-export function LitterHistoryStep({ bitch, data }: LitterHistoryStepProps) {
+export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: LitterHistoryStepProps) {
   const litters = mockLitters; // TODO: Get from animal profile
 
+  const handleContinue = () => {
+    onUpdate({
+      litters: litters
+    });
+    onNext();
+  };
+
   return (
-    <WizardStep
-      title="Litter History"
-      description="Review previous litters from animal profile"
-      icon={<Baby className="w-5 h-5 text-white" />}
-    >
+    <div className="space-y-6">
       {/* Summary Card */}
       <Card className="shadow-card border-primary/10 bg-gradient-subtle">
         <CardContent className="pt-6">
@@ -78,15 +81,7 @@ export function LitterHistoryStep({ bitch, data }: LitterHistoryStepProps) {
       {litters.length > 0 ? (
         <Card className="shadow-card border-primary/10">
           <CardHeader>
-            <CardTitle className="text-base flex items-center justify-between">
-              <span>Previous Litters</span>
-              <Link href={`/animals/${bitch.id}?tab=litters`}>
-                <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:border-primary">
-                  <Plus className="w-3 h-3 mr-2" />
-                  Add Litter
-                </Button>
-              </Link>
-            </CardTitle>
+            <CardTitle className="text-base">Previous Litters</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -115,12 +110,6 @@ export function LitterHistoryStep({ bitch, data }: LitterHistoryStepProps) {
                         Sire: <span className="font-medium text-foreground">{litter.sireName}</span>
                       </div>
                     </div>
-
-                    <Link href={`/animals/${bitch.id}?tab=litters&litter=${litter.id}`}>
-                      <Button variant="ghost" size="sm" className="hover:bg-primary/10">
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
-                    </Link>
                   </div>
                 </div>
               ))}
@@ -132,14 +121,8 @@ export function LitterHistoryStep({ bitch, data }: LitterHistoryStepProps) {
           <CardContent className="py-12 text-center">
             <Baby className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
             <p className="text-muted-foreground mb-4">
-              No previous litters recorded for {bitch.name}
+              No previous litters recorded
             </p>
-            <Link href={`/animals/${bitch.id}?tab=litters`}>
-              <Button variant="outline" className="hover:bg-primary/10 hover:border-primary">
-                <Plus className="w-4 h-4 mr-2" />
-                Add First Litter
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       )}
@@ -149,6 +132,16 @@ export function LitterHistoryStep({ bitch, data }: LitterHistoryStepProps) {
           <strong>Note:</strong> Litter history is used to calculate conception probabilities. More successful litters improve the rating.
         </AlertDescription>
       </Alert>
-    </WizardStep>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrevious}>
+          Previous
+        </Button>
+        <Button onClick={handleContinue} className="bg-gradient-brand hover:opacity-90 shadow-card">
+          Continue
+        </Button>
+      </div>
+    </div>
   );
 }

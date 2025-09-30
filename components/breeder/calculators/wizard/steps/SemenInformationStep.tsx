@@ -1,32 +1,36 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { WizardStep } from "../WizardStep";
 import { Droplet, AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 
 interface SemenInformationStepProps {
   data: any;
-  onChange: (updates: any) => void;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
-export function SemenInformationStep({ data, onChange }: SemenInformationStepProps) {
-  const semenType = data.semenInformation?.type || 'fresh';
-  const collectionDate = data.semenInformation?.collectionDate || '';
-  const storageTime = data.semenInformation?.storageTime || '';
-  const shippingDuration = data.semenInformation?.shippingDuration || '';
+export function SemenInformationStep({ data, onUpdate, onNext, onPrevious }: SemenInformationStepProps) {
+  const [semenType, setSemenType] = useState(data.type || 'fresh');
+  const [collectionDate, setCollectionDate] = useState(data.collectionDate || '');
+  const [storageTime, setStorageTime] = useState(data.storageTime || '');
+  const [shippingDuration, setShippingDuration] = useState(data.shippingDuration || '');
 
-  const handleChange = (field: string, value: any) => {
-    onChange({
-      semenInformation: {
-        ...data.semenInformation,
-        [field]: value
-      }
+  const handleContinue = () => {
+    onUpdate({
+      type: semenType,
+      collectionDate,
+      storageTime: semenType === 'frozen' ? storageTime : '',
+      shippingDuration: semenType === 'chilled' ? shippingDuration : ''
     });
+    onNext();
   };
 
   const getDaysSinceCollection = () => {
@@ -41,11 +45,7 @@ export function SemenInformationStep({ data, onChange }: SemenInformationStepPro
   const daysSinceCollection = getDaysSinceCollection();
 
   return (
-    <WizardStep
-      title="Semen Information"
-      description="Details about semen type and handling"
-      icon={<Droplet className="w-5 h-5 text-white" />}
-    >
+    <div className="space-y-6">
       {/* Semen Type Selection */}
       <Card className="shadow-card border-primary/10">
         <CardHeader>
@@ -54,7 +54,7 @@ export function SemenInformationStep({ data, onChange }: SemenInformationStepPro
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>What type of semen will be used?</Label>
-            <RadioGroup value={semenType} onValueChange={(value) => handleChange('type', value)}>
+            <RadioGroup value={semenType} onValueChange={setSemenType}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="fresh" id="semen-fresh" />
                 <Label htmlFor="semen-fresh" className="flex-1 cursor-pointer">
@@ -95,7 +95,7 @@ export function SemenInformationStep({ data, onChange }: SemenInformationStepPro
               id="collection-date"
               type="date"
               value={collectionDate}
-              onChange={(e) => handleChange('collectionDate', e.target.value)}
+              onChange={(e) => setCollectionDate(e.target.value)}
               max={format(new Date(), 'yyyy-MM-dd')}
               className="bg-background border-primary/20"
             />
@@ -115,7 +115,7 @@ export function SemenInformationStep({ data, onChange }: SemenInformationStepPro
                 min="0"
                 max="120"
                 value={storageTime}
-                onChange={(e) => handleChange('storageTime', parseInt(e.target.value) || '')}
+                onChange={(e) => setStorageTime(parseInt(e.target.value) || '')}
                 placeholder="Enter storage duration"
                 className="bg-background border-primary/20"
               />
@@ -134,7 +134,7 @@ export function SemenInformationStep({ data, onChange }: SemenInformationStepPro
                 min="0"
                 max="72"
                 value={shippingDuration}
-                onChange={(e) => handleChange('shippingDuration', parseInt(e.target.value) || '')}
+                onChange={(e) => setShippingDuration(parseInt(e.target.value) || '')}
                 placeholder="Enter shipping time"
                 className="bg-background border-primary/20"
               />
@@ -161,6 +161,16 @@ export function SemenInformationStep({ data, onChange }: SemenInformationStepPro
           <strong>Success Rates by Type:</strong> Fresh semen typically achieves 80-95% conception rate, chilled semen 60-80%, and frozen semen 50-70%. Proper timing and handling are critical for all types.
         </AlertDescription>
       </Alert>
-    </WizardStep>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrevious}>
+          Previous
+        </Button>
+        <Button onClick={handleContinue} className="bg-gradient-brand hover:opacity-90 shadow-card">
+          Continue
+        </Button>
+      </div>
+    </div>
   );
 }

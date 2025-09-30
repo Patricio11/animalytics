@@ -442,15 +442,16 @@ export default function CalculatorPage() {
                   <Button
                     className="w-full bg-gradient-brand hover:opacity-90 shadow-card"
                     size="lg"
-                    disabled
+                    asChild
                   >
-                    <Beaker className="w-4 h-4 mr-2" />
-                    Start Conception Rating Wizard
-                    <span className="ml-2 text-xs opacity-75">(Coming Soon)</span>
+                    <Link href="/calculators/conception-rating">
+                      <Beaker className="w-4 h-4 mr-2" />
+                      Start Conception Rating Wizard
+                    </Link>
                   </Button>
 
                   <p className="text-xs text-center text-muted-foreground">
-                    The wizard components are built and ready. Full integration coming in the next update.
+                    Complete all 9 steps to calculate your breeding conception rating
                   </p>
                 </div>
               </CardContent>

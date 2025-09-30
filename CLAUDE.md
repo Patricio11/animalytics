@@ -29,11 +29,21 @@ The application uses Next.js 15 App Router with route groups organized by user r
 ### Current Breeder Route Implementation
 All breeder routes are fully implemented with complete page components:
 - `/dashboard` - Main breeder dashboard with stats and overview
-- `/animals` - Animal management and portfolio
-- `/calculators` - Mating calculator with progesterone analysis
-- `/activities` - Activity reports and mating history
-- `/tasks` - Task management with priority filtering
-- `/marketplace` - Breeding animal listings and search
+- `/animals` - Animal management and portfolio with detailed profiles
+- `/animals/[id]` - Individual animal profile with 7 tabs (bitches) or 5 tabs (dogs)
+- `/calculators` - Calculator hub with 4 tabs (Overview, Progesterone, Mating, Conception)
+- `/calculators/mating` - Mating calculator dashboard with records
+- `/calculators/mating/[id]` - Individual mating detail view
+- `/calculators/conception-rating` - **Conception Rating Wizard** (9-step comprehensive assessment)
+- `/reports` - Reports dashboard with 7 report types
+- `/activities` - Activity reports and mating history (legacy route, use /reports)
+- `/tasks` - Task management with priority filtering and puppy feeding generator
+- `/marketplace` - Breeding animal listings and search with 5 categories
+- `/marketplace/[id]` - Detailed listing view
+- `/marketplace/create` - 3-step listing creation wizard
+- `/frozen-semen` - Frozen semen inventory management
+- `/frozen-semen/[id]` - Batch detail view with 3 tabs
+- `/frozen-semen/new` - Add new frozen semen batch
 - `/breeders` - Professional breeder network
 - `/documents` - Document management with categorization
 - `/settings` - Account settings and preferences
@@ -92,10 +102,21 @@ The application uses AppSidebar component with BreedBook Pro styling for the bre
 - **Hover States**: `text-muted-foreground hover:text-foreground hover:bg-accent`
 
 **Navigation Structure:**
-- **Main Navigation**: Dashboard, Animals, Calculator, Activities, Tasks, Marketplace
+- **Main Navigation**: Dashboard, My Animals, Mating Calculator, Reports, Tasks, Marketplace
 - **Secondary Navigation**: Breeders, Documents, Settings (separated with border)
 - **Group Labels**: Uppercase, tracked spacing with `text-xs font-medium text-muted-foreground`
 - **Collapsible**: Full Radix UI sidebar with icon mode and smooth transitions
+
+**Navigation Links:**
+- Dashboard → `/dashboard`
+- My Animals → `/animals`
+- Mating Calculator → `/calculators`
+- Reports → `/reports` (formerly "Activity Reports" → `/activities`)
+- Tasks → `/tasks`
+- Marketplace → `/marketplace`
+- Breeders → `/breeders`
+- Documents → `/documents`
+- Settings → `/settings`
 
 **Technical Implementation:**
 - **Client-Side Routing**: All navigation uses Next.js Link components for SPA behavior

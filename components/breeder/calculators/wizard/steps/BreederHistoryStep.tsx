@@ -1,30 +1,33 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { WizardStep } from "../WizardStep";
 import { Award, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BreederHistoryStepProps {
   data: any;
-  onChange: (updates: any) => void;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
-export function BreederHistoryStep({ data, onChange }: BreederHistoryStepProps) {
-  const yearsExperience = data.breederHistory?.yearsExperience || '';
-  const totalLitters = data.breederHistory?.totalLitters || 0;
-  const breedFamiliarity = data.breederHistory?.breedFamiliarity || 'moderate';
+export function BreederHistoryStep({ data, onUpdate, onNext, onPrevious }: BreederHistoryStepProps) {
+  const [yearsExperience, setYearsExperience] = useState(data.yearsExperience || '');
+  const [totalLitters, setTotalLitters] = useState(data.totalLitters || 0);
+  const [breedFamiliarity, setBreedFamiliarity] = useState(data.breedFamiliarity || 'moderate');
 
-  const handleChange = (field: string, value: any) => {
-    onChange({
-      breederHistory: {
-        ...data.breederHistory,
-        [field]: value
-      }
+  const handleContinue = () => {
+    onUpdate({
+      yearsExperience,
+      totalLitters,
+      breedFamiliarity
     });
+    onNext();
   };
 
   const getExperienceLevel = (years: number): string => {
@@ -36,11 +39,7 @@ export function BreederHistoryStep({ data, onChange }: BreederHistoryStepProps) 
   };
 
   return (
-    <WizardStep
-      title="Breeder Experience"
-      description="Your breeding experience and familiarity with the breed"
-      icon={<Award className="w-5 h-5 text-white" />}
-    >
+    <div className="space-y-6">
       {/* Experience Information */}
       <Card className="shadow-card border-primary/10">
         <CardHeader>
@@ -57,7 +56,7 @@ export function BreederHistoryStep({ data, onChange }: BreederHistoryStepProps) 
                 max="50"
                 step="0.5"
                 value={yearsExperience}
-                onChange={(e) => handleChange('yearsExperience', parseFloat(e.target.value) || '')}
+                onChange={(e) => setYearsExperience(parseFloat(e.target.value) || '')}
                 placeholder="Enter years of experience"
                 className="bg-background border-primary/20"
               />
@@ -76,7 +75,7 @@ export function BreederHistoryStep({ data, onChange }: BreederHistoryStepProps) 
                 min="0"
                 max="500"
                 value={totalLitters}
-                onChange={(e) => handleChange('totalLitters', parseInt(e.target.value) || 0)}
+                onChange={(e) => setTotalLitters(parseInt(e.target.value) || 0)}
                 placeholder="Enter total litters"
                 className="bg-background border-primary/20"
               />
@@ -105,7 +104,7 @@ export function BreederHistoryStep({ data, onChange }: BreederHistoryStepProps) 
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>How familiar are you with this specific breed?</Label>
-            <RadioGroup value={breedFamiliarity} onValueChange={(value) => handleChange('breedFamiliarity', value)}>
+            <RadioGroup value={breedFamiliarity} onValueChange={setBreedFamiliarity}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="expert" id="breed-expert" />
                 <Label htmlFor="breed-expert" className="flex-1 cursor-pointer">
@@ -157,6 +156,16 @@ export function BreederHistoryStep({ data, onChange }: BreederHistoryStepProps) 
           <strong>Experience Matters:</strong> Breeder experience and breed familiarity significantly impact breeding success rates. Experienced breeders are better at timing, handling complications, and providing optimal care.
         </AlertDescription>
       </Alert>
-    </WizardStep>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrevious}>
+          Previous
+        </Button>
+        <Button onClick={handleContinue} className="bg-gradient-brand hover:opacity-90 shadow-card">
+          Continue
+        </Button>
+      </div>
+    </div>
   );
 }
