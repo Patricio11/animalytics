@@ -16,7 +16,6 @@ import { SemenInformationStep } from "@/components/breeder/calculators/wizard/st
 import { SemenAssessmentStep } from "@/components/breeder/calculators/wizard/steps/SemenAssessmentStep";
 import { ConceptionRatingStep } from "@/components/breeder/calculators/wizard/steps/ConceptionRatingStep";
 import { ArrowLeft, Beaker } from "lucide-react";
-import Link from "next/link";
 
 interface WizardData {
   // Step 1: Breed Selection

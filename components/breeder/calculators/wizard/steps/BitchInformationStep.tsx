@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Heart, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WizardData } from "@/lib/types/wizard";
 
 interface BitchInformationStepProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: WizardData;
+  onUpdate: (data: Partial<WizardData>) => void;
   onNext: () => void;
   onPrevious: () => void;
 }

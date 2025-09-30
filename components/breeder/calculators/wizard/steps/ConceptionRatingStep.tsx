@@ -8,10 +8,11 @@ import { Star, CheckCircle2, AlertCircle, Info, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { calculateConceptionRating } from "@/lib/calculations/conception-rating";
 import { Progress } from "@/components/ui/progress";
+import { WizardData } from "@/lib/types/wizard";
 
 interface ConceptionRatingStepProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: WizardData;
+  onUpdate: (data: Partial<WizardData>) => void;
   onPrevious: () => void;
 }
 

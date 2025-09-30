@@ -308,7 +308,7 @@ export default function TasksPage() {
               <div className="text-center py-12">
                 <AlertTriangle className="w-12 h-12 text-chart-3 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">No overdue tasks</h3>
-                <p className="text-muted-foreground">You're staying on top of your schedule!</p>
+                <p className="text-muted-foreground">You&apos;re staying on top of your schedule!</p>
               </div>
             )}
           </TabsContent>

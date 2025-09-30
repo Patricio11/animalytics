@@ -9,10 +9,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Droplet, AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
+import { WizardData } from "@/lib/types/wizard";
 
 interface SemenInformationStepProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: WizardData;
+  onUpdate: (data: Partial<WizardData>) => void;
   onNext: () => void;
   onPrevious: () => void;
 }

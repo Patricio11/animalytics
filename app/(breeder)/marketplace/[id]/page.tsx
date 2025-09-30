@@ -9,12 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ArrowLeft, Heart, Share2, Flag, Eye, MapPin, Phone, Mail, Calendar,
-  Star, Award, Shield, CheckCircle, Building2
+  Star, Award, Shield, Building2
 } from "lucide-react";
 import { mockMarketplaceListings, getClinicById, getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface ListingDetailPageProps {
@@ -33,7 +32,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
           <CardContent className="p-6 text-center space-y-4">
             <div className="text-6xl">🔍</div>
             <h2 className="text-xl font-bold text-foreground">Listing Not Found</h2>
-            <p className="text-muted-foreground">The listing you're looking for doesn't exist or has been removed.</p>
+            <p className="text-muted-foreground">The listing you&apos;re looking for doesn&apos;t exist or has been removed.</p>
             <Button
               onClick={() => router.push('/marketplace')}
               className="bg-gradient-brand hover:opacity-90 shadow-card"

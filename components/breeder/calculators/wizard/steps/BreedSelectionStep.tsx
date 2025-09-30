@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { WizardStep } from "../WizardStep";
-import { Dna, Star, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
+import { Star, CheckCircle2 } from "lucide-react";
 import { getBreedRating } from "@/lib/mock-data/conception-factors";
 import { cn } from "@/lib/utils";
+import { WizardData } from "@/lib/types/wizard";
 
 interface BreedSelectionStepProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: WizardData;
+  onUpdate: (data: Partial<WizardData>) => void;
   onNext: () => void;
 }
 

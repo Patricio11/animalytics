@@ -26,9 +26,9 @@ export default function ReportsPage() {
   const availableAnimals = mockAnimals.map(a => ({ id: a.id, name: a.name }));
 
   // Filter tasks by date range
-  const filterByDateRange = (items: any[], dateField: string = 'date') => {
+  const filterByDateRange = (items: Record<string, unknown>[], dateField: string = 'date') => {
     return items.filter(item => {
-      const itemDate = parseISO(item[dateField]);
+      const itemDate = parseISO(item[dateField] as string);
       return isWithinInterval(itemDate, {
         start: parseISO(filters.startDate),
         end: parseISO(filters.endDate),
@@ -50,7 +50,7 @@ export default function ReportsPage() {
     }
 
     return events;
-  }, [filters]);
+  }, [filters, filterByDateRange]);
 
   // Feeding Report Data
   const feedingData = useMemo(() => {
@@ -62,7 +62,7 @@ export default function ReportsPage() {
     }
 
     return feeding;
-  }, [filters]);
+  }, [filters, filterByDateRange]);
 
   // Exercise Report Data
   const exerciseData = useMemo(() => {
@@ -74,7 +74,7 @@ export default function ReportsPage() {
     }
 
     return exercise;
-  }, [filters]);
+  }, [filters, filterByDateRange]);
 
   // Grooming Report Data
   const groomingData = useMemo(() => {
@@ -86,7 +86,7 @@ export default function ReportsPage() {
     }
 
     return grooming;
-  }, [filters]);
+  }, [filters, filterByDateRange]);
 
   // Cleaning Report Data
   const cleaningData = useMemo(() => {
@@ -94,7 +94,7 @@ export default function ReportsPage() {
     cleaning = filterByDateRange(cleaning);
 
     return cleaning;
-  }, [filters]);
+  }, [filters, filterByDateRange]);
 
   // Puppies Report Data
   const puppiesData = useMemo(() => {
@@ -188,8 +188,8 @@ export default function ReportsPage() {
     { key: 'damName', label: 'Dam', render: (val, row) => mockAnimals.find(a => a.id === row.damId)?.name || 'Unknown' },
     { key: 'puppies', label: 'Litter Size', align: 'center', render: (val) => val?.length || 0 },
     { key: 'status', label: 'Status', align: 'center', render: (val, row) => {
-      const retained = row.puppies?.filter((p: any) => p.status === 'retained').length || 0;
-      const sold = row.puppies?.filter((p: any) => p.status === 'sold').length || 0;
+      const retained = row.puppies?.filter((p: { status: string }) => p.status === 'retained').length || 0;
+      const sold = row.puppies?.filter((p: { status: string }) => p.status === 'sold').length || 0;
       return (
         <div className="flex gap-1 justify-center">
           {retained > 0 && <Badge variant="outline" className="text-xs">Retained: {retained}</Badge>}

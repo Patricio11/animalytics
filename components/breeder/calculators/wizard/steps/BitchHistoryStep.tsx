@@ -9,10 +9,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WizardData } from "@/lib/types/wizard";
 
 interface BitchHistoryStepProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: WizardData;
+  onUpdate: (data: Partial<WizardData>) => void;
   onNext: () => void;
   onPrevious: () => void;
 }

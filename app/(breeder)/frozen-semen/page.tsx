@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Snowflake, Package, TrendingUp, AlertTriangle } from "lucide-react";
-import { mockFrozenSemenBatches, FrozenSemenStatus, getTotalStrawsRemaining, getStatusLabel } from "@/lib/mock-data/frozen-semen";
+import { mockFrozenSemenBatches, FrozenSemenStatus, getTotalStrawsRemaining } from "@/lib/mock-data/frozen-semen";
 import Link from "next/link";
 
 export default function FrozenSemenInventoryPage() {

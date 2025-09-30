@@ -24,7 +24,7 @@ export default function FrozenSemenDetailPage({ params }: FrozenSemenDetailPageP
           <CardContent className="p-6 text-center space-y-4">
             <div className="text-6xl">❄️</div>
             <h2 className="text-xl font-bold text-foreground">Batch Not Found</h2>
-            <p className="text-muted-foreground">The frozen semen batch you're looking for doesn't exist.</p>
+            <p className="text-muted-foreground">The frozen semen batch you&apos;re looking for doesn&apos;t exist.</p>
             <Button
               onClick={() => router.push('/frozen-semen')}
               className="bg-gradient-brand hover:opacity-90 shadow-card"

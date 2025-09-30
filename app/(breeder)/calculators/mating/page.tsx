@@ -13,7 +13,6 @@ import { mockMatingRecords, mockAnimals } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MatingCalculatorPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const [showAnimalPicker, setShowAnimalPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,9 +42,9 @@ export default function MatingCalculatorPage() {
   };
 
   const handleAnimalSelectionComplete = (
-    bitchId: string,
-    dogId: string | null,
-    frozenSemenId: string | null
+    _bitchId: string,
+    _dogId: string | null,
+    _frozenSemenId: string | null
   ) => {
     setShowAnimalPicker(false);
 

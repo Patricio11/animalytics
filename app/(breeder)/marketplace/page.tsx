@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, MapPin, Store } from "lucide-react";
-import { mockMarketplaceListings, ListingCategory, getCategoryLabel, getListingsByCategory } from "@/lib/mock-data/marketplace-listings";
+import { mockMarketplaceListings, ListingCategory, getListingsByCategory } from "@/lib/mock-data/marketplace-listings";
 import Link from "next/link";
 
 export default function Marketplace() {
