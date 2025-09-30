@@ -623,18 +623,190 @@ All animal profile enhancement tasks completed:
 - ✅ Task 3.3: Season/heat cycle tracker with progesterone chart visualization
 - ✅ Task 3.4: Litter management interface with pregnancy tracking widget
 
+### Phase 4: Task & Report Systems (COMPLETED ✅)
+
+#### Task 4.1: Enhanced Task Management (COMPLETED ✅)
+Created comprehensive task management system with 6 task types and puppy feeding generator.
+
+**Task Management Components** (`components/breeder/tasks/`)
+- `TaskDialog.tsx` - **Unified** task dialog with dynamic form fields
+  - Single dialog component handles all 6 task types (not separate dialogs per type)
+  - Conditional field rendering based on selected task type
+  - Task type selector with icons and colors
+  - Animal selection (conditional based on task type)
+  - Date and time pickers with validation
+  - Type-specific fields that show/hide dynamically
+  - Create and edit modes with form pre-population
+  - Full validation system
+- `TaskCard.tsx` - Task display component
+  - Type-specific icons and color coding
+  - Status badges (Pending/Overdue/Completed)
+  - Priority indicators (High/Medium/Low)
+  - Type-specific detail rendering
+  - Action buttons (Complete/Edit/Delete)
+- `PuppyFeedingGenerator.tsx` - Automated puppy feeding task generator
+  - Finds eligible litters (puppies 3-6 months old)
+  - Age-based feeding schedules:
+    - 3-4 months: 3 feedings/day (7:30 AM, 1:00 PM, 6:30 PM)
+    - 4-6 months: 2 feedings/day (8:00 AM, 6:00 PM)
+  - Generates tasks for next 7 days
+  - Excludes sold puppies
+  - Auto-calculates puppy age from whelping date
+
+**Task Types Implemented**:
+1. **Feeding** - Food type, amount, unit (grams/cups), time
+2. **Exercise** - Exercise type (walk/play/training), duration
+3. **Grooming** - Grooming type (bath/brush/nails/ears/teeth), frequency
+4. **Weight** - Weight value (optional until recorded)
+5. **Cleaning** - Area, cleaning type, frequency (no animal required)
+6. **Event** - Event type, title, time, recurring flag (optional animal)
+
+**Task Types Mock Data** (`lib/mock-data/tasks.ts`)
+- TypeScript discriminated union types for all task variants
+- `Task` union type for type-safe task handling
+- Helper functions:
+  - `getTaskStatus()` - Pending/Overdue/Completed based on date
+  - `getTaskPriority()` - High/Medium/Low based on type and date
+- 12 sample tasks covering all types with realistic data
+
+**Tasks Page** (`app/(breeder)/tasks/page.tsx`)
+- Complete CRUD operations (Create, Read, Update, Delete)
+- Filtering system:
+  - Filter by task type (6 types + "All")
+  - Filter by priority (High/Medium/Low + "All")
+  - Search by animal name or notes
+- 4 categorized tabs:
+  - **Pending** - Incomplete tasks not yet overdue
+  - **Overdue** - Incomplete tasks past due date
+  - **Due Soon** - Tasks due within next 3 days
+  - **Completed** - Finished tasks
+- Stats cards showing task counts
+- Puppy Feeding Generator toggle button
+- Empty states with helpful messages
+- Confirmation dialogs for deletions
+
+**Key Features**:
+- Unified task dialog architecture (user's explicit design preference)
+- Dynamic form rendering based on task type selection
+- Full CRUD with state management
+- Multi-criteria filtering with real-time updates
+- Automated puppy feeding schedule generation
+- Color-coded task types and status indicators
+- Responsive design with BreedBook Pro styling
+
+#### Task 4.2: Reports System (COMPLETED ✅)
+Created unified reports page with 7 tabs and comprehensive filtering/export functionality.
+
+**Report Components** (`components/breeder/reports/`)
+- `ReportFilterBar.tsx` - Reusable filter component
+  - Date range picker (defaults to last 30 days)
+  - Animal filter dropdown (conditional)
+  - Task type filter (conditional)
+  - Event type filter (conditional)
+  - Apply filters and reset buttons
+  - Smart field visibility based on report type
+- `ReportTable.tsx` - Generic table component
+  - Configurable columns with custom render functions
+  - Summary statistics section (optional)
+  - Empty states with helpful messages
+  - Sortable columns support
+  - Row count display
+  - Helper functions for date/time formatting and status badges
+- `ReportExportButton.tsx` - Export functionality
+  - CSV export with proper escaping
+  - PDF export (via print dialog)
+  - Print report option
+  - Loading states during export
+  - Toast notifications for success/failure
+- `MatingHistoryComparison.tsx` - Advanced mating comparison
+  - Filter by dam and sire
+  - Select up to 3 matings to compare
+  - Progesterone level comparison chart (Recharts line chart)
+  - Days from mating X-axis alignment
+  - Color-coded mating lines (3 colors)
+  - Outcome summary table (success, litter size, reading count)
+  - Success/unsuccessful badges
+  - Litter details display
+
+**Reports Page** (`app/(breeder)/reports/page.tsx`)
+- **Unified tab-based architecture** (7 tabs, not separate pages)
+- Tab configuration with icons and record counts
+- Automatic data filtering by date range
+- Export button for each report type
+
+**Report Types**:
+1. **Events Report**
+   - All scheduled events (vet visits, vaccinations, worming, etc.)
+   - Filter by event type and date range
+   - Table: Date, Animal, Event Type, Title, Time, Status
+
+2. **Feeding Report**
+   - All feeding tasks
+   - Filter by animal and date range
+   - Table: Date, Time, Animal, Food Type, Amount, Status
+   - Summary: Total feedings, completed, pending
+
+3. **Exercise Report**
+   - All exercise sessions
+   - Filter by animal and date range
+   - Table: Date, Animal, Type, Duration, Status
+   - Summary: Total sessions, total minutes, completed
+
+4. **Grooming Report**
+   - All grooming sessions
+   - Filter by animal and date range
+   - Table: Date, Animal, Type, Frequency, Status
+   - Summary: Total sessions, completed, pending
+
+5. **Cleaning Report**
+   - All cleaning tasks
+   - Filter by date range only (no animal)
+   - Table: Date, Area, Type, Frequency, Status
+   - Summary: Total tasks, completed, pending
+
+6. **Puppies Report**
+   - All litters within date range (by whelping date)
+   - Table: Whelping Date, Sire, Dam, Litter Size, Status (Retained/Sold)
+   - Summary: Total litters, total puppies, retained, sold
+
+7. **Mating History Report** (CRITICAL FEATURE)
+   - Multi-mating comparison with progesterone charts
+   - Filter by dam and sire
+   - Select up to 3 matings to compare side-by-side
+   - Line chart comparing progesterone levels across matings
+   - Outcome summary table
+   - Success rate analysis
+
+**Key Features**:
+- Tab-based architecture (user's explicit preference over separate pages)
+- Unified filtering system with ReportFilterBar
+- Real-time data filtering with useMemo optimization
+- Export to CSV/PDF/Print for all reports
+- Summary statistics for each report type
+- Beautiful BreedBook Pro styling throughout
+- Responsive design across all breakpoints
+- Badge system for record counts in tabs
+- Empty states with helpful messages
+
+### Phase 4 Complete! ✅
+All task and report system tasks completed:
+- ✅ Task 4.1: Enhanced task management with unified dialog, 6 task types, puppy feeding generator, full CRUD operations
+- ✅ Task 4.2: Reports system with unified page, 7 tabs, filtering, export functionality, mating history comparison
+
 ## Project Status
 - **Design System**: BreedBook Pro design migration completed with professional styling throughout
-- **Current Focus**: Phase 4 - Task & Report Systems implementation (starting Task 4.1)
-- **Completed Pages**: Landing page, auth pages, sidebar, animals (with full profile system), calculators (with progesterone & mating system), activities (partial), dashboard
+- **Current Focus**: Phase 5 - Marketplace & Breeder Network (next phase)
+- **Completed Pages**: Landing page, auth pages, sidebar, animals (with full profile system), calculators (with progesterone & mating system), tasks (with full task management), reports (with 7 report types), activities (partial), dashboard
 - **Animalyzer Calculator Implementation**:
   - ✅ **Phase 1 COMPLETE** (Tasks 1.1, 1.2, 1.3) - Core calculation engine, progesterone UI, mating calculator dashboard
   - ✅ **Phase 2 COMPLETE** (Tasks 2.1, 2.2, 2.3) - Multi-step wizard framework, all 9 wizard steps, advanced calculation engine
   - ✅ **Phase 3 COMPLETE** (Tasks 3.1, 3.2, 3.3, 3.4) - Tab-based animal profiles, semen assessments, season tracking, litter management
-  - ⏳ **Phase 4 NEXT** (Task 4.1) - Enhanced task management with task-specific forms
+  - ✅ **Phase 4 COMPLETE** (Tasks 4.1, 4.2) - Enhanced task management with unified dialog, reports system with 7 tabs
+  - ⏳ **Phase 5 NEXT** - Marketplace and breeder network features
+- **Task & Report Systems**: Complete task management with 6 types and puppy feeding generator, comprehensive reports with filtering and export
 - **Animal Profile System**: Complete tab-based profile with sex-specific tabs, semen tracking, heat cycle monitoring, litter management, and pregnancy tracking
-- **Remaining Pages**: Tasks (needs enhancement), marketplace, breeders, documents, settings pages
-- **Next Phases**: Phase 4 (task & report systems), then marketplace and breeder network features
+- **Remaining Pages**: Marketplace, breeders, documents, settings pages
+- **Next Phases**: Phase 5 (marketplace and breeder network), then document management and settings
 - **Architecture**: Ready for multi-role expansion with established BreedBook Pro design patterns
 
 ## Current Development Server

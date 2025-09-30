@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby } from "lucide-react";
 import { Task, TaskType, mockTasks as initialMockTasks, getTaskStatus } from "@/lib/mock-data/tasks";
-import { mockAnimals } from "@/lib/mock-data/animals";
+import { mockAnimals } from "@/data/mockData";
 import { mockAnimalProfileDetails } from "@/lib/mock-data/animal-profile-details";
 
 export default function TasksPage() {
