@@ -111,30 +111,40 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative py-20 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-subtle opacity-50" />
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=1920&h=1080&fit=crop&crop=center&q=80"
+            alt="Happy people with their dogs"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-background/80" />
+          <div className="absolute inset-0 bg-gradient-subtle opacity-30" />
+        </div>
+
         <div className="container relative">
           <div className="text-center max-w-4xl mx-auto">
-            <Badge variant="secondary" className="mb-6 bg-primary-blue-light text-primary-blue">
+            <Badge variant="secondary" className="mb-6 bg-primary-blue-light text-primary-blue shadow-lg">
               <Sparkles className="h-3 w-3 mr-1" />
               Trusted by 10,000+ Professional Breeders
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 drop-shadow-lg">
               The Ultimate
               <span className="bg-gradient-brand bg-clip-text text-transparent"> Breeding </span>
               Management Platform
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto drop-shadow-md">
               Transform your breeding program with AI-powered analytics, comprehensive animal management,
               and data-driven insights that help you achieve better results.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="/auth/signup">
-                <Button size="lg" className="bg-gradient-brand hover:opacity-90 text-lg px-8">
+                <Button size="lg" className="bg-gradient-brand hover:opacity-90 text-lg px-8 shadow-elevated">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-lg px-8">
+              <Button size="lg" variant="outline" className="text-lg px-8 shadow-card backdrop-blur-sm bg-background/80 hover:bg-background/90">
                 Watch Demo
               </Button>
             </div>
@@ -142,8 +152,8 @@ export default function LandingPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl font-bold text-primary">{stat.value}</div>
+                <div key={index} className="text-center backdrop-blur-sm bg-background/40 rounded-lg p-4 shadow-card">
+                  <div className="text-3xl font-bold text-primary drop-shadow-md">{stat.value}</div>
                   <div className="text-sm text-muted-foreground">{stat.label}</div>
                 </div>
               ))}
