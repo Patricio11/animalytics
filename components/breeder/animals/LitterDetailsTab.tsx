@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { LitterDialog } from "./LitterDialog";
 import { LitterCard } from "./LitterCard";
 import { PregnancyTracker } from "./PregnancyTracker";
-import { mockAnimals } from "@/lib/mock-data/animals";
+import { mockAnimals } from "@/data/mockData";
 
 interface LitterDetailsTabProps {
   animalId: string;

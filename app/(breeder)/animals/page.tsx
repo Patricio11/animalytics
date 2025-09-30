@@ -5,50 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Filter } from "lucide-react";
+import { mockAnimals } from "@/data/mockData";
 
 export default function Animals() {
-  // todo: remove mock functionality
-  const mockAnimals = [
-    {
-      id: "1",
-      name: "Bella",
-      breed: "Golden Retriever",
-      gender: 'female' as const,
-      dateOfBirth: new Date('2020-03-15'),
-      imageUrl: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
-      status: 'available' as const,
-      lastMating: new Date('2024-01-15'),
-    },
-    {
-      id: "2",
-      name: "Max",
-      breed: "German Shepherd",
-      gender: 'male' as const,
-      dateOfBirth: new Date('2019-08-22'),
-      imageUrl: "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=400&h=400&fit=crop&crop=face",
-      status: 'breeding' as const,
-      lastMating: new Date('2024-02-01'),
-    },
-    {
-      id: "3",
-      name: "Duke",
-      breed: "Labrador Retriever",
-      gender: 'male' as const,
-      dateOfBirth: new Date('2021-06-10'),
-      imageUrl: "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=400&fit=crop&crop=face",
-      status: 'available' as const,
-    },
-    {
-      id: "4",
-      name: "Luna",
-      breed: "Border Collie",
-      gender: 'female' as const,
-      dateOfBirth: new Date('2022-01-20'),
-      imageUrl: "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face",
-      status: 'pregnant' as const,
-      lastMating: new Date('2024-01-20'),
-    },
-  ];
+  // Transform mockAnimals to match AnimalCard props
+  const displayAnimals = mockAnimals.map(animal => ({
+    id: animal.id,
+    name: animal.name,
+    breed: animal.breed,
+    gender: animal.type === 'dog' ? 'male' as const : 'female' as const,
+    dateOfBirth: new Date(animal.dateOfBirth),
+    imageUrl: animal.photos?.[0] || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
+    status: 'available' as const, // You can add more logic here based on animal data
+  }));
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -107,7 +76,7 @@ export default function Animals() {
 
         {/* Animals Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {mockAnimals.map((animal) => (
+          {displayAnimals.map((animal) => (
             <AnimalCard key={animal.id} {...animal} />
           ))}
         </div>

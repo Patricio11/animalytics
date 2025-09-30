@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, Calendar, Share2, Edit } from "lucide-react";
+import { Heart, Calendar, Share2, Edit, Eye } from "lucide-react";
 import { format } from "date-fns";
+import Link from "next/link";
 
 interface AnimalCardProps {
   id: string;
@@ -93,17 +94,20 @@ export function AnimalCard({
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-500 flex gap-3">
             <Button
               size="sm"
-              className="bg-background/95 backdrop-blur-md text-foreground hover:bg-background shadow-xl border border-primary/20 hover:border-primary/40 hover:shadow-2xl transition-all duration-300"
-              onClick={handleEdit}
+              className="bg-gradient-brand backdrop-blur-md text-white hover:opacity-90 shadow-xl border-0 hover:shadow-2xl transition-all duration-300"
+              asChild
             >
-              <Edit className="w-4 h-4" />
+              <Link href={`/animals/${id}`}>
+                <Eye className="w-4 h-4 mr-2" />
+                View
+              </Link>
             </Button>
             <Button
               size="sm"
               className="bg-background/95 backdrop-blur-md text-foreground hover:bg-background shadow-xl border border-primary/20 hover:border-primary/40 hover:shadow-2xl transition-all duration-300"
-              onClick={handleFavorite}
+              onClick={handleEdit}
             >
-              <Heart className="w-4 h-4" />
+              <Edit className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -138,22 +142,23 @@ export function AnimalCard({
           <div className="flex gap-2 pt-2">
             <Button
               size="sm"
-              variant="outline"
-              onClick={handleEdit}
-              data-testid={`button-edit-${id}`}
-              className="flex-1 hover:bg-primary/10 hover:border-primary border-primary/20 shadow-md hover:shadow-lg transition-all duration-300"
+              className="flex-1 bg-gradient-brand hover:opacity-90 shadow-card text-white"
+              data-testid={`button-view-${id}`}
+              asChild
             >
-              <Edit className="w-3 h-3 mr-2" />
-              Edit
+              <Link href={`/animals/${id}`}>
+                <Eye className="w-3 h-3 mr-2" />
+                View Profile
+              </Link>
             </Button>
             <Button
               size="sm"
-              variant="ghost"
-              onClick={handleShare}
-              data-testid={`button-share-${id}`}
-              className="hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 shadow-md hover:shadow-lg transition-all duration-300"
+              variant="outline"
+              onClick={handleEdit}
+              data-testid={`button-edit-${id}`}
+              className="hover:bg-primary/10 hover:border-primary border-primary/20 shadow-md hover:shadow-lg transition-all duration-300"
             >
-              <Share2 className="w-4 h-4" />
+              <Edit className="w-3 h-3" />
             </Button>
             <Button
               size="sm"
