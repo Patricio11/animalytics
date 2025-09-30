@@ -1,171 +1,202 @@
 "use client";
 
-import { MarketplaceCard } from "@/components/breeder/MarketplaceCard";
+import { useState, useMemo } from "react";
+import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Filter, MapPin } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, MapPin, Store } from "lucide-react";
+import { mockMarketplaceListings, ListingCategory, getCategoryLabel, getListingsByCategory } from "@/lib/mock-data/marketplace-listings";
+import Link from "next/link";
 
 export default function Marketplace() {
-  // todo: remove mock functionality
-  const mockListings = [
-    {
-      id: "1",
-      name: "Champion Duke",
-      breed: "Labrador Retriever",
-      age: 3,
-      gender: 'male' as const,
-      price: 15000,
-      location: "Melbourne, VIC",
-      imageUrl: "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=400&fit=crop&crop=face",
-      seller: "Premier Kennels",
-      description: "Award-winning bloodline with excellent temperament and show record",
-      isFeatured: true,
-    },
-    {
-      id: "2",
-      name: "Luna Belle",
-      breed: "Border Collie",
-      age: 2,
-      gender: 'female' as const,
-      price: 8500,
-      location: "Sydney, NSW",
-      imageUrl: "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face",
-      seller: "Agility Stars",
-      description: "Exceptional working dog with proven agility competition background",
-    },
-    {
-      id: "3",
-      name: "Golden Grace",
-      breed: "Golden Retriever",
-      age: 4,
-      gender: 'female' as const,
-      price: 12000,
-      location: "Brisbane, QLD",
-      imageUrl: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
-      seller: "Golden Dreams",
-      description: "Beautiful female with excellent breeding history and gentle nature",
-    },
-    {
-      id: "4",
-      name: "Storm",
-      breed: "German Shepherd",
-      age: 5,
-      gender: 'male' as const,
-      price: 18000,
-      location: "Perth, WA",
-      imageUrl: "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=400&h=400&fit=crop&crop=face",
-      seller: "Elite Guard Dogs",
-      description: "Proven working dog with protection training and excellent genetics",
-      isFeatured: true,
-    },
-    {
-      id: "5",
-      name: "Ruby Rose",
-      breed: "Australian Cattle Dog",
-      age: 2,
-      gender: 'female' as const,
-      price: 6500,
-      location: "Adelaide, SA",
-      imageUrl: "https://images.unsplash.com/photo-1605568427561-40dd23c2acea?w=400&h=400&fit=crop&crop=face",
-      seller: "Outback Breeders",
-      description: "Energetic working dog with excellent herding instincts",
-    },
-    {
-      id: "6",
-      name: "Zeus",
-      breed: "Rottweiler",
-      age: 4,
-      gender: 'male' as const,
-      price: 14000,
-      location: "Darwin, NT",
-      imageUrl: "https://images.unsplash.com/photo-1567752881298-894bb81f9379?w=400&h=400&fit=crop&crop=face",
-      seller: "Guardian Kennels",
-      description: "Powerful guardian with gentle family temperament and show quality",
-    },
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [activeCategory, setActiveCategory] = useState<ListingCategory | 'all'>('all');
+
+  // Filter listings
+  const filteredListings = useMemo(() => {
+    let listings = activeCategory === 'all'
+      ? mockMarketplaceListings
+      : getListingsByCategory(activeCategory);
+
+    // Search filter
+    if (searchQuery) {
+      listings = listings.filter(listing =>
+        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        listing.breed?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        listing.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Location filter
+    if (locationFilter) {
+      listings = listings.filter(listing =>
+        listing.contact.location.toLowerCase().includes(locationFilter.toLowerCase())
+      );
+    }
+
+    return listings;
+  }, [searchQuery, locationFilter, activeCategory]);
+
+  // Featured listings
+  const featuredListings = filteredListings.filter(l => l.featured);
+
+  // Category tabs config
+  const categoryTabs: { value: ListingCategory | 'all'; label: string; icon: string }[] = [
+    { value: 'all', label: 'All Listings', icon: '📋' },
+    { value: 'stud-dog', label: 'Stud Dogs', icon: '👑' },
+    { value: 'dog-for-sale', label: 'Dogs for Sale', icon: '🐕' },
+    { value: 'pups-for-sale', label: 'Puppies', icon: '🐶' },
+    { value: 'reproductive-services', label: 'AI Services', icon: '💉' },
+    { value: 'frozen-semen', label: 'Frozen Semen', icon: '❄️' },
   ];
+
+  // Count by category
+  const getCategoryCount = (category: ListingCategory | 'all') => {
+    if (category === 'all') return mockMarketplaceListings.length;
+    return getListingsByCategory(category).length;
+  };
 
   return (
     <div className="min-h-screen bg-surface-secondary">
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Marketplace</h1>
-            <p className="text-muted-foreground">Buy and sell quality breeding animals</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Marketplace</h1>
+            <p className="text-muted-foreground">Buy and sell quality breeding animals and services</p>
           </div>
-          <Button className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-create-listing">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Listing
-          </Button>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-surface shadow-card rounded-lg p-6 border-0">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by breed, name..."
-                className="pl-10 bg-background border-primary/20 focus:border-primary"
-                data-testid="input-search-listings"
-              />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center">
+              <Store className="w-5 h-5 text-white" />
             </div>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Location"
-                className="pl-10 w-full sm:w-[160px] bg-background border-primary/20 focus:border-primary"
-                data-testid="input-location"
-              />
-            </div>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[140px] bg-background border-primary/20 focus:border-primary" data-testid="select-price-range">
-                <SelectValue placeholder="Price Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-5000">$0 - $5,000</SelectItem>
-                <SelectItem value="5000-10000">$5,000 - $10,000</SelectItem>
-                <SelectItem value="10000-20000">$10,000 - $20,000</SelectItem>
-                <SelectItem value="20000+">$20,000+</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[120px] bg-background border-primary/20 focus:border-primary" data-testid="select-gender">
-                <SelectValue placeholder="Gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-advanced-filter">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
+            <Button
+              asChild
+              className="bg-gradient-brand hover:opacity-90 shadow-card"
+            >
+              <Link href="/marketplace/create">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Listing
+              </Link>
             </Button>
           </div>
         </div>
 
-        {/* Featured Section */}
-        <section>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {mockListings.filter(listing => listing.isFeatured).map((listing) => (
-              <MarketplaceCard key={listing.id} {...listing} />
-            ))}
-          </div>
-        </section>
+        {/* Filters */}
+        <Card className="shadow-card bg-surface border-0">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by breed, name, or description..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-background border-primary/20 focus:border-primary"
+                />
+              </div>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Location"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="pl-10 w-full sm:w-[200px] bg-background border-primary/20 focus:border-primary"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* All Listings */}
-        <section>
-          <h2 className="text-xl font-semibold text-foreground mb-4">All Listings</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {mockListings.map((listing) => (
-              <MarketplaceCard key={listing.id} {...listing} />
-            ))}
-          </div>
-        </section>
+        {/* Category Tabs */}
+        <Tabs value={activeCategory} onValueChange={(value) => setActiveCategory(value as ListingCategory | 'all')}>
+          <Card className="shadow-card bg-surface border-0">
+            <CardContent className="p-2">
+              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 bg-transparent gap-1">
+                {categoryTabs.map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="data-[state=active]:bg-gradient-brand data-[state=active]:text-white data-[state=active]:shadow-card text-xs sm:text-sm"
+                  >
+                    <span className="mr-1">{tab.icon}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {getCategoryCount(tab.value)}
+                    </Badge>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </CardContent>
+          </Card>
+
+          {/* Featured Listings */}
+          {featuredListings.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Featured Listings</h2>
+                <Badge className="bg-gradient-brand text-white">
+                  {featuredListings.length}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {featuredListings.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* All Listings by Category */}
+          {categoryTabs.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} className="space-y-4 mt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold text-foreground">
+                    {tab.value === 'all' ? 'All' : tab.label}
+                  </h2>
+                  <Badge variant="outline">
+                    {filteredListings.length} {filteredListings.length === 1 ? 'listing' : 'listings'}
+                  </Badge>
+                </div>
+              </div>
+
+              {filteredListings.length === 0 ? (
+                <Card className="shadow-card bg-surface border-0">
+                  <CardContent className="p-12 text-center space-y-4">
+                    <div className="text-6xl">🔍</div>
+                    <h3 className="text-lg font-medium text-foreground">No listings found</h3>
+                    <p className="text-muted-foreground">
+                      {searchQuery || locationFilter
+                        ? 'Try adjusting your search filters'
+                        : 'Be the first to create a listing in this category'}
+                    </p>
+                    {!searchQuery && !locationFilter && (
+                      <Button
+                        asChild
+                        className="bg-gradient-brand hover:opacity-90 shadow-card"
+                      >
+                        <Link href="/marketplace/create">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Create Listing
+                        </Link>
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredListings.map((listing) => (
+                    <ListingCard key={listing.id} listing={listing} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </div>
   );
