@@ -1,15 +1,17 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface WizardStepProps {
+  stepNumber?: number;
   title?: string;
   description?: string;
   icon?: ReactNode;
   children: ReactNode;
   className?: string;
+  isActive?: boolean;
 }
 
 export function WizardStep({
@@ -17,8 +19,14 @@ export function WizardStep({
   description,
   icon,
   children,
-  className
+  className,
+  isActive = true
 }: WizardStepProps) {
+  // Only render if this step is active
+  if (!isActive) {
+    return null;
+  }
+
   return (
     <div className={cn("w-full", className)}>
       {/* Step Header (optional) */}

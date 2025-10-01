@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,11 @@ export default function ConceptionRatingWizardPage() {
   const router = useRouter();
   const [wizardData, setWizardData] = useState<WizardData>({});
 
+  // Clear wizard progress on mount to start fresh
+  useEffect(() => {
+    localStorage.removeItem('wizard-progress');
+  }, []);
+
   const handleComplete = () => {
     console.log('Wizard completed with data:', wizardData);
     // Here you would normally save the data and navigate to results
@@ -88,6 +93,7 @@ export default function ConceptionRatingWizardPage() {
 
   const handleCancel = () => {
     if (confirm('Are you sure you want to cancel? All progress will be lost.')) {
+      localStorage.removeItem('wizard-progress');
       router.push('/calculators');
     }
   };
@@ -156,112 +162,113 @@ export default function ConceptionRatingWizardPage() {
           onComplete={handleComplete}
           onCancel={handleCancel}
           saveLabel="Calculate Rating"
+          showNavigation={false}
         >
-          {({ currentStep, data, updateData, goToNextStep, goToPreviousStep }) => (
+          {({ currentStep, data, updateData, nextStep, prevStep }) => (
             <>
-              <WizardStep stepNumber={1} title="Breed Selection" isActive={currentStep === 1}>
+              <WizardStep stepNumber={1} title="Breed Selection" isActive={currentStep === 0}>
                 <BreedSelectionStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onNext={goToNextStep}
+                  onNext={nextStep}
                 />
               </WizardStep>
 
-              <WizardStep stepNumber={2} title="Bitch Information" isActive={currentStep === 2}>
+              <WizardStep stepNumber={2} title="Bitch Information" isActive={currentStep === 1}>
                 <BitchInformationStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onNext={goToNextStep}
-                  onPrevious={goToPreviousStep}
+                  onNext={nextStep}
+                  onPrevious={prevStep}
                 />
               </WizardStep>
 
-              <WizardStep stepNumber={3} title="Bitch History" isActive={currentStep === 3}>
+              <WizardStep stepNumber={3} title="Bitch History" isActive={currentStep === 2}>
                 <BitchHistoryStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onNext={goToNextStep}
-                  onPrevious={goToPreviousStep}
+                  onNext={nextStep}
+                  onPrevious={prevStep}
                 />
               </WizardStep>
 
-              <WizardStep stepNumber={4} title="Litter History" isActive={currentStep === 4}>
+              <WizardStep stepNumber={4} title="Litter History" isActive={currentStep === 3}>
                 <LitterHistoryStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onNext={goToNextStep}
-                  onPrevious={goToPreviousStep}
+                  onNext={nextStep}
+                  onPrevious={prevStep}
                 />
               </WizardStep>
 
-              <WizardStep stepNumber={5} title="Dog History" isActive={currentStep === 5}>
+              <WizardStep stepNumber={5} title="Dog History" isActive={currentStep === 4}>
                 <DogHistoryStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onNext={goToNextStep}
-                  onPrevious={goToPreviousStep}
+                  onNext={nextStep}
+                  onPrevious={prevStep}
                 />
               </WizardStep>
 
-              <WizardStep stepNumber={6} title="Breeder History" isActive={currentStep === 6}>
+              <WizardStep stepNumber={6} title="Breeder History" isActive={currentStep === 5}>
                 <BreederHistoryStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onNext={goToNextStep}
-                  onPrevious={goToPreviousStep}
+                  onNext={nextStep}
+                  onPrevious={prevStep}
                 />
               </WizardStep>
 
-              <WizardStep stepNumber={7} title="Semen Information" isActive={currentStep === 7}>
+              <WizardStep stepNumber={7} title="Semen Information" isActive={currentStep === 6}>
                 <SemenInformationStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onNext={goToNextStep}
-                  onPrevious={goToPreviousStep}
+                  onNext={nextStep}
+                  onPrevious={prevStep}
                 />
               </WizardStep>
 
-              <WizardStep stepNumber={8} title="Semen Assessment" isActive={currentStep === 8}>
+              <WizardStep stepNumber={8} title="Semen Assessment" isActive={currentStep === 7}>
                 <SemenAssessmentStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onNext={goToNextStep}
-                  onPrevious={goToPreviousStep}
+                  onNext={nextStep}
+                  onPrevious={prevStep}
                 />
               </WizardStep>
 
-              <WizardStep stepNumber={9} title="Results" isActive={currentStep === 9}>
+              <WizardStep stepNumber={9} title="Results" isActive={currentStep === 8}>
                 <ConceptionRatingStep
                   data={data}
                   onUpdate={(stepData) => {
                     updateData(stepData);
                     updateWizardData(stepData);
                   }}
-                  onPrevious={goToPreviousStep}
+                  onPrevious={prevStep}
                 />
               </WizardStep>
             </>
