@@ -7,14 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PawPrint, ArrowLeft, ArrowRight, Check, CalendarIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PawPrint, ArrowLeft, ArrowRight, Check, CalendarIcon, ChevronsUpDown, Upload, X, ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { DOG_BREEDS } from "@/lib/data/dog-breeds";
 
 interface AddAnimalDialogProps {
   open: boolean;
@@ -22,7 +24,9 @@ interface AddAnimalDialogProps {
 }
 
 interface AnimalFormData {
-  // Step 1: Basic Info
+  // Step 1: Basic Info & Photo
+  profilePhoto: File | null;
+  profilePhotoPreview: string | null;
   name: string;
   type: 'dog' | 'bitch';
   breed: string;
@@ -43,33 +47,13 @@ interface AnimalFormData {
   location: string;
 }
 
-const popularBreeds = [
-  "German Shepherd",
-  "Golden Retriever",
-  "Labrador Retriever",
-  "French Bulldog",
-  "Bulldog",
-  "Poodle",
-  "Beagle",
-  "Rottweiler",
-  "German Shorthaired Pointer",
-  "Dachshund",
-  "Pembroke Welsh Corgi",
-  "Australian Shepherd",
-  "Yorkshire Terrier",
-  "Boxer",
-  "Cavalier King Charles Spaniel",
-  "Doberman Pinscher",
-  "Great Dane",
-  "Miniature Schnauzer",
-  "Siberian Husky",
-  "Bernese Mountain Dog"
-];
-
 export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const [breedSearchOpen, setBreedSearchOpen] = useState(false);
   const [formData, setFormData] = useState<AnimalFormData>({
+    profilePhoto: null,
+    profilePhotoPreview: null,
     name: "",
     type: "bitch",
     breed: "",
@@ -90,6 +74,52 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Handle profile photo upload
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an image file (JPG, PNG, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+
+    setFormData(prev => ({
+      ...prev,
+      profilePhoto: file,
+      profilePhotoPreview: previewUrl
+    }));
+  };
+
+  const removePhoto = () => {
+    if (formData.profilePhotoPreview) {
+      URL.revokeObjectURL(formData.profilePhotoPreview);
+    }
+    setFormData(prev => ({
+      ...prev,
+      profilePhoto: null,
+      profilePhotoPreview: null
+    }));
+  };
+
   const handleNext = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
@@ -105,14 +135,21 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const handleSubmit = () => {
     console.log("Animal data:", formData);
 
-    // TODO: Save to backend
+    // TODO: Save to backend (including photo upload)
     toast({
       title: "Animal Added Successfully!",
       description: `${formData.name} has been added to your animals.`,
     });
 
+    // Cleanup photo URL
+    if (formData.profilePhotoPreview) {
+      URL.revokeObjectURL(formData.profilePhotoPreview);
+    }
+
     // Reset and close
     setFormData({
+      profilePhoto: null,
+      profilePhotoPreview: null,
       name: "",
       type: "bitch",
       breed: "",
@@ -190,11 +227,70 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
 
         {/* Step Content */}
         <div className="space-y-6">
-          {/* Step 1: Basic Information */}
+          {/* Step 1: Basic Information & Photo */}
           {currentStep === 1 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                <h3 className="text-lg font-semibold mb-1">Basic Information</h3>
+                <p className="text-sm text-muted-foreground">Add a photo and essential details</p>
+              </div>
+
+              {/* Profile Photo Upload */}
+              <div className="space-y-3">
+                <Label>Profile Photo (Optional)</Label>
+                {!formData.profilePhotoPreview ? (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="profile-photo"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="profile-photo"
+                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/20 rounded-lg cursor-pointer hover:border-primary/40 hover:bg-surface-secondary transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <div className="w-12 h-12 rounded-full bg-gradient-brand/10 flex items-center justify-center mb-3">
+                          <Upload className="w-6 h-6 text-primary" />
+                        </div>
+                        <p className="text-sm font-medium text-foreground mb-1">
+                          Click to upload photo
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG up to 5MB
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="relative flex items-center gap-4 p-4 border border-primary/10 rounded-lg bg-surface-secondary">
+                    <Avatar className="w-20 h-20 border-2 border-primary/20">
+                      <AvatarImage src={formData.profilePhotoPreview} alt="Profile preview" />
+                      <AvatarFallback>
+                        <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">
+                        {formData.profilePhoto?.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.profilePhoto && (formData.profilePhoto.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={removePhoto}
+                      className="hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -204,24 +300,24 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   value={formData.name}
                   onChange={(e) => updateFormData("name", e.target.value)}
                   placeholder="Enter animal name"
-                  className="bg-background border-primary/20"
+                  className="bg-background border-primary/20 focus:border-primary"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label>Sex *</Label>
                 <RadioGroup value={formData.type} onValueChange={(value: 'dog' | 'bitch') => updateFormData("type", value)}>
-                  <div className="flex gap-4">
-                    <div className="flex items-center space-x-2 flex-1 p-4 rounded-lg border border-primary/10 bg-background cursor-pointer hover:bg-surface-secondary">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2 flex-1 p-4 rounded-lg border-2 border-primary/10 bg-background cursor-pointer hover:bg-surface-secondary hover:border-primary/30 transition-all">
                       <RadioGroupItem value="bitch" id="bitch" />
                       <Label htmlFor="bitch" className="flex-1 cursor-pointer font-medium">
-                        Bitch (Female)
+                        ♀ Bitch (Female)
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2 flex-1 p-4 rounded-lg border border-primary/10 bg-background cursor-pointer hover:bg-surface-secondary">
+                    <div className="flex items-center space-x-2 flex-1 p-4 rounded-lg border-2 border-primary/10 bg-background cursor-pointer hover:bg-surface-secondary hover:border-primary/30 transition-all">
                       <RadioGroupItem value="dog" id="dog" />
                       <Label htmlFor="dog" className="flex-1 cursor-pointer font-medium">
-                        Dog (Male)
+                        ♂ Dog (Male)
                       </Label>
                     </div>
                   </div>
@@ -229,46 +325,76 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="breed">Breed *</Label>
-                <Select value={formData.breed} onValueChange={(value) => updateFormData("breed", value)}>
-                  <SelectTrigger id="breed" className="bg-background border-primary/20">
-                    <SelectValue placeholder="Select breed" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {popularBreeds.map((breed) => (
-                      <SelectItem key={breed} value={breed}>
-                        {breed}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Date of Birth *</Label>
-                <Popover>
+                <Label>Breed * <span className="text-xs text-muted-foreground">({DOG_BREEDS.length} breeds available)</span></Label>
+                <Popover open={breedSearchOpen} onOpenChange={setBreedSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal bg-background border-primary/20",
-                        !formData.dateOfBirth && "text-muted-foreground"
-                      )}
+                      role="combobox"
+                      aria-expanded={breedSearchOpen}
+                      className="w-full justify-between bg-background border-primary/20 hover:bg-surface-secondary"
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.dateOfBirth ? format(formData.dateOfBirth, "PPP") : "Pick a date"}
+                      {formData.breed ? formData.breed : "Search breed..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.dateOfBirth}
-                      onSelect={(date) => updateFormData("dateOfBirth", date)}
-                      initialFocus
-                      disabled={(date) => date > new Date()}
-                    />
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search breed..." />
+                      <CommandList>
+                        <CommandEmpty>No breed found.</CommandEmpty>
+                        <CommandGroup>
+                          {DOG_BREEDS.map((breed) => (
+                            <CommandItem
+                              key={breed}
+                              value={breed}
+                              onSelect={() => {
+                                updateFormData("breed", breed);
+                                setBreedSearchOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.breed === breed ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {breed}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
                   </PopoverContent>
                 </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                <div className="relative">
+                  <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth ? format(formData.dateOfBirth, "yyyy-MM-dd") : ""}
+                    onChange={(e) => {
+                      const dateValue = e.target.value;
+                      if (dateValue) {
+                        updateFormData("dateOfBirth", new Date(dateValue));
+                      } else {
+                        updateFormData("dateOfBirth", undefined);
+                      }
+                    }}
+                    max={format(new Date(), "yyyy-MM-dd")}
+                    min="1990-01-01"
+                    className="pl-10 bg-background border-primary/20 focus:border-primary [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:hover:bg-primary/10 [&::-webkit-calendar-picker-indicator]:rounded [&::-webkit-calendar-picker-indicator]:p-1"
+                  />
+                </div>
+                {formData.dateOfBirth && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {format(formData.dateOfBirth, "MMMM d, yyyy")}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -421,15 +547,18 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
 
         {/* Navigation */}
         <div className="flex justify-between pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            className="hover:bg-surface-secondary"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Previous
-          </Button>
+          {currentStep > 1 ? (
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              className="hover:bg-surface-secondary"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Previous
+            </Button>
+          ) : (
+            <div />
+          )}
 
           {currentStep < totalSteps ? (
             <Button
