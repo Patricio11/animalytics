@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { StatsCard } from "@/components/breeder/StatsCard";
 import { AnimalCard } from "@/components/breeder/AnimalCard";
 import { CalculatorCard } from "@/components/breeder/CalculatorCard";
 import { ActivityCard } from "@/components/breeder/ActivityCard";
 import { TaskCard } from "@/components/breeder/TaskCard";
+import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { Button } from "@/components/ui/button";
 import { Heart, Calendar, Trophy, DollarSign, Plus, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function Dashboard() {
+  const [showAddAnimal, setShowAddAnimal] = useState(false);
   // todo: remove mock functionality
   const mockStats = [
     {
@@ -135,7 +138,11 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your animals.</p>
           </div>
-          <Button className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-add-animal">
+          <Button
+            className="bg-gradient-brand hover:opacity-90 shadow-card"
+            data-testid="button-add-animal"
+            onClick={() => setShowAddAnimal(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Animal
           </Button>
@@ -233,6 +240,9 @@ export default function Dashboard() {
           </section>
         </div>
       </div>
+
+      {/* Add Animal Dialog */}
+      <AddAnimalDialog open={showAddAnimal} onOpenChange={setShowAddAnimal} />
     </div>
     </div>
   );

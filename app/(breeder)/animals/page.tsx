@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { AnimalCard } from "@/components/breeder/AnimalCard";
+import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +10,7 @@ import { Plus, Search, Filter } from "lucide-react";
 import { mockAnimals } from "@/data/mockData";
 
 export default function Animals() {
+  const [showAddAnimal, setShowAddAnimal] = useState(false);
   // Transform mockAnimals to match AnimalCard props
   const displayAnimals = mockAnimals.map(animal => ({
     id: animal.id,
@@ -28,7 +31,11 @@ export default function Animals() {
             <h1 className="text-3xl font-bold text-foreground">My Animals</h1>
             <p className="text-muted-foreground">Manage your animal portfolio</p>
           </div>
-          <Button className="bg-gradient-brand hover:opacity-90 shadow-card" data-testid="button-add-animal">
+          <Button
+            className="bg-gradient-brand hover:opacity-90 shadow-card"
+            data-testid="button-add-animal"
+            onClick={() => setShowAddAnimal(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Animal
           </Button>
@@ -80,6 +87,9 @@ export default function Animals() {
             <AnimalCard key={animal.id} {...animal} />
           ))}
         </div>
+
+        {/* Add Animal Dialog */}
+        <AddAnimalDialog open={showAddAnimal} onOpenChange={setShowAddAnimal} />
       </div>
     </div>
   );
