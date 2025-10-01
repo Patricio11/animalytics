@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
+// import { ThemeToggle } from "@/components/shared/ThemeToggle"; // Hidden for now, will work on it later
 import { useState, useEffect } from "react";
 
 export function Header() {
@@ -58,7 +58,7 @@ export function Header() {
             <DropdownMenuItem className="text-destructive hover-elevate">Sign Out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
       </div>
     </header>
   );
