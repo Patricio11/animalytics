@@ -9,7 +9,7 @@ export interface WizardStep {
   isOptional?: boolean;
 }
 
-export interface WizardStateOptions<T = any> {
+export interface WizardStateOptions<T extends Record<string, unknown> = Record<string, unknown>> {
   initialData: T;
   storageKey?: string;
   steps: WizardStep[];
@@ -17,7 +17,7 @@ export interface WizardStateOptions<T = any> {
   onComplete?: (data: T) => void;
 }
 
-export interface WizardState<T = any> {
+export interface WizardState<T extends Record<string, unknown> = Record<string, unknown>> {
   currentStep: number;
   data: T;
   steps: WizardStep[];
@@ -37,7 +37,7 @@ export interface WizardState<T = any> {
   complete: () => void;
 }
 
-export function useWizardState<T = any>(
+export function useWizardState<T extends Record<string, unknown> = Record<string, unknown>>(
   options: WizardStateOptions<T>
 ): WizardState<T> {
   const {
@@ -54,8 +54,33 @@ export function useWizardState<T = any>(
 
   // Load saved progress on mount
   useEffect(() => {
-    loadProgress();
-  }, []);
+    if (!storageKey) return;
+
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const progress = JSON.parse(saved);
+
+        // Restore data
+        setData(progress.data || initialData);
+
+        // Restore current step
+        if (typeof progress.currentStep === 'number') {
+          setCurrentStep(progress.currentStep);
+        }
+
+        // Restore step validity
+        if (progress.steps) {
+          setSteps(prev => prev.map((step) => {
+            const savedStep = progress.steps.find((s: { id: string; isValid?: boolean }) => s.id === step.id);
+            return savedStep ? { ...step, isValid: savedStep.isValid } : step;
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load wizard progress:', error);
+    }
+  }, [storageKey, initialData]);
 
   // Computed properties
   const isFirstStep = currentStep === 0;
@@ -88,11 +113,32 @@ export function useWizardState<T = any>(
     if (nextStepIndex < steps.length) {
       setCurrentStep(nextStepIndex);
       onStepChange?.(nextStepIndex);
-      saveProgress();
+
+      // Save progress
+      if (!storageKey) return;
+      try {
+        const progress = {
+          currentStep: nextStepIndex,
+          data,
+          steps: steps.map(s => ({ id: s.id, isValid: s.isValid })),
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem(storageKey, JSON.stringify(progress));
+      } catch (error) {
+        console.error('Failed to save wizard progress:', error);
+      }
     } else {
-      complete();
+      // Complete wizard
+      onComplete?.(data);
+      if (storageKey) {
+        try {
+          localStorage.removeItem(storageKey);
+        } catch (error) {
+          console.error('Failed to clear wizard progress:', error);
+        }
+      }
     }
-  }, [currentStep, steps.length, canGoNext, onStepChange]);
+  }, [currentStep, steps, canGoNext, onStepChange, storageKey, data, onComplete]);
 
   // Navigate to previous step
   const prevStep = useCallback(() => {
@@ -159,8 +205,8 @@ export function useWizardState<T = any>(
 
         // Restore step validity
         if (progress.steps) {
-          setSteps(prev => prev.map((step, index) => {
-            const savedStep = progress.steps.find((s: any) => s.id === step.id);
+          setSteps(prev => prev.map((step) => {
+            const savedStep = progress.steps.find((s: { id: string; isValid?: boolean }) => s.id === step.id);
             return savedStep ? { ...step, isValid: savedStep.isValid } : step;
           }));
         }

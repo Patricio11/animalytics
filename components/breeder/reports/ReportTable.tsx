@@ -10,13 +10,13 @@ export interface ReportColumn {
   key: string;
   label: string;
   align?: 'left' | 'center' | 'right';
-  render?: (value: any, row: any) => React.ReactNode;
+  render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
 }
 
 interface ReportTableProps {
   title: string;
   columns: ReportColumn[];
-  data: any[];
+  data: Record<string, unknown>[];
   emptyMessage?: string;
   summary?: {
     label: string;

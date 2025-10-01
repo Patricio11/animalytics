@@ -120,7 +120,7 @@ export function SeasonProgesteroneChart({ readings }: SeasonProgesteroneChartPro
             itemStyle={{
               color: "hsl(var(--chart-3))",
             }}
-            formatter={(value: number, name: string, props: any) => {
+            formatter={(value: number, name: string, props: { payload: { displayDate: string; day: number } }) => {
               return [
                 `${value} ${unit}`,
                 `${props.payload.displayDate} (Day ${props.payload.day})`,

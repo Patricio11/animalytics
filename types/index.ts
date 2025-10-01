@@ -6,6 +6,7 @@ export interface Animal {
   type: 'dog' | 'bitch';
   breed: string;
   dateOfBirth: string;
+  age?: string; // Calculated or manually set age (e.g., "3 years")
   photos: string[];
   documents: Document[];
   frozenSemen?: FrozenSemenRecord[];
@@ -14,6 +15,7 @@ export interface Animal {
   description?: string;
   healthRecords: HealthRecord[];
   weight?: number;
+  height?: number;
   color?: string;
   markings?: string;
   microchipId?: string;

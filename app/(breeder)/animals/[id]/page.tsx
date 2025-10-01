@@ -35,7 +35,7 @@ interface PageProps {
 export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   const router = useRouter();
   const resolvedParams = use(params);
-  const resolvedSearchParams = use(searchParams || Promise.resolve({}));
+  const resolvedSearchParams = use(searchParams || Promise.resolve({})) as { tab?: string };
 
   const animal = mockAnimals.find((a) => a.id === resolvedParams.id);
   const profileDetails = getAnimalProfileDetails(resolvedParams.id);
@@ -109,11 +109,6 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                     alt={animal.name}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-4 left-4">
-                    <Badge className={cn(statusConfig[animal.status as keyof typeof statusConfig]?.color || statusConfig.available.color, "shadow-card")}>
-                      {statusConfig[animal.status as keyof typeof statusConfig]?.label || 'Available'}
-                    </Badge>
-                  </div>
                 </div>
                 {additionalPhotos.length > 0 && (
                   <div className="p-4 grid grid-cols-4 gap-2">
@@ -186,20 +181,20 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                 </div>
 
                 {/* Health Badges */}
-                {(animal.healthCertified || animal.championLines) && (
+                {(animal.achievements && animal.achievements.length > 0) && (
                   <>
                     <Separator />
                     <div className="flex gap-2 flex-wrap">
-                      {animal.healthCertified && (
+                      {animal.healthRecords && animal.healthRecords.length > 0 && (
                         <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/20">
                           <Shield className="w-4 h-4 mr-2" />
-                          Health Certified
+                          Health Records
                         </Badge>
                       )}
-                      {animal.championLines && (
+                      {animal.achievements && animal.achievements.length > 0 && (
                         <Badge className="bg-chart-2/10 text-chart-2 border-chart-2/20">
                           <Award className="w-4 h-4 mr-2" />
-                          Champion Lines
+                          Achievements
                         </Badge>
                       )}
                     </div>

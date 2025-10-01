@@ -46,10 +46,26 @@ export function ProgesteroneInputForm() {
 
   // Calculation results state
   const [calculationResult, setCalculationResult] = useState<{
-    rating: any;
-    trend: any;
-    recommendation: any;
-    breedingWindow: any;
+    rating: {
+      rating: number;
+      alternativeRating?: number;
+      matchedPattern: string;
+      confidence: number;
+    };
+    trend: {
+      direction: 'rising' | 'falling' | 'stable';
+      description: string;
+    };
+    recommendation: {
+      action: string;
+      timing: string;
+      confidence: number;
+    };
+    breedingWindow: {
+      start: string;
+      end: string;
+      optimal: string;
+    };
   } | null>(null);
 
   // Validation state

@@ -1,5 +1,22 @@
 // Mock data for conception rating calculations
 
+// Type for conception rating input data
+export interface ConceptionRatingData {
+  bitchBreed?: string;
+  dogBreed?: string;
+  bitchAge?: number;
+  dogAge?: number;
+  bodyCondition?: number;
+  healthStatus?: string;
+  previousLitters?: number;
+  timeSinceLastLitter?: number;
+  dogSuccessRate?: number;
+  breederExperience?: number;
+  semenType?: string;
+  semenQuality?: string;
+  [key: string]: string | number | undefined;
+}
+
 export const mockConceptionFactors = {
   // Breed success ratings (1-3: 1=difficult, 2=moderate, 3=easy)
   breedRatings: {
@@ -118,7 +135,7 @@ export function getBreedRating(breed: string): number {
 }
 
 // Calculate overall conception rating
-export function calculateConceptionRating(data: any): {
+export function calculateConceptionRating(data: ConceptionRatingData): {
   overall: number;
   accuracy: number;
   breakdown: Record<string, { percentage: number; contribution: number }>;
@@ -141,10 +158,11 @@ export function calculateConceptionRating(data: any): {
   }
 
   // Bitch information contribution
-  if (data.bitchInformation) {
-    const ageFactor = data.bitchInformation.age ? getAgeFactor(data.bitchInformation.age) : 1;
-    const bcsScore = data.bitchInformation.bodyConditionScore
-      ? mockConceptionFactors.bodyConditionFactors[data.bitchInformation.bodyConditionScore.toString()] || 1
+  if (data.bitchInformation && typeof data.bitchInformation === 'object') {
+    const bitchInfo = data.bitchInformation as { age?: number; bodyConditionScore?: number };
+    const ageFactor = bitchInfo.age ? getAgeFactor(bitchInfo.age) : 1;
+    const bcsScore = bitchInfo.bodyConditionScore
+      ? mockConceptionFactors.bodyConditionFactors[bitchInfo.bodyConditionScore.toString() as keyof typeof mockConceptionFactors.bodyConditionFactors] || 1
       : 1;
     const bitchScore = (ageFactor * bcsScore) * 100;
     breakdown.bitchInformation = {
@@ -156,9 +174,11 @@ export function calculateConceptionRating(data: any): {
   }
 
   // Semen quality contribution
-  if (data.semenQuality) {
-    const qualityFactor = mockConceptionFactors.semenQualityFactors[data.semenQuality.quality] || 0.7;
-    const typeFactor = mockConceptionFactors.semenTypeFactors[data.semenInformation?.type || 'fresh'] || 1;
+  if (data.semenQuality && typeof data.semenQuality === 'object') {
+    const semenQuality = data.semenQuality as { quality?: string };
+    const semenInfo = data.semenInformation as { type?: string } | undefined;
+    const qualityFactor = (semenQuality.quality && mockConceptionFactors.semenQualityFactors[semenQuality.quality as keyof typeof mockConceptionFactors.semenQualityFactors]) || 0.7;
+    const typeFactor = (semenInfo?.type && mockConceptionFactors.semenTypeFactors[semenInfo.type as keyof typeof mockConceptionFactors.semenTypeFactors]) || 1;
     const semenScore = (qualityFactor * typeFactor) * 100;
     breakdown.semenQuality = {
       percentage: semenScore,

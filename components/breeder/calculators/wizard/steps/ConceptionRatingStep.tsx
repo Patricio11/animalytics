@@ -150,7 +150,7 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
           <CardTitle className="text-base">Rating Breakdown</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {Object.entries(rating.breakdown).map(([section, values]: [string, any]) => {
+          {Object.entries(rating.breakdown).map(([section, values]: [string, { percentage: number; maxPossible: number; score: number; filled: boolean }]) => {
             const sectionLabels: Record<string, string> = {
               breed: 'Breed Selection',
               bitchInformation: 'Bitch Health & Condition',

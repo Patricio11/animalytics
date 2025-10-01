@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 export type ExportFormat = 'csv' | 'pdf' | 'print';
 
 interface ReportExportButtonProps {
-  data: any[];
+  data: Record<string, unknown>[];
   reportName: string;
   columns: { key: string; label: string }[];
   onExport?: (format: ExportFormat) => void;
@@ -63,7 +63,7 @@ export function ReportExportButton({
         title: "Export Successful",
         description: `Report exported as ${format.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Export Failed",
         description: "There was an error exporting the report",

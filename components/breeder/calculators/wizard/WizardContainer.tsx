@@ -9,7 +9,7 @@ import { useWizardState, WizardStateOptions } from "@/lib/hooks/use-wizard-state
 import { Info, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface WizardContainerProps<T = any> extends WizardStateOptions<T> {
+interface WizardContainerProps<T extends Record<string, unknown> = Record<string, unknown>> extends WizardStateOptions<T> {
   children: ReactNode | ((wizardState: ReturnType<typeof useWizardState<T>>) => ReactNode);
   className?: string;
   showProgress?: boolean;
@@ -23,7 +23,7 @@ interface WizardContainerProps<T = any> extends WizardStateOptions<T> {
   infoMessage?: string;
 }
 
-export function WizardContainer<T = any>({
+export function WizardContainer<T extends Record<string, unknown> = Record<string, unknown>>({
   children,
   className,
   showProgress = true,

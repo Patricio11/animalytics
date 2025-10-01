@@ -63,15 +63,15 @@ interface WizardData {
 }
 
 const wizardSteps = [
-  { id: 1, title: "Breed Selection", icon: "🐕", description: "Select the breed for assessment" },
-  { id: 2, title: "Bitch Information", icon: "🐾", description: "Basic information about the female" },
-  { id: 3, title: "Bitch History", icon: "📋", description: "Breeding history and health" },
-  { id: 4, title: "Litter History", icon: "🐶", description: "Previous litter outcomes" },
-  { id: 5, title: "Dog History", icon: "👑", description: "Stud dog breeding record" },
-  { id: 6, title: "Breeder History", icon: "👤", description: "Your breeding experience" },
-  { id: 7, title: "Semen Information", icon: "💉", description: "Semen type and handling" },
-  { id: 8, title: "Semen Assessment", icon: "🔬", description: "Laboratory analysis results" },
-  { id: 9, title: "Results", icon: "📊", description: "Conception rating calculation" },
+  { id: "1", title: "Breed Selection", icon: "🐕", description: "Select the breed for assessment" },
+  { id: "2", title: "Bitch Information", icon: "🐾", description: "Basic information about the female" },
+  { id: "3", title: "Bitch History", icon: "📋", description: "Breeding history and health" },
+  { id: "4", title: "Litter History", icon: "🐶", description: "Previous litter outcomes" },
+  { id: "5", title: "Dog History", icon: "👑", description: "Stud dog breeding record" },
+  { id: "6", title: "Breeder History", icon: "👤", description: "Your breeding experience" },
+  { id: "7", title: "Semen Information", icon: "💉", description: "Semen type and handling" },
+  { id: "8", title: "Semen Assessment", icon: "🔬", description: "Laboratory analysis results" },
+  { id: "9", title: "Results", icon: "📊", description: "Conception rating calculation" },
 ];
 
 export default function ConceptionRatingWizardPage() {

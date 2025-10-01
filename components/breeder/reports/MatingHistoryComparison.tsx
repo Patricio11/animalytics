@@ -69,9 +69,9 @@ export function MatingHistoryComparison({
 
   // Prepare progesterone chart data
   const prepareProgesteroneData = () => {
-    const dataMap = new Map<string, any>();
+    const dataMap = new Map<string, Record<string, number | string>>();
 
-    selectedMatingsForComparison.forEach((mating, index) => {
+    selectedMatingsForComparison.forEach((mating) => {
       if (!mating.progesteroneReadings) return;
 
       mating.progesteroneReadings.forEach(reading => {

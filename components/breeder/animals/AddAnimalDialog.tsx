@@ -70,7 +70,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
 
   const totalSteps = 4;
 
-  const updateFormData = (field: keyof AnimalFormData, value: any) => {
+  const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

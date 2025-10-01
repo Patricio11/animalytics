@@ -67,7 +67,7 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
     description: '',
   });
 
-  const updateFormData = (field: keyof ListingFormData, value: any) => {
+  const updateFormData = (field: keyof ListingFormData, value: string | number | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

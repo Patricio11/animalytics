@@ -44,7 +44,7 @@ export function FrozenSemenForm({ existingBatch, onSave, onCancel }: FrozenSemen
   // Filter to male dogs only
   const maleDogs = mockAnimals.filter(a => a.type === 'dog');
 
-  const updateField = (field: keyof FrozenSemenFormData, value: any) => {
+  const updateField = (field: keyof FrozenSemenFormData, value: string | number | Date) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error for this field
     if (errors[field]) {

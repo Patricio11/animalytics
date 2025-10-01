@@ -435,7 +435,7 @@ export function TaskDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="exercise-type">Exercise Type</Label>
-                  <Select value={exerciseType} onValueChange={(value: any) => setExerciseType(value)}>
+                  <Select value={exerciseType} onValueChange={(value: string) => setExerciseType(value)}>
                     <SelectTrigger id="exercise-type" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -470,7 +470,7 @@ export function TaskDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="grooming-type">Grooming Type</Label>
-                  <Select value={groomingType} onValueChange={(value: any) => setGroomingType(value)}>
+                  <Select value={groomingType} onValueChange={(value: string) => setGroomingType(value)}>
                     <SelectTrigger id="grooming-type" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -487,7 +487,7 @@ export function TaskDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="frequency">Frequency</Label>
-                  <Select value={frequency} onValueChange={(value: any) => setFrequency(value)}>
+                  <Select value={frequency} onValueChange={(value: string) => setFrequency(value)}>
                     <SelectTrigger id="frequency" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -524,7 +524,7 @@ export function TaskDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="area">Area</Label>
-                  <Select value={area} onValueChange={(value: any) => setArea(value)}>
+                  <Select value={area} onValueChange={(value: string) => setArea(value)}>
                     <SelectTrigger id="area" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -540,7 +540,7 @@ export function TaskDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="cleaning-type">Cleaning Type</Label>
-                  <Select value={cleaningType} onValueChange={(value: any) => setCleaningType(value)}>
+                  <Select value={cleaningType} onValueChange={(value: string) => setCleaningType(value)}>
                     <SelectTrigger id="cleaning-type" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -554,7 +554,7 @@ export function TaskDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="frequency">Frequency</Label>
-                  <Select value={frequency} onValueChange={(value: any) => setFrequency(value)}>
+                  <Select value={frequency} onValueChange={(value: string) => setFrequency(value)}>
                     <SelectTrigger id="frequency" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -573,7 +573,7 @@ export function TaskDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="event-type">Event Type</Label>
-                  <Select value={eventType} onValueChange={(value: any) => setEventType(value)}>
+                  <Select value={eventType} onValueChange={(value: string) => setEventType(value)}>
                     <SelectTrigger id="event-type" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
