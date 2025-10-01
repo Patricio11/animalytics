@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
+import { CreateListingDialog } from "@/components/breeder/marketplace/CreateListingDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,12 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, MapPin, Store } from "lucide-react";
 import { mockMarketplaceListings, ListingCategory, getListingsByCategory } from "@/lib/mock-data/marketplace-listings";
-import Link from "next/link";
 
 export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [activeCategory, setActiveCategory] = useState<ListingCategory | 'all'>('all');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Filter listings
   const filteredListings = useMemo(() => {
@@ -74,13 +75,11 @@ export default function Marketplace() {
               <Store className="w-5 h-5 text-white" />
             </div>
             <Button
-              asChild
+              onClick={() => setCreateDialogOpen(true)}
               className="bg-gradient-brand hover:opacity-90 shadow-card"
             >
-              <Link href="/marketplace/create">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Listing
-              </Link>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Listing
             </Button>
           </div>
         </div>
@@ -176,13 +175,11 @@ export default function Marketplace() {
                     </p>
                     {!searchQuery && !locationFilter && (
                       <Button
-                        asChild
+                        onClick={() => setCreateDialogOpen(true)}
                         className="bg-gradient-brand hover:opacity-90 shadow-card"
                       >
-                        <Link href="/marketplace/create">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Create Listing
-                        </Link>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Listing
                       </Button>
                     )}
                   </CardContent>
@@ -197,6 +194,12 @@ export default function Marketplace() {
             </TabsContent>
           ))}
         </Tabs>
+
+        {/* Create Listing Dialog */}
+        <CreateListingDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+        />
       </div>
     </div>
   );
