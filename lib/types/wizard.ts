@@ -1,4 +1,4 @@
-export interface WizardData {
+export interface WizardData extends Record<string, unknown> {
   // Step 1: Breed Selection
   bitchBreed?: string;
   dogBreed?: string;

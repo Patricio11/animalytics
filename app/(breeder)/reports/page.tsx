@@ -39,7 +39,7 @@ export default function ReportsPage() {
   // Events Report Data
   const eventsData = useMemo(() => {
     let events = mockTasks.filter(task => task.type === 'event');
-    events = filterByDateRange(events);
+    events = filterByDateRange(events) as typeof events;
 
     if (filters.animalId) {
       events = events.filter(task => 'animalId' in task && task.animalId === filters.animalId);
@@ -49,51 +49,51 @@ export default function ReportsPage() {
       events = events.filter(task => task.type === 'event' && task.eventType === filters.eventType);
     }
 
-    return events;
+    return events as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Feeding Report Data
   const feedingData = useMemo(() => {
     let feeding = mockTasks.filter(task => task.type === 'feeding');
-    feeding = filterByDateRange(feeding);
+    feeding = filterByDateRange(feeding) as typeof feeding;
 
     if (filters.animalId) {
       feeding = feeding.filter(task => 'animalId' in task && task.animalId === filters.animalId);
     }
 
-    return feeding;
+    return feeding as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Exercise Report Data
   const exerciseData = useMemo(() => {
     let exercise = mockTasks.filter(task => task.type === 'exercise');
-    exercise = filterByDateRange(exercise);
+    exercise = filterByDateRange(exercise) as typeof exercise;
 
     if (filters.animalId) {
       exercise = exercise.filter(task => 'animalId' in task && task.animalId === filters.animalId);
     }
 
-    return exercise;
+    return exercise as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Grooming Report Data
   const groomingData = useMemo(() => {
     let grooming = mockTasks.filter(task => task.type === 'grooming');
-    grooming = filterByDateRange(grooming);
+    grooming = filterByDateRange(grooming) as typeof grooming;
 
     if (filters.animalId) {
       grooming = grooming.filter(task => 'animalId' in task && task.animalId === filters.animalId);
     }
 
-    return grooming;
+    return grooming as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Cleaning Report Data
   const cleaningData = useMemo(() => {
     let cleaning = mockTasks.filter(task => task.type === 'cleaning');
-    cleaning = filterByDateRange(cleaning);
+    cleaning = filterByDateRange(cleaning) as typeof cleaning;
 
-    return cleaning;
+    return cleaning as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Puppies Report Data
@@ -109,7 +109,7 @@ export default function ReportsPage() {
         start: parseISO(filters.startDate),
         end: parseISO(filters.endDate),
       });
-    });
+    }) as Record<string, unknown>[];
   }, [filters]);
 
   // Mating History Data
@@ -292,7 +292,7 @@ export default function ReportsPage() {
           <TabsContent value="events" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={eventsData}
+                data={eventsData as Record<string, unknown>[]}
                 reportName="events-report"
                 columns={eventsColumns}
               />
@@ -300,7 +300,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Events Report"
               columns={eventsColumns}
-              data={eventsData}
+              data={eventsData as Record<string, unknown>[]}
               emptyMessage="No events found for the selected period"
             />
           </TabsContent>
@@ -309,7 +309,7 @@ export default function ReportsPage() {
           <TabsContent value="feeding" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={feedingData}
+                data={feedingData as Record<string, unknown>[]}
                 reportName="feeding-report"
                 columns={feedingColumns}
               />
@@ -317,7 +317,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Feeding Report"
               columns={feedingColumns}
-              data={feedingData}
+              data={feedingData as Record<string, unknown>[]}
               summary={feedingSummary}
               emptyMessage="No feeding records found for the selected period"
             />
@@ -327,7 +327,7 @@ export default function ReportsPage() {
           <TabsContent value="exercise" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={exerciseData}
+                data={exerciseData as Record<string, unknown>[]}
                 reportName="exercise-report"
                 columns={exerciseColumns}
               />
@@ -335,7 +335,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Exercise Report"
               columns={exerciseColumns}
-              data={exerciseData}
+              data={exerciseData as Record<string, unknown>[]}
               summary={exerciseSummary}
               emptyMessage="No exercise records found for the selected period"
             />
@@ -345,7 +345,7 @@ export default function ReportsPage() {
           <TabsContent value="grooming" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={groomingData}
+                data={groomingData as Record<string, unknown>[]}
                 reportName="grooming-report"
                 columns={groomingColumns}
               />
@@ -353,7 +353,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Grooming Report"
               columns={groomingColumns}
-              data={groomingData}
+              data={groomingData as Record<string, unknown>[]}
               summary={groomingSummary}
               emptyMessage="No grooming records found for the selected period"
             />
@@ -363,7 +363,7 @@ export default function ReportsPage() {
           <TabsContent value="cleaning" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={cleaningData}
+                data={cleaningData as Record<string, unknown>[]}
                 reportName="cleaning-report"
                 columns={cleaningColumns}
               />
@@ -371,7 +371,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Cleaning Report"
               columns={cleaningColumns}
-              data={cleaningData}
+              data={cleaningData as Record<string, unknown>[]}
               summary={cleaningSummary}
               emptyMessage="No cleaning records found for the selected period"
             />
@@ -381,7 +381,7 @@ export default function ReportsPage() {
           <TabsContent value="puppies" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={puppiesData}
+                data={puppiesData as Record<string, unknown>[]}
                 reportName="puppies-report"
                 columns={puppiesColumns}
               />
@@ -389,7 +389,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Puppies Report"
               columns={puppiesColumns}
-              data={puppiesData}
+              data={puppiesData as Record<string, unknown>[]}
               summary={puppiesSummary}
               emptyMessage="No litters found for the selected period"
             />

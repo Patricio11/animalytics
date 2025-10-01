@@ -15,52 +15,8 @@ import { BreederHistoryStep } from "@/components/breeder/calculators/wizard/step
 import { SemenInformationStep } from "@/components/breeder/calculators/wizard/steps/SemenInformationStep";
 import { SemenAssessmentStep } from "@/components/breeder/calculators/wizard/steps/SemenAssessmentStep";
 import { ConceptionRatingStep } from "@/components/breeder/calculators/wizard/steps/ConceptionRatingStep";
+import { WizardData } from "@/lib/types/wizard";
 import { ArrowLeft, Beaker } from "lucide-react";
-
-interface WizardData {
-  // Step 1: Breed Selection
-  breed?: string;
-
-  // Step 2: Bitch Information
-  bitchAge?: number;
-  bitchWeight?: number;
-  bodyConditionScore?: number;
-  generalHealth?: 'excellent' | 'good' | 'fair' | 'poor';
-
-  // Step 3: Bitch History
-  previousLitters?: number;
-  previousPuppies?: number;
-  complications?: boolean;
-  complicationDetails?: string;
-  lastLitterDate?: string;
-
-  // Step 4: Litter History
-  averageLitterSize?: number;
-  liveBirthRate?: number;
-  weaningSuccessRate?: number;
-
-  // Step 5: Dog History
-  dogAge?: number;
-  provednSire?: boolean;
-  previousLittersCount?: number;
-  averageProgenyLitterSize?: number;
-
-  // Step 6: Breeder History
-  yearsExperience?: number;
-  totalLittersProduced?: number;
-  breedingSuccessRate?: number;
-
-  // Step 7: Semen Information
-  semenType?: 'fresh' | 'chilled' | 'frozen';
-  collectionDate?: string;
-  storageConditions?: 'optimal' | 'good' | 'adequate';
-
-  // Step 8: Semen Assessment
-  volume?: number;
-  concentration?: number;
-  motility?: number;
-  morphology?: number;
-}
 
 const wizardSteps = [
   { id: "1", title: "Breed Selection", icon: "🐕", description: "Select the breed for assessment" },
