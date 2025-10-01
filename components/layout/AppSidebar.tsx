@@ -72,12 +72,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r bg-surface shadow-card">
       <SidebarContent className="bg-surface">
         <div className="p-4 group-data-[collapsible=icon]:p-2 border-b border-primary/10">
-          <Link href="/" className="flex items-center justify-center hover:opacity-90 transition-opacity">
-            <div className="w-40 h-auto flex items-center justify-center group-data-[collapsible=icon]:w-8">
+          <Link href="/" className="flex items-center justify-start group-data-[collapsible=icon]:justify-center hover:opacity-90 transition-all duration-200">
+            <div className="w-40 h-auto flex items-center justify-start group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 overflow-hidden">
               <img
                 src="/animalytics.png"
                 alt="Animalytics Logo"
-                className="w-full h-auto object-contain"
+                className="w-full h-auto object-contain object-left group-data-[collapsible=icon]:scale-[9] group-data-[collapsible=icon]:translate-x-[395%]"
               />
             </div>
           </Link>
