@@ -71,10 +71,16 @@ export function AnimalPickerDialog({
   const handleAnimalSelect = (animal: Animal) => {
     if (step === 'bitch') {
       setSelectedBitch(animal);
-      setStep('dog');
-      setSearchQuery('');
+      // Don't auto-advance - let user confirm
     } else {
       setSelectedDog(animal);
+    }
+  };
+
+  const handleNextStep = () => {
+    if (step === 'bitch' && selectedBitch) {
+      setStep('dog');
+      setSearchQuery('');
     }
   };
 
@@ -103,11 +109,24 @@ export function AnimalPickerDialog({
     setSearchQuery('');
   };
 
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      // Reset state when closing
+      setStep('bitch');
+      setSelectedBitch(null);
+      setSelectedDog(null);
+      setUseFrozenSemen(false);
+      setSearchQuery('');
+    }
+    onOpenChange(open);
+  };
+
   const filteredAnimals = getFilteredAnimals();
-  const canComplete = selectedBitch && (selectedDog || useFrozenSemen);
+  const canProceedToNextStep = step === 'bitch' && selectedBitch;
+  const canComplete = step === 'dog' && selectedBitch && (selectedDog || useFrozenSemen);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="max-w-3xl max-h-[80vh] p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-3">
@@ -134,15 +153,55 @@ export function AnimalPickerDialog({
           </div>
 
           {/* Progress Indicator */}
-          <div className="flex items-center gap-2 mt-4">
-            <div className={cn(
-              "flex-1 h-1 rounded-full transition-colors",
-              step === 'bitch' || selectedBitch ? 'bg-primary' : 'bg-muted'
-            )} />
-            <div className={cn(
-              "flex-1 h-1 rounded-full transition-colors",
-              selectedDog || useFrozenSemen ? 'bg-primary' : 'bg-muted'
-            )} />
+          <div className="flex items-center gap-3 mt-4">
+            <div className="flex items-center gap-2 flex-1">
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                selectedBitch
+                  ? "bg-gradient-brand text-white shadow-md"
+                  : step === 'bitch'
+                  ? "bg-primary/20 text-primary border-2 border-primary"
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {selectedBitch ? <Check className="w-4 h-4" /> : '1'}
+              </div>
+              <div className={cn(
+                "flex-1 h-1 rounded-full transition-colors",
+                selectedBitch ? 'bg-primary' : 'bg-muted'
+              )} />
+            </div>
+            <div className="flex items-center gap-2 flex-1">
+              <div className={cn(
+                "flex-1 h-1 rounded-full transition-colors",
+                selectedDog || useFrozenSemen ? 'bg-primary' : 'bg-muted'
+              )} />
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                selectedDog || useFrozenSemen
+                  ? "bg-gradient-brand text-white shadow-md"
+                  : step === 'dog'
+                  ? "bg-primary/20 text-primary border-2 border-primary"
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {selectedDog || useFrozenSemen ? <Check className="w-4 h-4" /> : '2'}
+              </div>
+            </div>
+          </div>
+
+          {/* Step Labels */}
+          <div className="flex items-center justify-between mt-2 text-xs">
+            <span className={cn(
+              "font-medium transition-colors",
+              step === 'bitch' ? "text-primary" : selectedBitch ? "text-foreground" : "text-muted-foreground"
+            )}>
+              Step 1: Select Bitch
+            </span>
+            <span className={cn(
+              "font-medium transition-colors",
+              step === 'dog' ? "text-primary" : (selectedDog || useFrozenSemen) ? "text-foreground" : "text-muted-foreground"
+            )}>
+              Step 2: Select Dog
+            </span>
           </div>
         </DialogHeader>
 
@@ -277,19 +336,31 @@ export function AnimalPickerDialog({
         <div className="px-6 py-4 flex gap-3">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleDialogClose(false)}
             className="flex-1"
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleComplete}
-            disabled={!canComplete}
-            className="flex-1 bg-gradient-brand hover:opacity-90"
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            Create Mating Record
-          </Button>
+
+          {step === 'bitch' ? (
+            <Button
+              onClick={handleNextStep}
+              disabled={!canProceedToNextStep}
+              className="flex-1 bg-gradient-brand hover:opacity-90"
+            >
+              Next: Select Dog
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleComplete}
+              disabled={!canComplete}
+              className="flex-1 bg-gradient-brand hover:opacity-90"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Create Mating Record
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
