@@ -147,9 +147,11 @@ export function calculateConceptionRating(data: ConceptionRatingData): {
   const breakdown: Record<string, { percentage: number; contribution: number }> = {};
 
   // Breed contribution
-  if (data.breed) {
-    const breedRating = getBreedRating(data.breed);
-    const breedScore = (breedRating / 3) * 100; // Normalize to 0-100
+  if (data.bitchBreed && data.dogBreed) {
+    const bitchRating = getBreedRating(data.bitchBreed);
+    const dogRating = getBreedRating(data.dogBreed);
+    const avgBreedRating = (bitchRating + dogRating) / 2;
+    const breedScore = (avgBreedRating / 3) * 100; // Normalize to 0-100
     breakdown.breed = {
       percentage: breedScore,
       contribution: weights.breed
