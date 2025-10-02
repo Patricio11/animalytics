@@ -181,7 +181,7 @@ export const mockAnimals: Animal[] = [
     breed: 'Labrador Retriever',
     dateOfBirth: '2021-05-10',
     photos: [
-      'https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=800&h=600&fit=crop',
     ],
     documents: [],

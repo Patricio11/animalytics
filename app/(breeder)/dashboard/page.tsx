@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   const mockRecentAnimals = [
     {
-      id: "1",
+      id: "animal1",
       name: "Bella",
       breed: "Golden Retriever",
       gender: 'female' as const,
@@ -57,7 +57,7 @@ export default function Dashboard() {
       lastMating: new Date('2024-01-15'),
     },
     {
-      id: "2",
+      id: "animal2",
       name: "Max",
       breed: "German Shepherd",
       gender: 'male' as const,
@@ -67,12 +67,12 @@ export default function Dashboard() {
       lastMating: new Date('2024-02-01'),
     },
     {
-      id: "3",
+      id: "animal3",
       name: "Luna",
       breed: "Border Collie",
       gender: 'female' as const,
       dateOfBirth: new Date('2021-06-10'),
-      imageUrl: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop&crop=face",
+      imageUrl: "https://images.unsplash.com/photo-1568572933382-74d440642117?w=400&h=400&fit=crop&crop=face",
       status: 'pregnant' as const,
       lastMating: new Date('2024-02-10'),
     }
