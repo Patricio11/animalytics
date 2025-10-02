@@ -46,16 +46,16 @@ export default function TasksPage() {
 
   const handleSave = (newTask: Omit<Task, 'id' | 'completed'>) => {
     if (dialogMode === 'create') {
-      const task: Task = {
+      const task = {
         ...newTask,
         id: `task-${Date.now()}`,
         completed: false,
-      };
+      } as Task;
       setTasks([...tasks, task]);
     } else if (editingTask) {
       setTasks(
         tasks.map((t) =>
-          t.id === editingTask.id ? { ...newTask, id: t.id, completed: t.completed } : t
+          t.id === editingTask.id ? { ...newTask, id: t.id, completed: t.completed } as Task : t
         )
       );
     }
@@ -76,11 +76,11 @@ export default function TasksPage() {
   };
 
   const handleGeneratePuppyTasks = (newTasks: Omit<Task, 'id' | 'completed'>[]) => {
-    const tasksWithIds: Task[] = newTasks.map((task, index) => ({
+    const tasksWithIds = newTasks.map((task, index) => ({
       ...task,
       id: `puppy-task-${Date.now()}-${index}`,
       completed: false,
-    }));
+    } as Task));
     setTasks([...tasks, ...tasksWithIds]);
     setShowPuppyGenerator(false);
   };

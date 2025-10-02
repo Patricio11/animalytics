@@ -55,7 +55,7 @@ export function SemenInformationStep({ data, onUpdate, onNext, onPrevious }: Sem
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>What type of semen will be used?</Label>
-            <RadioGroup value={semenType} onValueChange={setSemenType}>
+            <RadioGroup value={semenType} onValueChange={(val) => setSemenType(val as 'fresh' | 'chilled' | 'frozen')}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="fresh" id="semen-fresh" />
                 <Label htmlFor="semen-fresh" className="flex-1 cursor-pointer">
@@ -142,7 +142,7 @@ export function SemenInformationStep({ data, onUpdate, onNext, onPrevious }: Sem
               <p className="text-xs text-muted-foreground">
                 Time from collection to arrival (optimal: under 24 hours)
               </p>
-              {shippingDuration > 48 && (
+              {Number(shippingDuration) > 48 && (
                 <Alert className="border-destructive/50 bg-destructive/10 mt-2">
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <AlertDescription className="ml-2 text-sm">

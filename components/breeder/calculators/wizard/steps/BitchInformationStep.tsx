@@ -129,7 +129,7 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>Overall Health Condition</Label>
-            <RadioGroup value={healthStatus} onValueChange={setHealthStatus}>
+            <RadioGroup value={healthStatus} onValueChange={(val) => setHealthStatus(val as 'excellent' | 'good' | 'fair' | 'poor')}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="excellent" id="health-excellent" />
                 <Label htmlFor="health-excellent" className="flex-1 cursor-pointer">

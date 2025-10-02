@@ -109,7 +109,7 @@ export function ReportTable({
                       >
                         {column.render
                           ? column.render(row[column.key], row)
-                          : row[column.key]}
+                          : (row[column.key] as React.ReactNode)}
                       </td>
                     ))}
                   </tr>

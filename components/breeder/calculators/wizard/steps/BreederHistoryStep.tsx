@@ -63,7 +63,7 @@ export function BreederHistoryStep({ data, onUpdate, onNext, onPrevious }: Breed
               />
               {yearsExperience && (
                 <p className="text-xs text-chart-3 font-medium">
-                  Level: {getExperienceLevel(yearsExperience)}
+                  Level: {getExperienceLevel(Number(yearsExperience))}
                 </p>
               )}
             </div>
@@ -90,7 +90,7 @@ export function BreederHistoryStep({ data, onUpdate, onNext, onPrevious }: Breed
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
               <div className="text-sm text-muted-foreground mb-1">Average Litters Per Year</div>
               <div className="text-xl font-bold text-foreground">
-                {(totalLitters / yearsExperience).toFixed(1)}
+                {(totalLitters / Number(yearsExperience)).toFixed(1)}
               </div>
             </div>
           )}

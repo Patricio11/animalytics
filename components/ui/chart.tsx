@@ -113,10 +113,13 @@ interface ChartTooltipContentProps extends React.HTMLAttributes<HTMLDivElement> 
   indicator?: "dot" | "line" | "dashed";
   hideLabel?: boolean;
   hideIndicator?: boolean;
-  label?: string | number;
-  labelFormatter?: (label: string | number, payload: unknown[]) => React.ReactNode;
+  label?: React.ReactNode;
+  labelFormatter?: (value: unknown, payload: unknown[]) => React.ReactNode;
   labelClassName?: string;
   formatter?: (value: unknown, name: string, item: unknown, index: number) => React.ReactNode;
+  color?: string;
+  nameKey?: string;
+  labelKey?: string;
   color?: string;
   nameKey?: string;
 }

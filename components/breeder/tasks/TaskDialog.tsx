@@ -86,8 +86,8 @@ export function TaskDialog({
       setNotes(existingTask.notes || '');
 
       if ('animalId' in existingTask) {
-        setAnimalId(existingTask.animalId);
-        setAnimalName(existingTask.animalName);
+        setAnimalId(existingTask.animalId || '');
+        setAnimalName(existingTask.animalName || '');
       }
 
       switch (existingTask.type) {
@@ -119,7 +119,7 @@ export function TaskDialog({
           setEventTime(existingTask.time || '');
           setRecurring(existingTask.recurring || false);
           if (existingTask.animalId) {
-            setAnimalId(existingTask.animalId);
+            setAnimalId(existingTask.animalId || '');
             setAnimalName(existingTask.animalName || '');
           }
           break;
@@ -219,7 +219,7 @@ export function TaskDialog({
           time,
           date,
           notes: notes || undefined,
-        };
+        } as Omit<Task, 'id' | 'completed'>;
         break;
       case 'exercise':
         task = {
@@ -230,7 +230,7 @@ export function TaskDialog({
           duration: parseInt(duration),
           date,
           notes: notes || undefined,
-        };
+        } as Omit<Task, 'id' | 'completed'>;
         break;
       case 'grooming':
         task = {
@@ -241,7 +241,7 @@ export function TaskDialog({
           frequency,
           date,
           notes: notes || undefined,
-        };
+        } as Omit<Task, 'id' | 'completed'>;
         break;
       case 'weight':
         task = {
@@ -251,7 +251,7 @@ export function TaskDialog({
           weight: weight ? parseFloat(weight) : undefined,
           date,
           notes: notes || undefined,
-        };
+        } as Omit<Task, 'id' | 'completed'>;
         break;
       case 'cleaning':
         task = {
@@ -261,7 +261,7 @@ export function TaskDialog({
           frequency,
           date,
           notes: notes || undefined,
-        };
+        } as Omit<Task, 'id' | 'completed'>;
         break;
       case 'event':
         task = {
@@ -274,7 +274,7 @@ export function TaskDialog({
           date,
           notes: notes || undefined,
           recurring: recurring || undefined,
-        };
+        } as Omit<Task, 'id' | 'completed'>;
         break;
     }
 
@@ -435,7 +435,7 @@ export function TaskDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="exercise-type">Exercise Type</Label>
-                  <Select value={exerciseType} onValueChange={(value: string) => setExerciseType(value)}>
+                  <Select value={exerciseType} onValueChange={(value: string) => setExerciseType(value as 'walk' | 'play' | 'training' | 'other')}>
                     <SelectTrigger id="exercise-type" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -470,7 +470,7 @@ export function TaskDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="grooming-type">Grooming Type</Label>
-                  <Select value={groomingType} onValueChange={(value: string) => setGroomingType(value)}>
+                  <Select value={groomingType} onValueChange={(value: string) => setGroomingType(value as 'bath' | 'brush' | 'nails' | 'ears' | 'teeth' | 'full')}>
                     <SelectTrigger id="grooming-type" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -487,7 +487,7 @@ export function TaskDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="frequency">Frequency</Label>
-                  <Select value={frequency} onValueChange={(value: string) => setFrequency(value)}>
+                  <Select value={frequency} onValueChange={(value: string) => setFrequency(value as 'daily' | 'weekly' | 'monthly' | 'once')}>
                     <SelectTrigger id="frequency" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -524,7 +524,7 @@ export function TaskDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="area">Area</Label>
-                  <Select value={area} onValueChange={(value: string) => setArea(value)}>
+                  <Select value={area} onValueChange={(value: string) => setArea(value as 'kennel' | 'whelping-box' | 'yard' | 'shelter' | 'all')}>
                     <SelectTrigger id="area" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -540,7 +540,7 @@ export function TaskDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="cleaning-type">Cleaning Type</Label>
-                  <Select value={cleaningType} onValueChange={(value: string) => setCleaningType(value)}>
+                  <Select value={cleaningType} onValueChange={(value: string) => setCleaningType(value as 'daily' | 'deep-clean' | 'disinfect')}>
                     <SelectTrigger id="cleaning-type" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -554,7 +554,7 @@ export function TaskDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="frequency">Frequency</Label>
-                  <Select value={frequency} onValueChange={(value: string) => setFrequency(value)}>
+                  <Select value={frequency} onValueChange={(value: string) => setFrequency(value as 'daily' | 'weekly' | 'monthly' | 'once')}>
                     <SelectTrigger id="frequency" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
@@ -573,7 +573,7 @@ export function TaskDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="event-type">Event Type</Label>
-                  <Select value={eventType} onValueChange={(value: string) => setEventType(value)}>
+                  <Select value={eventType} onValueChange={(value: string) => setEventType(value as 'vet-visit' | 'vaccination' | 'health-check' | 'worming' | 'heartworm' | 'flea-tick' | 'rugging' | 'pest-management' | 'other')}>
                     <SelectTrigger id="event-type" className="bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>

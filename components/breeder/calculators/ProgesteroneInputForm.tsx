@@ -53,18 +53,19 @@ export function ProgesteroneInputForm() {
       confidence: number;
     };
     trend: {
-      direction: 'rising' | 'falling' | 'stable';
-      description: string;
+      trend: 'rising' | 'falling' | 'stable' | 'insufficient';
+      averageChange: number;
+      isOptimal: boolean;
     };
     recommendation: {
-      action: string;
-      timing: string;
-      confidence: number;
+      recommendation: 'optimal' | 'good' | 'acceptable' | 'not_recommended';
+      message: string;
+      suggestedAction: string;
     };
     breedingWindow: {
-      start: string;
-      end: string;
-      optimal: string;
+      startDay: number;
+      endDay: number;
+      confidence: number;
     };
   } | null>(null);
 

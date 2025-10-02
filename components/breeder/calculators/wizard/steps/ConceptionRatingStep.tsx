@@ -32,29 +32,36 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
       healthStatus: data.generalHealth
     },
     bitchHistory: {
-      hasBeenBred: data.hasBeenBred === 'yes',
+      hasBeenBred: data.hasBeenBred as 'yes' | 'no' | undefined,
       previousLitters: data.previousLitters || 0,
-      monthsSinceLastLitter: data.lastLitterDate ? parseInt(data.lastLitterDate) : null,
-      hasComplications: data.complications || false
+      monthsSinceLastLitter: data.lastLitterDate ? parseInt(String(data.lastLitterDate)) : undefined,
+      hasComplications: (data.complications ? 'yes' : 'no') as 'yes' | 'no'
     },
-    litterHistory: data.litters || [],
+    litterHistory: {
+      totalLitters: data.litters?.length || 0,
+      totalPuppies: data.litters?.reduce((sum, l) => sum + (l.puppyCount || 0), 0) || 0,
+      successfulLitters: data.litters?.filter(l => !l.complications).length || 0,
+      averageLitterSize: data.litters && data.litters.length > 0
+        ? data.litters.reduce((sum, l) => sum + (l.puppyCount || 0), 0) / data.litters.length
+        : 0
+    },
     dogHistory: {
-      hasBeenUsed: data.hasBeenUsed === 'yes',
+      hasBeenUsed: data.hasBeenUsed as 'yes' | 'no' | undefined,
       previousLitters: data.previousLitters || 0,
-      successRate: data.successRate ? parseFloat(data.successRate) : null
+      successRate: data.successRate ? parseFloat(String(data.successRate)) : undefined
     },
     breederHistory: {
-      yearsExperience: data.yearsExperience ? parseFloat(data.yearsExperience) : 0,
+      yearsExperience: data.yearsExperience ? parseFloat(String(data.yearsExperience)) : 0,
       totalLitters: data.totalLitters || 0,
-      breedFamiliarity: data.breedFamiliarity || 'moderate'
+      breedFamiliarity: (data.breedFamiliarity || 'moderate') as 'expert' | 'experienced' | 'moderate' | 'limited' | 'novice'
     },
     semenInformation: {
       type: data.type || 'fresh',
       collectionDate: data.collectionDate
     },
     semenAssessment: {
-      type: data.type || 'visual',
-      quality: data.quality || 'good',
+      type: (data.type || 'visual') as 'full' | 'visual' | 'none',
+      quality: (data.quality || 'good') as 'excellent' | 'good' | 'fair' | 'poor',
       volume: data.volume,
       concentration: data.concentration,
       motility: data.motility,
@@ -99,17 +106,17 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className={cn("w-32 h-32 rounded-full flex items-center justify-center", getRatingBgColor(rating.overall))}>
+              <div className={cn("w-32 h-32 rounded-full flex items-center justify-center", getRatingBgColor(rating.overallRating))}>
                 <div className="text-white">
-                  <div className="text-4xl font-bold">{Math.round(rating.overall)}</div>
+                  <div className="text-4xl font-bold">{Math.round(rating.overallRating)}</div>
                   <div className="text-sm">out of 100</div>
                 </div>
               </div>
             </div>
 
             <div>
-              <Badge className={cn("text-base px-4 py-1", getRatingBgColor(rating.overall), "text-white")}>
-                {getRatingLabel(rating.overall)} Rating
+              <Badge className={cn("text-base px-4 py-1", getRatingBgColor(rating.overallRating), "text-white")}>
+                {getRatingLabel(rating.overallRating)} Rating
               </Badge>
             </div>
 
@@ -119,7 +126,7 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
                   key={star}
                   className={cn(
                     "w-6 h-6",
-                    star <= rating.accuracy
+                    star <= rating.informationAccuracy
                       ? "text-chart-4 fill-current"
                       : "text-muted-foreground/30"
                   )}
@@ -127,7 +134,7 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
               ))}
             </div>
             <p className="text-sm text-muted-foreground">
-              Accuracy: {rating.accuracy}/5 stars (based on data completeness)
+              Accuracy: {rating.informationAccuracy}/5 stars (based on data completeness)
             </p>
           </div>
         </CardContent>
@@ -136,11 +143,11 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
       {/* Recommendation */}
       <Alert className={cn(
         "border-2",
-        rating.overall >= 60 ? "border-chart-3/50 bg-chart-3/10" : "border-chart-2/50 bg-chart-2/10"
+        rating.overallRating >= 60 ? "border-chart-3/50 bg-chart-3/10" : "border-chart-2/50 bg-chart-2/10"
       )}>
-        <Info className={cn("h-4 w-4", rating.overall >= 60 ? "text-chart-3" : "text-chart-2")} />
+        <Info className={cn("h-4 w-4", rating.overallRating >= 60 ? "text-chart-3" : "text-chart-2")} />
         <AlertDescription className="ml-2">
-          <strong>Recommendation:</strong> {getRecommendation(rating.overall)}
+          <strong>Recommendation:</strong> {getRecommendation(rating.overallRating)}
         </AlertDescription>
       </Alert>
 
@@ -242,7 +249,7 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
           <CardTitle className="text-base">Key Factors</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {rating.overall >= 80 && (
+          {rating.overallRating >= 80 && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-chart-3/10 border border-chart-3/20">
               <CheckCircle2 className="w-5 h-5 text-chart-3 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
@@ -260,7 +267,7 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
             </div>
           )}
 
-          {data.lastLitterDate && data.lastLitterDate < 12 && (
+          {data.lastLitterDate && Number(data.lastLitterDate) < 12 && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
               <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
               <div className="text-sm">

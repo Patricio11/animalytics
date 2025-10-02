@@ -401,8 +401,8 @@ export default function ReportsPage() {
           <TabsContent value="mating" className="space-y-4">
             <MatingHistoryComparison
               matings={matingHistoryData}
-              availableDams={availableAnimals.filter(a => mockAnimals.find(ma => ma.id === a.id)?.sex === 'female')}
-              availableSires={availableAnimals.filter(a => mockAnimals.find(ma => ma.id === a.id)?.sex === 'male')}
+              availableDams={availableAnimals.filter(a => mockAnimals.find(ma => ma.id === a.id)?.type === 'bitch')}
+              availableSires={availableAnimals.filter(a => mockAnimals.find(ma => ma.id === a.id)?.type === 'dog')}
             />
           </TabsContent>
         </Tabs>

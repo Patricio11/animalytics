@@ -30,7 +30,6 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
 
   const handleContinue = () => {
     onUpdate({
-      type: assessmentType,
       quality,
       volume: assessmentType === 'full' ? volume : '',
       concentration: assessmentType === 'full' ? concentration : '',
@@ -161,7 +160,7 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
             </div>
 
             {/* Quality Warnings */}
-            {motility && motility < 50 && (
+            {motility && Number(motility) < 50 && (
               <Alert className="border-destructive/50 bg-destructive/10">
                 <AlertCircle className="h-4 w-4 text-destructive" />
                 <AlertDescription className="ml-2 text-sm">
@@ -170,7 +169,7 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
               </Alert>
             )}
 
-            {concentration && concentration < 200 && (
+            {concentration && Number(concentration) < 200 && (
               <Alert className="border-destructive/50 bg-destructive/10">
                 <AlertCircle className="h-4 w-4 text-destructive" />
                 <AlertDescription className="ml-2 text-sm">
@@ -232,7 +231,7 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>Based on your assessment, how would you rate the overall semen quality?</Label>
-            <RadioGroup value={quality} onValueChange={setQuality}>
+            <RadioGroup value={quality} onValueChange={(val) => setQuality(val as 'excellent' | 'good' | 'fair' | 'poor')}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
                 <RadioGroupItem value="excellent" id="quality-excellent" />
                 <Label htmlFor="quality-excellent" className="flex-1 cursor-pointer">

@@ -86,11 +86,14 @@ export function MatingHistoryComparison({
         }
 
         const matingLabel = `${mating.damName} × ${mating.sireName} (${format(new Date(mating.matingDate), 'MMM yyyy')})`;
-        dataMap.get(key)[matingLabel] = reading.value;
+        const dataPoint = dataMap.get(key);
+        if (dataPoint) {
+          dataPoint[matingLabel] = reading.value;
+        }
       });
     });
 
-    return Array.from(dataMap.values()).sort((a, b) => a.day - b.day);
+    return Array.from(dataMap.values()).sort((a, b) => Number(a.day) - Number(b.day));
   };
 
   const chartData = prepareProgesteroneData();

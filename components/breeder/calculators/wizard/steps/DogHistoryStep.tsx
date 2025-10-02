@@ -121,7 +121,7 @@ export function DogHistoryStep({ data, onUpdate, onNext, onPrevious }: DogHistor
                 </p>
               </div>
 
-              {successRate && successRate < 50 && (
+              {successRate && Number(successRate) < 50 && (
                 <Alert className="border-destructive/50 bg-destructive/10">
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <AlertDescription className="ml-2 text-sm">
@@ -130,7 +130,7 @@ export function DogHistoryStep({ data, onUpdate, onNext, onPrevious }: DogHistor
                 </Alert>
               )}
 
-              {successRate && successRate >= 75 && (
+              {successRate && Number(successRate) >= 75 && (
                 <Alert className="border-chart-3/50 bg-chart-3/10">
                   <Info className="h-4 w-4 text-chart-3" />
                   <AlertDescription className="ml-2 text-sm">
