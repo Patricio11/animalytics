@@ -286,7 +286,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            © 2024 Animalytics. All rights reserved. Made with ❤️ for breeders.
+            © 2025 Animalytics. All rights reserved.
           </div>
         </div>
       </footer>
