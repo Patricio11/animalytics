@@ -14,7 +14,7 @@ export function hasPermission(
   const resourcePermissions = rolePermissions[resource as keyof typeof rolePermissions];
   if (!resourcePermissions) return false;
 
-  return resourcePermissions.includes(action);
+  return (resourcePermissions as string[]).includes(action);
 }
 
 export function getUserPermissions(userRole: UserRole) {
