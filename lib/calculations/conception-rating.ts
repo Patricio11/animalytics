@@ -222,7 +222,7 @@ function calculateLitterHistoryFactor(inputs: ConceptionInputs): FactorCalculati
     ? (history.successfulLitters / history.totalLitters) * 100
     : 50; // Default to moderate if not specified
 
-  let score = LITTER_SUCCESS_FACTORS.moderateSuccess;
+  let score: number = LITTER_SUCCESS_FACTORS.moderateSuccess;
   if (successRate >= 80) {
     score = LITTER_SUCCESS_FACTORS.highSuccess;
   } else if (successRate >= 50) {
