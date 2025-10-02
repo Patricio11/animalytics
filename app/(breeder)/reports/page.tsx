@@ -26,9 +26,9 @@ export default function ReportsPage() {
   const availableAnimals = mockAnimals.map(a => ({ id: a.id, name: a.name }));
 
   // Filter tasks by date range
-  const filterByDateRange = <T extends Record<string, unknown>>(items: T[], dateField: string = 'date'): T[] => {
+  const filterByDateRange = <T,>(items: T[], dateField: string = 'date'): T[] => {
     return items.filter(item => {
-      const itemDate = parseISO(item[dateField] as string);
+      const itemDate = parseISO((item as Record<string, unknown>)[dateField] as string);
       return isWithinInterval(itemDate, {
         start: parseISO(filters.startDate),
         end: parseISO(filters.endDate),
