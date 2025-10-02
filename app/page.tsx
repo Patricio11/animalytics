@@ -146,7 +146,7 @@ export default function LandingPage() {
               </Link>
               <Link href="/dashboard">
                 <Button size="lg" variant="outline" className="text-lg px-8 shadow-card backdrop-blur-sm bg-background/80 hover:bg-background/90">
-                  Breeder's Dashboard
+                  Breeder Dashboard
                 </Button>
               </Link>
             </div>
