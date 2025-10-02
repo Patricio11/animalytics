@@ -131,7 +131,8 @@ export function getAgeFactor(age: number): number {
 
 // Get breed rating
 export function getBreedRating(breed: string): number {
-  return mockConceptionFactors.breedRatings[breed as keyof typeof mockConceptionFactors.breedRatings] || mockConceptionFactors.breedRatings['Default'];
+  const ratings = mockConceptionFactors.breedRatings as Record<string, number>;
+  return ratings[breed] || ratings['Default'];
 }
 
 // Calculate overall conception rating
