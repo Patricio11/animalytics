@@ -26,7 +26,7 @@ export default function ReportsPage() {
   const availableAnimals = mockAnimals.map(a => ({ id: a.id, name: a.name }));
 
   // Filter tasks by date range
-  const filterByDateRange = (items: Record<string, unknown>[], dateField: string = 'date') => {
+  const filterByDateRange = <T extends Record<string, unknown>>(items: T[], dateField: string = 'date'): T[] => {
     return items.filter(item => {
       const itemDate = parseISO(item[dateField] as string);
       return isWithinInterval(itemDate, {
@@ -38,9 +38,10 @@ export default function ReportsPage() {
 
   // Events Report Data
   const eventsData = useMemo(() => {
-    let events = mockTasks.filter(task => task.type === 'event');
-    events = filterByDateRange(events) as typeof events;
+    const filteredByType = mockTasks.filter(task => task.type === 'event');
+    const filteredByDate = filterByDateRange(filteredByType);
 
+    let events = filteredByDate;
     if (filters.animalId) {
       events = events.filter(task => 'animalId' in task && task.animalId === filters.animalId);
     }
@@ -55,7 +56,7 @@ export default function ReportsPage() {
   // Feeding Report Data
   const feedingData = useMemo(() => {
     let feeding = mockTasks.filter(task => task.type === 'feeding');
-    feeding = filterByDateRange(feeding) as typeof feeding;
+    feeding = filterByDateRange(feeding);
 
     if (filters.animalId) {
       feeding = feeding.filter(task => 'animalId' in task && task.animalId === filters.animalId);
@@ -67,7 +68,7 @@ export default function ReportsPage() {
   // Exercise Report Data
   const exerciseData = useMemo(() => {
     let exercise = mockTasks.filter(task => task.type === 'exercise');
-    exercise = filterByDateRange(exercise) as typeof exercise;
+    exercise = filterByDateRange(exercise);
 
     if (filters.animalId) {
       exercise = exercise.filter(task => 'animalId' in task && task.animalId === filters.animalId);
@@ -79,7 +80,7 @@ export default function ReportsPage() {
   // Grooming Report Data
   const groomingData = useMemo(() => {
     let grooming = mockTasks.filter(task => task.type === 'grooming');
-    grooming = filterByDateRange(grooming) as typeof grooming;
+    grooming = filterByDateRange(grooming);
 
     if (filters.animalId) {
       grooming = grooming.filter(task => 'animalId' in task && task.animalId === filters.animalId);
@@ -91,7 +92,7 @@ export default function ReportsPage() {
   // Cleaning Report Data
   const cleaningData = useMemo(() => {
     let cleaning = mockTasks.filter(task => task.type === 'cleaning');
-    cleaning = filterByDateRange(cleaning) as typeof cleaning;
+    cleaning = filterByDateRange(cleaning);
 
     return cleaning as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
