@@ -142,55 +142,56 @@ export default function ReportsPage() {
 
   // Column definitions for each report type
   const eventsColumns: ReportColumn[] = [
-    { key: 'date', label: 'Date', render: (val) => formatTableDate(val) },
+    { key: 'date', label: 'Date', render: (val) => formatTableDate(val as string | Date) },
     { key: 'animalName', label: 'Animal' },
-    { key: 'eventType', label: 'Event Type', render: (val) => <span className="capitalize">{val.replace('-', ' ')}</span> },
+    { key: 'eventType', label: 'Event Type', render: (val) => <span className="capitalize">{(val as string).replace('-', ' ')}</span> },
     { key: 'title', label: 'Title' },
     { key: 'time', label: 'Time' },
     { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
   ];
 
   const feedingColumns: ReportColumn[] = [
-    { key: 'date', label: 'Date', render: (val) => formatTableDate(val) },
+    { key: 'date', label: 'Date', render: (val) => formatTableDate(val as string | Date) },
     { key: 'time', label: 'Time' },
     { key: 'animalName', label: 'Animal' },
     { key: 'foodType', label: 'Food Type' },
-    { key: 'amount', label: 'Amount', render: (val, row) => `${val} ${row.unit}` },
+    { key: 'amount', label: 'Amount', render: (val, row) => `${val} ${(row as Record<string, unknown>).unit}` },
     { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
   ];
 
   const exerciseColumns: ReportColumn[] = [
-    { key: 'date', label: 'Date', render: (val) => formatTableDate(val) },
+    { key: 'date', label: 'Date', render: (val) => formatTableDate(val as string | Date) },
     { key: 'animalName', label: 'Animal' },
-    { key: 'exerciseType', label: 'Type', render: (val) => <span className="capitalize">{val}</span> },
+    { key: 'exerciseType', label: 'Type', render: (val) => <span className="capitalize">{val as string}</span> },
     { key: 'duration', label: 'Duration (min)', align: 'center' },
     { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
   ];
 
   const groomingColumns: ReportColumn[] = [
-    { key: 'date', label: 'Date', render: (val) => formatTableDate(val) },
+    { key: 'date', label: 'Date', render: (val) => formatTableDate(val as string | Date) },
     { key: 'animalName', label: 'Animal' },
-    { key: 'groomingType', label: 'Type', render: (val) => <span className="capitalize">{val}</span> },
-    { key: 'frequency', label: 'Frequency', render: (val) => <span className="capitalize">{val}</span> },
+    { key: 'groomingType', label: 'Type', render: (val) => <span className="capitalize">{val as string}</span> },
+    { key: 'frequency', label: 'Frequency', render: (val) => <span className="capitalize">{val as string}</span> },
     { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
   ];
 
   const cleaningColumns: ReportColumn[] = [
-    { key: 'date', label: 'Date', render: (val) => formatTableDate(val) },
-    { key: 'area', label: 'Area', render: (val) => <span className="capitalize">{val.replace('-', ' ')}</span> },
-    { key: 'cleaningType', label: 'Type', render: (val) => <span className="capitalize">{val.replace('-', ' ')}</span> },
-    { key: 'frequency', label: 'Frequency', render: (val) => <span className="capitalize">{val}</span> },
+    { key: 'date', label: 'Date', render: (val) => formatTableDate(val as string | Date) },
+    { key: 'area', label: 'Area', render: (val) => <span className="capitalize">{(val as string).replace('-', ' ')}</span> },
+    { key: 'cleaningType', label: 'Type', render: (val) => <span className="capitalize">{(val as string).replace('-', ' ')}</span> },
+    { key: 'frequency', label: 'Frequency', render: (val) => <span className="capitalize">{val as string}</span> },
     { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
   ];
 
   const puppiesColumns: ReportColumn[] = [
-    { key: 'whelpingDate', label: 'Whelping Date', render: (val) => val ? formatTableDate(val) : 'N/A' },
+    { key: 'whelpingDate', label: 'Whelping Date', render: (val) => val ? formatTableDate(val as string | Date) : 'N/A' },
     { key: 'sireName', label: 'Sire' },
-    { key: 'damName', label: 'Dam', render: (val, row) => mockAnimals.find(a => a.id === row.damId)?.name || 'Unknown' },
-    { key: 'puppies', label: 'Litter Size', align: 'center', render: (val) => val?.length || 0 },
+    { key: 'damName', label: 'Dam', render: (val, row) => mockAnimals.find(a => a.id === (row as Record<string, unknown>).damId)?.name || 'Unknown' },
+    { key: 'puppies', label: 'Litter Size', align: 'center', render: (val) => (val as Array<unknown>)?.length || 0 },
     { key: 'status', label: 'Status', align: 'center', render: (val, row) => {
-      const retained = row.puppies?.filter((p: { status: string }) => p.status === 'retained').length || 0;
-      const sold = row.puppies?.filter((p: { status: string }) => p.status === 'sold').length || 0;
+      const puppies = (row as Record<string, unknown>).puppies as Array<{ status: string }> | undefined;
+      const retained = puppies?.filter((p) => p.status === 'retained').length || 0;
+      const sold = puppies?.filter((p) => p.status === 'sold').length || 0;
       return (
         <div className="flex gap-1 justify-center">
           {retained > 0 && <Badge variant="outline" className="text-xs">Retained: {retained}</Badge>}
