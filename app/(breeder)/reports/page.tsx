@@ -50,7 +50,7 @@ export default function ReportsPage() {
       events = events.filter(task => task.type === 'event' && task.eventType === filters.eventType);
     }
 
-    return events as Record<string, unknown>[];
+    return events as unknown as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Feeding Report Data
@@ -62,7 +62,7 @@ export default function ReportsPage() {
       feeding = feeding.filter(task => 'animalId' in task && task.animalId === filters.animalId);
     }
 
-    return feeding as Record<string, unknown>[];
+    return feeding as unknown as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Exercise Report Data
@@ -74,7 +74,7 @@ export default function ReportsPage() {
       exercise = exercise.filter(task => 'animalId' in task && task.animalId === filters.animalId);
     }
 
-    return exercise as Record<string, unknown>[];
+    return exercise as unknown as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Grooming Report Data
@@ -86,7 +86,7 @@ export default function ReportsPage() {
       grooming = grooming.filter(task => 'animalId' in task && task.animalId === filters.animalId);
     }
 
-    return grooming as Record<string, unknown>[];
+    return grooming as unknown as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Cleaning Report Data
@@ -94,7 +94,7 @@ export default function ReportsPage() {
     let cleaning = mockTasks.filter(task => task.type === 'cleaning');
     cleaning = filterByDateRange(cleaning);
 
-    return cleaning as Record<string, unknown>[];
+    return cleaning as unknown as Record<string, unknown>[];
   }, [filters, filterByDateRange]);
 
   // Puppies Report Data
@@ -110,7 +110,7 @@ export default function ReportsPage() {
         start: parseISO(filters.startDate),
         end: parseISO(filters.endDate),
       });
-    }) as Record<string, unknown>[];
+    }) as unknown as Record<string, unknown>[];
   }, [filters]);
 
   // Mating History Data
