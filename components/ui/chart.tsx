@@ -116,12 +116,10 @@ interface ChartTooltipContentProps extends React.HTMLAttributes<HTMLDivElement> 
   label?: React.ReactNode;
   labelFormatter?: (value: unknown, payload: unknown[]) => React.ReactNode;
   labelClassName?: string;
-  formatter?: (value: unknown, name: string, item: unknown, index: number) => React.ReactNode;
+  formatter?: (value: unknown, name: string, item: unknown, index: number, payload: unknown) => React.ReactNode;
   color?: string;
   nameKey?: string;
   labelKey?: string;
-  color?: string;
-  nameKey?: string;
 }
 
 const ChartTooltipContent = React.forwardRef<
@@ -253,9 +251,13 @@ const ChartTooltipContent = React.forwardRef<
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
-                      {item.value && (
+                      {item.value != null && (
                         <span className="font-mono font-medium tabular-nums text-foreground">
-                          {item.value.toLocaleString()}
+                          {typeof item.value === 'number'
+                            ? item.value.toLocaleString()
+                            : typeof item.value === 'string'
+                            ? item.value
+                            : String(item.value)}
                         </span>
                       )}
                     </div>
