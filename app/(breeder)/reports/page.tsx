@@ -204,33 +204,33 @@ export default function ReportsPage() {
   // Calculate summaries
   const feedingSummary = [
     { label: 'Total Feedings', value: feedingData.length },
-    { label: 'Completed', value: feedingData.filter(f => f.completed).length, color: 'text-chart-3' },
-    { label: 'Pending', value: feedingData.filter(f => !f.completed).length, color: 'text-chart-4' },
+    { label: 'Completed', value: feedingData.filter(f => (f as Record<string, unknown>).completed).length, color: 'text-chart-3' },
+    { label: 'Pending', value: feedingData.filter(f => !(f as Record<string, unknown>).completed).length, color: 'text-chart-4' },
   ];
 
   const exerciseSummary = [
     { label: 'Total Sessions', value: exerciseData.length },
-    { label: 'Total Minutes', value: exerciseData.reduce((sum, e) => sum + ('duration' in e ? e.duration : 0), 0) },
-    { label: 'Completed', value: exerciseData.filter(e => e.completed).length, color: 'text-chart-3' },
+    { label: 'Total Minutes', value: exerciseData.reduce((sum, e) => sum + (Number((e as Record<string, unknown>).duration) || 0), 0) },
+    { label: 'Completed', value: exerciseData.filter(e => (e as Record<string, unknown>).completed).length, color: 'text-chart-3' },
   ];
 
   const groomingSummary = [
     { label: 'Total Sessions', value: groomingData.length },
-    { label: 'Completed', value: groomingData.filter(g => g.completed).length, color: 'text-chart-3' },
-    { label: 'Pending', value: groomingData.filter(g => !g.completed).length, color: 'text-chart-4' },
+    { label: 'Completed', value: groomingData.filter(g => (g as Record<string, unknown>).completed).length, color: 'text-chart-3' },
+    { label: 'Pending', value: groomingData.filter(g => !(g as Record<string, unknown>).completed).length, color: 'text-chart-4' },
   ];
 
   const cleaningSummary = [
     { label: 'Total Tasks', value: cleaningData.length },
-    { label: 'Completed', value: cleaningData.filter(c => c.completed).length, color: 'text-chart-3' },
-    { label: 'Pending', value: cleaningData.filter(c => !c.completed).length, color: 'text-chart-4' },
+    { label: 'Completed', value: cleaningData.filter(c => (c as Record<string, unknown>).completed).length, color: 'text-chart-3' },
+    { label: 'Pending', value: cleaningData.filter(c => !(c as Record<string, unknown>).completed).length, color: 'text-chart-4' },
   ];
 
   const puppiesSummary = [
     { label: 'Total Litters', value: puppiesData.length },
-    { label: 'Total Puppies', value: puppiesData.reduce((sum, l) => sum + (l.puppies?.length || 0), 0) },
-    { label: 'Retained', value: puppiesData.reduce((sum, l) => sum + (l.puppies?.filter(p => p.status === 'retained').length || 0), 0), color: 'text-chart-4' },
-    { label: 'Sold', value: puppiesData.reduce((sum, l) => sum + (l.puppies?.filter(p => p.status === 'sold').length || 0), 0), color: 'text-chart-3' },
+    { label: 'Total Puppies', value: puppiesData.reduce((sum, l) => sum + (((l as Record<string, unknown>).puppies as Array<unknown>)?.length || 0), 0) },
+    { label: 'Retained', value: puppiesData.reduce((sum, l) => sum + (((l as Record<string, unknown>).puppies as Array<{ status: string }>)?.filter(p => p.status === 'retained').length || 0), 0), color: 'text-chart-4' },
+    { label: 'Sold', value: puppiesData.reduce((sum, l) => sum + (((l as Record<string, unknown>).puppies as Array<{ status: string }>)?.filter(p => p.status === 'sold').length || 0), 0), color: 'text-chart-3' },
   ];
 
   const tabConfig = [
