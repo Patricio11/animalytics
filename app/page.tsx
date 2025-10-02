@@ -144,9 +144,11 @@ export default function LandingPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-lg px-8 shadow-card backdrop-blur-sm bg-background/80 hover:bg-background/90">
-                Watch Demo
-              </Button>
+              <Link href="/dashboard">
+                <Button size="lg" variant="outline" className="text-lg px-8 shadow-card backdrop-blur-sm bg-background/80 hover:bg-background/90">
+                  Breeder's Dashboard
+                </Button>
+              </Link>
             </div>
 
             {/* Stats */}
