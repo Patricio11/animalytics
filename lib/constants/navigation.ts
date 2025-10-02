@@ -2,7 +2,7 @@ import {
   Home, Heart, Activity, Calculator, ShoppingBag, Settings,
   Users, Shield, BarChart3, Calendar, Stethoscope,
   FileText, Trophy, UserCheck,
-  PresentationChart, Database
+  Presentation, Database
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { UserRole, USER_ROLES } from './roles';
@@ -224,6 +224,6 @@ export const QUICK_ACTIONS: Record<UserRole, NavigationItem[]> = {
     { name: 'Create Event', href: '/(event-organizer)/events/create', icon: Calendar },
     { name: 'Check Registrations', href: '/(event-organizer)/registrations', icon: UserCheck },
     { name: 'Enter Results', href: '/(event-organizer)/results/new', icon: Trophy },
-    { name: 'Event Analytics', href: '/(event-organizer)/analytics', icon: PresentationChart },
+    { name: 'Event Analytics', href: '/(event-organizer)/analytics', icon: Presentation },
   ],
 };
