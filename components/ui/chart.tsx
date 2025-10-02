@@ -106,6 +106,7 @@ interface ChartTooltipContentProps extends React.HTMLAttributes<HTMLDivElement> 
   active?: boolean;
   payload?: Array<{
     dataKey: string;
+    name?: string;
     value: unknown;
     payload: Record<string, unknown>;
     color?: string;
@@ -277,11 +278,16 @@ const ChartLegend = RechartsPrimitive.Legend
 
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
-      hideIcon?: boolean
-      nameKey?: string
-    }
+  React.ComponentProps<"div"> & {
+    payload?: Array<{
+      value: string;
+      dataKey?: string;
+      color?: string;
+    }>;
+    verticalAlign?: "top" | "bottom";
+    hideIcon?: boolean;
+    nameKey?: string;
+  }
 >(
   (
     { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
