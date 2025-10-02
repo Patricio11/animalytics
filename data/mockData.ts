@@ -460,6 +460,7 @@ export const mockUser: User = {
     emailUpdates: true,
     darkMode: false,
     language: 'en',
+    timezone: 'UTC',
   },
   subscription: {
     plan: 'premium',
