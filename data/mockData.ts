@@ -467,6 +467,11 @@ export const mockUser: User = {
     expiresAt: '2024-12-31',
     features: ['unlimited_animals', 'advanced_analytics', 'marketplace_listings', 'priority_support'],
   },
+  permissions: ['view_animals', 'manage_animals', 'view_marketplace', 'create_listings', 'use_calculators', 'manage_tasks'],
+  isVerified: true,
+  lastLogin: '2024-10-01T10:30:00Z',
+  createdAt: '2024-01-15T08:00:00Z',
+  updatedAt: '2024-10-01T10:30:00Z',
 };
 
 export const mockDashboardStats: DashboardStats = {
