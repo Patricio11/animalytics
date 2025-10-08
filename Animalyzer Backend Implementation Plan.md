@@ -189,8 +189,8 @@ import { auth } from '@/lib/auth/config';
 const publicRoutes = ['/', '/auth/signin', '/auth/signup', '/auth/forgot-password'];
 const roleRoutes = {
   breeder: ['/dashboard', '/animals', '/calculators', '/tasks'],
-  veterinarian: ['/vet-dashboard', '/appointments', '/records'],
-  admin: ['/admin-dashboard', '/users', '/system'],
+  veterinarian: ['/dashboard', '/appointments', '/records'],
+  admin: ['/dashboard', '/users', '/system'],
   event_organizer: ['/events', '/registrations'],
 };
 
