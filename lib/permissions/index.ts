@@ -1,69 +1,49 @@
-import { UserRole, ROLE_PERMISSIONS } from '@/lib/constants/roles';
+/**
+ * Permission System
+ *
+ * This module provides a comprehensive permission system for role-based access control.
+ *
+ * Usage:
+ *
+ * Client-side (components):
+ * ```typescript
+ * import { usePermissions, PERMISSIONS } from '@/lib/permissions';
+ *
+ * function MyComponent() {
+ *   const { hasPermission, canCreate } = usePermissions();
+ *
+ *   if (hasPermission(PERMISSIONS.ANIMALS_CREATE)) {
+ *     return <CreateButton />;
+ *   }
+ *
+ *   if (canCreate('animals')) {
+ *     return <AddAnimalButton />;
+ *   }
+ * }
+ * ```
+ *
+ * Server-side (server components, API routes):
+ * ```typescript
+ * import { requirePermission, hasPermission, PERMISSIONS } from '@/lib/permissions/server';
+ *
+ * export default async function ProtectedPage() {
+ *   await requirePermission(PERMISSIONS.ANIMALS_CREATE);
+ *   return <div>Protected content</div>;
+ * }
+ *
+ * // In API routes
+ * export async function POST(request: Request) {
+ *   const { allowed } = await checkPermission(PERMISSIONS.ANIMALS_CREATE);
+ *   if (!allowed) {
+ *     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+ *   }
+ * }
+ * ```
+ */
 
-export type Permission = string;
-export type Resource = keyof typeof ROLE_PERMISSIONS[UserRole];
+// Export definitions
+export { PERMISSIONS, ROLE_PERMISSIONS, type Permission } from './definitions';
+export { getPermissionsForRole, roleHasPermission } from './definitions';
 
-export function hasPermission(
-  userRole: UserRole,
-  resource: string,
-  action: string
-): boolean {
-  const rolePermissions = ROLE_PERMISSIONS[userRole];
-  if (!rolePermissions) return false;
-
-  const resourcePermissions = rolePermissions[resource as keyof typeof rolePermissions];
-  if (!resourcePermissions) return false;
-
-  return (resourcePermissions as readonly string[]).includes(action);
-}
-
-export function getUserPermissions(userRole: UserRole) {
-  return ROLE_PERMISSIONS[userRole] || {};
-}
-
-export function canAccessRoute(userRole: UserRole, route: string): boolean {
-  // Define route access based on role
-  const routePermissions: Record<string, UserRole[]> = {
-    '/(breeder)': ['breeder'],
-    '/(admin)': ['admin'],
-    '/(vet)': ['vet'],
-    '/(event-organizer)': ['event_organizer'],
-    '/auth': ['breeder', 'admin', 'vet', 'event_organizer'], // All roles can access auth
-  };
-
-  for (const [routePattern, allowedRoles] of Object.entries(routePermissions)) {
-    if (route.startsWith(routePattern)) {
-      return allowedRoles.includes(userRole);
-    }
-  }
-
-  return false;
-}
-
-export class PermissionChecker {
-  constructor(private userRole: UserRole) {}
-
-  can(resource: string, action: string): boolean {
-    return hasPermission(this.userRole, resource, action);
-  }
-
-  canRead(resource: string): boolean {
-    return this.can(resource, 'read');
-  }
-
-  canCreate(resource: string): boolean {
-    return this.can(resource, 'create');
-  }
-
-  canUpdate(resource: string): boolean {
-    return this.can(resource, 'update');
-  }
-
-  canDelete(resource: string): boolean {
-    return this.can(resource, 'delete');
-  }
-
-  canManage(resource: string): boolean {
-    return this.can(resource, 'manage');
-  }
-}
+// Export client hooks
+export { usePermissions, useResourcePermissions } from './hooks';

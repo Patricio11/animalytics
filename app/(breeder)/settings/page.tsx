@@ -10,10 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Settings as SettingsIcon, User, Bell, Shield, Palette, Database, Mail, Phone, MapPin, Camera } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Shield, Palette, Database, Mail, Phone, MapPin, Camera, Globe, DollarSign } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth/client";
+import { CURRENCIES } from "@/lib/utils/currency";
 
 export default function Settings() {
+  const { user } = useAuth();
+
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -24,8 +28,8 @@ export default function Settings() {
   });
 
   const [profile, setProfile] = useState({
-    name: "John Breeder",
-    email: "john@example.com",
+    name: user?.name || "John Breeder",
+    email: user?.email || "john@example.com",
     phone: "+61 4 1234 5678",
     kennel: "Premium Kennels",
     location: "Melbourne, VIC",
@@ -52,7 +56,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 bg-surface shadow-card">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 gap-1 bg-surface shadow-card">
           <TabsTrigger value="profile" data-testid="tab-profile" className="text-xs sm:text-sm">
             <User className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Profile</span>
@@ -60,6 +64,10 @@ export default function Settings() {
           <TabsTrigger value="notifications" data-testid="tab-notifications" className="text-xs sm:text-sm">
             <Bell className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Notifications</span>
+          </TabsTrigger>
+          <TabsTrigger value="regional" data-testid="tab-regional" className="text-xs sm:text-sm">
+            <Globe className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Regional</span>
           </TabsTrigger>
           <TabsTrigger value="privacy" data-testid="tab-privacy" className="text-xs sm:text-sm">
             <Shield className="w-4 h-4 sm:mr-2" />
@@ -290,6 +298,139 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+
+          {/* Regional Settings */}
+          <TabsContent value="regional" className="space-y-6">
+            <Card className="shadow-card bg-surface border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-primary" />
+                  Regional Preferences
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Currency & Locale */}
+                <div className="space-y-4">
+                  <h3 className="font-medium text-foreground">Currency & Locale</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currency">Currency</Label>
+                      <Select defaultValue="USD">
+                        <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(CURRENCIES).map(([code, info]) => (
+                            <SelectItem key={code} value={code}>
+                              {info.symbol} {code} - {info.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="timezone">Timezone</Label>
+                      <Select defaultValue="UTC">
+                        <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="UTC">UTC</SelectItem>
+                          <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                          <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                          <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                          <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                          <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                          <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
+                          <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                          <SelectItem value="Australia/Sydney">Sydney (AEST)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Date & Time Format */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="font-medium text-foreground">Date & Time Format</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dateFormat">Date Format</Label>
+                      <Select defaultValue="MM/DD/YYYY">
+                        <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MM/DD/YYYY">MM/DD/YYYY (US)</SelectItem>
+                          <SelectItem value="DD/MM/YYYY">DD/MM/YYYY (UK/EU)</SelectItem>
+                          <SelectItem value="YYYY-MM-DD">YYYY-MM-DD (ISO)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="timeFormat">Time Format</Label>
+                      <Select defaultValue="12h">
+                        <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="12h">12-hour (AM/PM)</SelectItem>
+                          <SelectItem value="24h">24-hour</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Measurement Units */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="font-medium text-foreground">Measurement Units</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="measurementUnit">Unit System</Label>
+                    <Select defaultValue="metric">
+                      <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="metric">Metric (kg, cm, °C)</SelectItem>
+                        <SelectItem value="imperial">Imperial (lbs, inches, °F)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Weight, height, and temperature will be displayed in your preferred units
+                    </p>
+                  </div>
+                </div>
+
+                {/* Language */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="font-medium text-foreground">Language</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="language">Display Language</Label>
+                    <Select defaultValue="en">
+                      <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="es">Español (Spanish)</SelectItem>
+                        <SelectItem value="pt">Português (Portuguese)</SelectItem>
+                        <SelectItem value="fr">Français (French)</SelectItem>
+                        <SelectItem value="de">Deutsch (German)</SelectItem>
+                        <SelectItem value="af">Afrikaans</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4 border-t border-primary/10">
+                  <Button onClick={() => handleSave('regional')} className="bg-gradient-brand hover:opacity-90 shadow-card">
+                    Save Changes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Privacy Settings */}
           <TabsContent value="privacy" className="space-y-6">

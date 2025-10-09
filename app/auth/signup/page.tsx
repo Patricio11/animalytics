@@ -2,26 +2,35 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PawPrint, Eye, EyeOff, User, Mail, Lock } from "lucide-react";
+import { PawPrint, Eye, EyeOff, User, Mail, Lock, AlertCircle, Stethoscope, Users, Calendar } from "lucide-react";
+import { authClient } from "@/lib/auth/client";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SignUp() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    role: "breeder" as "breeder" | "veterinarian" | "admin" | "event_organizer",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -30,35 +39,80 @@ export default function SignUp() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
     // Basic validation
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-      console.log("Please fill in all fields");
+      setError("Please fill in all fields");
       setIsLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      console.log("Passwords do not match");
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
       setIsLoading(false);
       return;
     }
 
     if (!agreeTerms) {
-      console.log("Please agree to the terms and conditions");
+      setError("Please agree to the terms and conditions");
       setIsLoading(false);
       return;
     }
 
-    // Mock registration - replace with real auth logic
-    setTimeout(() => {
-      console.log("Account created successfully");
+    try {
+      await authClient.signUp.email({
+        email: formData.email,
+        password: formData.password,
+        name: `${formData.firstName} ${formData.lastName}`,
+        callbackURL: "/dashboard",
+      });
+
+      toast({
+        title: "Success",
+        description: "Account created successfully",
+      });
+
+      // Redirect to dashboard
+      router.push("/dashboard");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create account. Please try again.";
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleGoogleSignUp = () => {
-    console.log("Google sign-up clicked");
+  const handleGoogleSignUp = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+    } catch (err) {
+      const errorMessage = "Google sign-up is not available at the moment";
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -118,6 +172,51 @@ export default function SignUp() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">I am a...</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value) => handleInputChange("role", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="breeder">
+                        <div className="flex items-center">
+                          <PawPrint className="mr-2 h-4 w-4" />
+                          Breeder
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="veterinarian">
+                        <div className="flex items-center">
+                          <Stethoscope className="mr-2 h-4 w-4" />
+                          Veterinarian
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="event_organizer">
+                        <div className="flex items-center">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Event Organizer
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        <div className="flex items-center">
+                          <Users className="mr-2 h-4 w-4" />
+                          Administrator
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First name</Label>

@@ -1,0 +1,60 @@
+{
+  "title": "My Animals",
+  "addAnimal": "Add Animal",
+  "viewProfile": "View Profile",
+  "editProfile": "Edit Profile",
+  "deleteAnimal": "Delete Animal",
+  "animalProfile": "Animal Profile",
+  "breed": "Breed",
+  "sex": "Sex",
+  "male": "Male",
+  "female": "Female",
+  "dateOfBirth": "Date of Birth",
+  "age": "Age",
+  "weight": "Weight",
+  "height": "Height",
+  "color": "Color",
+  "markings": "Markings",
+  "microchipNumber": "Microchip Number",
+  "registrationNumber": "Registration Number",
+  "pedigree": "Pedigree",
+  "sire": "Sire",
+  "dam": "Dam",
+  "health": "Health",
+  "vaccinations": "Vaccinations",
+  "healthRecords": "Health Records",
+  "breeding": "Breeding",
+  "litters": "Litters",
+  "offspring": "Offspring",
+  "matings": "Matings",
+  "photos": "Photos",
+  "documents": "Documents",
+  "notes": "Notes",
+  "tabs": {
+    "profile": "Profile",
+    "photosDocs": "Photos & Docs",
+    "feeding": "Feeding",
+    "semen": "Semen",
+    "seasons": "Seasons",
+    "litters": "Litter Details",
+    "reminders": "Reminders"
+  },
+  "filters": {
+    "all": "All",
+    "dogs": "Dogs",
+    "bitches": "Bitches",
+    "puppies": "Puppies",
+    "retired": "Retired"
+  },
+  "stats": {
+    "total": "Total Animals",
+    "active": "Active Breeders",
+    "puppies": "Puppies",
+    "litters": "Litters This Year"
+  },
+  "empty": {
+    "title": "No animals yet",
+    "description": "Start building your breeding portfolio by adding your first animal",
+    "action": "Add your first animal"
+  }
+}

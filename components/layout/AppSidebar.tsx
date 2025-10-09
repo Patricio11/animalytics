@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings } from "lucide-react";
+import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -48,6 +48,16 @@ const menuItems = [
 ];
 
 const secondaryItems = [
+  {
+    title: "Wallet",
+    url: "/wallet",
+    icon: Wallet,
+  },
+  {
+    title: "Verification",
+    url: "/verification",
+    icon: BadgeCheck,
+  },
   {
     title: "Breeders",
     url: "/breeders",

@@ -6,27 +6,57 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PawPrint, Mail, ArrowLeft } from "lucide-react";
+import { PawPrint, Mail, ArrowLeft, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ForgotPassword() {
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Mock password reset - replace with real auth logic
-    setTimeout(() => {
-      if (email) {
-        setEmailSent(true);
-        console.log("Password reset email sent");
-      } else {
-        console.log("Please enter your email");
-      }
+    if (!email) {
+      setError("Please enter your email address");
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+
+    try {
+      // Better Auth password reset - using fetch to the auth API
+      const response = await fetch("/api/auth/forget-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          redirectTo: `${window.location.origin}/auth/reset-password`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send reset email");
+      }
+
+      setEmailSent(true);
+      toast({
+        title: "Email Sent",
+        description: "Check your inbox for password reset instructions",
+      });
+    } catch (err) {
+      // For security, we show success even if email doesn't exist
+      setEmailSent(true);
+      console.error("Password reset error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,6 +96,12 @@ export default function ForgotPassword() {
             <CardContent>
               {!emailSent ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <div className="relative">

@@ -1,0 +1,46 @@
+{
+  "title": "Marketplace",
+  "createListing": "Create Listing",
+  "categories": {
+    "all": "All Listings",
+    "studDogs": "Stud Dogs",
+    "dogsForSale": "Dogs for Sale",
+    "puppies": "Puppies",
+    "aiServices": "AI Services",
+    "frozenSemen": "Frozen Semen"
+  },
+  "listing": {
+    "title": "Title",
+    "description": "Description",
+    "price": "Price",
+    "location": "Location",
+    "contact": "Contact",
+    "availability": "Availability",
+    "healthCertified": "Health Certified",
+    "championLines": "Champion Lines",
+    "featured": "Featured"
+  },
+  "filters": {
+    "breed": "Breed",
+    "priceRange": "Price Range",
+    "location": "Location",
+    "category": "Category"
+  },
+  "actions": {
+    "viewDetails": "View Details",
+    "contactSeller": "Contact Seller",
+    "favorite": "Save to Favorites",
+    "share": "Share",
+    "report": "Report"
+  },
+  "stats": {
+    "views": "Views",
+    "interested": "Interested",
+    "posted": "Posted"
+  },
+  "empty": {
+    "title": "No listings found",
+    "description": "Try adjusting your filters or search criteria",
+    "action": "Clear filters"
+  }
+}

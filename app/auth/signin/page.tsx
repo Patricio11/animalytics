@@ -2,37 +2,77 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { PawPrint, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { PawPrint, Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
+import { authClient } from "@/lib/auth/client";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function SignIn() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Mock authentication - replace with real auth logic
-    setTimeout(() => {
-      if (email && password) {
-        // Redirect to dashboard would happen here
-        console.log("Sign in successful");
-      } else {
-        console.log("Please fill in all fields");
-      }
+    try {
+      await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/dashboard",
+      });
+
+      toast({
+        title: "Success",
+        description: "Signed in successfully",
+      });
+
+      // Redirect to dashboard
+      router.push("/dashboard");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Invalid email or password";
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleGoogleSignIn = () => {
-    console.log("Google sign-in clicked");
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+    } catch (err) {
+      const errorMessage = "Google sign-in is not available at the moment";
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,6 +103,12 @@ export default function SignIn() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
