@@ -7,3 +7,4 @@ export * from './animals';
 export * from './matings';
 export * from './tasks';
 export * from './reports';
+export * from './marketplace';
