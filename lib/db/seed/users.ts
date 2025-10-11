@@ -14,7 +14,7 @@ export const TEST_USERS = {
   },
   veterinarian: {
     email: 'vet@test.com',
-    password: 'vet123',
+    password: 'veterinarian123',
     name: 'Dr. Sarah Johnson',
     role: 'veterinarian' as const,
   },

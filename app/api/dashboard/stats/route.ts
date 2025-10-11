@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { animals, litters, frozenSemen } from '@/lib/db/schema/animals';
 import { matings } from '@/lib/db/schema/matings';
 import { tasks } from '@/lib/db/schema/tasks';
-import { marketplaceListings } from '@/lib/db/schema/marketplace';
+import { listings } from '@/lib/db/schema/marketplace';
 import { auth } from '@/lib/auth/config';
 import {
   successResponse,

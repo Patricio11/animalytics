@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DailyReadingInput } from './DailyReadingInput';
 import { LabSelectorCard } from './LabSelectorCard';
 import { ProgesteroneRatingDisplay } from './ProgesteroneRatingDisplay';
-import { Calculator, Save, RotateCcw } from 'lucide-react';
+import { Calculator, Save, RotateCcw, Info, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useProgesteroneStore } from '@/lib/stores/progesterone-store';
 import {
   Laboratory,
   Unit,
@@ -29,20 +31,54 @@ interface DailyReading {
 export function ProgesteroneInputForm() {
   const { toast } = useToast();
 
-  // Testing parameters state
-  const [laboratory, setLaboratory] = useState<Laboratory>('VIDAS');
-  const [unit, setUnit] = useState<Unit>('nanograms');
-  const [breedingMethod, setBreedingMethod] = useState<BreedingMethod>('natural_ai');
+  // Zustand progesterone store
+  const progesteroneStore = useProgesteroneStore();
+
+  // Initialize from Zustand store or use defaults
+  const [laboratory, setLaboratory] = useState<Laboratory>(progesteroneStore.laboratory || 'VIDAS');
+  const [unit, setUnit] = useState<Unit>(progesteroneStore.unit || 'nanograms');
+  const [breedingMethod, setBreedingMethod] = useState<BreedingMethod>(progesteroneStore.breedingMethod || 'natural_ai');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Convert Zustand readings to local state format
+  const initializeReadings = (): DailyReading[] => {
+    if (progesteroneStore.readings.length > 0) {
+      // Create array with all 6 days
+      const allDays: DailyReading[] = [
+        { day: 0, value: '', date: undefined },
+        { day: 1, value: '', date: undefined },
+        { day: 2, value: '', date: undefined },
+        { day: 3, value: '', date: undefined },
+        { day: 4, value: '', date: undefined },
+        { day: 5, value: '', date: undefined },
+      ];
+
+      // Fill in saved readings
+      progesteroneStore.readings.forEach(reading => {
+        if (reading.day >= 0 && reading.day <= 5) {
+          allDays[reading.day] = {
+            day: reading.day as DayNumber,
+            value: reading.value.toString(),
+            date: new Date(reading.date)
+          };
+        }
+      });
+
+      return allDays;
+    }
+
+    return [
+      { day: 0, value: '', date: undefined },
+      { day: 1, value: '', date: undefined },
+      { day: 2, value: '', date: undefined },
+      { day: 3, value: '', date: undefined },
+      { day: 4, value: '', date: undefined },
+      { day: 5, value: '', date: undefined },
+    ];
+  };
 
   // Daily readings state (6 days: 0-5)
-  const [readings, setReadings] = useState<DailyReading[]>([
-    { day: 0, value: '', date: undefined },
-    { day: 1, value: '', date: undefined },
-    { day: 2, value: '', date: undefined },
-    { day: 3, value: '', date: undefined },
-    { day: 4, value: '', date: undefined },
-    { day: 5, value: '', date: undefined },
-  ]);
+  const [readings, setReadings] = useState<DailyReading[]>(initializeReadings);
 
   // Calculation results state
   const [calculationResult, setCalculationResult] = useState<{
@@ -76,6 +112,19 @@ export function ProgesteroneInputForm() {
   useEffect(() => {
     calculateRating();
   }, [readings, laboratory, unit, breedingMethod]);
+
+  // Sync changes to Zustand store with auto-save
+  useEffect(() => {
+    const syncToStore = () => {
+      progesteroneStore.setLaboratory(laboratory);
+      progesteroneStore.setUnit(unit);
+      progesteroneStore.setBreedingMethod(breedingMethod);
+      setLastSaved(new Date());
+    };
+
+    const debounce = setTimeout(syncToStore, 500);
+    return () => clearTimeout(debounce);
+  }, [laboratory, unit, breedingMethod]);
 
   const validateReading = (value: string, day: DayNumber): { isValid: boolean; message?: string } => {
     if (!value || value.trim() === '') {
@@ -128,6 +177,20 @@ export function ProgesteroneInputForm() {
       r.day === day ? { ...r, date } : r
     );
     setReadings(newReadings);
+
+    // Auto-save to Zustand when date is set and value exists
+    const reading = newReadings.find(r => r.day === day);
+    if (reading && reading.value && reading.date) {
+      const numValue = parseFloat(reading.value);
+      if (!isNaN(numValue)) {
+        progesteroneStore.addReading({
+          day: reading.day,
+          value: numValue,
+          date: reading.date
+        });
+        setLastSaved(new Date());
+      }
+    }
   };
 
   const calculateRating = () => {
@@ -198,16 +261,18 @@ export function ProgesteroneInputForm() {
       return;
     }
 
-    // TODO: Persist to backend/mating record
-    // For now, save to local storage
-    localStorage.setItem('progesterone_readings', JSON.stringify({
-      laboratory,
-      unit,
-      breedingMethod,
-      readings: filledReadings,
-      calculationResult,
-      savedAt: new Date().toISOString()
-    }));
+    // Save all readings to Zustand store
+    filledReadings.forEach(reading => {
+      if (reading.date) {
+        progesteroneStore.addReading({
+          day: reading.day,
+          value: parseFloat(reading.value),
+          date: reading.date
+        });
+      }
+    });
+
+    setLastSaved(new Date());
 
     toast({
       title: "Readings saved",
@@ -226,6 +291,7 @@ export function ProgesteroneInputForm() {
     ]);
     setValidationErrors({});
     setCalculationResult(null);
+    progesteroneStore.reset();
 
     toast({
       title: "Form reset",
@@ -234,25 +300,55 @@ export function ProgesteroneInputForm() {
   };
 
   const hasAnyReadings = readings.some(r => r.value && r.value.trim() !== '');
+  const hasSavedProgress = progesteroneStore.readings.length > 0;
+
+  // Format last saved time
+  const getLastSavedText = () => {
+    if (!lastSaved) return null;
+    const seconds = Math.floor((Date.now() - lastSaved.getTime()) / 1000);
+    if (seconds < 60) return `Saved ${seconds} seconds ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `Saved ${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return lastSaved.toLocaleTimeString();
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <Card className="shadow-card border-primary/10 bg-gradient-subtle">
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-brand shadow-md">
-              <Calculator className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-xl">Progesterone Calculator</div>
-              <div className="text-sm font-normal text-muted-foreground mt-1">
-                Enter daily progesterone readings to calculate optimal breeding timing
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-brand shadow-md">
+                <Calculator className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="text-xl">Progesterone Calculator</div>
+                <div className="text-sm font-normal text-muted-foreground mt-1">
+                  Enter daily progesterone readings to calculate optimal breeding timing
+                </div>
               </div>
             </div>
+            {lastSaved && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                {getLastSavedText()}
+              </div>
+            )}
           </CardTitle>
         </CardHeader>
       </Card>
+
+      {/* Saved Progress Alert */}
+      {hasSavedProgress && (
+        <Alert className="border-chart-3/50 bg-chart-3/10">
+          <Info className="h-4 w-4 text-chart-3" />
+          <AlertDescription className="ml-2">
+            You have {progesteroneStore.readings.length} saved progesterone reading(s).
+            Continue adding more readings or click Reset to start fresh.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Input Form */}
@@ -309,7 +405,7 @@ export function ProgesteroneInputForm() {
             <Button
               variant="outline"
               onClick={handleReset}
-              disabled={!hasAnyReadings}
+              disabled={!hasAnyReadings && !hasSavedProgress}
               className="hover:bg-primary/10 hover:border-primary"
             >
               <RotateCcw className="w-4 h-4 mr-2" />

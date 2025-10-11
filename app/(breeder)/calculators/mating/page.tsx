@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,58 +8,80 @@ import { Input } from "@/components/ui/input";
 import { MatingCard } from "@/components/breeder/calculators/MatingCard";
 import { MatingEmptyState } from "@/components/breeder/calculators/MatingEmptyState";
 import { AnimalPickerDialog } from "@/components/breeder/calculators/AnimalPickerDialog";
-import { Heart, Plus, Search, Filter } from "lucide-react";
-import { mockMatingRecords, mockAnimals } from "@/data/mockData";
+import { Heart, Plus, Search, Filter, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMatings, useCreateMating } from "@/lib/api/queries/matings";
+import { useAnimals } from "@/lib/api/queries/animals";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { APIMating, APIAnimal } from "@/lib/api/types";
 
 export default function MatingCalculatorPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [showAnimalPicker, setShowAnimalPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // TODO: Replace with actual data fetching
-  const matings = mockMatingRecords;
-  const animals = mockAnimals;
+  // Fetch data from API
+  const { data: matingsData, isLoading: matingsLoading, isError: matingsError } = useMatings();
+  const { data: animalsData, isLoading: animalsLoading } = useAnimals();
+  const createMatingMutation = useCreateMating();
 
   // Filter matings based on search
-  const filteredMatings = matings.filter(mating => {
-    if (!searchQuery) return true;
+  const filteredMatings = useMemo(() => {
+    if (!matingsData) return [];
 
-    const bitch = animals.find(a => a.id === mating.bitchId);
-    const dog = animals.find(a => a.id === mating.dogId);
+    return matingsData.filter((mating: APIMating) => {
+      if (!searchQuery) return true;
 
-    const query = searchQuery.toLowerCase();
-    return (
-      bitch?.name.toLowerCase().includes(query) ||
-      dog?.name.toLowerCase().includes(query) ||
-      bitch?.breed.toLowerCase().includes(query) ||
-      dog?.breed.toLowerCase().includes(query)
-    );
-  });
+      const query = searchQuery.toLowerCase();
+      return (
+        mating.bitch?.name?.toLowerCase().includes(query) ||
+        mating.dog?.name?.toLowerCase().includes(query) ||
+        mating.bitch?.breed?.name?.toLowerCase().includes(query) ||
+        mating.dog?.breed?.name?.toLowerCase().includes(query)
+      );
+    });
+  }, [matingsData, searchQuery]);
 
   const handleCreateMating = () => {
     setShowAnimalPicker(true);
   };
 
-  const handleAnimalSelectionComplete = (
-    _bitchId: string,
-    _dogId: string | null,
-    _frozenSemenId: string | null
+  const handleAnimalSelectionComplete = async (
+    bitchId: string,
+    dogId: string | null,
+    frozenSemenId: string | null
   ) => {
-    setShowAnimalPicker(false);
+    try {
+      const newMating = await createMatingMutation.mutateAsync({
+        bitchId,
+        dogId: dogId || undefined,
+        frozenSemenId: frozenSemenId || undefined,
+        matingDate: new Date().toISOString().split('T')[0],
+        status: 'planned',
+      });
 
-    // TODO: Create new mating record and show progesterone form
-    // For now, just show a toast
-    toast({
-      title: "Animals selected",
-      description: "Mating record created. You can now enter progesterone readings."
-    });
+      setShowAnimalPicker(false);
 
-    // In production, this would create a mating record and navigate to its detail page
-    // router.push(`/calculators/mating/${newMatingId}`);
+      toast({
+        title: "Mating record created",
+        description: "You can now enter progesterone readings."
+      });
+
+      // Navigate to the mating detail page
+      router.push(`/calculators/mating/${newMating.id}`);
+    } catch (error) {
+      console.error('Failed to create mating:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create mating record. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const hasMatings = matings.length > 0;
+  const hasMatings = (matingsData?.length || 0) > 0;
+  const isLoading = matingsLoading || animalsLoading;
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -112,78 +134,120 @@ export default function MatingCalculatorPage() {
           </Card>
         )}
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading matings...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {matingsError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load mating records. Please try again later.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Content */}
-        {!hasMatings ? (
-          <MatingEmptyState onCreateMating={handleCreateMating} />
-        ) : (
+        {!isLoading && !matingsError && (
           <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card className="shadow-card border-primary/10">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Matings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-foreground">
-                    {matings.length}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card border-primary/10">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Average Rating
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-chart-4">
-                    {(matings.reduce((sum, m) => sum + m.overallRating, 0) / matings.length).toFixed(1)}%
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card border-primary/10">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Success Rate
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-chart-3">
-                    {((matings.filter(m => m.status === 'successful' || m.status === 'completed').length / matings.length) * 100).toFixed(0)}%
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Mating Records List */}
-            {filteredMatings.length === 0 ? (
-              <Card className="shadow-card border-primary/10">
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">
-                    No mating records found matching your search
-                  </p>
-                </CardContent>
-              </Card>
+            {!hasMatings ? (
+              <MatingEmptyState onCreateMating={handleCreateMating} />
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredMatings.map(mating => {
-                  const bitch = animals.find(a => a.id === mating.bitchId)!;
-                  const dog = animals.find(a => a.id === mating.dogId)!;
+              <>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Card className="shadow-card border-primary/10">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                        Total Matings
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-foreground">
+                        {matingsData?.length || 0}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                  return (
-                    <MatingCard
-                      key={mating.id}
-                      mating={mating}
-                      bitch={bitch}
-                      dog={dog}
-                    />
-                  );
-                })}
-              </div>
+                  <Card className="shadow-card border-primary/10">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                        Average Rating
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-chart-4">
+                        {matingsData && matingsData.length > 0
+                          ? (matingsData.reduce((sum: number, m: APIMating) => sum + (m.overallRating || 0), 0) / matingsData.length).toFixed(1)
+                          : '0.0'}%
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="shadow-card border-primary/10">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                        Success Rate
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-chart-3">
+                        {matingsData && matingsData.length > 0
+                          ? ((matingsData.filter((m: APIMating) => m.status === 'resulted_in_litter').length / matingsData.length) * 100).toFixed(0)
+                          : '0'}%
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Mating Records List */}
+                {filteredMatings.length === 0 ? (
+                  <Card className="shadow-card border-primary/10">
+                    <CardContent className="py-12 text-center">
+                      <p className="text-muted-foreground">
+                        No mating records found matching your search
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {filteredMatings.map((mating: APIMating) => (
+                      <MatingCard
+                        key={mating.id}
+                        mating={{
+                          id: mating.id,
+                          bitchId: mating.bitchId,
+                          dogId: mating.dogId || '',
+                          matingDate: mating.matingDate,
+                          progesteroneLevel: 0,
+                          status: mating.status as any,
+                          progesteroneCycleRating: mating.progesteroneCycleRating || 0,
+                          conceptionRating: mating.conceptionRating || 0,
+                          overallRating: mating.overallRating || 0,
+                          createdAt: typeof mating.createdAt === 'string' ? mating.createdAt : mating.createdAt.toISOString(),
+                        }}
+                        bitch={{
+                          id: mating.bitch?.id || '',
+                          name: mating.bitch?.name || 'Unknown',
+                          breed: mating.bitch?.breed?.name || 'Unknown',
+                          photos: [mating.bitch?.profileImageUrl || '']
+                        } as any}
+                        dog={{
+                          id: mating.dog?.id || '',
+                          name: mating.dog?.name || mating.frozenSemenBatch?.batchIdentifier || 'Unknown',
+                          breed: mating.dog?.breed?.name || 'Frozen Semen',
+                          photos: [mating.dog?.profileImageUrl || '']
+                        } as any}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -192,7 +256,13 @@ export default function MatingCalculatorPage() {
         <AnimalPickerDialog
           open={showAnimalPicker}
           onOpenChange={setShowAnimalPicker}
-          animals={animals}
+          animals={animalsData?.map((a: APIAnimal) => ({
+            id: a.id,
+            name: a.name,
+            breed: a.breed?.name || 'Unknown',
+            type: a.sex === 'male' ? 'dog' : 'bitch',
+            photos: [a.profileImageUrl || '']
+          })) || []}
           onComplete={handleAnimalSelectionComplete}
         />
       </div>

@@ -7,41 +7,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Snowflake, Package, TrendingUp, AlertTriangle } from "lucide-react";
-import { mockFrozenSemenBatches, FrozenSemenStatus, getTotalStrawsRemaining } from "@/lib/mock-data/frozen-semen";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Plus, Search, Snowflake, Package, TrendingUp, AlertTriangle, Loader2, AlertCircle } from "lucide-react";
+import { useFrozenSemenBatches, useFrozenSemenStats } from "@/lib/api/queries/frozen-semen";
 import Link from "next/link";
+
+type FrozenSemenStatus = 'available' | 'reserved' | 'used' | 'expired';
 
 export default function FrozenSemenInventoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<FrozenSemenStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Filter batches
+  // Fetch data from API
+  const { data: batchesData, isLoading, isError } = useFrozenSemenBatches(
+    statusFilter !== 'all' ? { status: statusFilter as any } : undefined
+  );
+  const { data: statsData } = useFrozenSemenStats();
+
+  // Filter batches client-side for search
   const filteredBatches = useMemo(() => {
-    let batches = mockFrozenSemenBatches;
+    if (!batchesData) return [];
 
-    // Status filter
-    if (statusFilter !== 'all') {
-      batches = batches.filter(b => b.status === statusFilter);
-    }
+    if (!searchQuery) return batchesData;
 
-    // Search filter
-    if (searchQuery) {
-      batches = batches.filter(b =>
-        b.batchIdentifier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.sourceAnimalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.breed.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+    return batchesData.filter((b: any) =>
+      b.batchIdentifier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.sourceAnimal?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.sourceAnimal?.breed?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [batchesData, searchQuery]);
 
-    return batches;
-  }, [searchQuery, statusFilter]);
-
-  // Calculate stats
-  const totalBatches = mockFrozenSemenBatches.length;
-  const availableBatches = mockFrozenSemenBatches.filter(b => b.status === 'available').length;
-  const totalStraws = mockFrozenSemenBatches.reduce((sum, b) => sum + b.numberOfStraws, 0);
-  const strawsRemaining = getTotalStrawsRemaining();
-  const lowStockBatches = mockFrozenSemenBatches.filter(b => b.strawsRemaining > 0 && b.strawsRemaining <= 3).length;
+  // Calculate stats from API data
+  const totalBatches = statsData?.totalBatches || 0;
+  const availableBatches = statsData?.availableBatches || 0;
+  const totalStraws = batchesData?.reduce((sum: number, b: any) => sum + b.strawCount, 0) || 0;
+  const strawsRemaining = statsData?.strawsRemaining || 0;
+  const lowStockBatches = statsData?.lowStockCount || 0;
 
   const stats = [
     {
@@ -146,46 +147,66 @@ export default function FrozenSemenInventoryPage() {
           </CardContent>
         </Card>
 
-        {/* Batches Grid */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Inventory</h2>
-            <Badge variant="outline">
-              {filteredBatches.length} {filteredBatches.length === 1 ? 'batch' : 'batches'}
-            </Badge>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading frozen semen batches...</span>
           </div>
+        )}
 
-          {filteredBatches.length === 0 ? (
-            <Card className="shadow-card bg-surface border-0">
-              <CardContent className="p-12 text-center space-y-4">
-                <div className="text-6xl">❄️</div>
-                <h3 className="text-lg font-medium text-foreground">No Batches Found</h3>
-                <p className="text-muted-foreground">
-                  {searchQuery || statusFilter !== 'all'
-                    ? 'Try adjusting your search filters'
-                    : 'Start by adding your first frozen semen batch'}
-                </p>
-                {!searchQuery && statusFilter === 'all' && (
-                  <Button
-                    asChild
-                    className="bg-gradient-brand hover:opacity-90 shadow-card"
-                  >
-                    <Link href="/frozen-semen/new">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Batch
-                    </Link>
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredBatches.map((batch) => (
-                <FrozenSemenCard key={batch.id} batch={batch} />
-              ))}
+        {/* Error State */}
+        {isError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load frozen semen batches. Please try again later.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Batches Grid */}
+        {!isLoading && !isError && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-foreground">Inventory</h2>
+              <Badge variant="outline">
+                {filteredBatches.length} {filteredBatches.length === 1 ? 'batch' : 'batches'}
+              </Badge>
             </div>
-          )}
-        </div>
+
+            {filteredBatches.length === 0 ? (
+              <Card className="shadow-card bg-surface border-0">
+                <CardContent className="p-12 text-center space-y-4">
+                  <div className="text-6xl">❄️</div>
+                  <h3 className="text-lg font-medium text-foreground">No Batches Found</h3>
+                  <p className="text-muted-foreground">
+                    {searchQuery || statusFilter !== 'all'
+                      ? 'Try adjusting your search filters'
+                      : 'Start by adding your first frozen semen batch'}
+                  </p>
+                  {!searchQuery && statusFilter === 'all' && (
+                    <Button
+                      asChild
+                      className="bg-gradient-brand hover:opacity-90 shadow-card"
+                    >
+                      <Link href="/frozen-semen/new">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Batch
+                      </Link>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredBatches.map((batch: any) => (
+                  <FrozenSemenCard key={batch.id} batch={batch} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

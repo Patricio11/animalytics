@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TaskCard } from "@/components/breeder/tasks/TaskCard";
 import { TaskDialog } from "@/components/breeder/tasks/TaskDialog";
 import { PuppyFeedingGenerator } from "@/components/breeder/tasks/PuppyFeedingGenerator";
@@ -10,27 +10,32 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby } from "lucide-react";
-import { Task, TaskType, mockTasks as initialMockTasks, getTaskStatus } from "@/lib/mock-data/tasks";
-import { mockAnimals } from "@/data/mockData";
-import { mockAnimalProfileDetails } from "@/lib/mock-data/animal-profile-details";
+import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby, Loader2, AlertCircle as AlertCircleIcon } from "lucide-react";
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useCompleteTask } from "@/lib/api/queries/tasks";
+import { useAnimals } from "@/lib/api/queries/animals";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { Task } from "@/lib/mock-data/tasks";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(initialMockTasks);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [editingTask, setEditingTask] = useState<any | undefined>();
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [filterType, setFilterType] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showPuppyGenerator, setShowPuppyGenerator] = useState(false);
+  const [activeTab, setActiveTab] = useState("pending");
+
+  // Fetch tasks and animals from API
+  const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useTasks();
+  const { data: animalsData } = useAnimals();
+  const createTaskMutation = useCreateTask();
+  const updateTaskMutation = useUpdateTask();
+  const deleteTaskMutation = useDeleteTask();
+  const completeTaskMutation = useCompleteTask();
 
   // Get available animals for task assignment
-  const availableAnimals = mockAnimals.map(a => ({ id: a.id, name: a.name }));
-
-  // Get all litters for puppy feeding generator
-  const allLitters = Object.values(mockAnimalProfileDetails)
-    .flatMap(details => details.litters || []);
+  const availableAnimals = animalsData?.map((a: any) => ({ id: a.id, name: a.name })) || [];
 
   const handleCreateNew = () => {
     setEditingTask(undefined);
@@ -38,109 +43,140 @@ export default function TasksPage() {
     setDialogOpen(true);
   };
 
-  const handleEdit = (task: Task) => {
+  const handleEdit = (task: any) => {
     setEditingTask(task);
     setDialogMode('edit');
     setDialogOpen(true);
   };
 
-  const handleSave = (newTask: Omit<Task, 'id' | 'completed'>) => {
-    if (dialogMode === 'create') {
-      const task = {
-        ...newTask,
-        id: `task-${Date.now()}`,
-        completed: false,
-      } as Task;
-      setTasks([...tasks, task]);
-    } else if (editingTask) {
-      setTasks(
-        tasks.map((t) =>
-          t.id === editingTask.id ? { ...newTask, id: t.id, completed: t.completed } as Task : t
-        )
-      );
+  const handleSave = async (newTask: any) => {
+    try {
+      if (dialogMode === 'create') {
+        await createTaskMutation.mutateAsync(newTask);
+      } else if (editingTask) {
+        await updateTaskMutation.mutateAsync({
+          id: editingTask.id,
+          ...newTask,
+        });
+      }
+      setDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to save task:', error);
     }
   };
 
-  const handleDelete = (taskId: string) => {
+  const handleDelete = async (taskId: string | { id: string }) => {
+    const id = typeof taskId === 'string' ? taskId : taskId.id;
     if (confirm('Are you sure you want to delete this task?')) {
-      setTasks(tasks.filter((t) => t.id !== taskId));
+      try {
+        await deleteTaskMutation.mutateAsync(id);
+      } catch (error) {
+        console.error('Failed to delete task:', error);
+      }
     }
   };
 
-  const handleToggleComplete = (taskId: string) => {
-    setTasks(
-      tasks.map((t) =>
-        t.id === taskId ? { ...t, completed: !t.completed } : t
-      )
-    );
+  const handleToggleComplete = async (taskId: string | { id: string }) => {
+    const id = typeof taskId === 'string' ? taskId : taskId.id;
+    try {
+      await completeTaskMutation.mutateAsync(id);
+    } catch (error) {
+      console.error('Failed to complete task:', error);
+    }
   };
 
-  const handleGeneratePuppyTasks = (newTasks: Omit<Task, 'id' | 'completed'>[]) => {
-    const tasksWithIds = newTasks.map((task, index) => ({
-      ...task,
-      id: `puppy-task-${Date.now()}-${index}`,
-      completed: false,
-    } as Task));
-    setTasks([...tasks, ...tasksWithIds]);
-    setShowPuppyGenerator(false);
+  const handleGeneratePuppyTasks = async (newTasks: any[]) => {
+    try {
+      for (const task of newTasks) {
+        await createTaskMutation.mutateAsync(task);
+      }
+      setShowPuppyGenerator(false);
+    } catch (error) {
+      console.error('Failed to generate puppy tasks:', error);
+    }
   };
 
-  // Filter tasks
-  const getFilteredTasks = (taskList: Task[]) => {
-    return taskList.filter(task => {
+  // Filter and categorize tasks
+  const filteredTasks = useMemo(() => {
+    if (!tasksData) return [];
+
+    return tasksData.filter((task: any) => {
       // Type filter
       const matchesType = filterType === "all" || task.type === filterType;
 
       // Priority filter
-      const priority = task.completed ? 'low' :
-        getTaskStatus(task) === 'overdue' ? 'high' :
-        'medium';
-      const matchesPriority = filterPriority === "all" || priority === filterPriority;
+      const matchesPriority = filterPriority === "all" || task.priority === filterPriority;
 
-      // Search query
-      const matchesSearch = searchQuery === "" ||
-        ('animalName' in task && task.animalName?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (task.type === 'event' && task.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+      // Search filter
+      const matchesSearch = searchQuery
+        ? task.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          task.animal?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          task.notes?.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
 
       return matchesType && matchesPriority && matchesSearch;
     });
+  }, [tasksData, filterType, filterPriority, searchQuery]);
+
+  // Categorize tasks by status
+  const categorizedTasks = useMemo(() => {
+    const now = new Date();
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    return {
+      pending: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) > now),
+      overdue: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) <= now),
+      dueSoon: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) <= threeDaysFromNow && new Date(t.dueDate) > now),
+      completed: filteredTasks.filter((t: any) => t.completedAt),
+    };
+  }, [filteredTasks]);
+
+  // Task counts for tabs
+  const taskCounts = {
+    pending: categorizedTasks.pending.length,
+    overdue: categorizedTasks.overdue.length,
+    dueSoon: categorizedTasks.dueSoon.length,
+    completed: categorizedTasks.completed.length,
   };
 
-  // Categorize tasks
-  const pendingTasks = tasks.filter(task => !task.completed);
-  const completedTasks = tasks.filter(task => task.completed);
-  const overdueTasks = pendingTasks.filter(task => getTaskStatus(task) === 'overdue');
-  const dueSoonTasks = pendingTasks.filter(task => {
-    const taskDate = new Date(task.date);
-    const today = new Date();
-    const threeDaysLater = new Date();
-    threeDaysLater.setDate(today.getDate() + 3);
-    return taskDate >= today && taskDate <= threeDaysLater && getTaskStatus(task) !== 'overdue';
+  // Transform task for display
+  const transformTask = (task: any) => ({
+    id: task.id,
+    title: task.title || `${task.type} task`,
+    description: task.notes || "",
+    dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
+    priority: task.priority as "high" | "medium" | "low",
+    category: task.type,
+    animalName: task.animal?.name || "N/A",
+    completed: !!task.completedAt,
+    type: task.type,
+    taskData: task.taskData || {},
+    date: task.dueDate,
+    notes: task.notes,
   });
 
   const taskStats = [
     {
       label: "Total Tasks",
-      value: tasks.length,
+      value: tasksData?.length || 0,
       icon: CheckSquare,
       color: "text-foreground"
     },
     {
       label: "Pending",
-      value: pendingTasks.length,
+      value: taskCounts.pending,
       icon: Clock,
       color: "text-chart-4"
     },
     {
       label: "Overdue",
-      value: overdueTasks.length,
+      value: taskCounts.overdue,
       icon: AlertTriangle,
       color: "text-destructive"
     },
     {
       label: "Completed",
-      value: completedTasks.length,
+      value: taskCounts.completed,
       icon: CheckCircle,
       color: "text-chart-3"
     }
@@ -199,7 +235,7 @@ export default function TasksPage() {
         {/* Puppy Feeding Generator */}
         {showPuppyGenerator && (
           <PuppyFeedingGenerator
-            litters={allLitters}
+            litters={[]}
             onGenerateTasks={handleGeneratePuppyTasks}
           />
         )}
@@ -252,40 +288,40 @@ export default function TasksPage() {
             <TabsTrigger value="pending" className="text-xs sm:text-sm">
               Pending
               <Badge variant="secondary" className="ml-1 text-xs">
-                {getFilteredTasks(pendingTasks).length}
+                {categorizedTasks.pending.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="overdue" className="text-xs sm:text-sm">
               Overdue
               <Badge variant="destructive" className="ml-1 text-xs">
-                {getFilteredTasks(overdueTasks).length}
+                {categorizedTasks.overdue.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="due-soon" className="text-xs sm:text-sm">
               Due Soon
               <Badge className="ml-1 text-xs bg-chart-4 text-white">
-                {getFilteredTasks(dueSoonTasks).length}
+                {categorizedTasks.dueSoon.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="completed" className="text-xs sm:text-sm">
               Completed
               <Badge className="ml-1 text-xs bg-chart-3 text-white">
-                {getFilteredTasks(completedTasks).length}
+                {categorizedTasks.completed.length}
               </Badge>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pending" className="space-y-4">
-            {getFilteredTasks(pendingTasks).map((task) => (
+            {categorizedTasks.pending.map((task: any) => (
               <TaskCard
                 key={task.id}
-                task={task}
+                task={transformTask(task) as unknown as Task}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
               />
             ))}
-            {getFilteredTasks(pendingTasks).length === 0 && (
+            {categorizedTasks.pending.length === 0 && (
               <div className="text-center py-12">
                 <CheckSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">No pending tasks</h3>
@@ -295,16 +331,16 @@ export default function TasksPage() {
           </TabsContent>
 
           <TabsContent value="overdue" className="space-y-4">
-            {getFilteredTasks(overdueTasks).map((task) => (
+            {categorizedTasks.overdue.map((task: any) => (
               <TaskCard
                 key={task.id}
-                task={task}
+                task={transformTask(task) as unknown as Task}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
               />
             ))}
-            {getFilteredTasks(overdueTasks).length === 0 && (
+            {categorizedTasks.overdue.length === 0 && (
               <div className="text-center py-12">
                 <AlertTriangle className="w-12 h-12 text-chart-3 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">No overdue tasks</h3>
@@ -314,16 +350,16 @@ export default function TasksPage() {
           </TabsContent>
 
           <TabsContent value="due-soon" className="space-y-4">
-            {getFilteredTasks(dueSoonTasks).map((task) => (
+            {categorizedTasks.dueSoon.map((task: any) => (
               <TaskCard
                 key={task.id}
-                task={task}
+                task={transformTask(task) as unknown as Task}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
               />
             ))}
-            {getFilteredTasks(dueSoonTasks).length === 0 && (
+            {categorizedTasks.dueSoon.length === 0 && (
               <div className="text-center py-12">
                 <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">No tasks due soon</h3>
@@ -333,16 +369,16 @@ export default function TasksPage() {
           </TabsContent>
 
           <TabsContent value="completed" className="space-y-4">
-            {getFilteredTasks(completedTasks).map((task) => (
+            {categorizedTasks.completed.map((task: any) => (
               <TaskCard
                 key={task.id}
-                task={task}
+                task={transformTask(task) as unknown as Task}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
               />
             ))}
-            {getFilteredTasks(completedTasks).length === 0 && (
+            {categorizedTasks.completed.length === 0 && (
               <div className="text-center py-12">
                 <CheckCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">No completed tasks</h3>

@@ -327,9 +327,15 @@ export const frozenSemen = pgTable('frozen_semen', {
   storageLocation: text('storage_location'),
   storageType: text('storage_type'), // nitrogen_tank, facility_name
 
-  // Quality assessment (linked to semen assessment)
+  // Quality assessment (can link to semen assessment OR store directly)
   semenAssessmentId: text('semen_assessment_id').references(() => semenAssessments.id),
   qualityRating: text('quality_rating'), // poor, fair, good, excellent
+
+  // Quality metrics (stored directly for convenience)
+  volume: decimal('volume', { precision: 5, scale: 2 }), // ml
+  concentration: integer('concentration'), // million/ml
+  motility: decimal('motility', { precision: 5, scale: 2 }), // percentage
+  morphology: decimal('morphology', { precision: 5, scale: 2 }), // percentage normal
 
   // Status
   status: text('status').default('available'), // available, reserved, depleted, expired

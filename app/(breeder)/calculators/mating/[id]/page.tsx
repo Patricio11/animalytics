@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ArrowLeft,
   Heart,
@@ -15,27 +16,43 @@ import {
   TrendingUp,
   FileText,
   CheckCircle2,
-  Clock
+  Clock,
+  Loader2,
+  AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ProgesteroneInputForm } from "@/components/breeder/calculators/ProgesteroneInputForm";
-import { mockMatingRecords, mockAnimals } from "@/data/mockData";
+import { useMating } from "@/lib/api/queries/matings";
 
 export default function MatingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
 
-  // Get mating record
-  const mating = mockMatingRecords.find(m => m.id === id);
-  const bitch = mating ? mockAnimals.find(a => a.id === mating.bitchId) : null;
-  const dog = mating ? mockAnimals.find(a => a.id === mating.dogId) : null;
+  // Fetch mating record from API
+  const { data: mating, isLoading, isError } = useMating(id);
 
-  if (!mating || !bitch || !dog) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="text-muted-foreground">Loading mating details...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError || !mating) {
     return (
       <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
         <Card className="shadow-card max-w-md">
           <CardContent className="pt-6 text-center space-y-4">
-            <p className="text-muted-foreground">Mating record not found</p>
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
+            <p className="text-muted-foreground">
+              {isError ? "Failed to load mating record" : "Mating record not found"}
+            </p>
             <Link href="/calculators/mating">
               <Button variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -47,6 +64,9 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
       </div>
     );
   }
+
+  const bitch = mating.bitch;
+  const dog = mating.dog;
 
   // Rating color logic
   const getRatingColor = (rating: number) => {

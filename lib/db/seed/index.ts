@@ -1,4 +1,8 @@
 import { seedUsers, TEST_USERS } from './users';
+import { seedAnimals } from './animals';
+import { seedMatings } from './matings';
+import { seedTasks } from './tasks';
+import { seedFrozenSemen } from './frozen-semen';
 import * as dotenv from 'dotenv';
 
 // Load environment variables
@@ -16,11 +20,41 @@ async function seed() {
   console.log('🌱 Starting database seeding...\n');
 
   try {
-    // Seed users via Better Auth API
+    // Step 1: Seed users via Better Auth API
     await seedUsers();
 
+    // Step 2: Get breeder user ID from database
+    // After user creation via Better Auth, query the database for the breeder user
+    const { db } = await import('@/lib/db');
+    const { users } = await import('@/lib/db/schema');
+
+    const breederUser = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.email, TEST_USERS.breeder.email),
+    });
+
+    if (!breederUser) {
+      throw new Error('Breeder user not found after creation');
+    }
+
+    console.log(`\n📦 Seeding data for breeder: ${breederUser.name} (${breederUser.id})\n`);
+
+    // Step 3: Seed animals
+    const animals = await seedAnimals(breederUser.id);
+    const animalIds = animals.map((a) => a.id);
+
+    // Step 4: Seed matings
+    await seedMatings(breederUser.id, animalIds);
+
+    // Step 5: Seed tasks
+    await seedTasks(breederUser.id, animalIds);
+
+    // Step 6: Seed frozen semen
+    await seedFrozenSemen(breederUser.id, animalIds);
+
     console.log('\n✅ Database seeding completed successfully!');
-    console.log('\n💡 You can now sign in at: http://localhost:3000/auth/signin');
+    console.log('\n💡 You can now sign in at: http://localhost:3002/auth/signin');
+    console.log(`💡 Use email: ${TEST_USERS.breeder.email}`);
+    console.log(`💡 Password: ${TEST_USERS.breeder.password}\n`);
     process.exit(0);
   } catch (error) {
     console.error('\n❌ Seeding failed:', error);

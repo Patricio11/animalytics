@@ -1,26 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AnimalCard } from "@/components/breeder/AnimalCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Filter } from "lucide-react";
-import { mockAnimals } from "@/data/mockData";
+import { Plus, Search, Filter, Loader2, AlertCircle } from "lucide-react";
+import { useAnimals } from "@/lib/api/queries/animals";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { APIAnimal } from "@/lib/api/types";
 
 export default function Animals() {
   const [showAddAnimal, setShowAddAnimal] = useState(false);
-  // Transform mockAnimals to match AnimalCard props
-  const displayAnimals = mockAnimals.map(animal => ({
-    id: animal.id,
-    name: animal.name,
-    breed: animal.breed,
-    gender: animal.type === 'dog' ? 'male' as const : 'female' as const,
-    dateOfBirth: new Date(animal.dateOfBirth),
-    imageUrl: animal.photos?.[0] || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
-    status: 'available' as const, // You can add more logic here based on animal data
-  }));
+  const [searchQuery, setSearchQuery] = useState("");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Fetch animals from API
+  const { data: animals, isLoading, isError, error } = useAnimals();
+
+  // Filter and search animals
+  const displayAnimals = useMemo(() => {
+    if (!animals) return [];
+
+    return animals
+      .filter((animal: APIAnimal) => {
+        // Search filter
+        const matchesSearch = searchQuery
+          ? animal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            animal.breed?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+          : true;
+
+        // Gender filter
+        const matchesGender = genderFilter === "all" || animal.sex === genderFilter;
+
+        // Status filter (based on isActive and isBreedingActive)
+        let matchesStatus = true;
+        if (statusFilter === "available") {
+          matchesStatus = animal.isActive && !animal.isBreedingActive;
+        } else if (statusFilter === "breeding") {
+          matchesStatus = animal.isBreedingActive;
+        } else if (statusFilter === "retired") {
+          matchesStatus = !animal.isActive;
+        }
+
+        return matchesSearch && matchesGender && matchesStatus;
+      })
+      .map((animal: APIAnimal) => ({
+        id: animal.id,
+        name: animal.name,
+        breed: animal.breed?.name || "Unknown",
+        gender: animal.sex as "male" | "female",
+        dateOfBirth: animal.dateOfBirth ? new Date(animal.dateOfBirth) : new Date(),
+        imageUrl:
+          animal.profileImageUrl ||
+          "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
+        status: animal.isBreedingActive
+          ? ("breeding" as const)
+          : animal.isActive
+          ? ("available" as const)
+          : ("retired" as const),
+      }));
+  }, [animals, searchQuery, genderFilter, statusFilter]);
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -50,9 +92,11 @@ export default function Animals() {
                 placeholder="Search animals..."
                 className="pl-10 bg-background border-primary/20 focus:border-primary"
                 data-testid="input-search-animals"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Select>
+            <Select value={genderFilter} onValueChange={setGenderFilter}>
               <SelectTrigger className="w-full sm:w-[180px] bg-background border-primary/20 focus:border-primary" data-testid="select-filter-gender">
                 <SelectValue placeholder="Gender" />
               </SelectTrigger>
@@ -62,7 +106,7 @@ export default function Animals() {
                 <SelectItem value="female">Female</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[180px] bg-background border-primary/20 focus:border-primary" data-testid="select-filter-status">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -70,23 +114,50 @@ export default function Animals() {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="available">Available</SelectItem>
                 <SelectItem value="breeding">Breeding</SelectItem>
-                <SelectItem value="pregnant">Pregnant</SelectItem>
                 <SelectItem value="retired">Retired</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card" data-testid="button-filter">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading animals...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {isError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load animals. {error?.message || "Please try again later."}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Animals Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {displayAnimals.map((animal) => (
-            <AnimalCard key={animal.id} {...animal} />
-          ))}
-        </div>
+        {!isLoading && !isError && (
+          <>
+            {displayAnimals.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {displayAnimals.map((animal: any) => (
+                  <AnimalCard key={animal.id} {...animal} />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-surface shadow-card rounded-lg p-12 text-center">
+                <p className="text-muted-foreground">
+                  {searchQuery || genderFilter !== "all" || statusFilter !== "all"
+                    ? "No animals found matching your filters."
+                    : "No animals yet. Add your first animal to get started!"}
+                </p>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Add Animal Dialog */}
         <AddAnimalDialog open={showAddAnimal} onOpenChange={setShowAddAnimal} />

@@ -8,126 +8,68 @@ import { ActivityCard } from "@/components/breeder/ActivityCard";
 import { TaskCard } from "@/components/breeder/TaskCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { Button } from "@/components/ui/button";
-import { Heart, Calendar, Trophy, DollarSign, Plus, ArrowRight } from "lucide-react";
+import { Heart, Calendar, Trophy, DollarSign, Plus, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useDashboardStats } from "@/lib/api/queries/dashboard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { APIAnimal, APITask } from "@/lib/api/types";
 
 export default function Dashboard() {
   const [showAddAnimal, setShowAddAnimal] = useState(false);
-  // todo: remove mock functionality
-  const mockStats = [
+
+  // Fetch dashboard stats from API
+  const { data: stats, isLoading, isError } = useDashboardStats();
+
+  // Transform stats for display
+  const dashboardStats = stats ? [
     {
       title: "Total Animals",
-      value: 24,
-      description: "Actively managed",
+      value: stats.totalAnimals.total,
+      description: `${stats.totalAnimals.female} female, ${stats.totalAnimals.male} male`,
       icon: <Heart className="w-4 h-4" />,
-      trend: { value: 12, isPositive: true }
     },
     {
-      title: "Recent Matings",
-      value: 8,
-      description: "This month",
+      title: "Active Matings",
+      value: stats.activeMatingsCount,
+      description: "Currently monitored",
       icon: <Calendar className="w-4 h-4" />,
-      trend: { value: 25, isPositive: true }
     },
     {
-      title: "Success Rate",
-      value: "87.5%",
-      description: "Conception rate",
+      title: "Pending Tasks",
+      value: stats.pendingTasksCount,
+      description: "Require attention",
       icon: <Trophy className="w-4 h-4" />,
-      trend: { value: 5, isPositive: true }
     },
     {
-      title: "Portfolio Value",
-      value: "$125,000",
-      description: "Market value",
+      title: "Recent Updates",
+      value: stats.recentAnimals.length,
+      description: "Last 30 days",
       icon: <DollarSign className="w-4 h-4" />,
-      trend: { value: 8, isPositive: true }
     }
-  ];
+  ] : [];
 
-  const mockRecentAnimals = [
-    {
-      id: "animal1",
-      name: "Bella",
-      breed: "Golden Retriever",
-      gender: 'female' as const,
-      dateOfBirth: new Date('2020-03-15'),
-      imageUrl: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
-      status: 'available' as const,
-      lastMating: new Date('2024-01-15'),
-    },
-    {
-      id: "animal2",
-      name: "Max",
-      breed: "German Shepherd",
-      gender: 'male' as const,
-      dateOfBirth: new Date('2019-08-22'),
-      imageUrl: "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face",
-      status: 'breeding' as const,
-      lastMating: new Date('2024-02-01'),
-    },
-    {
-      id: "animal3",
-      name: "Luna",
-      breed: "Border Collie",
-      gender: 'female' as const,
-      dateOfBirth: new Date('2021-06-10'),
-      imageUrl: "https://images.unsplash.com/photo-1568572933382-74d440642117?w=400&h=400&fit=crop&crop=face",
-      status: 'pregnant' as const,
-      lastMating: new Date('2024-02-10'),
-    }
-  ];
+  // Transform recent animals
+  const recentAnimals = stats?.recentAnimals.map((animal: APIAnimal) => ({
+    id: animal.id,
+    name: animal.name,
+    breed: animal.breed?.name || "Unknown",
+    gender: animal.sex as "male" | "female",
+    dateOfBirth: animal.dateOfBirth ? new Date(animal.dateOfBirth) : new Date(),
+    imageUrl: animal.profileImageUrl || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
+    status: animal.isBreedingActive ? ("breeding" as const) : ("available" as const),
+  })) || [];
 
-  const mockRecentActivities = [
-    {
-      id: "1",
-      type: 'feeding' as const,
-      animalName: "Bella",
-      title: "Morning Feeding",
-      description: "Regular feeding schedule",
-      date: new Date('2024-02-20'),
-      data: { food: "Premium kibble", amount: "2 cups" }
-    },
-    {
-      id: "2",
-      type: 'exercise' as const,
-      animalName: "Max",
-      title: "Daily Walk",
-      description: "Regular exercise routine",
-      date: new Date('2024-02-19'),
-      data: { duration: "45 mins", distance: "2.5 km" }
-    }
-  ];
-
-  const mockUpcomingTasks = [
-    {
-      id: "1",
-      title: "Schedule vet checkup",
-      description: "Annual health examination for Bella",
-      dueDate: new Date('2024-03-02'),
-      priority: 'high' as const,
-      category: 'health' as const,
-      animalName: "Bella",
-      completed: false,
-    },
-    {
-      id: "2",
-      title: "Update breeding records",
-      description: "Record recent mating details",
-      dueDate: new Date('2024-02-28'),
-      priority: 'medium' as const,
-      category: 'breeding' as const,
-      animalName: "Luna",
-      completed: false,
-    }
-  ];
-
-  const mockCalculatorResult = {
-    progesteroneRating: 95.0,
-    conceptionRating: 42.7,
-    overallRating: 67.5,
-    accuracyStars: 4
-  };
+  // Transform upcoming tasks
+  const upcomingTasks = stats?.upcomingTasks.map((task: APITask) => ({
+    id: task.id,
+    title: task.title || `${task.type} task`,
+    description: task.notes || "",
+    dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
+    priority: task.priority as "high" | "medium" | "low",
+    category: task.type as "health" | "breeding" | "feeding",
+    animalName: task.animal?.name || "N/A",
+    completed: !!task.completedAt,
+  })) || [];
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -148,98 +90,118 @@ export default function Dashboard() {
           </Button>
         </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {mockStats.map((stat, index) => (
-          <StatsCard key={index} {...stat} />
-        ))}
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Recent Animals */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Recent Animals</h2>
-              <Link href="/animals">
-                <Button variant="ghost" size="sm" data-testid="link-view-all-animals">
-                  View all
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockRecentAnimals.map((animal) => (
-                <AnimalCard key={animal.id} {...animal} />
-              ))}
-            </div>
-          </section>
-
-          {/* Recent Mating Calculator */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Recent Mating</h2>
-              <Link href="/calculators">
-                <Button variant="ghost" size="sm" data-testid="link-view-calculators">
-                  View calculators
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CalculatorCard
-                title="Bella x Max Mating"
-                description="Recent calculation from Feb 15, 2024"
-                result={mockCalculatorResult}
-              />
-              <CalculatorCard
-                title="New Calculation"
-                description="Calculate ratings for a new mating event"
-              />
-            </div>
-          </section>
-
-          {/* Recent Activity */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
-              <Link href="/activities">
-                <Button variant="ghost" size="sm" data-testid="link-view-reports">
-                  View reports
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {mockRecentActivities.map((activity) => (
-                <ActivityCard key={activity.id} {...activity} />
-              ))}
-            </div>
-          </section>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Loading dashboard...</span>
         </div>
+      )}
 
-        {/* Right Column - Tasks */}
-        <div className="space-y-6">
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Upcoming Tasks</h2>
-              <Link href="/task">
-                <Button variant="ghost" size="sm" data-testid="link-view-tasks">
-                  View all
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
+      {/* Error State */}
+      {isError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load dashboard. Please try again later.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Dashboard Content */}
+      {!isLoading && !isError && (
+        <>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {dashboardStats.map((stat, index) => (
+              <StatsCard key={index} {...stat} />
+            ))}
+          </div>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Recent Animals */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-foreground">Recent Animals</h2>
+                  <Link href="/animals">
+                    <Button variant="ghost" size="sm" data-testid="link-view-all-animals">
+                      View all
+                      <ArrowRight className="w-3 h-3 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+                {recentAnimals.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {recentAnimals.map((animal: any) => (
+                      <AnimalCard key={animal.id} {...animal} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-surface shadow-card rounded-lg p-8 text-center">
+                    <p className="text-muted-foreground">No animals yet. Add your first animal to get started!</p>
+                  </div>
+                )}
+              </section>
+
+              {/* Recent Mating */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
+                  <Link href="/calculators">
+                    <Button variant="ghost" size="sm" data-testid="link-view-calculators">
+                      View calculators
+                      <ArrowRight className="w-3 h-3 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Link href="/calculators/mating">
+                    <CalculatorCard
+                      title="Mating Calculator"
+                      description="Calculate progesterone-based breeding recommendations"
+                    />
+                  </Link>
+                  <Link href="/calculators/conception-rating">
+                    <CalculatorCard
+                      title="Conception Rating"
+                      description="Comprehensive 9-step conception assessment"
+                    />
+                  </Link>
+                </div>
+              </section>
             </div>
-            <div className="space-y-4">
-              {mockUpcomingTasks.map((task) => (
-                <TaskCard key={task.id} {...task} />
-              ))}
+
+            {/* Right Column - Tasks */}
+            <div className="space-y-6">
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-foreground">Upcoming Tasks</h2>
+                  <Link href="/tasks">
+                    <Button variant="ghost" size="sm" data-testid="link-view-tasks">
+                      View all
+                      <ArrowRight className="w-3 h-3 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+                {upcomingTasks.length > 0 ? (
+                  <div className="space-y-4">
+                    {upcomingTasks.map((task: any) => (
+                      <TaskCard key={task.id} {...task} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-surface shadow-card rounded-lg p-8 text-center">
+                    <p className="text-muted-foreground">No upcoming tasks</p>
+                  </div>
+                )}
+              </section>
             </div>
-          </section>
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       {/* Add Animal Dialog */}
       <AddAnimalDialog open={showAddAnimal} onOpenChange={setShowAddAnimal} />
