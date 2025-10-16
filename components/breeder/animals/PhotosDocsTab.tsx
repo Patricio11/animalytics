@@ -6,47 +6,148 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Image as ImageIcon, FileText, Eye, Download, Trash2, X, File } from "lucide-react";
-import { PhotoCategory } from "@/lib/mock-data/animal-profile-details";
+import { Upload, Image as ImageIcon, FileText, Eye, Download, Trash2, X, File, Loader2 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useUploadThing } from "@/lib/uploadthing";
 
 interface PhotosDocsTabProps {
   animalId: string;
-  photoCategories: PhotoCategory[];
 }
 
 type FileType = 'photo' | 'document';
 
-type CategoryId = 'shelter' | 'whelping' | 'vaccinations' | 'pedigree' | 'registration' | 'parents' | 'baby';
+type CategoryId = 'shelter' | 'whelping_areas' | 'vaccinations' | 'pedigree' | 'council_registration' | 'parents' | 'baby_photos' | 'training' | 'shows' | 'health';
 
 interface CategoryDefinition {
   id: CategoryId;
   name: string;
   description: string;
   icon: string;
-  types: FileType[]; // Which file types can be uploaded to this category
+  types: FileType[];
+  limit: number;
 }
 
 const categoryDefinitions: CategoryDefinition[] = [
-  { id: 'shelter', name: 'Shelter', description: 'Photos of living quarters and kennels', icon: '🏠', types: ['photo'] },
-  { id: 'whelping', name: 'Whelping Areas', description: 'Whelping box and maternity areas', icon: '🐾', types: ['photo'] },
-  { id: 'vaccinations', name: 'Vaccinations', description: 'Vaccination records and certificates', icon: '💉', types: ['document'] },
-  { id: 'pedigree', name: 'Pedigree', description: 'Pedigree certificates and lineage documents', icon: '📜', types: ['document'] },
-  { id: 'registration', name: 'Council Registration', description: 'Registration papers and permits', icon: '📋', types: ['document'] },
-  { id: 'parents', name: 'Parents', description: 'Photos of sire and dam', icon: '👨‍👩‍👦', types: ['photo'] },
-  { id: 'baby', name: 'Baby Photos', description: 'Puppy photos and early development', icon: '🍼', types: ['photo'] },
+  { id: 'shelter', name: 'Shelter', description: 'Photos of living quarters and kennels', icon: '🏠', types: ['photo'], limit: 10 },
+  { id: 'whelping_areas', name: 'Whelping Areas', description: 'Whelping box and maternity areas', icon: '🐾', types: ['photo'], limit: 10 },
+  { id: 'vaccinations', name: 'Vaccinations', description: 'Vaccination records and certificates', icon: '💉', types: ['document'], limit: 10 },
+  { id: 'pedigree', name: 'Pedigree', description: 'Pedigree certificates and lineage documents', icon: '📜', types: ['document'], limit: 10 },
+  { id: 'council_registration', name: 'Council Registration', description: 'Registration papers and permits', icon: '📋', types: ['document'], limit: 10 },
+  { id: 'parents', name: 'Parents', description: 'Photos of sire and dam', icon: '👨‍👩‍👦', types: ['photo'], limit: 10 },
+  { id: 'baby_photos', name: 'Baby Photos', description: 'Puppy photos and early development', icon: '🍼', types: ['photo'], limit: 10 },
+  { id: 'training', name: 'Training', description: 'Training sessions and activities', icon: '🎓', types: ['photo'], limit: 10 },
+  { id: 'shows', name: 'Shows', description: 'Competition and show photos', icon: '🏆', types: ['photo'], limit: 10 },
+  { id: 'health', name: 'Health Records', description: 'Health documents and records', icon: '⚕️', types: ['document'], limit: 10 },
 ];
 
-export function PhotosDocsTab({ animalId, photoCategories }: PhotosDocsTabProps) {
+export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fileType, setFileType] = useState<FileType>('photo');
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('shelter');
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [caption, setCaption] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  // Fetch photos from API
+  const { data: photosData, isLoading } = useQuery({
+    queryKey: ['animal-photos', animalId],
+    queryFn: async () => {
+      const response = await fetch(`/api/animals/${animalId}/photos`);
+      if (!response.ok) throw new Error('Failed to fetch photos');
+      return response.json();
+    },
+  });
+
+  // UploadThing integration
+  const { startUpload } = useUploadThing('animalImage', {
+    onClientUploadComplete: async (res) => {
+      if (!res || res.length === 0) {
+        setUploading(false);
+        return;
+      }
+
+      // Save each uploaded file to database
+      for (const file of res) {
+        try {
+          const response = await fetch(`/api/animals/${animalId}/photos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              category: selectedCategory,
+              fileUrl: file.url,
+              fileName: file.name,
+              fileSize: file.size,
+              caption: caption || null,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save photo');
+          }
+        } catch (error) {
+          console.error('Error saving photo:', error);
+          toast({
+            title: "Upload Error",
+            description: error instanceof Error ? error.message : 'Failed to save photo',
+            variant: "destructive",
+          });
+        }
+      }
+
+      // Refresh photos list
+      queryClient.invalidateQueries({ queryKey: ['animal-photos', animalId] });
+
+      setUploading(false);
+      setUploadedFiles([]);
+      setCaption('');
+
+      toast({
+        title: "Upload Successful!",
+        description: `${res.length} file(s) uploaded to ${categoryDefinitions.find(c => c.id === selectedCategory)?.name}.`,
+      });
+    },
+    onUploadError: (error) => {
+      setUploading(false);
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload files",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete photo mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (photoId: string) => {
+      const response = await fetch(`/api/animals/${animalId}/photos?photoId=${photoId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete photo');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['animal-photos', animalId] });
+      toast({
+        title: "Photo Deleted",
+        description: "Photo deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: error instanceof Error ? error.message : "Failed to delete photo",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Filter categories based on selected file type
   const filteredCategories = categoryDefinitions.filter(category =>
@@ -67,14 +168,16 @@ export function PhotosDocsTab({ animalId, photoCategories }: PhotosDocsTabProps)
     }
   };
 
+  // Get photos for a specific category
   const getCategoryPhotos = (categoryId: string) => {
-    const category = photoCategories.find(c => c.category.toLowerCase() === categoryId);
-    return category?.photos || [];
+    if (!photosData?.photos) return [];
+    return photosData.photos.filter((p: any) => p.category === categoryId);
   };
 
-  const getTotalPhotos = (categoryId: string) => {
-    return getCategoryPhotos(categoryId).length;
-  };
+  // Get current category info
+  const currentCategory = categoryDefinitions.find(c => c.id === selectedCategory);
+  const currentCategoryPhotos = getCategoryPhotos(selectedCategory);
+  const remainingSlots = (currentCategory?.limit || 10) - currentCategoryPhotos.length;
 
   // Handle drag and drop
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -148,7 +251,7 @@ export function PhotosDocsTab({ animalId, photoCategories }: PhotosDocsTabProps)
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (uploadedFiles.length === 0) {
       toast({
         title: "No Files Selected",
@@ -158,23 +261,18 @@ export function PhotosDocsTab({ animalId, photoCategories }: PhotosDocsTabProps)
       return;
     }
 
-    // TODO: Implement actual upload logic
-    console.log('Uploading files:', {
-      animalId,
-      fileType,
-      category: selectedCategory,
-      files: uploadedFiles,
-      caption,
-    });
+    // Check category limit
+    if (uploadedFiles.length > remainingSlots) {
+      toast({
+        title: "Category Limit Exceeded",
+        description: `Only ${remainingSlots} slot(s) remaining in this category. Please select fewer files.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
-    toast({
-      title: "Upload Successful!",
-      description: `${uploadedFiles.length} file(s) uploaded to ${categoryDefinitions.find(c => c.id === selectedCategory)?.name}.`,
-    });
-
-    // Reset form
-    setUploadedFiles([]);
-    setCaption('');
+    setUploading(true);
+    await startUpload(uploadedFiles);
   };
 
   return (
@@ -216,26 +314,35 @@ export function PhotosDocsTab({ animalId, photoCategories }: PhotosDocsTabProps)
             <div className="space-y-2">
               <Label htmlFor="category">
                 Category
-                <span className="text-xs text-muted-foreground ml-2">
-                  ({filteredCategories.length} {fileType === 'photo' ? 'photo' : 'document'} categories)
-                </span>
+                {currentCategory && (
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {remainingSlots} of {currentCategory.limit} slots remaining
+                  </Badge>
+                )}
               </Label>
               <Select value={selectedCategory} onValueChange={(value: CategoryId) => setSelectedCategory(value)}>
                 <SelectTrigger id="category" className="bg-background border-primary/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{category.icon}</span>
-                        <div>
-                          <div className="font-medium">{category.name}</div>
-                          <div className="text-xs text-muted-foreground">{category.description}</div>
+                  {filteredCategories.map((category) => {
+                    const categoryPhotos = getCategoryPhotos(category.id);
+                    const remaining = category.limit - categoryPhotos.length;
+                    return (
+                      <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{category.icon}</span>
+                          <div className="flex-1">
+                            <div className="font-medium">{category.name}</div>
+                            <div className="text-xs text-muted-foreground">{category.description}</div>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {remaining}/{category.limit}
+                          </Badge>
                         </div>
-                      </div>
-                    </SelectItem>
-                  ))}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -345,91 +452,123 @@ export function PhotosDocsTab({ animalId, photoCategories }: PhotosDocsTabProps)
           {/* Upload Button */}
           <Button
             onClick={handleUpload}
-            disabled={uploadedFiles.length === 0}
+            disabled={uploadedFiles.length === 0 || uploading || remainingSlots === 0}
             className="w-full bg-gradient-brand hover:opacity-90 shadow-card"
           >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload {uploadedFiles.length > 0 && `(${uploadedFiles.length})`}
+            {uploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload {uploadedFiles.length > 0 && `(${uploadedFiles.length})`}
+              </>
+            )}
           </Button>
+
+          {remainingSlots === 0 && (
+            <p className="text-sm text-destructive text-center">
+              This category is full. Please select a different category or delete existing photos.
+            </p>
+          )}
         </CardContent>
       </Card>
 
       {/* Uploaded Files Gallery by Category */}
-      {categoryDefinitions.map((category) => {
-        const photos = getCategoryPhotos(category.id);
-        const photoCount = photos.length;
-        const hasPhotos = photoCount > 0;
+      {isLoading ? (
+        <Card className="shadow-card border-0 bg-surface">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
+            <p className="text-sm text-muted-foreground mt-2">Loading photos...</p>
+          </CardContent>
+        </Card>
+      ) : (
+        categoryDefinitions.map((category) => {
+          const photos = getCategoryPhotos(category.id);
+          const photoCount = photos.length;
+          const hasPhotos = photoCount > 0;
 
-        if (!hasPhotos) return null;
+          if (!hasPhotos) return null;
 
-        return (
-          <Card key={category.id} className="shadow-card border-0 bg-surface">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">{category.icon}</div>
-                  <div>
-                    <CardTitle className="text-lg">{category.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{category.description}</p>
-                  </div>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  {photoCount} items
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {photos.map((photo) => (
-                  <div
-                    key={photo.id}
-                    className="relative group aspect-square rounded-lg overflow-hidden border border-primary/10 bg-background hover-elevate cursor-pointer"
-                  >
-                    <img
-                      src={photo.url}
-                      alt={photo.caption || category.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-white hover:text-white hover:bg-white/20"
-                        onClick={() => setSelectedImage(photo.url)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-white hover:text-white hover:bg-white/20"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-white hover:text-white hover:bg-destructive/80"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+          return (
+            <Card key={category.id} className="shadow-card border-0 bg-surface">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">{category.icon}</div>
+                    <div>
+                      <CardTitle className="text-lg">{category.name}</CardTitle>
+                      <p className="text-sm text-muted-foreground">{category.description}</p>
                     </div>
-
-                    {/* Caption */}
-                    {photo.caption && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                        <p className="text-xs text-white truncate">{photo.caption}</p>
-                      </div>
-                    )}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+                  <Badge variant="outline" className="text-xs">
+                    {photoCount} / {category.limit}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {photos.map((photo: any) => (
+                    <div
+                      key={photo.id}
+                      className="relative group aspect-square rounded-lg overflow-hidden border border-primary/10 bg-background hover-elevate cursor-pointer"
+                    >
+                      <img
+                        src={photo.fileUrl}
+                        alt={photo.caption || category.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+
+                      {/* Overlay on hover */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-white hover:text-white hover:bg-white/20"
+                          onClick={() => setSelectedImage(photo.fileUrl)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-white hover:text-white hover:bg-white/20"
+                          onClick={() => window.open(photo.fileUrl, '_blank')}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-white hover:text-white hover:bg-destructive/80"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Are you sure you want to delete this photo?')) {
+                              deleteMutation.mutate(photo.id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      {/* Caption */}
+                      {photo.caption && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                          <p className="text-xs text-white truncate">{photo.caption}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })
+      )}
 
       {/* Image Viewer Modal (placeholder) */}
       {selectedImage && (

@@ -18,7 +18,11 @@ export const photoCategoryEnum = pgEnum('photo_category', [
   'pedigree',
   'health',
   'shelter',
-  'baby_photos'
+  'baby_photos',
+  'whelping_areas',
+  'vaccinations',
+  'council_registration',
+  'parents'
 ]);
 export const fileTypeEnum = pgEnum('file_type', ['image', 'video', 'document']);
 export const reminderTypeEnum = pgEnum('reminder_type', [
