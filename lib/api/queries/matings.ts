@@ -1,4 +1,36 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ConceptionInputs } from '@/lib/calculations/conception-types';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface CreateMatingData {
+  bitchId: string;
+  dogId?: string;
+  frozenSemenBatchId?: string;
+  matingDate: string;
+  breedingMethod: 'natural_ai' | 'tci' | 'surgical_ai' | 'frozen';
+  notes?: string;
+  status?: 'planned' | 'confirmed' | 'unsuccessful' | 'resulted_in_litter';
+}
+
+interface UpdateMatingData extends Partial<CreateMatingData> {
+  expectedWhelping?: string;
+  actualWhelping?: string;
+}
+
+interface ProgesteroneData {
+  laboratory: 'VIDAS' | 'IDEXX';
+  unit: 'nanograms' | 'nanomoles';
+  breedingMethod: 'natural_ai' | 'tci' | 'surgical_ai' | 'frozen';
+  readings: Array<{ day: number; value: number }>;
+}
+
+interface CalculateMatingData {
+  progesterone?: ProgesteroneData;
+  conception?: ConceptionInputs;
+}
 
 // ============================================================================
 // API CLIENT FUNCTIONS
@@ -27,7 +59,7 @@ async function fetchMating(id: string) {
   return json.data;
 }
 
-async function createMating(data: any) {
+async function createMating(data: CreateMatingData) {
   const response = await fetch('/api/matings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -41,7 +73,7 @@ async function createMating(data: any) {
   return json.data;
 }
 
-async function updateMating({ id, data }: { id: string; data: any }) {
+async function updateMating({ id, data }: { id: string; data: UpdateMatingData }) {
   const response = await fetch(`/api/matings/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -67,7 +99,7 @@ async function deleteMating(id: string) {
   return json.data;
 }
 
-async function calculateMating({ id, data }: { id: string; data: any }) {
+async function calculateMating({ id, data }: { id: string; data: CalculateMatingData }) {
   const response = await fetch(`/api/matings/${id}/calculate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

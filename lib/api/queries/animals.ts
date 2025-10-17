@@ -2,6 +2,37 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth/client';
 
 // ============================================================================
+// TYPES
+// ============================================================================
+
+interface CreateAnimalData {
+  name: string;
+  breedId?: string;
+  sex: 'male' | 'female';
+  dateOfBirth?: string;
+  microchipNumber?: string;
+  registrationNumber?: string;
+  weight?: number;
+  height?: number;
+  color?: string;
+  markings?: string;
+  profileImageUrl?: string;
+  bio?: string;
+  temperament?: string;
+  healthStatus?: 'excellent' | 'good' | 'fair' | 'poor';
+  isBreedingActive?: boolean;
+  isChampion?: boolean;
+  titles?: string[];
+  notes?: string;
+}
+
+interface UpdateAnimalData extends Partial<CreateAnimalData> {
+  isActive?: boolean;
+  isDeceased?: boolean;
+  deceasedDate?: string;
+}
+
+// ============================================================================
 // API CLIENT FUNCTIONS
 // ============================================================================
 
@@ -31,7 +62,7 @@ async function fetchAnimal(id: string) {
   return json.data;
 }
 
-async function createAnimal(data: any) {
+async function createAnimal(data: CreateAnimalData) {
   const response = await fetch('/api/animals', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -46,7 +77,7 @@ async function createAnimal(data: any) {
   return json.data;
 }
 
-async function updateAnimal({ id, data }: { id: string; data: any }) {
+async function updateAnimal({ id, data }: { id: string; data: UpdateAnimalData }) {
   const response = await fetch(`/api/animals/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

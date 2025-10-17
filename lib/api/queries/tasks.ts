@@ -1,6 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // ============================================================================
+// TYPES
+// ============================================================================
+
+interface CreateTaskData {
+  type: 'feeding' | 'exercise' | 'grooming' | 'weight' | 'cleaning' | 'event' | 'puppy_feeding' | 'misc';
+  title?: string;
+  notes?: string;
+  dueDate: string;
+  dueTime?: string;
+  animalId?: string;
+  priority: 'low' | 'medium' | 'high';
+  recurring?: boolean;
+  recurringPattern?: string;
+  metadata?: Record<string, string | number | boolean | null>;
+}
+
+interface UpdateTaskData extends Partial<CreateTaskData> {
+  completedAt?: string;
+}
+
+// ============================================================================
 // API CLIENT FUNCTIONS
 // ============================================================================
 
@@ -35,7 +56,7 @@ async function fetchTask(id: string) {
   return json.data;
 }
 
-async function createTask(data: any) {
+async function createTask(data: CreateTaskData) {
   const response = await fetch('/api/tasks', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -50,7 +71,7 @@ async function createTask(data: any) {
   return json.data;
 }
 
-async function updateTask({ id, data }: { id: string; data: any }) {
+async function updateTask({ id, data }: { id: string; data: UpdateTaskData }) {
   const response = await fetch(`/api/tasks/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

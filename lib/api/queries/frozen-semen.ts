@@ -1,6 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // ============================================================================
+// TYPES
+// ============================================================================
+
+interface CreateFrozenSemenData {
+  sourceAnimalId: string;
+  batchIdentifier: string;
+  collectionDate: string;
+  clinicId?: string;
+  totalStraws: number;
+  storageLocation?: string;
+  storageNotes?: string;
+  semenQuality?: 'excellent' | 'good' | 'fair' | 'poor';
+  volume?: number;
+  concentration?: number;
+  motility?: number;
+  morphology?: number;
+}
+
+interface UpdateFrozenSemenData extends Partial<CreateFrozenSemenData> {
+  strawsRemaining?: number;
+  status?: 'available' | 'reserved' | 'used' | 'expired';
+}
+
+// ============================================================================
 // API CLIENT FUNCTIONS
 // ============================================================================
 
@@ -25,7 +49,7 @@ async function fetchFrozenSemenBatch(id: string) {
   return json.data;
 }
 
-async function createFrozenSemenBatch(data: any) {
+async function createFrozenSemenBatch(data: CreateFrozenSemenData) {
   const response = await fetch('/api/frozen-semen', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -39,7 +63,7 @@ async function createFrozenSemenBatch(data: any) {
   return json.data;
 }
 
-async function updateFrozenSemenBatch({ id, data }: { id: string; data: any }) {
+async function updateFrozenSemenBatch({ id, data }: { id: string; data: UpdateFrozenSemenData }) {
   const response = await fetch(`/api/frozen-semen/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

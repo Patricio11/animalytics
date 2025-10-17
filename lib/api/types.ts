@@ -77,7 +77,7 @@ export interface APITask {
   priority: 'low' | 'medium' | 'high';
   recurring: boolean;
   recurringPattern: string | null;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, string | number | boolean | null> | null;
   createdAt: Date;
   updatedAt: Date;
   animal?: APIAnimal;

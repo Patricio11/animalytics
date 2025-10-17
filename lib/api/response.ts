@@ -3,7 +3,7 @@
  * Consistent response format across all API routes
  */
 
-export interface ApiSuccessResponse<T = any> {
+export interface ApiSuccessResponse<T = unknown> {
   success: true;
   data: T;
   message?: string;
@@ -11,7 +11,7 @@ export interface ApiSuccessResponse<T = any> {
     page?: number;
     limit?: number;
     total?: number;
-    [key: string]: any;
+    [key: string]: number | string | boolean | undefined;
   };
 }
 

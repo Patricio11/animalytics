@@ -1,6 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // ============================================================================
+// TYPES
+// ============================================================================
+
+interface CreateMarketplaceListingData {
+  animalId?: string;
+  category: 'stud_dog' | 'puppies' | 'dog_for_sale' | 'reproductive_services' | 'frozen_semen';
+  title: string;
+  description: string;
+  price?: number;
+  currency?: string;
+  location?: string;
+  clinicId?: string;
+  availability?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  images?: string[];
+}
+
+interface UpdateMarketplaceListingData extends Partial<CreateMarketplaceListingData> {
+  status?: 'active' | 'sold' | 'inactive';
+  featured?: boolean;
+}
+
+// ============================================================================
 // API CLIENT FUNCTIONS
 // ============================================================================
 
@@ -29,7 +54,7 @@ async function fetchMarketplaceListing(id: string) {
   return json.data;
 }
 
-async function createMarketplaceListing(data: any) {
+async function createMarketplaceListing(data: CreateMarketplaceListingData) {
   const response = await fetch('/api/marketplace', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -43,7 +68,7 @@ async function createMarketplaceListing(data: any) {
   return json.data;
 }
 
-async function updateMarketplaceListing({ id, data }: { id: string; data: any }) {
+async function updateMarketplaceListing({ id, data }: { id: string; data: UpdateMarketplaceListingData }) {
   const response = await fetch(`/api/marketplace/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
