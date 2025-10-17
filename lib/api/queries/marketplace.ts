@@ -18,13 +18,15 @@ async function fetchMarketplaceListings(filters?: {
 
   const response = await fetch(`/api/marketplace?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch marketplace listings');
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function fetchMarketplaceListing(id: string) {
   const response = await fetch(`/api/marketplace/${id}`);
   if (!response.ok) throw new Error('Failed to fetch marketplace listing');
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function createMarketplaceListing(data: any) {
@@ -37,7 +39,8 @@ async function createMarketplaceListing(data: any) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to create marketplace listing');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function updateMarketplaceListing({ id, data }: { id: string; data: any }) {
@@ -50,7 +53,8 @@ async function updateMarketplaceListing({ id, data }: { id: string; data: any })
     const error = await response.json();
     throw new Error(error.error || 'Failed to update marketplace listing');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function deleteMarketplaceListing(id: string) {
@@ -61,7 +65,8 @@ async function deleteMarketplaceListing(id: string) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to delete marketplace listing');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 // ============================================================================

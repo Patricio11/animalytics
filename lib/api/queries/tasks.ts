@@ -22,13 +22,17 @@ async function fetchTasks(filters?: {
 
   const response = await fetch(`/api/tasks?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch tasks');
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: [...] }
+  return json.data;
 }
 
 async function fetchTask(id: string) {
   const response = await fetch(`/api/tasks/${id}`);
   if (!response.ok) throw new Error('Failed to fetch task');
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 async function createTask(data: any) {
@@ -41,7 +45,9 @@ async function createTask(data: any) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to create task');
   }
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 async function updateTask({ id, data }: { id: string; data: any }) {
@@ -54,7 +60,9 @@ async function updateTask({ id, data }: { id: string; data: any }) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to update task');
   }
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 async function deleteTask(id: string) {
@@ -65,7 +73,9 @@ async function deleteTask(id: string) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to delete task');
   }
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 async function completeTask(id: string) {
@@ -76,7 +86,9 @@ async function completeTask(id: string) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to complete task');
   }
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 // ============================================================================

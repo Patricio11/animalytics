@@ -18,13 +18,17 @@ async function fetchAnimals(filters?: {
 
   const response = await fetch(`/api/animals?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch animals');
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: [...] }
+  return json.data;
 }
 
 async function fetchAnimal(id: string) {
   const response = await fetch(`/api/animals/${id}`);
   if (!response.ok) throw new Error('Failed to fetch animal');
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 async function createAnimal(data: any) {
@@ -37,7 +41,9 @@ async function createAnimal(data: any) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to create animal');
   }
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 async function updateAnimal({ id, data }: { id: string; data: any }) {
@@ -50,7 +56,9 @@ async function updateAnimal({ id, data }: { id: string; data: any }) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to update animal');
   }
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 async function deleteAnimal(id: string) {
@@ -61,7 +69,9 @@ async function deleteAnimal(id: string) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to delete animal');
   }
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 // ============================================================================

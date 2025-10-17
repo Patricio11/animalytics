@@ -34,7 +34,8 @@ async function generateReport(data: {
     const error = await response.json();
     throw new Error(error.error || 'Failed to generate report');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function fetchReports(reportType?: string) {
@@ -43,7 +44,8 @@ async function fetchReports(reportType?: string) {
 
   const response = await fetch(`/api/reports?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch reports');
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function exportReport(data: { reportId: string; format: 'csv' | 'pdf' }) {
@@ -56,7 +58,8 @@ async function exportReport(data: { reportId: string; format: 'csv' | 'pdf' }) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to export report');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 // ============================================================================

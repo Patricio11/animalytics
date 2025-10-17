@@ -8,3 +8,4 @@ export * from './matings';
 export * from './tasks';
 export * from './reports';
 export * from './marketplace';
+export * from './relations';

@@ -14,13 +14,15 @@ async function fetchFrozenSemenBatches(filters?: {
 
   const response = await fetch(`/api/frozen-semen?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch frozen semen batches');
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function fetchFrozenSemenBatch(id: string) {
   const response = await fetch(`/api/frozen-semen/${id}`);
   if (!response.ok) throw new Error('Failed to fetch frozen semen batch');
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function createFrozenSemenBatch(data: any) {
@@ -33,7 +35,8 @@ async function createFrozenSemenBatch(data: any) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to create frozen semen batch');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function updateFrozenSemenBatch({ id, data }: { id: string; data: any }) {
@@ -46,7 +49,8 @@ async function updateFrozenSemenBatch({ id, data }: { id: string; data: any }) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to update frozen semen batch');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function deleteFrozenSemenBatch(id: string) {
@@ -57,7 +61,8 @@ async function deleteFrozenSemenBatch(id: string) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to delete frozen semen batch');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function recordFrozenSemenUsage({
@@ -84,7 +89,8 @@ async function recordFrozenSemenUsage({
     const error = await response.json();
     throw new Error(error.error || 'Failed to record usage');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 // ============================================================================
@@ -162,7 +168,8 @@ export function useRecordFrozenSemenUsage() {
 async function fetchFrozenSemenStats() {
   const response = await fetch('/api/frozen-semen/stats');
   if (!response.ok) throw new Error('Failed to fetch frozen semen stats');
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 export function useFrozenSemenStats() {

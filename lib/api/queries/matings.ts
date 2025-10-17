@@ -16,13 +16,15 @@ async function fetchMatings(filters?: {
 
   const response = await fetch(`/api/matings?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch matings');
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function fetchMating(id: string) {
   const response = await fetch(`/api/matings/${id}`);
   if (!response.ok) throw new Error('Failed to fetch mating');
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function createMating(data: any) {
@@ -35,7 +37,8 @@ async function createMating(data: any) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to create mating');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function updateMating({ id, data }: { id: string; data: any }) {
@@ -48,7 +51,8 @@ async function updateMating({ id, data }: { id: string; data: any }) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to update mating');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function deleteMating(id: string) {
@@ -59,7 +63,8 @@ async function deleteMating(id: string) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to delete mating');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 async function calculateMating({ id, data }: { id: string; data: any }) {
@@ -72,7 +77,8 @@ async function calculateMating({ id, data }: { id: string; data: any }) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to calculate ratings');
   }
-  return response.json();
+  const json = await response.json();
+  return json.data;
 }
 
 // ============================================================================

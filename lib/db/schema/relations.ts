@@ -1,0 +1,185 @@
+import { relations } from 'drizzle-orm';
+import { users } from './users';
+import { animals, litters, frozenSemen, semenAssessments, seasons, progesteroneReadings, puppies, breeds } from './animals';
+import { matings } from './matings';
+import { tasks } from './tasks';
+import { listings } from './marketplace';
+
+// ============================================================================
+// USER RELATIONS
+// ============================================================================
+
+export const usersRelations = relations(users, ({ many }) => ({
+  animals: many(animals),
+  matings: many(matings),
+  tasks: many(tasks),
+  listings: many(listings),
+  frozenSemen: many(frozenSemen),
+}));
+
+// ============================================================================
+// BREED RELATIONS
+// ============================================================================
+
+export const breedsRelations = relations(breeds, ({ many }) => ({
+  animals: many(animals),
+}));
+
+// ============================================================================
+// ANIMAL RELATIONS
+// ============================================================================
+
+export const animalsRelations = relations(animals, ({ one, many }) => ({
+  // Belongs to
+  user: one(users, {
+    fields: [animals.userId],
+    references: [users.id],
+  }),
+  breed: one(breeds, {
+    fields: [animals.breedId],
+    references: [breeds.id],
+  }),
+
+  // Has many
+  matingsAsBitch: many(matings, { relationName: 'bitch' }),
+  matingsAsDog: many(matings, { relationName: 'dog' }),
+  litters: many(litters),
+  tasks: many(tasks),
+  semenAssessments: many(semenAssessments),
+  seasons: many(seasons),
+}));
+
+// ============================================================================
+// MATING RELATIONS
+// ============================================================================
+
+export const matingsRelations = relations(matings, ({ one }) => ({
+  user: one(users, {
+    fields: [matings.userId],
+    references: [users.id],
+  }),
+  bitch: one(animals, {
+    fields: [matings.bitchId],
+    references: [animals.id],
+    relationName: 'bitch',
+  }),
+  dog: one(animals, {
+    fields: [matings.dogId],
+    references: [animals.id],
+    relationName: 'dog',
+  }),
+}));
+
+// ============================================================================
+// LITTER RELATIONS
+// ============================================================================
+
+export const littersRelations = relations(litters, ({ one, many }) => ({
+  bitch: one(animals, {
+    fields: [litters.bitchId],
+    references: [animals.id],
+  }),
+  sire: one(animals, {
+    fields: [litters.sireId],
+    references: [animals.id],
+  }),
+  puppies: many(puppies),
+}));
+
+// ============================================================================
+// PUPPY RELATIONS
+// ============================================================================
+
+export const puppiesRelations = relations(puppies, ({ one }) => ({
+  litter: one(litters, {
+    fields: [puppies.litterId],
+    references: [litters.id],
+  }),
+}));
+
+// ============================================================================
+// TASK RELATIONS
+// ============================================================================
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  user: one(users, {
+    fields: [tasks.userId],
+    references: [users.id],
+  }),
+  animal: one(animals, {
+    fields: [tasks.animalId],
+    references: [animals.id],
+  }),
+}));
+
+// ============================================================================
+// FROZEN SEMEN RELATIONS
+// ============================================================================
+
+export const frozenSemenRelations = relations(frozenSemen, ({ one }) => ({
+  user: one(users, {
+    fields: [frozenSemen.userId],
+    references: [users.id],
+  }),
+  sourceAnimal: one(animals, {
+    fields: [frozenSemen.sourceAnimalId],
+    references: [animals.id],
+  }),
+}));
+
+// ============================================================================
+// SEMEN ASSESSMENT RELATIONS
+// ============================================================================
+
+export const semenAssessmentsRelations = relations(semenAssessments, ({ one }) => ({
+  animal: one(animals, {
+    fields: [semenAssessments.animalId],
+    references: [animals.id],
+  }),
+}));
+
+// ============================================================================
+// SEASON RELATIONS
+// ============================================================================
+
+export const seasonsRelations = relations(seasons, ({ one, many }) => ({
+  animal: one(animals, {
+    fields: [seasons.animalId],
+    references: [animals.id],
+  }),
+  progesteroneReadings: many(progesteroneReadings),
+}));
+
+// ============================================================================
+// PROGESTERONE READING RELATIONS
+// ============================================================================
+
+export const progesteroneReadingsRelations = relations(progesteroneReadings, ({ one }) => ({
+  animal: one(animals, {
+    fields: [progesteroneReadings.animalId],
+    references: [animals.id],
+  }),
+  season: one(seasons, {
+    fields: [progesteroneReadings.seasonId],
+    references: [seasons.id],
+  }),
+}));
+
+// ============================================================================
+// LISTING RELATIONS
+// ============================================================================
+
+export const listingsRelations = relations(listings, ({ one }) => ({
+  user: one(users, {
+    fields: [listings.userId],
+    references: [users.id],
+  }),
+  animal: one(animals, {
+    fields: [listings.animalId],
+    references: [animals.id],
+  }),
+  frozenSemen: one(frozenSemen, {
+    fields: [listings.frozenSemenId],
+    references: [frozenSemen.id],
+  }),
+}));

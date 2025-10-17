@@ -10,7 +10,7 @@ import {
   unauthorizedResponse,
   serverErrorResponse,
 } from '@/lib/api/response';
-import { eq, and, count, sql, gte, lte } from 'drizzle-orm';
+import { eq, and, count, sql, gte, isNull, inArray } from 'drizzle-orm';
 
 // ============================================================================
 // GET /api/dashboard/stats - Get dashboard statistics for current user
@@ -18,11 +18,15 @@ import { eq, and, count, sql, gte, lte } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('📊 Dashboard stats API called');
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session) {
+      console.log('❌ No session found');
       return unauthorizedResponse();
     }
+
+    console.log('✅ Session found for user:', session.user.id);
 
     const today = new Date();
     const thirtyDaysAgo = new Date(today);
@@ -63,17 +67,26 @@ export async function GET(request: NextRequest) {
     // 3. Litter Statistics
     // ========================================================================
 
-    const litterStats = await db
+    // Get user's animal IDs first
+    const userAnimalIds = await db
+      .select({ id: animals.id })
+      .from(animals)
+      .where(eq(animals.userId, session.user.id));
+
+    const animalIds = userAnimalIds.map(a => a.id);
+
+    const litterStats = animalIds.length > 0 ? await db
       .select({
         total: count(),
         expected: sql<number>`COUNT(CASE WHEN ${litters.status} = 'expected' THEN 1 END)`,
         whelped: sql<number>`COUNT(CASE WHEN ${litters.status} = 'whelped' THEN 1 END)`,
         archived: sql<number>`COUNT(CASE WHEN ${litters.status} = 'archived' THEN 1 END)`,
         totalPuppies: sql<number>`SUM(${litters.puppyCount})`,
-        recentCount: sql<number>`COUNT(CASE WHEN ${litters.whelpingDate} >= ${thirtyDaysAgo.toISOString().split('T')[0]} THEN 1 END)`,
+        recentCount: sql<number>`COUNT(CASE WHEN ${litters.actualWhelpingDate} >= ${thirtyDaysAgo.toISOString().split('T')[0]} THEN 1 END)`,
       })
       .from(litters)
-      .where(eq(litters.userId, session.user.id));
+      .where(inArray(litters.bitchId, animalIds))
+    : [{ total: 0, expected: 0, whelped: 0, archived: 0, totalPuppies: 0, recentCount: 0 }];
 
     // ========================================================================
     // 4. Task Statistics
@@ -83,10 +96,10 @@ export async function GET(request: NextRequest) {
     const taskStats = await db
       .select({
         total: count(),
-        completed: sql<number>`COUNT(CASE WHEN ${tasks.isCompleted} = true THEN 1 END)`,
-        pending: sql<number>`COUNT(CASE WHEN ${tasks.isCompleted} = false AND ${tasks.dueDate} >= ${todayStr} THEN 1 END)`,
-        overdue: sql<number>`COUNT(CASE WHEN ${tasks.isCompleted} = false AND ${tasks.dueDate} < ${todayStr} THEN 1 END)`,
-        highPriority: sql<number>`COUNT(CASE WHEN ${tasks.priority} = 'high' AND ${tasks.isCompleted} = false THEN 1 END)`,
+        completed: sql<number>`COUNT(CASE WHEN ${tasks.completedAt} IS NOT NULL THEN 1 END)`,
+        pending: sql<number>`COUNT(CASE WHEN ${tasks.completedAt} IS NULL AND ${tasks.dueDate} >= ${todayStr} THEN 1 END)`,
+        overdue: sql<number>`COUNT(CASE WHEN ${tasks.completedAt} IS NULL AND ${tasks.dueDate} < ${todayStr} THEN 1 END)`,
+        highPriority: sql<number>`COUNT(CASE WHEN ${tasks.priority} = 'high' AND ${tasks.completedAt} IS NULL THEN 1 END)`,
       })
       .from(tasks)
       .where(eq(tasks.userId, session.user.id));
@@ -98,8 +111,8 @@ export async function GET(request: NextRequest) {
     const frozenSemenStats = await db
       .select({
         total: count(),
-        active: sql<number>`COUNT(CASE WHEN ${frozenSemen.isActive} = true THEN 1 END)`,
-        totalStraws: sql<number>`SUM(${frozenSemen.numberOfStraws})`,
+        active: sql<number>`COUNT(CASE WHEN ${frozenSemen.isAvailable} = true THEN 1 END)`,
+        totalStraws: sql<number>`SUM(${frozenSemen.strawCount})`,
         strawsRemaining: sql<number>`SUM(${frozenSemen.strawsRemaining})`,
         lowStock: sql<number>`COUNT(CASE WHEN ${frozenSemen.strawsRemaining} > 0 AND ${frozenSemen.strawsRemaining} <= 5 THEN 1 END)`,
       })
@@ -113,13 +126,13 @@ export async function GET(request: NextRequest) {
     const marketplaceStats = await db
       .select({
         total: count(),
-        active: sql<number>`COUNT(CASE WHEN ${marketplaceListings.status} = 'active' THEN 1 END)`,
-        sold: sql<number>`COUNT(CASE WHEN ${marketplaceListings.status} = 'sold' THEN 1 END)`,
-        featured: sql<number>`COUNT(CASE WHEN ${marketplaceListings.featuredTier} IN ('basic', 'premium', 'spotlight') THEN 1 END)`,
-        totalViews: sql<number>`SUM(${marketplaceListings.views})`,
+        active: sql<number>`COUNT(CASE WHEN ${listings.status} = 'active' THEN 1 END)`,
+        sold: sql<number>`COUNT(CASE WHEN ${listings.status} = 'sold' THEN 1 END)`,
+        featured: sql<number>`COUNT(CASE WHEN ${listings.featuredTier} IN ('basic', 'premium', 'spotlight') THEN 1 END)`,
+        totalViews: sql<number>`SUM(${listings.viewCount})`,
       })
-      .from(marketplaceListings)
-      .where(eq(marketplaceListings.userId, session.user.id));
+      .from(listings)
+      .where(eq(listings.userId, session.user.id));
 
     // ========================================================================
     // 7. Recent Activity (Last 30 days)
@@ -157,7 +170,7 @@ export async function GET(request: NextRequest) {
     const upcomingTasks = await db.query.tasks.findMany({
       where: and(
         eq(tasks.userId, session.user.id),
-        eq(tasks.isCompleted, false),
+        isNull(tasks.completedAt),
         gte(tasks.dueDate, todayStr)
       ),
       with: {
@@ -170,10 +183,30 @@ export async function GET(request: NextRequest) {
     });
 
     // ========================================================================
-    // 8. Combine and Return
+    // 8. Combine and Return (Dashboard Structure)
     // ========================================================================
 
     const stats = {
+      // Dashboard expects: totalAnimals.total, totalAnimals.male, totalAnimals.female
+      totalAnimals: {
+        total: Number(animalStats[0]?.total) || 0,
+        male: Number(animalStats[0]?.males) || 0,
+        female: Number(animalStats[0]?.females) || 0,
+      },
+
+      // Dashboard expects: activeMatingsCount (number)
+      activeMatingsCount: (Number(matingStats[0]?.planned) || 0) + (Number(matingStats[0]?.confirmed) || 0),
+
+      // Dashboard expects: pendingTasksCount (number)
+      pendingTasksCount: Number(taskStats[0]?.pending) || 0,
+
+      // Dashboard expects: recentAnimals (array of animals)
+      recentAnimals: recentAnimals,
+
+      // Dashboard expects: upcomingTasks (array of tasks)
+      upcomingTasks: upcomingTasks,
+
+      // Additional stats for other pages
       animals: {
         total: animalStats[0]?.total || 0,
         active: animalStats[0]?.active || 0,
@@ -243,16 +276,20 @@ export async function GET(request: NextRequest) {
             ? Math.round((marketplaceStats[0]?.totalViews || 0) / marketplaceStats[0].total)
             : 0,
       },
-      recentActivity: {
-        animals: recentAnimals,
-        matings: recentMatings,
-        upcomingTasks: upcomingTasks,
-      },
     };
+
+    console.log('📈 Sending stats response:', {
+      totalAnimals: stats.totalAnimals,
+      activeMatingsCount: stats.activeMatingsCount,
+      pendingTasksCount: stats.pendingTasksCount,
+      recentAnimalsCount: stats.recentAnimals.length,
+      upcomingTasksCount: stats.upcomingTasks.length,
+    });
 
     return successResponse(stats);
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
+    console.error('❌ Error fetching dashboard stats:', error);
+    console.error('Full error details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     return serverErrorResponse('Failed to fetch dashboard statistics');
   }
 }

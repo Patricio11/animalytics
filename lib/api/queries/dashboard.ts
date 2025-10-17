@@ -7,7 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 async function fetchDashboardStats() {
   const response = await fetch('/api/dashboard/stats');
   if (!response.ok) throw new Error('Failed to fetch dashboard statistics');
-  return response.json();
+  const json = await response.json();
+  // API wraps response in { success: true, data: {...} }
+  return json.data;
 }
 
 // ============================================================================

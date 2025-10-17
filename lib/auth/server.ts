@@ -38,12 +38,20 @@ export async function requireRole(
 ) {
   const session = await requireAuth();
   const user = session.user as ExtendedUser;
+
+  // Debug logging
+  console.log("🔍 Session user:", JSON.stringify(user, null, 2));
+  console.log("🔍 User role:", user.role);
+  console.log("🔍 Allowed roles:", allowedRoles);
+
   const userRole = user.role as string;
 
-  if (!allowedRoles.includes(userRole as UserRole)) {
+  if (!userRole || !allowedRoles.includes(userRole as UserRole)) {
+    console.log("❌ Access denied - role mismatch");
     redirect("/unauthorized");
   }
 
+  console.log("✅ Access granted");
   return session;
 }
 
