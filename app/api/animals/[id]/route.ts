@@ -46,7 +46,7 @@ const updateAnimalSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -55,9 +55,11 @@ export async function GET(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     const animal = await db.query.animals.findFirst({
       where: and(
-        eq(animals.id, params.id),
+        eq(animals.id, id),
         eq(animals.userId, session.user.id)
       ),
       with: {
@@ -117,7 +119,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -126,6 +128,7 @@ export async function PATCH(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
     const body = await request.json();
 
     // Validate request body
@@ -150,7 +153,7 @@ export async function PATCH(
         updatedAt: new Date(),
       })
       .where(
-        and(eq(animals.id, params.id), eq(animals.userId, session.user.id))
+        and(eq(animals.id, id), eq(animals.userId, session.user.id))
       )
       .returning();
 
@@ -171,7 +174,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -180,10 +183,12 @@ export async function DELETE(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     const deleted = await db
       .delete(animals)
       .where(
-        and(eq(animals.id, params.id), eq(animals.userId, session.user.id))
+        and(eq(animals.id, id), eq(animals.userId, session.user.id))
       )
       .returning();
 

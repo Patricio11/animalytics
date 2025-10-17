@@ -32,7 +32,7 @@ const recordUsageSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -41,9 +41,11 @@ export async function POST(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     // Verify batch exists and belongs to user
     const batch = await db.query.frozenSemen.findFirst({
-      where: and(eq(frozenSemen.id, params.id), eq(frozenSemen.userId, session.user.id)),
+      where: and(eq(frozenSemen.id, id), eq(frozenSemen.userId, session.user.id)),
     });
 
     if (!batch) {
@@ -80,7 +82,7 @@ export async function POST(
     const usageRecord = await db
       .insert(frozenSemenUsage)
       .values({
-        frozenSemenId: params.id,
+        frozenSemenId: id,
         bitchId: validatedData.bitchId,
         userId: session.user.id,
         usageDate: validatedData.usageDate,
@@ -99,7 +101,7 @@ export async function POST(
         strawsRemaining: batch.strawsRemaining - validatedData.strawsUsed,
         updatedAt: new Date(),
       })
-      .where(and(eq(frozenSemen.id, params.id), eq(frozenSemen.userId, session.user.id)))
+      .where(and(eq(frozenSemen.id, id), eq(frozenSemen.userId, session.user.id)))
       .returning();
 
     return successResponse(

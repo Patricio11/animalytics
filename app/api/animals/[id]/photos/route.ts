@@ -11,12 +11,13 @@ import { createId } from '@paralleldrive/cuid2';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
     const session = await requireAuth();
 
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
 
@@ -24,13 +25,13 @@ export async function GET(
     let query = db
       .select()
       .from(animalPhotos)
-      .where(eq(animalPhotos.animalId, params.id));
+      .where(eq(animalPhotos.animalId, id));
 
     // Filter by category if provided
     if (category) {
       query = query.where(
         and(
-          eq(animalPhotos.animalId, params.id),
+          eq(animalPhotos.animalId, id),
           eq(animalPhotos.category, category as any)
         )
       );
@@ -61,12 +62,13 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
     const session = await requireAuth();
 
+    const { id } = await params;
     const body = await request.json();
     const { category, fileUrl, fileName, fileSize, thumbnailUrl, caption, width, height } = body;
 
@@ -89,7 +91,7 @@ export async function POST(
       .from(animalPhotos)
       .where(
         and(
-          eq(animalPhotos.animalId, params.id),
+          eq(animalPhotos.animalId, id),
           eq(animalPhotos.category, category)
         )
       );
@@ -110,7 +112,7 @@ export async function POST(
         .delete(animalPhotos)
         .where(
           and(
-            eq(animalPhotos.animalId, params.id),
+            eq(animalPhotos.animalId, id),
             eq(animalPhotos.category, 'profile')
           )
         );
@@ -121,7 +123,7 @@ export async function POST(
       .insert(animalPhotos)
       .values({
         id: createId(),
-        animalId: params.id,
+        animalId: id,
         category,
         fileUrl,
         fileName,
@@ -158,12 +160,13 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
     const session = await requireAuth();
 
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const photoId = searchParams.get('photoId');
 
@@ -183,7 +186,7 @@ export async function DELETE(
       .where(
         and(
           eq(animalPhotos.id, photoId),
-          eq(animalPhotos.animalId, params.id) // Ensure it belongs to this animal
+          eq(animalPhotos.animalId, id) // Ensure it belongs to this animal
         )
       );
 

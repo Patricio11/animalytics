@@ -57,7 +57,7 @@ const calculateSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -66,9 +66,11 @@ export async function POST(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     // Verify mating exists and belongs to user
     const existing = await db.query.matings.findFirst({
-      where: and(eq(matings.id, params.id), eq(matings.userId, session.user.id)),
+      where: and(eq(matings.id, id), eq(matings.userId, session.user.id)),
     });
 
     if (!existing) {
@@ -168,7 +170,7 @@ export async function POST(
         ratingBreakdown: conceptionResult?.breakdown || null,
         updatedAt: new Date(),
       })
-      .where(and(eq(matings.id, params.id), eq(matings.userId, session.user.id)))
+      .where(and(eq(matings.id, id), eq(matings.userId, session.user.id)))
       .returning();
 
     // ========================================================================

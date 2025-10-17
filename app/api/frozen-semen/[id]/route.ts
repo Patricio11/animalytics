@@ -38,7 +38,7 @@ const updateFrozenSemenSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -47,8 +47,10 @@ export async function GET(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     const batch = await db.query.frozenSemen.findFirst({
-      where: and(eq(frozenSemen.id, params.id), eq(frozenSemen.userId, session.user.id)),
+      where: and(eq(frozenSemen.id, id), eq(frozenSemen.userId, session.user.id)),
       with: {
         sourceAnimal: {
           with: {
@@ -85,7 +87,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -94,9 +96,11 @@ export async function PATCH(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     // Verify batch exists and belongs to user
     const existing = await db.query.frozenSemen.findFirst({
-      where: and(eq(frozenSemen.id, params.id), eq(frozenSemen.userId, session.user.id)),
+      where: and(eq(frozenSemen.id, id), eq(frozenSemen.userId, session.user.id)),
     });
 
     if (!existing) {
@@ -147,7 +151,7 @@ export async function PATCH(
         ...validatedData,
         updatedAt: new Date(),
       })
-      .where(and(eq(frozenSemen.id, params.id), eq(frozenSemen.userId, session.user.id)))
+      .where(and(eq(frozenSemen.id, id), eq(frozenSemen.userId, session.user.id)))
       .returning();
 
     return successResponse(updated[0], 'Frozen semen batch updated successfully');
@@ -163,7 +167,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -172,9 +176,11 @@ export async function DELETE(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     // Verify batch exists and belongs to user
     const existing = await db.query.frozenSemen.findFirst({
-      where: and(eq(frozenSemen.id, params.id), eq(frozenSemen.userId, session.user.id)),
+      where: and(eq(frozenSemen.id, id), eq(frozenSemen.userId, session.user.id)),
     });
 
     if (!existing) {
@@ -184,7 +190,7 @@ export async function DELETE(
     // Delete batch
     await db
       .delete(frozenSemen)
-      .where(and(eq(frozenSemen.id, params.id), eq(frozenSemen.userId, session.user.id)));
+      .where(and(eq(frozenSemen.id, id), eq(frozenSemen.userId, session.user.id)));
 
     return successResponse(null, 'Frozen semen batch deleted successfully');
   } catch (error) {

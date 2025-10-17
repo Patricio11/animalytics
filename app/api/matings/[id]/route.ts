@@ -36,7 +36,7 @@ const updateMatingSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -45,8 +45,10 @@ export async function GET(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     const mating = await db.query.matings.findFirst({
-      where: and(eq(matings.id, params.id), eq(matings.userId, session.user.id)),
+      where: and(eq(matings.id, id), eq(matings.userId, session.user.id)),
       with: {
         bitch: {
           with: {
@@ -91,7 +93,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -100,6 +102,7 @@ export async function PATCH(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
     const body = await request.json();
 
     // Validate request body
@@ -123,7 +126,7 @@ export async function PATCH(
         ...validatedData,
         updatedAt: new Date(),
       })
-      .where(and(eq(matings.id, params.id), eq(matings.userId, session.user.id)))
+      .where(and(eq(matings.id, id), eq(matings.userId, session.user.id)))
       .returning();
 
     if (!updated.length) {
@@ -143,7 +146,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -152,9 +155,11 @@ export async function DELETE(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     const deleted = await db
       .delete(matings)
-      .where(and(eq(matings.id, params.id), eq(matings.userId, session.user.id)))
+      .where(and(eq(matings.id, id), eq(matings.userId, session.user.id)))
       .returning();
 
     if (!deleted.length) {

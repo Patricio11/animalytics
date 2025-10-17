@@ -161,7 +161,6 @@ async function seedDatabase() {
               status: 'not_started',
               monthlyLimit: 0,
               transactionLimit: 0,
-              currentMonthSales: 0,
               createdAt: new Date(),
               updatedAt: new Date(),
             });
