@@ -35,7 +35,7 @@ const updateTaskSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -44,8 +44,10 @@ export async function GET(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     const task = await db.query.tasks.findFirst({
-      where: and(eq(tasks.id, params.id), eq(tasks.userId, session.user.id)),
+      where: and(eq(tasks.id, id), eq(tasks.userId, session.user.id)),
       with: {
         animal: {
           with: {
@@ -72,7 +74,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -81,9 +83,11 @@ export async function PATCH(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     // Verify task exists and belongs to user
     const existing = await db.query.tasks.findFirst({
-      where: and(eq(tasks.id, params.id), eq(tasks.userId, session.user.id)),
+      where: and(eq(tasks.id, id), eq(tasks.userId, session.user.id)),
     });
 
     if (!existing) {
@@ -113,7 +117,7 @@ export async function PATCH(
         ...validatedData,
         updatedAt: new Date(),
       })
-      .where(and(eq(tasks.id, params.id), eq(tasks.userId, session.user.id)))
+      .where(and(eq(tasks.id, id), eq(tasks.userId, session.user.id)))
       .returning();
 
     return successResponse(updated[0], 'Task updated successfully');
@@ -129,7 +133,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -138,9 +142,11 @@ export async function DELETE(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     // Verify task exists and belongs to user
     const existing = await db.query.tasks.findFirst({
-      where: and(eq(tasks.id, params.id), eq(tasks.userId, session.user.id)),
+      where: and(eq(tasks.id, id), eq(tasks.userId, session.user.id)),
     });
 
     if (!existing) {
@@ -150,7 +156,7 @@ export async function DELETE(
     // Delete task
     await db
       .delete(tasks)
-      .where(and(eq(tasks.id, params.id), eq(tasks.userId, session.user.id)));
+      .where(and(eq(tasks.id, id), eq(tasks.userId, session.user.id)));
 
     return successResponse(null, 'Task deleted successfully');
   } catch (error) {

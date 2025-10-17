@@ -16,7 +16,7 @@ import { eq, and } from 'drizzle-orm';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -25,9 +25,11 @@ export async function POST(
       return unauthorizedResponse();
     }
 
+    const { id } = await params;
+
     // Verify task exists and belongs to user
     const existing = await db.query.tasks.findFirst({
-      where: and(eq(tasks.id, params.id), eq(tasks.userId, session.user.id)),
+      where: and(eq(tasks.id, id), eq(tasks.userId, session.user.id)),
     });
 
     if (!existing) {
@@ -42,7 +44,7 @@ export async function POST(
         completedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(and(eq(tasks.id, params.id), eq(tasks.userId, session.user.id)))
+      .where(and(eq(tasks.id, id), eq(tasks.userId, session.user.id)))
       .returning();
 
     return successResponse(updated[0], 'Task marked as completed');
