@@ -107,7 +107,7 @@ export const payoutRequests = pgTable('payout_requests', {
     swiftCode?: string;
     iban?: string;
     email?: string;
-    [key: string]: any;
+    [key: string]: string | undefined;
   }>().notNull(),
 
   // Status workflow

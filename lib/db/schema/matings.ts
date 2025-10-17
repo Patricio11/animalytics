@@ -213,27 +213,10 @@ export const conceptionRatingHistory = pgTable('conception_rating_history', {
   informationAccuracy: decimal('information_accuracy', { precision: 3, scale: 1 }), // 0-5 stars
 
   // Complete input data snapshot (for audit trail)
-  inputData: jsonb('input_data').$type<{
-    breed?: any;
-    bitchInformation?: any;
-    bitchHistory?: any;
-    litterHistory?: any;
-    dogHistory?: any;
-    breederHistory?: any;
-    semenInformation?: any;
-    semenAssessment?: any;
-  }>(),
+  inputData: jsonb('input_data').$type<MatingCalculationData>(),
 
   // Breakdown snapshot
-  breakdown: jsonb('breakdown').$type<{
-    breed?: any;
-    bitchInformation?: any;
-    bitchHistory?: any;
-    litterHistory?: any;
-    dogHistory?: any;
-    breederHistory?: any;
-    semenQuality?: any;
-  }>(),
+  breakdown: jsonb('breakdown').$type<MatingRatingBreakdown>(),
 
   // Recommendation at time of calculation
   recommendation: text('recommendation'),

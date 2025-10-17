@@ -8,7 +8,6 @@
 import {
   type Locale,
   defaultLocale,
-  localeToTimezone,
   localeToCurrency,
   localeToDateFormat,
   localeToMeasurementSystem,

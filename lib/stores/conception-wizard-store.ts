@@ -1,36 +1,56 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import type {
+  BitchInformationInputs,
+  BitchHistoryInputs,
+  LitterHistoryInputs,
+  DogHistoryInputs,
+  BreederHistoryInputs,
+  SemenInformationInputs,
+  SemenAssessmentInputs,
+  SemenQualityInputs,
+} from '@/lib/calculations/conception-types';
 
-interface ConceptionWizardState {
+interface BreedData {
+  bitchBreed?: string;
+  dogBreed?: string;
+}
+
+interface SemenData extends SemenInformationInputs {
+  quality?: SemenQualityInputs;
+}
+
+interface ConceptionWizardData {
+  breed: BreedData | null;
+  bitchInfo: BitchInformationInputs | null;
+  bitchHistory: BitchHistoryInputs | null;
+  litterHistory: LitterHistoryInputs | null;
+  dogHistory: DogHistoryInputs | null;
+  breederHistory: BreederHistoryInputs | null;
+  semenInfo: SemenData | null;
+  semenAssessment: SemenAssessmentInputs | null;
+}
+
+interface ConceptionWizardState extends ConceptionWizardData {
   // Current step
   currentStep: number;
-
-  // Form data for all steps
-  breed: any;
-  bitchInfo: any;
-  bitchHistory: any;
-  litterHistory: any;
-  dogHistory: any;
-  breederHistory: any;
-  semenInfo: any;
-  semenAssessment: any;
 
   // Mating context
   matingId: string | null;
 
   // Actions
   setCurrentStep: (step: number) => void;
-  updateBreed: (data: any) => void;
-  updateBitchInfo: (data: any) => void;
-  updateBitchHistory: (data: any) => void;
-  updateLitterHistory: (data: any) => void;
-  updateDogHistory: (data: any) => void;
-  updateBreederHistory: (data: any) => void;
-  updateSemenInfo: (data: any) => void;
-  updateSemenAssessment: (data: any) => void;
+  updateBreed: (data: BreedData) => void;
+  updateBitchInfo: (data: BitchInformationInputs) => void;
+  updateBitchHistory: (data: BitchHistoryInputs) => void;
+  updateLitterHistory: (data: LitterHistoryInputs) => void;
+  updateDogHistory: (data: DogHistoryInputs) => void;
+  updateBreederHistory: (data: BreederHistoryInputs) => void;
+  updateSemenInfo: (data: SemenData) => void;
+  updateSemenAssessment: (data: SemenAssessmentInputs) => void;
   setMatingId: (id: string) => void;
   reset: () => void;
-  getAllData: () => any;
+  getAllData: () => ConceptionWizardData;
 }
 
 const initialState = {

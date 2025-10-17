@@ -7,16 +7,18 @@ interface ProgesteroneReading {
   date: Date;
 }
 
+type BreedingMethod = 'natural_ai' | 'tci' | 'surgical_ai' | 'frozen';
+
 interface ProgesteroneState {
   laboratory: 'VIDAS' | 'IDEXX' | null;
   unit: 'nanograms' | 'nanomoles' | null;
-  breedingMethod: 'natural_ai' | 'tci' | 'surgical_ai' | 'frozen' | null;
+  breedingMethod: BreedingMethod | null;
   readings: ProgesteroneReading[];
   matingId: string | null;
 
   setLaboratory: (lab: 'VIDAS' | 'IDEXX') => void;
   setUnit: (unit: 'nanograms' | 'nanomoles') => void;
-  setBreedingMethod: (method: string) => void;
+  setBreedingMethod: (method: BreedingMethod) => void;
   addReading: (reading: ProgesteroneReading) => void;
   updateReading: (day: number, reading: ProgesteroneReading) => void;
   removeReading: (day: number) => void;
@@ -35,7 +37,7 @@ export const useProgesteroneStore = create<ProgesteroneState>()(
 
       setLaboratory: (lab) => set({ laboratory: lab }),
       setUnit: (unit) => set({ unit }),
-      setBreedingMethod: (method) => set({ breedingMethod: method as any }),
+      setBreedingMethod: (method) => set({ breedingMethod: method }),
 
       addReading: (reading) =>
         set((state) => ({
