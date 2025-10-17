@@ -155,10 +155,10 @@ export default function BreederProfilePage() {
       </div>
 
       {/* Profile Header */}
-      <div className="max-w-7xl mx-auto px-8 -mt-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20">
         <Card className="shadow-elevated border-0">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-6 items-start">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
               {/* Avatar */}
               <div className="relative">
                 <Avatar className="w-32 h-32 border-4 border-surface shadow-card">
@@ -180,41 +180,41 @@ export default function BreederProfilePage() {
 
               {/* Info */}
               <div className="flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
+                  <div className="flex-1 w-full">
                     {isEditing ? (
                       <Input
                         value={editedProfile.displayName}
                         onChange={(e) => setEditedProfile({...editedProfile, displayName: e.target.value})}
-                        className="text-3xl font-bold mb-2"
+                        className="text-2xl sm:text-3xl font-bold mb-2"
                       />
                     ) : (
-                      <h1 className="text-3xl font-bold mb-2">{mockProfile.displayName}</h1>
+                      <h1 className="text-2xl sm:text-3xl font-bold mb-2">{mockProfile.displayName}</h1>
                     )}
                     {isEditing ? (
                       <Input
                         value={editedProfile.tagline}
                         onChange={(e) => setEditedProfile({...editedProfile, tagline: e.target.value})}
-                        className="text-muted-foreground"
+                        className="text-sm sm:text-base text-muted-foreground"
                       />
                     ) : (
-                      <p className="text-muted-foreground">{mockProfile.tagline}</p>
+                      <p className="text-sm sm:text-base text-muted-foreground">{mockProfile.tagline}</p>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     {isEditing ? (
                       <>
-                        <Button onClick={handleSave} className="bg-gradient-brand hover:opacity-90">
+                        <Button onClick={handleSave} className="bg-gradient-brand hover:opacity-90 w-full sm:w-auto">
                           <Save className="w-4 h-4 mr-2" />
                           Save
                         </Button>
-                        <Button onClick={handleCancel} variant="outline">
+                        <Button onClick={handleCancel} variant="outline" className="w-full sm:w-auto">
                           <X className="w-4 h-4 mr-2" />
                           Cancel
                         </Button>
                       </>
                     ) : (
-                      <Button onClick={() => setIsEditing(true)} variant="outline" className="hover-elevate">
+                      <Button onClick={() => setIsEditing(true)} variant="outline" className="hover-elevate w-full sm:w-auto">
                         <Edit className="w-4 h-4 mr-2" />
                         Edit Profile
                       </Button>
@@ -259,8 +259,8 @@ export default function BreederProfilePage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-8 mt-6">
-        <div className="grid gap-6 md:grid-cols-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -282,7 +282,7 @@ export default function BreederProfilePage() {
 
       {/* Profile Completeness */}
       {mockProfile.profileCompleteness < 100 && (
-        <div className="max-w-7xl mx-auto px-8 mt-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
           <Alert className="bg-chart-2-light border-chart-2">
             <TrendingUp className="h-4 w-4 text-chart-2" />
             <AlertDescription className="text-chart-2">
@@ -298,7 +298,7 @@ export default function BreederProfilePage() {
       )}
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-8 mt-6 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12">
         <Tabs defaultValue="about" className="space-y-6">
           <TabsList className="bg-surface shadow-card">
             <TabsTrigger value="about">About</TabsTrigger>

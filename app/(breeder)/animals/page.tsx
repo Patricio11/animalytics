@@ -66,15 +66,15 @@ export default function Animals() {
 
   return (
     <div className="min-h-screen bg-surface-secondary">
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">My Animals</h1>
-            <p className="text-muted-foreground">Manage your animal portfolio</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Animals</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your animal portfolio</p>
           </div>
           <Button
-            className="bg-gradient-brand hover:opacity-90 shadow-card"
+            className="bg-gradient-brand hover:opacity-90 shadow-card w-full sm:w-auto"
             data-testid="button-add-animal"
             onClick={() => setShowAddAnimal(true)}
           >

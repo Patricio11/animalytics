@@ -133,21 +133,21 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Wallet</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Wallet</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">
             Manage your earnings, withdrawals, and transaction history
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="hover-elevate">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+          <Button variant="outline" className="hover-elevate w-full sm:w-auto">
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button className="bg-gradient-brand hover:opacity-90 shadow-card">
+          <Button className="bg-gradient-brand hover:opacity-90 shadow-card w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
             Request Payout
           </Button>
@@ -277,7 +277,7 @@ export default function WalletPage() {
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -288,7 +288,7 @@ export default function WalletPage() {
               />
             </div>
             <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
-              <SelectTrigger className="w-full md:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter type" />
               </SelectTrigger>
