@@ -4,6 +4,7 @@ export * from './wallet';
 export * from './kyc';
 export * from './profiles';
 export * from './animals';
+export * from './pedigree';
 export * from './matings';
 export * from './tasks';
 export * from './reports';

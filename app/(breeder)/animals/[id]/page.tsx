@@ -11,6 +11,7 @@ import { SemenTab } from "@/components/breeder/animals/SemenTab";
 import { SeasonsTab } from "@/components/breeder/animals/SeasonsTab";
 import { LitterDetailsTab } from "@/components/breeder/animals/LitterDetailsTab";
 import { RemindersTab } from "@/components/breeder/animals/RemindersTab";
+import { PedigreeTab } from "@/components/breeder/animals/PedigreeTab";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   // Determine available tabs based on animal type
   const tabs = [
     { value: 'profile', label: 'Profile', icon: Activity },
+    { value: 'pedigree', label: 'Pedigree', icon: Share2 },
     { value: 'photos-docs', label: 'Photos & Docs', icon: Award },
     { value: 'feeding', label: 'Feeding', icon: Calendar },
     { value: 'semen', label: 'Semen', icon: Shield },
@@ -224,6 +226,10 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                 <div className="p-6">
                   <TabsContent value="profile" className="mt-0">
                     <ProfileTab animal={animal} />
+                  </TabsContent>
+
+                  <TabsContent value="pedigree" className="mt-0">
+                    <PedigreeTab animalId={animal.id} animalName={animal.name} />
                   </TabsContent>
 
                   <TabsContent value="photos-docs" className="mt-0">
