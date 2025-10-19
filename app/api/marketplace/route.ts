@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { animals } from '@/lib/db/schema/animals';
+import { animals, breeds } from '@/lib/db/schema/animals';
 import { breederProfiles } from '@/lib/db/schema/profiles';
-import { eq, desc, and, or, ilike, sql } from 'drizzle-orm';
+import { eq, desc, and, or, ilike, sql, isNotNull } from 'drizzle-orm';
 
 // ============================================================================
 // GET /api/marketplace
@@ -23,31 +23,67 @@ export async function GET(request: NextRequest) {
     const offset = Number(searchParams.get('offset') || '0');
 
     // Build query - only show available animals from public profiles
-    let query = db
+    let conditions = [
+      eq(animals.isActive, true),
+      eq(animals.isBreedingActive, true), // Only show animals available for breeding
+      isNotNull(breederProfiles.isPublic),
+      eq(breederProfiles.isPublic, true)
+    ];
+
+    // Apply filters
+    if (status === 'available') {
+      // Already filtered by isBreedingActive
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(animals.name, `%${search}%`),
+          ilike(breeds.name, `%${search}%`),
+          ilike(breederProfiles.displayName, `%${search}%`)
+        )!
+      );
+    }
+
+    if (breed) {
+      conditions.push(ilike(breeds.name, `%${breed}%`));
+    }
+
+    if (sex === 'male' || sex === 'female') {
+      conditions.push(eq(animals.sex, sex));
+    }
+
+    if (location) {
+      conditions.push(
+        or(
+          sql`${breederProfiles.location}->>'city' ILIKE ${`%${location}%`}`,
+          sql`${breederProfiles.location}->>'state' ILIKE ${`%${location}%`}`,
+          sql`${breederProfiles.location}->>'country' ILIKE ${`%${location}%`}`
+        )!
+      );
+    }
+
+    const marketplaceAnimals = await db
       .select({
         // Animal fields
         id: animals.id,
         name: animals.name,
-        breed: animals.breed,
+        breedId: animals.breedId,
+        breedName: breeds.name,
         sex: animals.sex,
         dateOfBirth: animals.dateOfBirth,
-        age: animals.age,
         color: animals.color,
         markings: animals.markings,
         profileImageUrl: animals.profileImageUrl,
-        imageUrls: animals.imageUrls,
         bio: animals.bio,
         temperament: animals.temperament,
-        price: animals.price,
-        status: animals.status,
         isChampion: animals.isChampion,
         titles: animals.titles,
-        healthCertified: animals.healthCertified,
-        vaccinated: animals.vaccinated,
-        microchipped: animals.microchipped,
+        microchipNumber: animals.microchipNumber,
+        registrationNumber: animals.registrationNumber,
         createdAt: animals.createdAt,
         // Breeder info
-        breederId: animals.breederId,
+        breederId: animals.userId,
         breederName: breederProfiles.displayName,
         breederSlug: breederProfiles.slug,
         breederLocation: breederProfiles.location,
@@ -55,100 +91,9 @@ export async function GET(request: NextRequest) {
         breederPremium: breederProfiles.premiumMember,
       })
       .from(animals)
-      .leftJoin(breederProfiles, eq(animals.breederId, breederProfiles.userId))
-      .where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true)
-        )
-      );
-
-    // Apply status filter
-    if (status) {
-      query = query.where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true),
-          eq(animals.status, status)
-        )
-      );
-    }
-
-    // Apply search filter
-    if (search) {
-      query = query.where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true),
-          or(
-            ilike(animals.name, `%${search}%`),
-            ilike(animals.breed, `%${search}%`),
-            ilike(breederProfiles.displayName, `%${search}%`)
-          )
-        )
-      );
-    }
-
-    // Apply breed filter
-    if (breed) {
-      query = query.where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true),
-          ilike(animals.breed, `%${breed}%`)
-        )
-      );
-    }
-
-    // Apply sex filter
-    if (sex === 'male' || sex === 'female') {
-      query = query.where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true),
-          eq(animals.sex, sex)
-        )
-      );
-    }
-
-    // Apply price filters
-    if (minPrice) {
-      query = query.where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true),
-          sql`${animals.price} >= ${Number(minPrice)}`
-        )
-      );
-    }
-
-    if (maxPrice) {
-      query = query.where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true),
-          sql`${animals.price} <= ${Number(maxPrice)}`
-        )
-      );
-    }
-
-    // Apply location filter
-    if (location) {
-      query = query.where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true),
-          or(
-            sql`${breederProfiles.location}->>'city' ILIKE ${`%${location}%`}`,
-            sql`${breederProfiles.location}->>'state' ILIKE ${`%${location}%`}`,
-            sql`${breederProfiles.location}->>'country' ILIKE ${`%${location}%`}`
-          )
-        )
-      );
-    }
-
-    // Order by: Featured/Premium first, then newest
-    const marketplaceAnimals = await query
+      .leftJoin(breeds, eq(animals.breedId, breeds.id))
+      .leftJoin(breederProfiles, eq(animals.userId, breederProfiles.userId))
+      .where(and(...conditions))
       .orderBy(
         desc(breederProfiles.premiumMember),
         desc(animals.createdAt)
@@ -156,18 +101,21 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
+
     // Get total count for pagination
+    const countConditions = [
+      eq(animals.isActive, true),
+      eq(animals.isBreedingActive, true),
+      isNotNull(breederProfiles.isPublic),
+      eq(breederProfiles.isPublic, true)
+    ];
+
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(animals)
-      .leftJoin(breederProfiles, eq(animals.breederId, breederProfiles.userId))
-      .where(
-        and(
-          eq(animals.isActive, true),
-          eq(breederProfiles.isPublic, true),
-          status ? eq(animals.status, status) : undefined
-        )
-      );
+      .leftJoin(breeds, eq(animals.breedId, breeds.id))
+      .leftJoin(breederProfiles, eq(animals.userId, breederProfiles.userId))
+      .where(and(...countConditions));
 
     return NextResponse.json({
       success: true,
