@@ -62,41 +62,34 @@ export default function GlobalMarketplace() {
 
   return (
     <div className="min-h-screen bg-surface-secondary">
-      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-lg bg-gradient-brand flex items-center justify-center">
-                <Store className="w-6 h-6 text-white" />
+      {/* Header */}
+      <div className="bg-gradient-brand text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Store className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-4xl font-bold">Global Marketplace</h1>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Global Marketplace</h1>
+              <p className="text-lg opacity-90">
+                Browse quality breeding animals and services from verified breeders
+              </p>
             </div>
-            <p className="text-muted-foreground">Browse quality breeding animals and services from verified breeders</p>
+            
+            {/* Sign In CTA */}
+            <Link href="/auth/signin">
+              <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white/30 text-white backdrop-blur-sm">
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In to List
+              </Button>
+            </Link>
           </div>
-          
-          {/* Sign In CTA */}
-          <Link href="/auth/signin">
-            <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card">
-              <LogIn className="w-4 h-4 mr-2" />
-              Sign In to List
-            </Button>
-          </Link>
         </div>
+      </div>
 
-        {/* Info Banner */}
-        <Card className="shadow-card bg-gradient-to-r from-primary/5 to-chart-2/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">ℹ️</div>
-              <div className="flex-1">
-                <p className="text-sm text-foreground">
-                  <strong>Browse freely!</strong> Sign in or create an account to contact breeders, make offers, and list your own animals.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto -mt-8">
 
         {/* Filters */}
         <Card className="shadow-card bg-surface border-0">
