@@ -8,6 +8,8 @@ import { ActivityCard } from "@/components/breeder/ActivityCard";
 import { TaskCard } from "@/components/breeder/TaskCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Calendar, Trophy, DollarSign, Plus, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useDashboardStats } from "@/lib/api/queries/dashboard";
@@ -92,10 +94,91 @@ export default function Dashboard() {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="ml-2 text-muted-foreground">Loading dashboard...</span>
-        </div>
+        <>
+          {/* Stats Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="shadow-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                  </div>
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-3 w-32" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Main Content Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Recent Animals Skeleton */}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <Skeleton className="h-7 w-40" />
+                  <Skeleton className="h-9 w-24" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="shadow-card">
+                      <CardContent className="p-0">
+                        <Skeleton className="aspect-square w-full rounded-t-lg" />
+                        <div className="p-4 space-y-2">
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-6 w-20" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Actions Skeleton */}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <Skeleton className="h-7 w-32" />
+                  <Skeleton className="h-9 w-32" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[1, 2].map((i) => (
+                    <Card key={i} className="shadow-card">
+                      <CardContent className="p-6">
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-full" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Tasks Skeleton */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <Skeleton className="h-7 w-36" />
+                <Skeleton className="h-9 w-24" />
+              </div>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="shadow-card">
+                    <CardContent className="p-4">
+                      <Skeleton className="h-5 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-6 w-16" />
+                        <Skeleton className="h-6 w-20" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Error State */}

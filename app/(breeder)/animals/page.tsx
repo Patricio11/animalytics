@@ -5,6 +5,8 @@ import { AnimalCard } from "@/components/breeder/AnimalCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Filter, Loader2, AlertCircle } from "lucide-react";
 import { useAnimals } from "@/lib/api/queries/animals";
@@ -122,9 +124,22 @@ export default function Animals() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="ml-2 text-muted-foreground">Loading animals...</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <Card key={i} className="shadow-card">
+                <CardContent className="p-0">
+                  <Skeleton className="aspect-square w-full rounded-t-lg" />
+                  <div className="p-4 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-6 w-20" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
 
