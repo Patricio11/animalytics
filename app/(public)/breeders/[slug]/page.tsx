@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { use } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Star,
   Award,
@@ -12,9 +12,9 @@ import {
   DollarSign,
   Package,
   MessageCircle,
-  Edit,
   CheckCircle2,
   RefreshCw,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,22 +23,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import { ProfileBanner } from "@/components/breeder/profile/ProfileBanner";
 import { ProfileHeader } from "@/components/breeder/profile/ProfileHeader";
 import { ProfileStats } from "@/components/breeder/profile/ProfileStats";
-import { EditProfileDialog } from "@/components/breeder/profile/EditProfileDialog";
 import { ShareButton } from "@/components/shared/ShareButton";
+import Link from "next/link";
 
-// Fetch breeder profile from API
-function useBreederProfile() {
+// Fetch public breeder profile
+function usePublicBreederProfile(slug: string) {
   return useQuery({
-    queryKey: ['breeder-profile'],
+    queryKey: ['public-breeder-profile', slug],
     queryFn: async () => {
-      const response = await fetch('/api/breeder/profile');
+      const response = await fetch(`/api/breeders/${slug}`);
       if (!response.ok) {
         if (response.status === 404) {
-          return null; // Profile doesn't exist yet
+          throw new Error('Breeder not found');
         }
         throw new Error('Failed to fetch profile');
       }
@@ -48,39 +47,29 @@ function useBreederProfile() {
   });
 }
 
-export default function BreederProfilePage() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { data: profile, isLoading, error, refetch } = useBreederProfile();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  // Initialize profile mutation
-  const initializeMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/breeder/profile/initialize', {
-        method: 'POST',
-      });
+// Fetch breeder's animals
+function useBreederAnimals(slug: string) {
+  return useQuery({
+    queryKey: ['breeder-animals', slug],
+    queryFn: async () => {
+      const response = await fetch(`/api/breeders/${slug}/animals`);
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to initialize profile');
+        throw new Error('Failed to fetch animals');
       }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Profile Created',
-        description: 'Your breeder profile has been initialized successfully',
-      });
-      refetch();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Initialization Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
+      const data = await response.json();
+      return data.animals;
     },
   });
+}
+
+export default function PublicBreederProfilePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
+  const { data: profile, isLoading, error } = usePublicBreederProfile(slug);
+  const { data: animals, isLoading: animalsLoading } = useBreederAnimals(slug);
 
   // Loading state
   if (isLoading) {
@@ -90,48 +79,6 @@ export default function BreederProfilePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32">
           <Skeleton className="h-48 w-full rounded-lg" />
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-32 w-full" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Profile doesn't exist - show initialization
-  if (!profile && !error) {
-    return (
-      <div className="min-h-screen bg-surface-secondary flex items-center justify-center p-4">
-        <Card className="max-w-md w-full shadow-elevated">
-          <CardHeader>
-            <CardTitle>Create Your Breeder Profile</CardTitle>
-            <CardDescription>
-              You don't have a breeder profile yet. Let's create one to get you started.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Your profile will be initialized with sample data that you can customize later.
-            </p>
-            <Button
-              onClick={() => initializeMutation.mutate()}
-              disabled={initializeMutation.isPending}
-              className="w-full bg-gradient-brand hover:opacity-90"
-            >
-              {initializeMutation.isPending ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Creating Profile...
-                </>
-              ) : (
-                'Create My Profile'
-              )}
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -142,9 +89,9 @@ export default function BreederProfilePage() {
       <div className="min-h-screen bg-surface-secondary flex items-center justify-center p-4">
         <Card className="max-w-md w-full shadow-elevated">
           <CardHeader>
-            <CardTitle>Error Loading Profile</CardTitle>
+            <CardTitle>Breeder Not Found</CardTitle>
             <CardDescription>
-              There was an error loading your breeder profile.
+              The breeder profile you're looking for doesn't exist or is not public.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -153,10 +100,12 @@ export default function BreederProfilePage() {
                 {(error as Error).message}
               </AlertDescription>
             </Alert>
-            <Button onClick={() => refetch()} className="w-full">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
-            </Button>
+            <Link href="/breeders">
+              <Button className="w-full">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Breeders Directory
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -168,10 +117,7 @@ export default function BreederProfilePage() {
   return (
     <div className="min-h-screen bg-surface-secondary">
       {/* Banner */}
-      <ProfileBanner
-        bannerUrl={profile.bannerUrl}
-        isEditing={false}
-      />
+      <ProfileBanner bannerUrl={profile.bannerUrl} isEditing={false} />
 
       {/* Profile Header */}
       <ProfileHeader
@@ -192,17 +138,13 @@ export default function BreederProfilePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         <div className="flex flex-wrap gap-3 justify-end">
           <ShareButton
-            url={`/breeders/${profile.slug}`}
+            url={`/breeders/${slug}`}
             title={profile.displayName}
             description={profile.tagline || `Check out ${profile.displayName} on Animalytics`}
           />
-          <Button
-            onClick={() => setIsEditDialogOpen(true)}
-            variant="outline"
-            className="hover-elevate"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Profile
+          <Button className="bg-gradient-brand hover:opacity-90">
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Contact Breeder
           </Button>
         </div>
       </div>
@@ -215,28 +157,14 @@ export default function BreederProfilePage() {
         responseRate={profile.responseRate}
       />
 
-      {/* Profile Completeness */}
-      {profile.profileCompleteness < 100 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <Alert className="bg-chart-2-light border-chart-2">
-            <TrendingUp className="h-4 w-4 text-chart-2" />
-            <AlertDescription className="text-chart-2">
-              <div className="flex items-center justify-between mb-2">
-                <strong>Your profile is {profile.profileCompleteness}% complete</strong>
-                <span className="text-sm">{100 - profile.profileCompleteness}% to go!</span>
-              </div>
-              <Progress value={profile.profileCompleteness} className="h-2 mb-2" />
-              <p className="text-sm">Complete your profile to increase visibility and build trust with buyers.</p>
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12">
         <Tabs defaultValue="about" className="space-y-6">
           <TabsList className="bg-surface shadow-card">
             <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="animals">
+              Animals {animals && `(${animals.length})`}
+            </TabsTrigger>
             <TabsTrigger value="statistics">Statistics</TabsTrigger>
             <TabsTrigger value="certifications">Certifications</TabsTrigger>
             <TabsTrigger value="reviews">Reviews ({profile.totalReviews})</TabsTrigger>
@@ -322,9 +250,6 @@ export default function BreederProfilePage() {
                       </a>
                     </div>
                   )}
-                  {!profile.publicEmail && !profile.publicPhone && !profile.website && (
-                    <p className="text-sm text-muted-foreground">No contact information provided yet.</p>
-                  )}
                 </CardContent>
               </Card>
 
@@ -390,6 +315,58 @@ export default function BreederProfilePage() {
                   </Card>
                 )}
               </div>
+            )}
+          </TabsContent>
+
+          {/* Animals Tab */}
+          <TabsContent value="animals" className="space-y-6">
+            {animalsLoading ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-64 w-full" />
+                ))}
+              </div>
+            ) : animals && animals.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {animals.map((animal: any) => (
+                  <Card key={animal.id} className="shadow-card hover-elevate">
+                    <CardContent className="p-0">
+                      {animal.imageUrl && (
+                        <div className="aspect-square relative overflow-hidden rounded-t-lg">
+                          <img
+                            src={animal.imageUrl}
+                            alt={animal.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <h3 className="font-semibold mb-1">{animal.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {animal.breed} • {animal.sex}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <Badge variant={animal.status === 'available' ? 'default' : 'secondary'}>
+                            {animal.status}
+                          </Badge>
+                          <Link href={`/animals/${animal.id}`}>
+                            <Button size="sm" variant="ghost">
+                              View Details
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="shadow-card">
+                <CardContent className="p-12 text-center">
+                  <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground">No animals listed yet</p>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
@@ -465,55 +442,6 @@ export default function BreederProfilePage() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Additional Stats */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center">
-                    <Package className="w-4 h-4 mr-2 text-primary" />
-                    Inventory Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Total Animals</span>
-                    <span className="font-bold">{profile.totalAnimals}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Total Litters</span>
-                    <span className="font-bold">{profile.totalLitters}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Active Listings</span>
-                    <span className="font-bold">{profile.activeListings || 0}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center">
-                    <TrendingUp className="w-4 h-4 mr-2 text-chart-3" />
-                    Profile Analytics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Total Views</span>
-                    <span className="font-bold">{profile.profileViews?.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Views This Month</span>
-                    <span className="font-bold">{profile.profileViewsThisMonth || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Profile Completeness</span>
-                    <span className="font-bold text-chart-3">{profile.profileCompleteness}%</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </TabsContent>
 
           {/* Certifications Tab */}
@@ -545,13 +473,6 @@ export default function BreederProfilePage() {
                 <CardContent className="p-12 text-center">
                   <Award className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <p className="text-muted-foreground">No certifications added yet.</p>
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => setIsEditDialogOpen(true)}
-                  >
-                    Add Certifications
-                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -580,7 +501,7 @@ export default function BreederProfilePage() {
             <Card className="shadow-card">
               <CardHeader>
                 <CardTitle>Customer Reviews</CardTitle>
-                <CardDescription>What our customers are saying</CardDescription>
+                <CardDescription>What customers are saying</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12 text-muted-foreground">
@@ -593,13 +514,6 @@ export default function BreederProfilePage() {
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Edit Profile Dialog */}
-      <EditProfileDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        profile={profile}
-      />
     </div>
   );
 }
