@@ -1,4 +1,4 @@
-import { PublicHeader } from "@/components/layout/PublicHeader";
+import { LandingHeader } from "@/components/layout/LandingHeader";
 
 /**
  * Public Layout - No Authentication Required
@@ -6,9 +6,10 @@ import { PublicHeader } from "@/components/layout/PublicHeader";
  * This layout is for public pages that don't require authentication:
  * - Breeders directory
  * - Public breeder profiles
+ * - Global marketplace
  * - Any other public-facing pages
  * 
- * Simple header with navigation and auth buttons - no sidebar
+ * Uses the same header as the landing page - no sidebar
  */
 export default function PublicLayout({
   children,
@@ -17,7 +18,7 @@ export default function PublicLayout({
 }) {
   return (
     <div className="min-h-screen bg-background">
-      <PublicHeader />
+      <LandingHeader />
       <main>{children}</main>
     </div>
   );

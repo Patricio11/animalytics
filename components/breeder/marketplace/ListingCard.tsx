@@ -13,9 +13,10 @@ import Link from "next/link";
 interface ListingCardProps {
   listing: MarketplaceListing;
   onInterested?: (listingId: string) => void;
+  isPublicView?: boolean;
 }
 
-export function ListingCard({ listing, onInterested }: ListingCardProps) {
+export function ListingCard({ listing, onInterested, isPublicView }: ListingCardProps) {
   const categoryConfig = {
     'dog-for-sale': { color: 'bg-chart-1 text-white', icon: '🐕' },
     'pups-for-sale': { color: 'bg-chart-3 text-white', icon: '🐶' },
