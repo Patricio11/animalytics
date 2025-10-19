@@ -20,7 +20,7 @@ export function LandingHeader() {
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/breeders" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/global-breeders" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Find Breeders
           </Link>
           <Link href="/global-marketplace" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">

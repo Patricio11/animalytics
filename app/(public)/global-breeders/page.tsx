@@ -35,7 +35,7 @@ function useBreeders(search: string, breed: string) {
   });
 }
 
-export default function BreedersDirectoryPage() {
+export default function GlobalBreedersDirectoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBreed, setSelectedBreed] = useState("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
