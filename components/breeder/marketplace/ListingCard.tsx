@@ -35,6 +35,9 @@ export function ListingCard({ listing, onInterested, isPublicView }: ListingCard
   };
 
   const statusStyle = statusConfig[listing.status];
+  
+  // Use public route if this is public view
+  const detailUrl = isPublicView ? `/global-marketplace/${listing.id}` : `/marketplace/${listing.id}`;
 
   return (
     <Card className={cn(
@@ -43,7 +46,7 @@ export function ListingCard({ listing, onInterested, isPublicView }: ListingCard
     )}>
       <CardContent className="p-0">
         {/* Image */}
-        <Link href={`/marketplace/${listing.id}`}>
+        <Link href={detailUrl}>
           <div className="relative aspect-video overflow-hidden rounded-t-lg bg-surface-secondary">
             <img
               src={listing.images[0]}
@@ -75,7 +78,7 @@ export function ListingCard({ listing, onInterested, isPublicView }: ListingCard
         <div className="p-4 space-y-4">
           {/* Title and Price */}
           <div className="space-y-2">
-            <Link href={`/marketplace/${listing.id}`}>
+            <Link href={detailUrl}>
               <h3 className="text-lg font-bold text-foreground hover:text-primary transition-colors line-clamp-2">
                 {listing.title}
               </h3>
@@ -174,7 +177,7 @@ export function ListingCard({ listing, onInterested, isPublicView }: ListingCard
               asChild
               className="flex-1 bg-gradient-brand hover:opacity-90 shadow-card"
             >
-              <Link href={`/marketplace/${listing.id}`}>
+              <Link href={detailUrl}>
                 View Details
               </Link>
             </Button>

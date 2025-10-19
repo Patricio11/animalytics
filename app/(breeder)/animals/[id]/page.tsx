@@ -17,9 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
   ArrowLeft, Share2, Edit, Heart, Award, Shield, Calendar,
-  Weight, Activity, Ruler, MapPin, Phone, Mail
+  Weight, Activity, Ruler, MapPin, Phone, Mail, Eye
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,8 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
   const initialTab = resolvedSearchParams?.tab || 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   if (!animal) {
     notFound();
@@ -71,6 +74,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   // Get primary photo or use first photo
   const primaryPhoto = animal.photos?.[0] || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=600&fit=crop&crop=face";
   const additionalPhotos = animal.photos?.slice(1, 5) || [];
+  const allPhotos = animal.photos || [primaryPhoto];
 
   // Determine available tabs based on animal type
   const tabs = [
@@ -105,18 +109,39 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
             {/* Image Gallery */}
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-0">
-                <div className="relative aspect-video overflow-hidden rounded-t-lg">
+                <div 
+                  className="relative aspect-video overflow-hidden rounded-t-lg cursor-pointer group"
+                  onClick={() => {
+                    setLightboxIndex(0);
+                    setLightboxOpen(true);
+                  }}
+                >
                   <img
                     src={primaryPhoto}
                     alt={animal.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                    <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
                 </div>
                 {additionalPhotos.length > 0 && (
                   <div className="p-4 grid grid-cols-4 gap-2">
                     {additionalPhotos.map((photo, index) => (
-                      <div key={index} className="aspect-square rounded-lg overflow-hidden">
-                        <img src={photo} alt={`${animal.name} ${index + 1}`} className="w-full h-full object-cover" />
+                      <div 
+                        key={index} 
+                        className="aspect-square rounded-lg overflow-hidden cursor-pointer group relative"
+                        onClick={() => {
+                          setLightboxIndex(index + 1);
+                          setLightboxOpen(true);
+                        }}
+                      >
+                        <img 
+                          src={photo} 
+                          alt={`${animal.name} ${index + 1}`} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                       </div>
                     ))}
                   </div>
@@ -362,6 +387,15 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        images={allPhotos}
+        initialIndex={lightboxIndex}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        alt={animal.name}
+      />
     </div>
   );
 }

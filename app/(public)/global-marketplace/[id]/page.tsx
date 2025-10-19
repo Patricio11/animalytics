@@ -9,23 +9,24 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
-  ArrowLeft, Heart, Share2, Flag, Eye, MapPin, Phone, Mail, Calendar,
-  Star, Award, Shield, Building2
+  ArrowLeft, Heart, Share2, Eye, MapPin, Phone, Mail, Calendar,
+  Star, Award, Shield, Building2, LogIn
 } from "lucide-react";
 import { mockMarketplaceListings, getClinicById, getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface ListingDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function ListingDetailPage({ params }: ListingDetailPageProps) {
+export default function PublicListingDetailPage({ params }: ListingDetailPageProps) {
   const router = useRouter();
   const { id } = use(params);
   const listing = mockMarketplaceListings.find(l => l.id === id);
-
+  
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -38,7 +39,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
             <h2 className="text-xl font-bold text-foreground">Listing Not Found</h2>
             <p className="text-muted-foreground">The listing you&apos;re looking for doesn&apos;t exist or has been removed.</p>
             <Button
-              onClick={() => router.push('/marketplace')}
+              onClick={() => router.push('/global-marketplace')}
               className="bg-gradient-brand hover:opacity-90 shadow-card"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -67,7 +68,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
         {/* Back Button */}
         <Button
           variant="outline"
-          onClick={() => router.push('/marketplace')}
+          onClick={() => router.push('/global-marketplace')}
           className="hover:bg-primary/10 hover:border-primary shadow-card"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -176,35 +177,8 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                           <div className="font-medium text-foreground">{listing.color}</div>
                         </div>
                       )}
-                      {listing.registrationNumber && (
-                        <div className="col-span-2">
-                          <div className="text-sm text-muted-foreground">Registration</div>
-                          <div className="font-medium text-foreground">{listing.registrationNumber}</div>
-                        </div>
-                      )}
                     </div>
                   </div>
-                )}
-
-                {/* Health Badges */}
-                {(listing.healthCertified || listing.championLines) && (
-                  <>
-                    <Separator />
-                    <div className="flex gap-2">
-                      {listing.healthCertified && (
-                        <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/20">
-                          <Shield className="w-4 h-4 mr-2" />
-                          Health Certified
-                        </Badge>
-                      )}
-                      {listing.championLines && (
-                        <Badge className="bg-chart-2/10 text-chart-2 border-chart-2/20">
-                          <Award className="w-4 h-4 mr-2" />
-                          Champion Lines
-                        </Badge>
-                      )}
-                    </div>
-                  </>
                 )}
 
                 <Separator />
@@ -215,96 +189,75 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                   <p className="text-muted-foreground whitespace-pre-line">{listing.description}</p>
                 </div>
 
-                {/* Clinic Information */}
-                {clinic && (
+                {/* Health & Certifications */}
+                {(listing.healthCertified || listing.championLines) && (
                   <>
                     <Separator />
                     <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-3">Clinic Information</h3>
-                      <Card className="shadow-card bg-surface-secondary border-0">
-                        <CardContent className="p-4 space-y-3">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-brand flex items-center justify-center flex-shrink-0">
-                              <Building2 className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-semibold text-foreground">{clinic.name}</div>
-                              <div className="text-sm text-muted-foreground">{clinic.location}</div>
-                              <div className="text-sm text-muted-foreground">{clinic.phone}</div>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {clinic.services.map((service) => (
-                              <Badge key={service} variant="outline" className="text-xs">
-                                {service}
-                              </Badge>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <h3 className="text-lg font-semibold text-foreground mb-3">Health & Certifications</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {listing.healthCertified && (
+                          <Badge className="text-sm bg-chart-3/10 text-chart-3 border-chart-3/20">
+                            <Shield className="w-4 h-4 mr-1" />
+                            Health Certified
+                          </Badge>
+                        )}
+                        {listing.championLines && (
+                          <Badge className="text-sm bg-chart-2/10 text-chart-2 border-chart-2/20">
+                            <Award className="w-4 h-4 mr-1" />
+                            Champion Lines
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
+
+                {/* Stats */}
+                <Separator />
+                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Eye className="w-4 h-4" />
+                    {listing.views} views
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Heart className="w-4 h-4" />
+                    {listing.interested} interested
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    Posted {format(new Date(listing.createdAt), 'MMM dd, yyyy')}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Contact Card */}
-            <Card className="shadow-card bg-surface border-0">
+            {/* Authentication Gate - Sign In to Contact */}
+            <Card className="shadow-elevated bg-gradient-to-br from-primary/5 to-chart-2/5 border-primary/20">
               <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Contact Seller</h3>
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <div className="text-sm text-muted-foreground">Location</div>
-                      <div className="font-medium text-foreground">{listing.contact.location}</div>
-                    </div>
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-brand flex items-center justify-center mx-auto">
+                    <LogIn className="w-6 h-6 text-white" />
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <div className="text-sm text-muted-foreground">Phone</div>
-                      <div className="font-medium text-foreground">{listing.contact.phone}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <div className="text-sm text-muted-foreground">Email</div>
-                      <div className="font-medium text-foreground">{listing.contact.email}</div>
-                    </div>
-                  </div>
+                  <h3 className="font-semibold text-lg">Sign In to Contact Breeder</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Create a free account or sign in to contact this breeder and make an offer
+                  </p>
                 </div>
-
-                {listing.contact.availabilityNotes && (
-                  <Alert className="border-primary/20 bg-surface-secondary">
-                    <AlertDescription className="text-sm">
-                      <strong>Availability:</strong> {listing.contact.availabilityNotes}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Send Message
-                </Button>
-
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
-                    <Heart className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
-                    <Flag className="w-4 h-4" />
-                  </Button>
+                <div className="space-y-2">
+                  <Link href="/auth/signup" className="block">
+                    <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
+                      Create Free Account
+                    </Button>
+                  </Link>
+                  <Link href="/auth/signin" className="block">
+                    <Button variant="outline" className="w-full">
+                      Sign In
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -312,60 +265,71 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
             {/* Breeder Info */}
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">About the Breeder</h3>
-
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-16 h-16">
+                <h3 className="font-semibold text-lg text-foreground">Breeder Information</h3>
+                
+                <div className="flex items-start gap-3">
+                  <Avatar className="w-12 h-12">
                     <AvatarImage src={listing.breederAvatar} alt={listing.breederName} />
                     <AvatarFallback>{listing.breederName.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <div className="font-semibold text-foreground">{listing.breederName}</div>
-                    <div className="flex items-center gap-1 text-sm">
+                    <div className="font-medium text-foreground">{listing.breederName}</div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="w-3 h-3" />
+                      {listing.contact.location}
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
                       <Star className="w-4 h-4 text-chart-2 fill-current" />
-                      <span className="font-medium text-foreground">{listing.breederReputation}</span>
-                      <span className="text-muted-foreground">rating</span>
+                      <span className="text-sm font-medium text-foreground">{listing.breederReputation}</span>
+                      <span className="text-xs text-muted-foreground">rating</span>
                     </div>
                   </div>
                 </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full hover:bg-primary/10 hover:border-primary shadow-card"
-                >
-                  View Profile
-                </Button>
+                <Separator />
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="w-4 h-4" />
+                    <span className="blur-sm select-none">+1 (555) 123-4567</span>
+                    <Badge variant="outline" className="text-xs">Sign in to view</Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="w-4 h-4" />
+                    <span className="blur-sm select-none">breeder@example.com</span>
+                    <Badge variant="outline" className="text-xs">Sign in to view</Badge>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Stats */}
+            {/* Clinic Info (if applicable) - Commented out due to type mismatch */}
+            {/* {clinic && (
+              <Card className="shadow-card bg-surface border-0">
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="font-semibold text-lg text-foreground flex items-center gap-2">
+                    <Building2 className="w-5 h-5" />
+                    Veterinary Clinic
+                  </h3>
+                  
+                  <div>
+                    <div className="font-medium text-foreground">{clinic.name}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            )} */}
+
+            {/* Share & Actions */}
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-6 space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Eye className="w-4 h-4" />
-                    <span>Views</span>
-                  </div>
-                  <span className="font-medium text-foreground">{listing.views}</span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Heart className="w-4 h-4" />
-                    <span>Interested</span>
-                  </div>
-                  <span className="font-medium text-foreground">{listing.interested}</span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    <span>Posted</span>
-                  </div>
-                  <span className="font-medium text-foreground">
-                    {format(new Date(listing.createdAt), 'MMM dd, yyyy')}
-                  </span>
-                </div>
+                <Button variant="outline" className="w-full" disabled>
+                  <Heart className="w-4 h-4 mr-2" />
+                  Save (Sign in required)
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share Listing
+                </Button>
               </CardContent>
             </Card>
           </div>
