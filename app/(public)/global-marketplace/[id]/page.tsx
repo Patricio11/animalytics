@@ -304,7 +304,7 @@ export default function PublicListingDetailPage({ params }: ListingDetailPagePro
             </Card>
 
             {/* Clinic Info (if applicable) - Commented out due to type mismatch */}
-            {/* {clinic && (
+            {clinic && (
               <Card className="shadow-card bg-surface border-0">
                 <CardContent className="p-6 space-y-4">
                   <h3 className="font-semibold text-lg text-foreground flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function PublicListingDetailPage({ params }: ListingDetailPagePro
                   </div>
                 </CardContent>
               </Card>
-            )} */}
+            )}
 
             {/* Share & Actions */}
             <Card className="shadow-card bg-surface border-0">

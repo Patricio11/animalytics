@@ -104,7 +104,7 @@ function transformAnimalToListing(animal: any): MarketplaceListing {
     description: animal.bio || `Beautiful ${animal.breedName || 'dog'} available for breeding. ${animal.isChampion ? 'Champion bloodlines. ' : ''}Contact breeder for more details.`,
     price: undefined,
     currency: 'USD',
-    images: animal.profileImageUrl ? [animal.profileImageUrl] : ['/placeholder-dog.jpg'],
+    images: animal.profileImageUrl ? [animal.profileImageUrl] : ['/images/placeholder-dog.png'],
     contact: {
       email: animal.breederPublicEmail || '',
       phone: animal.breederPublicPhone || '',

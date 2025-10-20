@@ -1,0 +1,118 @@
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config({ path: '.env.local' });
+dotenv.config();
+
+import { db } from '../lib/db/config';
+import { breeds } from '../lib/db/schema/animals';
+import { nanoid } from 'nanoid';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Read breed names from breeds.md file
+const breedsFilePath = path.join(__dirname, '..', 'breeds.md');
+const breedNamesText = fs.readFileSync(breedsFilePath, 'utf-8');
+const breedNames = breedNamesText
+  .split(',')
+  .map(name => name.trim())
+  .filter(name => name.length > 0 && name !== '.');
+
+// Generate breed data with realistic information
+function generateBreedData(name: string) {
+  // Determine size category based on breed name patterns
+  let sizeCategory: 'toy' | 'small' | 'medium' | 'large' | 'giant' = 'medium';
+  let avgWeight = 20;
+  let avgHeight = 45;
+  
+  if (name.includes('Toy') || name.includes('Chihuahua') || name.includes('Pomeranian') || 
+      name.includes('Papillon') || name.includes('Maltese') || name.includes('Yorkshire')) {
+    sizeCategory = 'toy';
+    avgWeight = 3;
+    avgHeight = 23;
+  } else if (name.includes('Terrier') && !name.includes('Airedale') && !name.includes('Russian') ||
+             name.includes('Spaniel') && !name.includes('Springer') ||
+             name.includes('Corgi') || name.includes('Beagle') || name.includes('Dachshund') ||
+             name.includes('Pug') || name.includes('Shih Tzu') || name.includes('Bichon')) {
+    sizeCategory = 'small';
+    avgWeight = 8;
+    avgHeight = 32;
+  } else if (name.includes('Shepherd') || name.includes('Retriever') || name.includes('Setter') ||
+             name.includes('Pointer') || name.includes('Boxer') || name.includes('Doberman') ||
+             name.includes('Rottweiler') || name.includes('Husky') || name.includes('Collie')) {
+    sizeCategory = 'large';
+    avgWeight = 32;
+    avgHeight = 60;
+  } else if (name.includes('Mastiff') || name.includes('Dane') || name.includes('Pyrenees') ||
+             name.includes('Newfoundland') || name.includes('Leonberger') || name.includes('Malamute') ||
+             name.includes('Saint Bernard') || name.includes('Schnauzer') && name.includes('Giant')) {
+    sizeCategory = 'giant';
+    avgWeight = 55;
+    avgHeight = 70;
+  }
+  
+  // Generate success rating (4.0 to 4.9)
+  const successRating = (4.0 + Math.random() * 0.9).toFixed(1);
+  
+  // Generate description
+  const description = `${name} is a wonderful breed known for its unique characteristics. ` +
+    `This ${sizeCategory}-sized dog makes an excellent companion for the right family. ` +
+    `Known for being loyal, intelligent, and adaptable to various living situations.`;
+  
+  return {
+    name,
+    successRating,
+    sizeCategory,
+    averageWeight: avgWeight,
+    averageHeight: avgHeight,
+    description
+  };
+}
+
+async function seedBreeds() {
+  console.log('🌱 Starting breed seeding...');
+  console.log(`📋 Found ${breedNames.length} breeds to seed`);
+
+  try {
+    // Generate data for all breeds
+    const allBreedData = breedNames.map(generateBreedData);
+
+    // Insert breeds in batches
+    const batchSize = 50;
+    for (let i = 0; i < allBreedData.length; i += batchSize) {
+      const batch = allBreedData.slice(i, i + batchSize);
+      
+      const breedsToInsert = batch.map(breed => ({
+        id: nanoid(),
+        name: breed.name,
+        successRating: breed.successRating,
+        sizeCategory: breed.sizeCategory,
+        averageWeight: breed.averageWeight.toString(),
+        averageHeight: breed.averageHeight.toString(),
+        description: breed.description,
+        imageUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+
+      await db.insert(breeds).values(breedsToInsert);
+      console.log(`✅ Inserted breeds ${i + 1} to ${Math.min(i + batchSize, allBreedData.length)}`);
+    }
+
+    console.log(`🎉 Successfully seeded ${allBreedData.length} breeds!`);
+  } catch (error) {
+    console.error('❌ Error seeding breeds:', error);
+    throw error;
+  }
+}
+
+// Run the seed function
+seedBreeds()
+  .then(() => {
+    console.log('✅ Breed seeding completed!');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('❌ Breed seeding failed:', error);
+    process.exit(1);
+  });
