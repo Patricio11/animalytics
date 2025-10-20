@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
+import { MarketplaceListing } from "@/lib/mock-data/marketplace-listings";
 import { 
   Search, 
   MapPin, 
@@ -21,7 +23,6 @@ import {
   Calendar
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 // Fetch marketplace animals
 function useMarketplaceAnimals(filters: {
@@ -58,6 +59,71 @@ function useBreeds() {
       return response.json();
     },
   });
+}
+
+// Transform API animal data to MarketplaceListing format
+function transformAnimalToListing(animal: any): MarketplaceListing {
+  // Calculate age from dateOfBirth
+  const calculateAge = (dateOfBirth: string) => {
+    const birth = new Date(dateOfBirth);
+    const today = new Date();
+    const years = today.getFullYear() - birth.getFullYear();
+    const months = today.getMonth() - birth.getMonth();
+    
+    if (years === 0) {
+      return `${months} months`;
+    } else if (years === 1 && months === 0) {
+      return '1 year';
+    } else if (months < 0) {
+      return `${years - 1} years ${12 + months} months`;
+    } else if (months === 0) {
+      return `${years} years`;
+    } else {
+      return `${years} years ${months} months`;
+    }
+  };
+
+  // Format location
+  const formatLocation = () => {
+    if (!animal.breederLocation) return 'Location not specified';
+    const { city, state, country } = animal.breederLocation;
+    const parts = [city, state, country].filter(Boolean);
+    return parts.join(', ') || 'Location not specified';
+  };
+
+  return {
+    id: animal.id,
+    category: 'stud-dog' as any, // Default category for breeding animals
+    animalId: animal.id,
+    animalName: animal.name,
+    breederId: animal.breederId || 'unknown',
+    breederName: animal.breederName || 'Unknown Breeder',
+    breederAvatar: undefined,
+    breederReputation: animal.breederRating || 4.5,
+    title: `${animal.name} - ${animal.breedName || 'Unknown Breed'}`,
+    description: animal.bio || `Beautiful ${animal.breedName || 'dog'} available for breeding. ${animal.isChampion ? 'Champion bloodlines. ' : ''}Contact breeder for more details.`,
+    price: undefined,
+    currency: 'USD',
+    images: animal.profileImageUrl ? [animal.profileImageUrl] : ['/placeholder-dog.jpg'],
+    contact: {
+      email: animal.breederPublicEmail || '',
+      phone: animal.breederPublicPhone || '',
+      location: formatLocation(),
+    },
+    status: 'active' as any,
+    createdAt: animal.createdAt || new Date().toISOString(),
+    updatedAt: animal.updatedAt || new Date().toISOString(),
+    views: 0,
+    interested: 0,
+    featured: animal.breederPremium || false,
+    breed: animal.breedName,
+    sex: animal.sex,
+    age: animal.dateOfBirth ? calculateAge(animal.dateOfBirth) : undefined,
+    color: animal.color,
+    registrationNumber: animal.registrationNumber,
+    healthCertified: animal.healthStatus === 'excellent',
+    championLines: animal.isChampion || false,
+  };
 }
 
 export default function GlobalMarketplace() {
@@ -390,15 +456,26 @@ export default function GlobalMarketplace() {
 
         {/* Loading State */}
         {animalsLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="shadow-card">
                 <CardContent className="p-0">
-                  <Skeleton className="aspect-square w-full rounded-t-lg" />
-                  <div className="p-4 space-y-2">
-                    <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="aspect-video w-full rounded-t-lg" />
+                  <div className="p-4 space-y-3">
+                    <Skeleton className="h-6 w-3/4" />
                     <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-6 w-20" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-6 w-16" />
+                      <Skeleton className="h-6 w-16" />
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-32" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-10 w-full" />
                   </div>
                 </CardContent>
               </Card>
@@ -408,91 +485,21 @@ export default function GlobalMarketplace() {
 
         {/* Animals Grid */}
         {!animalsLoading && finalAnimals.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {finalAnimals.map((animal: any) => (
-              <Link key={animal.id} href={`/global-marketplace/${animal.id}`}>
-                <Card className="shadow-card hover-elevate cursor-pointer h-full">
-                  <CardContent className="p-0">
-                    {/* Image */}
-                    <div className="aspect-square relative overflow-hidden rounded-t-lg bg-surface-secondary">
-                      {animal.profileImageUrl ? (
-                        <Image
-                          src={animal.profileImageUrl}
-                          alt={animal.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Heart className="w-12 h-12 text-muted-foreground opacity-20" />
-                        </div>
-                      )}
-                      
-                      {/* Badges */}
-                      <div className="absolute top-2 right-2 flex flex-col gap-2">
-                        {animal.isChampion && (
-                          <Badge className="bg-chart-2 text-white shadow-lg">
-                            <Award className="w-3 h-3 mr-1" />
-                            Champion
-                          </Badge>
-                        )}
-                        {animal.breederPremium && (
-                          <Badge className="bg-gradient-brand text-white shadow-lg">
-                            Premium
-                          </Badge>
-                        )}
-                        {animal.breederVerified && (
-                          <Badge className="bg-chart-3 text-white shadow-lg">
-                            Verified
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-4">
-                      <h3 className="font-semibold text-lg mb-1 truncate">
-                        {animal.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {animal.breedName || 'Unknown Breed'} • {animal.sex === 'male' ? '♂' : '♀'}
-                      </p>
-                      
-                      {animal.dateOfBirth && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-                          <Calendar className="w-3 h-3" />
-                          {calculateAge(animal.dateOfBirth)}
-                        </div>
-                      )}
-
-                      {/* Titles */}
-                      {animal.titles && animal.titles.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {animal.titles.slice(0, 3).map((title: string, idx: number) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {title}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Breeder Info */}
-                      <div className="pt-3 border-t">
-                        <p className="text-xs text-muted-foreground truncate">
-                          {animal.breederName}
-                        </p>
-                        {animal.breederLocation && (
-                          <p className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-1">
-                            <MapPin className="w-3 h-3" />
-                            {animal.breederLocation.city}, {animal.breederLocation.country}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {finalAnimals.map((animal: any) => {
+              const listing = transformAnimalToListing(animal);
+              return (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  isPublicView={true}
+                  onInterested={(id) => {
+                    // Handle interested action (could add to favorites, etc.)
+                    console.log('Interested in animal:', id);
+                  }}
+                />
+              );
+            })}
           </div>
         )}
 
