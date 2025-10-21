@@ -153,25 +153,24 @@ export default function Animals() {
           </Alert>
         )}
 
-        {/* Animals Grid */}
-        {!isLoading && !isError && (
-          <>
-            {displayAnimals.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {displayAnimals.map((animal: any) => (
-                  <AnimalCard key={animal.id} {...animal} />
-                ))}
-              </div>
-            ) : (
-              <div className="bg-surface shadow-card rounded-lg p-12 text-center">
-                <p className="text-muted-foreground">
-                  {searchQuery || genderFilter !== "all" || statusFilter !== "all"
-                    ? "No animals found matching your filters."
-                    : "No animals yet. Add your first animal to get started!"}
-                </p>
-              </div>
-            )}
-          </>
+        {/* Animals Grid - Only show when not loading and not error */}
+        {!isLoading && !isError && displayAnimals.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {displayAnimals.map((animal: any) => (
+              <AnimalCard key={animal.id} {...animal} />
+            ))}
+          </div>
+        )}
+
+        {/* Empty State - Only show when not loading, not error, and no animals */}
+        {!isLoading && !isError && displayAnimals.length === 0 && (
+          <div className="bg-surface shadow-card rounded-lg p-12 text-center">
+            <p className="text-muted-foreground">
+              {searchQuery || genderFilter !== "all" || statusFilter !== "all"
+                ? "No animals found matching your filters."
+                : "No animals yet. Add your first animal to get started!"}
+            </p>
+          </div>
         )}
 
         {/* Add Animal Dialog */}

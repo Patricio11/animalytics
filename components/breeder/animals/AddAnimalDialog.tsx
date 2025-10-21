@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useCreateAnimal } from "@/lib/api/queries/animals";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,10 +65,14 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [breedSearchOpen, setBreedSearchOpen] = useState(false);
   const [breedSearch, setBreedSearch] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Fetch breeds from API
   const { data: breedsData, isLoading: breedsLoading } = useBreeds();
   const breeds = breedsData?.breeds || [];
+  
+  // Create animal mutation
+  const createAnimalMutation = useCreateAnimal();
   
   // Filter breeds based on search
   const filteredBreeds = useMemo(() => {
@@ -157,39 +162,81 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     }
   };
 
-  const handleSubmit = () => {
-    console.log("Animal data:", formData);
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
 
-    // TODO: Save to backend (including photo upload)
-    toast({
-      title: "Animal Added Successfully!",
-      description: `${formData.name} has been added to your animals.`,
-    });
+      // Find the breed ID from the breed name
+      const selectedBreed = breeds.find((b: any) => b.name === formData.breed);
+      
+      if (!selectedBreed) {
+        toast({
+          title: "Error",
+          description: "Please select a valid breed.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
-    // Cleanup photo URL
-    if (formData.profilePhotoPreview) {
-      URL.revokeObjectURL(formData.profilePhotoPreview);
+      // Map form data to API format
+      const animalData = {
+        name: formData.name,
+        breedId: selectedBreed.id,
+        sex: formData.type === 'dog' ? 'male' as const : 'female' as const,
+        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split('T')[0] : undefined,
+        color: formData.color || undefined,
+        markings: formData.markings || undefined,
+        weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        microchipNumber: formData.microchipId || undefined,
+        registrationNumber: formData.registrationNumber || undefined,
+        bio: formData.description || undefined,
+        // TODO: Handle photo upload separately
+        profileImageUrl: undefined,
+      };
+
+      // Create animal via API
+      await createAnimalMutation.mutateAsync(animalData);
+
+      toast({
+        title: "Animal Added Successfully!",
+        description: `${formData.name} has been added to your animals.`,
+      });
+
+      // Cleanup photo URL
+      if (formData.profilePhotoPreview) {
+        URL.revokeObjectURL(formData.profilePhotoPreview);
+      }
+
+      // Reset and close
+      setFormData({
+        profilePhoto: null,
+        profilePhotoPreview: null,
+        name: "",
+        type: "bitch",
+        breed: "",
+        dateOfBirth: undefined,
+        color: "",
+        markings: "",
+        weight: "",
+        microchipId: "",
+        registrationNumber: "",
+        bloodline: "",
+        description: "",
+        location: ""
+      });
+      setCurrentStep(1);
+      setIsSubmitting(false);
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error('Failed to create animal:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add animal. Please try again.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
     }
-
-    // Reset and close
-    setFormData({
-      profilePhoto: null,
-      profilePhotoPreview: null,
-      name: "",
-      type: "bitch",
-      breed: "",
-      dateOfBirth: undefined,
-      color: "",
-      markings: "",
-      weight: "",
-      microchipId: "",
-      registrationNumber: "",
-      bloodline: "",
-      description: "",
-      location: ""
-    });
-    setCurrentStep(1);
-    onOpenChange(false);
   };
 
   const canProceed = () => {
@@ -625,10 +672,20 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
           ) : (
             <Button
               onClick={handleSubmit}
+              disabled={isSubmitting}
               className="bg-gradient-brand hover:opacity-90 shadow-card"
             >
-              <Check className="w-4 h-4 mr-2" />
-              Add Animal
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Add Animal
+                </>
+              )}
             </Button>
           )}
         </div>
