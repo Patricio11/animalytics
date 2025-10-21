@@ -8,17 +8,36 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Bell, BellOff, Calendar, Edit, Trash2, Syringe, Stethoscope, Activity, Utensils } from "lucide-react";
-import { ReminderSettings } from "@/lib/mock-data/animal-profile-details";
 import { format } from "date-fns";
+
+interface Reminder {
+  id: string;
+  title: string;
+  description?: string;
+  reminderType: string;
+  dueDate: string;
+  isCompleted: boolean;
+  completedAt?: string;
+}
 
 interface RemindersTabProps {
   animalId: string;
-  animalType: 'dog' | 'bitch';
-  reminders: ReminderSettings;
+  animalSex: 'male' | 'female';
+  reminders: Reminder[];
 }
 
-export function RemindersTab({ animalId, animalType, reminders }: RemindersTabProps) {
-  const isBitch = animalType === 'bitch';
+export function RemindersTab({ animalId, animalSex, reminders }: RemindersTabProps) {
+  const isBitch = animalSex === 'female';
+  
+  // Settings for notification preferences (would be stored in user preferences)
+  const settings = {
+    enabled: true,
+    vaccinations: true,
+    vetCheckups: true,
+    feedingSchedule: false,
+    heatCycles: isBitch,
+    seasonTracking: isBitch,
+  };
 
   return (
     <div className="space-y-6">
@@ -27,7 +46,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {reminders.enabled ? (
+              {settings.enabled ? (
                 <div className="w-10 h-10 rounded-full bg-gradient-brand flex items-center justify-center">
                   <Bell className="w-5 h-5 text-white" />
                 </div>
@@ -38,16 +57,16 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
               )}
               <div>
                 <div className="font-semibold text-foreground">
-                  {reminders.enabled ? 'Reminders Enabled' : 'Reminders Disabled'}
+                  {settings.enabled ? 'Reminders Enabled' : 'Reminders Disabled'}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {reminders.enabled
+                  {settings.enabled
                     ? 'You will receive notifications for this animal'
                     : 'No notifications will be sent for this animal'}
                 </div>
               </div>
             </div>
-            <Switch checked={reminders.enabled} />
+            <Switch checked={settings.enabled} />
           </div>
         </CardContent>
       </Card>
@@ -69,7 +88,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                 <div className="text-sm text-muted-foreground">Annual vaccination reminders</div>
               </div>
             </div>
-            <Switch checked={reminders.vaccinations} disabled={!reminders.enabled} />
+            <Switch checked={settings.vaccinations} disabled={!settings.enabled} />
           </div>
 
           {/* Vet Checkups */}
@@ -83,7 +102,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                 <div className="text-sm text-muted-foreground">Regular health examination reminders</div>
               </div>
             </div>
-            <Switch checked={reminders.vetCheckups} disabled={!reminders.enabled} />
+            <Switch checked={settings.vetCheckups} disabled={!settings.enabled} />
           </div>
 
           {/* Feeding Schedule */}
@@ -97,7 +116,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                 <div className="text-sm text-muted-foreground">Daily feeding time reminders</div>
               </div>
             </div>
-            <Switch checked={reminders.feedingSchedule} disabled={!reminders.enabled} />
+            <Switch checked={settings.feedingSchedule} disabled={!settings.enabled} />
           </div>
 
           {/* Bitch-specific reminders */}
@@ -113,7 +132,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                     <div className="text-sm text-muted-foreground">Expected season start reminders</div>
                   </div>
                 </div>
-                <Switch checked={reminders.heatCycles} disabled={!reminders.enabled} />
+                <Switch checked={settings.heatCycles} disabled={!settings.enabled} />
               </div>
 
               <div className="flex items-center justify-between p-4 rounded-lg border border-primary/10 bg-background hover:bg-accent transition-colors">
@@ -126,7 +145,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                     <div className="text-sm text-muted-foreground">Progesterone testing reminders during season</div>
                   </div>
                 </div>
-                <Switch checked={reminders.seasonTracking} disabled={!reminders.enabled} />
+                <Switch checked={settings.seasonTracking} disabled={!settings.enabled} />
               </div>
             </>
           )}
@@ -142,7 +161,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
               variant="outline"
               size="sm"
               className="hover:bg-primary/10 hover:border-primary"
-              disabled={!reminders.enabled}
+              disabled={!settings.enabled}
             >
               <Plus className="w-3 h-3 mr-2" />
               Add Custom
@@ -150,9 +169,9 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
           </div>
         </CardHeader>
         <CardContent>
-          {reminders.customReminders.length > 0 ? (
+          {reminders.length > 0 ? (
             <div className="space-y-3">
-              {reminders.customReminders.map((reminder) => (
+              {reminders.map((reminder: Reminder) => (
                 <div
                   key={reminder.id}
                   className="p-4 rounded-lg border border-primary/10 bg-background hover:bg-accent transition-colors"
@@ -160,14 +179,20 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="font-medium text-foreground mb-2">{reminder.title}</div>
+                      {reminder.description && (
+                        <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
+                      )}
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <Badge variant="outline" className="capitalize text-xs">
-                          {reminder.frequency}
+                          {reminder.reminderType.replace('_', ' ')}
                         </Badge>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          Next: {format(new Date(reminder.nextDate), 'MMM dd, yyyy')}
+                          Due: {format(new Date(reminder.dueDate), 'MMM dd, yyyy')}
                         </span>
+                        {reminder.isCompleted && (
+                          <Badge variant="secondary" className="text-xs">Completed</Badge>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -175,7 +200,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                         variant="ghost"
                         size="sm"
                         className="hover:bg-primary/10"
-                        disabled={!reminders.enabled}
+                        disabled={!settings.enabled}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -183,7 +208,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                         variant="ghost"
                         size="sm"
                         className="hover:bg-destructive/10 hover:text-destructive"
-                        disabled={!reminders.enabled}
+                        disabled={!settings.enabled}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -199,7 +224,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
               <Button
                 variant="outline"
                 className="hover:bg-primary/10 hover:border-primary"
-                disabled={!reminders.enabled}
+                disabled={!settings.enabled}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Custom Reminder
@@ -221,14 +246,14 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
               id="reminder-title"
               className="bg-background border-primary/20"
               placeholder="e.g., Hip X-ray for breeding certification"
-              disabled={!reminders.enabled}
+              disabled={!settings.enabled}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="frequency">Frequency</Label>
-              <Select disabled={!reminders.enabled}>
+              <Select disabled={!settings.enabled}>
                 <SelectTrigger id="frequency" className="bg-background border-primary/20">
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
@@ -247,7 +272,7 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
                 id="next-date"
                 type="date"
                 className="bg-background border-primary/20"
-                disabled={!reminders.enabled}
+                disabled={!settings.enabled}
               />
             </div>
           </div>
@@ -255,12 +280,12 @@ export function RemindersTab({ animalId, animalType, reminders }: RemindersTabPr
           <div className="flex gap-2">
             <Button
               className="bg-gradient-brand hover:opacity-90 shadow-card"
-              disabled={!reminders.enabled}
+              disabled={!settings.enabled}
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Reminder
             </Button>
-            <Button variant="outline" disabled={!reminders.enabled}>
+            <Button variant="outline" disabled={!settings.enabled}>
               Clear
             </Button>
           </div>
