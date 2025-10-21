@@ -74,7 +74,7 @@ export async function GET(
         },
         // Feeding plans
         feedingPlans: {
-          where: (plans, { eq }) => eq(plans.isActive, true),
+          orderBy: (plans, { desc }) => [desc(plans.createdAt)],
         },
         // Semen assessments (for dogs)
         semenAssessments: {
@@ -96,8 +96,7 @@ export async function GET(
         },
         // Reminders
         reminders: {
-          where: (reminders, { eq }) => eq(reminders.isCompleted, false),
-          orderBy: (reminders, { asc }) => [asc(reminders.dueDate)],
+          orderBy: (reminders, { desc }) => [desc(reminders.dueDate)],
         },
       },
     });
@@ -136,7 +135,7 @@ export async function PATCH(
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -145,13 +144,43 @@ export async function PATCH(
 
     const validatedData = validation.data;
 
+    // Prepare update data with proper type conversions
+    const updateData: any = {};
+    
+    // Copy validated fields
+    if (validatedData.name !== undefined) updateData.name = validatedData.name;
+    if (validatedData.breedId !== undefined) updateData.breedId = validatedData.breedId;
+    if (validatedData.sex !== undefined) updateData.sex = validatedData.sex;
+    if (validatedData.dateOfBirth !== undefined) updateData.dateOfBirth = validatedData.dateOfBirth;
+    if (validatedData.microchipNumber !== undefined) updateData.microchipNumber = validatedData.microchipNumber;
+    if (validatedData.registrationNumber !== undefined) updateData.registrationNumber = validatedData.registrationNumber;
+    if (validatedData.color !== undefined) updateData.color = validatedData.color;
+    if (validatedData.markings !== undefined) updateData.markings = validatedData.markings;
+    if (validatedData.profileImageUrl !== undefined) updateData.profileImageUrl = validatedData.profileImageUrl;
+    if (validatedData.bio !== undefined) updateData.bio = validatedData.bio;
+    if (validatedData.temperament !== undefined) updateData.temperament = validatedData.temperament;
+    if (validatedData.healthStatus !== undefined) updateData.healthStatus = validatedData.healthStatus;
+    if (validatedData.isBreedingActive !== undefined) updateData.isBreedingActive = validatedData.isBreedingActive;
+    if (validatedData.isChampion !== undefined) updateData.isChampion = validatedData.isChampion;
+    if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
+    if (validatedData.isDeceased !== undefined) updateData.isDeceased = validatedData.isDeceased;
+    if (validatedData.deceasedDate !== undefined) updateData.deceasedDate = validatedData.deceasedDate;
+    if (validatedData.notes !== undefined) updateData.notes = validatedData.notes;
+    
+    // Convert numbers to strings for decimal fields
+    if (validatedData.weight !== undefined) updateData.weight = String(validatedData.weight);
+    if (validatedData.height !== undefined) updateData.height = String(validatedData.height);
+    
+    // Handle titles array (jsonb field)
+    if (validatedData.titles !== undefined) updateData.titles = validatedData.titles;
+    
+    // Always update timestamp
+    updateData.updatedAt = new Date();
+
     // Update animal
     const updated = await db
       .update(animals)
-      .set({
-        ...validatedData,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(
         and(eq(animals.id, id), eq(animals.userId, session.user.id))
       )

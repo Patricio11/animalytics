@@ -26,7 +26,7 @@ export function ProfileTab({ animal }: ProfileTabProps) {
   const age = animal.dateOfBirth ? calculateAge(animal.dateOfBirth) : 'Unknown';
 
   // Extract breed name from API structure
-  const breedName = typeof animal.breed === 'string' ? animal.breed : animal.breed?.name || 'Unknown Breed';
+  const breedName = typeof animal.breed === 'string' ? animal.breed : (animal.breed as any)?.name || 'Unknown Breed';
 
   // Map sex to type for display
   const animalType = (animal as any).sex || (animal as any).type;

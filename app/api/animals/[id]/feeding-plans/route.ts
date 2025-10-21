@@ -1,0 +1,174 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { feedingPlans, animals } from '@/lib/db/schema/animals';
+import { auth } from '@/lib/auth/config';
+import { eq, and, desc } from 'drizzle-orm';
+import { z } from 'zod';
+import { createId } from '@paralleldrive/cuid2';
+
+// ============================================================================
+// VALIDATION SCHEMAS
+// ============================================================================
+
+const mealTimeSchema = z.object({
+  time: z.string(), // "08:00"
+  amount: z.string(), // "2 cups"
+  unit: z.string(), // "cups", "grams", etc.
+});
+
+const supplementSchema = z.object({
+  name: z.string(),
+  dosage: z.string(),
+  frequency: z.string(),
+});
+
+const createFeedingPlanSchema = z.object({
+  foodType: z.string().optional(),
+  mealTimes: z.array(mealTimeSchema).optional(),
+  specialDiet: z.string().optional(),
+  supplements: z.array(supplementSchema).optional(),
+  calorieTarget: z.number().int().positive().optional(),
+  specialNotes: z.string().optional(),
+  isActive: z.boolean().optional().default(true),
+});
+
+const updateFeedingPlanSchema = createFeedingPlanSchema.partial();
+
+// ============================================================================
+// GET /api/animals/[id]/feeding-plans
+// ============================================================================
+// Get all feeding plans for an animal
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id: animalId } = await params;
+
+    // Verify animal ownership
+    const [animal] = await db
+      .select()
+      .from(animals)
+      .where(and(eq(animals.id, animalId), eq(animals.userId, session.user.id)))
+      .limit(1);
+
+    if (!animal) {
+      return NextResponse.json({ error: 'Animal not found' }, { status: 404 });
+    }
+
+    // Get feeding plans
+    const plans = await db
+      .select()
+      .from(feedingPlans)
+      .where(eq(feedingPlans.animalId, animalId))
+      .orderBy(desc(feedingPlans.createdAt));
+
+    return NextResponse.json({
+      success: true,
+      data: plans,
+    });
+  } catch (error) {
+    console.error('Error fetching feeding plans:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch feeding plans' },
+      { status: 500 }
+    );
+  }
+}
+
+// ============================================================================
+// POST /api/animals/[id]/feeding-plans
+// ============================================================================
+// Create a new feeding plan
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id: animalId } = await params;
+    const body = await request.json();
+
+    // Validate request body
+    const validation = createFeedingPlanSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: validation.error.issues.map((err) => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
+    // Verify animal ownership
+    const [animal] = await db
+      .select()
+      .from(animals)
+      .where(and(eq(animals.id, animalId), eq(animals.userId, session.user.id)))
+      .limit(1);
+
+    if (!animal) {
+      return NextResponse.json({ error: 'Animal not found' }, { status: 404 });
+    }
+
+    const validatedData = validation.data;
+
+    // If this plan is active, deactivate other plans
+    if (validatedData.isActive) {
+      await db
+        .update(feedingPlans)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(
+          and(
+            eq(feedingPlans.animalId, animalId),
+            eq(feedingPlans.isActive, true)
+          )
+        );
+    }
+
+    // Create feeding plan
+    const [plan] = await db
+      .insert(feedingPlans)
+      .values({
+        id: createId(),
+        animalId,
+        foodType: validatedData.foodType || null,
+        mealTimes: validatedData.mealTimes as any || null,
+        specialDiet: validatedData.specialDiet || null,
+        supplements: validatedData.supplements as any || null,
+        calorieTarget: validatedData.calorieTarget || null,
+        specialNotes: validatedData.specialNotes || null,
+        isActive: validatedData.isActive ?? true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      data: plan,
+      message: 'Feeding plan created successfully',
+    });
+  } catch (error) {
+    console.error('Error creating feeding plan:', error);
+    return NextResponse.json(
+      { error: 'Failed to create feeding plan' },
+      { status: 500 }
+    );
+  }
+}

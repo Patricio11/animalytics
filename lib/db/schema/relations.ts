@@ -1,6 +1,20 @@
 import { relations } from 'drizzle-orm';
 import { users } from './users';
-import { animals, litters, frozenSemen, semenAssessments, seasons, progesteroneReadings, puppies, breeds } from './animals';
+import { 
+  animals, 
+  litters, 
+  frozenSemen, 
+  semenAssessments, 
+  seasons, 
+  progesteroneReadings, 
+  puppies, 
+  breeds,
+  animalPhotos,
+  animalDocuments,
+  feedingPlans,
+  healthRecords,
+  animalReminders
+} from './animals';
 import { matings } from './matings';
 import { tasks } from './tasks';
 import { listings } from './marketplace';
@@ -47,6 +61,11 @@ export const animalsRelations = relations(animals, ({ one, many }) => ({
   tasks: many(tasks),
   semenAssessments: many(semenAssessments),
   seasons: many(seasons),
+  photos: many(animalPhotos),
+  documents: many(animalDocuments),
+  feedingPlans: many(feedingPlans),
+  healthRecords: many(healthRecords),
+  reminders: many(animalReminders),
 }));
 
 // ============================================================================
@@ -181,5 +200,64 @@ export const listingsRelations = relations(listings, ({ one }) => ({
   frozenSemen: one(frozenSemen, {
     fields: [listings.frozenSemenId],
     references: [frozenSemen.id],
+  }),
+}));
+
+// ============================================================================
+// ANIMAL PHOTOS RELATIONS
+// ============================================================================
+
+export const animalPhotosRelations = relations(animalPhotos, ({ one }) => ({
+  animal: one(animals, {
+    fields: [animalPhotos.animalId],
+    references: [animals.id],
+  }),
+}));
+
+// ============================================================================
+// ANIMAL DOCUMENTS RELATIONS
+// ============================================================================
+
+export const animalDocumentsRelations = relations(animalDocuments, ({ one }) => ({
+  animal: one(animals, {
+    fields: [animalDocuments.animalId],
+    references: [animals.id],
+  }),
+}));
+
+// ============================================================================
+// FEEDING PLANS RELATIONS
+// ============================================================================
+
+export const feedingPlansRelations = relations(feedingPlans, ({ one }) => ({
+  animal: one(animals, {
+    fields: [feedingPlans.animalId],
+    references: [animals.id],
+  }),
+}));
+
+// ============================================================================
+// HEALTH RECORDS RELATIONS
+// ============================================================================
+
+export const healthRecordsRelations = relations(healthRecords, ({ one }) => ({
+  animal: one(animals, {
+    fields: [healthRecords.animalId],
+    references: [animals.id],
+  }),
+}));
+
+// ============================================================================
+// ANIMAL REMINDERS RELATIONS
+// ============================================================================
+
+export const animalRemindersRelations = relations(animalReminders, ({ one }) => ({
+  animal: one(animals, {
+    fields: [animalReminders.animalId],
+    references: [animals.id],
+  }),
+  user: one(users, {
+    fields: [animalReminders.userId],
+    references: [users.id],
   }),
 }));
