@@ -79,16 +79,26 @@ export function Header() {
         {/* User Profile Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full hover-elevate">
+            <Button 
+              variant="ghost" 
+              className="relative h-auto px-3 py-2 hover-elevate rounded-lg flex items-center gap-3"
+            >
               <Avatar className="h-9 w-9 shadow-card border-2 border-primary/20">
-                <AvatarImage
-                  src={user?.image || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"}
-                  alt={user?.name || "User"}
-                />
-                <AvatarFallback className="bg-gradient-brand text-white font-medium">
+                <AvatarFallback className="bg-gradient-brand text-white font-semibold text-sm">
                   {getUserInitials()}
                 </AvatarFallback>
               </Avatar>
+              <div className="flex flex-col items-start text-left gap-1">
+                <span className="text-sm font-semibold text-foreground leading-tight">
+                  {user?.name || 'User'}
+                </span>
+                <Badge 
+                  variant="secondary" 
+                  className="text-[10px] capitalize px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                >
+                  {role?.replace('_', ' ') || 'User'}
+                </Badge>
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-64 shadow-elevated" align="end" forceMount>
