@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BreedCombobox } from "@/components/ui/breed-combobox";
 import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
 import { MarketplaceListing } from "@/lib/mock-data/marketplace-listings";
 import { 
@@ -315,23 +316,12 @@ export default function GlobalMarketplace() {
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">
                       Breed
                     </label>
-                    <Select value={breedFilter || "all"} onValueChange={(value) => setBreedFilter(value === "all" ? "" : value)}>
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="All Breeds" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Breeds</SelectItem>
-                        {breedsLoading ? (
-                          <SelectItem value="loading" disabled>Loading...</SelectItem>
-                        ) : (
-                          breeds.map((breed: any) => (
-                            <SelectItem key={breed.id} value={breed.name}>
-                              {breed.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <BreedCombobox
+                      value={breedFilter}
+                      onChange={setBreedFilter}
+                      placeholder="All Breeds"
+                      showAllOption={true}
+                    />
                   </div>
 
                   {/* Sex Filter */}

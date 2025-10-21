@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BreedCombobox } from "@/components/ui/breed-combobox";
 import { MarketplaceListing } from "@/lib/mock-data/marketplace-listings";
 import { 
   Plus, 
@@ -102,6 +103,7 @@ function transformAnimalToListing(animal: any): MarketplaceListing {
     currency: 'USD',
     images: animal.profileImageUrl ? [animal.profileImageUrl] : ['/images/placeholder-dog.png'],
     contact: {
+      name: animal.breederName || 'Unknown Breeder',
       email: animal.breederPublicEmail || '',
       phone: animal.breederPublicPhone || '',
       location: formatLocation(),
@@ -183,7 +185,7 @@ export default function Marketplace() {
   }, [finalAnimals]);
 
   // Featured listings
-  const featuredListings = listings.filter(l => l.featured);
+  const featuredListings = listings.filter((l: any) => l.featured);
 
   // Active filters count
   const activeFiltersCount = [
@@ -288,23 +290,12 @@ export default function Marketplace() {
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">
                       Breed
                     </label>
-                    <Select value={breedFilter || "all"} onValueChange={(value) => setBreedFilter(value === "all" ? "" : value)}>
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="All Breeds" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Breeds</SelectItem>
-                        {breedsLoading ? (
-                          <SelectItem value="loading" disabled>Loading...</SelectItem>
-                        ) : (
-                          breeds.map((breed: any) => (
-                            <SelectItem key={breed.id} value={breed.name}>
-                              {breed.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <BreedCombobox
+                      value={breedFilter}
+                      onChange={setBreedFilter}
+                      placeholder="All Breeds"
+                      showAllOption={true}
+                    />
                   </div>
 
                   {/* Sex Filter */}
@@ -458,7 +449,7 @@ export default function Marketplace() {
               </Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredListings.map((listing) => (
+              {featuredListings.map((listing: any) => (
                 <ListingCard 
                   key={listing.id} 
                   listing={listing}
@@ -483,7 +474,7 @@ export default function Marketplace() {
               </Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {listings.map((listing) => (
+              {listings.map((listing: any) => (
                 <ListingCard 
                   key={listing.id} 
                   listing={listing}

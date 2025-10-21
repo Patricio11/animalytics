@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BreedCombobox } from "@/components/ui/breed-combobox";
 import { Plus, Search, Filter, Loader2, AlertCircle } from "lucide-react";
 import { useAnimals } from "@/lib/api/queries/animals";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -16,6 +17,7 @@ import { APIAnimal } from "@/lib/api/types";
 export default function Animals() {
   const [showAddAnimal, setShowAddAnimal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [breedFilter, setBreedFilter] = useState<string>("");
   const [genderFilter, setGenderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -34,6 +36,9 @@ export default function Animals() {
             animal.breed?.name?.toLowerCase().includes(searchQuery.toLowerCase())
           : true;
 
+        // Breed filter
+        const matchesBreed = !breedFilter || animal.breed?.name === breedFilter;
+
         // Gender filter
         const matchesGender = genderFilter === "all" || animal.sex === genderFilter;
 
@@ -47,7 +52,7 @@ export default function Animals() {
           matchesStatus = !animal.isActive;
         }
 
-        return matchesSearch && matchesGender && matchesStatus;
+        return matchesSearch && matchesBreed && matchesGender && matchesStatus;
       })
       .map((animal: APIAnimal) => ({
         id: animal.id,
@@ -64,7 +69,7 @@ export default function Animals() {
           ? ("available" as const)
           : ("retired" as const),
       }));
-  }, [animals, searchQuery, genderFilter, statusFilter]);
+  }, [animals, searchQuery, breedFilter, genderFilter, statusFilter]);
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -87,8 +92,8 @@ export default function Animals() {
 
         {/* Filters */}
         <div className="bg-surface shadow-card rounded-lg p-6 border-0">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative sm:col-span-2 lg:col-span-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search animals..."
@@ -98,27 +103,39 @@ export default function Animals() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Select value={genderFilter} onValueChange={setGenderFilter}>
-              <SelectTrigger className="w-full sm:w-[180px] bg-background border-primary/20 focus:border-primary" data-testid="select-filter-gender">
-                <SelectValue placeholder="Gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px] bg-background border-primary/20 focus:border-primary" data-testid="select-filter-status">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="breeding">Breeding</SelectItem>
-                <SelectItem value="retired">Retired</SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <BreedCombobox
+                value={breedFilter}
+                onChange={setBreedFilter}
+                placeholder="All Breeds"
+                showAllOption={true}
+              />
+            </div>
+            <div>
+              <Select value={genderFilter} onValueChange={setGenderFilter}>
+                <SelectTrigger className="w-full bg-background border-primary/20 focus:border-primary" data-testid="select-filter-gender">
+                  <SelectValue placeholder="Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full bg-background border-primary/20 focus:border-primary" data-testid="select-filter-status">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="breeding">Breeding</SelectItem>
+                  <SelectItem value="retired">Retired</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -166,7 +183,7 @@ export default function Animals() {
         {!isLoading && !isError && displayAnimals.length === 0 && (
           <div className="bg-surface shadow-card rounded-lg p-12 text-center">
             <p className="text-muted-foreground">
-              {searchQuery || genderFilter !== "all" || statusFilter !== "all"
+              {searchQuery || breedFilter || genderFilter !== "all" || statusFilter !== "all"
                 ? "No animals found matching your filters."
                 : "No animals yet. Add your first animal to get started!"}
             </p>

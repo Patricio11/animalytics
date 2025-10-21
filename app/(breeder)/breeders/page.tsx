@@ -8,13 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BreederCard } from "@/components/breeder/BreederCard";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { BreedCombobox } from "@/components/ui/breed-combobox";
 
 // Fetch breeders from API
 function useBreeders(search: string, breed: string) {
@@ -37,7 +31,7 @@ function useBreeders(search: string, breed: string) {
 
 export default function BreedersDirectoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedBreed, setSelectedBreed] = useState("all");
+  const [selectedBreed, setSelectedBreed] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Debounce search
@@ -94,20 +88,14 @@ export default function BreedersDirectoryPage() {
               </div>
 
               {/* Breed Filter */}
-              <Select value={selectedBreed} onValueChange={setSelectedBreed}>
-                <SelectTrigger className="w-full sm:w-64">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter by breed" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Breeds</SelectItem>
-                  {popularBreeds.map((breed) => (
-                    <SelectItem key={breed} value={breed}>
-                      {breed}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="w-full sm:w-64">
+                <BreedCombobox
+                  value={selectedBreed}
+                  onChange={setSelectedBreed}
+                  placeholder="Filter by breed"
+                  showAllOption={true}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
