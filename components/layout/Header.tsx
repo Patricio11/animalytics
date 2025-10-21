@@ -41,7 +41,7 @@ export function Header() {
   };
 
   return (
-    <header className="border-b bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60 sticky top-0 z-50 flex items-center justify-between p-4">
+    <header className="border-b bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60 sticky top-0 z-50 flex items-center justify-between py-2 px-8">
       <SidebarTrigger data-testid="button-sidebar-toggle" className="hover-elevate" />
 
       <div className="flex items-center gap-3">
