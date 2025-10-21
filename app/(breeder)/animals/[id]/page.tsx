@@ -149,86 +149,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Animal Details Card */}
-            <Card className="shadow-card bg-surface border-0">
-              <CardContent className="p-6 space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Badge className="bg-gradient-brand text-white shadow-card">
-                      {animal.type === 'bitch' ? '♀ Female' : '♂ Male'}
-                    </Badge>
-                  </div>
-
-                  <h1 className="text-3xl font-bold text-foreground">{animal.name}</h1>
-
-                  <div className="text-lg text-muted-foreground">{animal.breed}</div>
-                </div>
-
-                <Separator />
-
-                {/* Quick Info */}
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-3">Quick Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Age</div>
-                      <div className="font-medium text-foreground">{age} years old</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Date of Birth</div>
-                      <div className="font-medium text-foreground">
-                        {format(new Date(animal.dateOfBirth), 'MMM dd, yyyy')}
-                      </div>
-                    </div>
-                    {animal.weight && (
-                      <div>
-                        <div className="text-sm text-muted-foreground">Weight</div>
-                        <div className="font-medium text-foreground">{animal.weight} kg</div>
-                      </div>
-                    )}
-                    {animal.color && (
-                      <div>
-                        <div className="text-sm text-muted-foreground">Color</div>
-                        <div className="font-medium text-foreground">{animal.color}</div>
-                      </div>
-                    )}
-                    {animal.microchipId && (
-                      <div className="col-span-2">
-                        <div className="text-sm text-muted-foreground">Microchip ID</div>
-                        <div className="font-medium text-foreground">{animal.microchipId}</div>
-                      </div>
-                    )}
-                    {animal.registrationNumber && (
-                      <div className="col-span-2">
-                        <div className="text-sm text-muted-foreground">Registration Number</div>
-                        <div className="font-medium text-foreground">{animal.registrationNumber}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Health Badges */}
-                {(animal.achievements && animal.achievements.length > 0) && (
-                  <>
-                    <Separator />
-                    <div className="flex gap-2 flex-wrap">
-                      {animal.healthRecords && animal.healthRecords.length > 0 && (
-                        <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/20">
-                          <Shield className="w-4 h-4 mr-2" />
-                          Health Records
-                        </Badge>
-                      )}
-                      {animal.achievements && animal.achievements.length > 0 && (
-                        <Badge className="bg-chart-2/10 text-chart-2 border-chart-2/20">
-                          <Award className="w-4 h-4 mr-2" />
-                          Achievements
-                        </Badge>
-                      )}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            
 
             {/* Tabs Section */}
             <Card className="shadow-card bg-surface border-0">
@@ -316,6 +237,86 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Animal Details Card */}
+            <Card className="shadow-card bg-surface border-0">
+              <CardContent className="p-6 space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Badge className="bg-gradient-brand text-white shadow-card">
+                      {animal.type === 'bitch' ? '♀ Female' : '♂ Male'}
+                    </Badge>
+                  </div>
+
+                  <h1 className="text-3xl font-bold text-foreground">{animal.name}</h1>
+
+                  <div className="text-lg text-muted-foreground">{animal.breed}</div>
+                </div>
+
+                <Separator />
+
+                {/* Quick Info */}
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Quick Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-muted-foreground">Age</div>
+                      <div className="font-medium text-foreground">{age} years old</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Date of Birth</div>
+                      <div className="font-medium text-foreground">
+                        {format(new Date(animal.dateOfBirth), 'MMM dd, yyyy')}
+                      </div>
+                    </div>
+                    {animal.weight && (
+                      <div>
+                        <div className="text-sm text-muted-foreground">Weight</div>
+                        <div className="font-medium text-foreground">{animal.weight} kg</div>
+                      </div>
+                    )}
+                    {animal.color && (
+                      <div>
+                        <div className="text-sm text-muted-foreground">Color</div>
+                        <div className="font-medium text-foreground">{animal.color}</div>
+                      </div>
+                    )}
+                    {animal.microchipId && (
+                      <div className="col-span-2">
+                        <div className="text-sm text-muted-foreground">Microchip ID</div>
+                        <div className="font-medium text-foreground">{animal.microchipId}</div>
+                      </div>
+                    )}
+                    {animal.registrationNumber && (
+                      <div className="col-span-2">
+                        <div className="text-sm text-muted-foreground">Registration Number</div>
+                        <div className="font-medium text-foreground">{animal.registrationNumber}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Health Badges */}
+                {(animal.achievements && animal.achievements.length > 0) && (
+                  <>
+                    <Separator />
+                    <div className="flex gap-2 flex-wrap">
+                      {animal.healthRecords && animal.healthRecords.length > 0 && (
+                        <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/20">
+                          <Shield className="w-4 h-4 mr-2" />
+                          Health Records
+                        </Badge>
+                      )}
+                      {animal.achievements && animal.achievements.length > 0 && (
+                        <Badge className="bg-chart-2/10 text-chart-2 border-chart-2/20">
+                          <Award className="w-4 h-4 mr-2" />
+                          Achievements
+                        </Badge>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
             {/* Actions Card */}
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-6 space-y-4">

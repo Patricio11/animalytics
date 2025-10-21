@@ -28,7 +28,7 @@ export function ProfileTab({ animal }: ProfileTabProps) {
   return (
     <div className="space-y-6">
       {/* Main Photos */}
-      {animal.photos && animal.photos.length > 0 && (
+      {/* {animal.photos && animal.photos.length > 0 && (
         <Card className="shadow-card border-primary/10">
           <CardContent className="p-0">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
@@ -44,7 +44,7 @@ export function ProfileTab({ animal }: ProfileTabProps) {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Basic Information */}
       <Card className="shadow-card border-primary/10">
