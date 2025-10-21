@@ -9,9 +9,10 @@ import { format } from "date-fns";
 
 interface ProfileTabProps {
   animal: Animal;
+  onEdit?: () => void;
 }
 
-export function ProfileTab({ animal }: ProfileTabProps) {
+export function ProfileTab({ animal, onEdit }: ProfileTabProps) {
   const calculateAge = (dateOfBirth: string | Date) => {
     const dob = new Date(dateOfBirth);
     const today = new Date();
@@ -62,7 +63,12 @@ export function ProfileTab({ animal }: ProfileTabProps) {
       <Card className="shadow-card border-primary/10">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Basic Information</CardTitle>
-          <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:border-primary">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hover:bg-primary/10 hover:border-primary"
+            onClick={onEdit}
+          >
             <Edit className="w-3 h-3 mr-2" />
             Edit Profile
           </Button>

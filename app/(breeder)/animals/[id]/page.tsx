@@ -11,6 +11,7 @@ import { SeasonsTab } from "@/components/breeder/animals/SeasonsTab";
 import { LitterDetailsTab } from "@/components/breeder/animals/LitterDetailsTab";
 import { RemindersTab } from "@/components/breeder/animals/RemindersTab";
 import { PedigreeTab } from "@/components/breeder/animals/PedigreeTab";
+import { EditAnimalDialog } from "@/components/breeder/animals/EditAnimalDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,25 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: animal.name,
+          text: `Check out ${animal.name} - ${animal.breed?.name || 'Dog'}`,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.log('Share cancelled');
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    }
+  };
 
   // Loading state
   if (isLoading) {
@@ -184,7 +204,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
                 <div className="p-6">
                   <TabsContent value="profile" className="mt-0">
-                    <ProfileTab animal={animal} />
+                    <ProfileTab animal={animal} onEdit={() => setShowEditDialog(true)} />
                   </TabsContent>
 
                   <TabsContent value="pedigree" className="mt-0">
@@ -221,7 +241,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                       <TabsContent value="litters" className="mt-0">
                         <LitterDetailsTab
                           animalId={animal.id}
-                          litters={animal.litters || []}
+                          litters={animal.littersAsBitch || []}
                         />
                       </TabsContent>
                     </>
@@ -332,19 +352,22 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
               <CardContent className="p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Quick Actions</h3>
 
-                <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
+                <Button 
+                  className="w-full bg-gradient-brand hover:opacity-90 shadow-card"
+                  onClick={() => setShowEditDialog(true)}
+                >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Profile
                 </Button>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card">
-                    <Heart className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" className="hover:bg-primary/10 hover:border-primary shadow-card">
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Button 
+                  variant="outline" 
+                  className="w-full hover:bg-primary/10 hover:border-primary shadow-card"
+                  onClick={handleShare}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share Profile
+                </Button>
               </CardContent>
             </Card>
 
@@ -405,6 +428,28 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
         initialIndex={lightboxIndex}
         open={lightboxOpen}
         onOpenChange={setLightboxOpen}
+      />
+
+      {/* Edit Animal Dialog */}
+      <EditAnimalDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        animalId={animal.id}
+        animalData={{
+          name: animal.name,
+          sex: animal.sex,
+          breed: animal.breed?.name || '',
+          dateOfBirth: new Date(animal.dateOfBirth),
+          color: animal.color || '',
+          markings: animal.markings || '',
+          weight: animal.weight || '',
+          microchipId: animal.microchipNumber || '',
+          registrationNumber: animal.registrationNumber || '',
+          bloodline: '',
+          description: animal.bio || '',
+          location: '',
+          imageUrl: animal.profileImageUrl || '',
+        }}
       />
     </div>
   );
