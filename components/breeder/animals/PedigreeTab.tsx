@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PedigreeTree } from "./PedigreeTree";
-import { EditParentsDialog } from "./EditParentsDialog";
-import { PedigreeDocumentsList } from "./PedigreeDocumentsList";
-import { ImportPedigreeDialog } from "./ImportPedigreeDialog";
+import { PedigreeTree } from "@/components/breeder/animals/PedigreeTree";
+import { EditParentsDialog } from "@/components/breeder/animals/EditParentsDialog";
+import { PedigreeDocumentsList } from "@/components/breeder/animals/PedigreeDocumentsList";
+import { ImportPedigreeDialog } from "@/components/breeder/animals/ImportPedigreeDialog";
 import {
   Download,
   FileText,

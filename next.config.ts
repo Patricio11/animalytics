@@ -12,6 +12,16 @@ const nextConfig: NextConfig = {
     // This allows deployment while we incrementally fix remaining type issues
     ignoreBuildErrors: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
