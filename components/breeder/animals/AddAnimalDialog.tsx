@@ -363,14 +363,14 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 </div>
 
                 {/* Animal Name */}
-                <div className="space-y-3">
+                <div className="space-y-3 flex flex-col justify-center">
                   <Label htmlFor="name">Animal Name *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => updateFormData("name", e.target.value)}
                     placeholder="Enter animal name"
-                    className="bg-background border-primary/20 focus:border-primary h-[160px] text-lg"
+                    className="bg-background border-primary/20 focus:border-primary text-lg"
                   />
                   <p className="text-xs text-muted-foreground">
                     Choose a unique name for your animal

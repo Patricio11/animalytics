@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { AnimalCard } from "@/components/breeder/AnimalCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
+import { EditAnimalDialog } from "@/components/breeder/animals/EditAnimalDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +17,8 @@ import { APIAnimal } from "@/lib/api/types";
 
 export default function Animals() {
   const [showAddAnimal, setShowAddAnimal] = useState(false);
+  const [showEditAnimal, setShowEditAnimal] = useState(false);
+  const [editingAnimal, setEditingAnimal] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [breedFilter, setBreedFilter] = useState<string>("");
   const [genderFilter, setGenderFilter] = useState<string>("all");
@@ -70,6 +73,12 @@ export default function Animals() {
           : ("retired" as const),
       }));
   }, [animals, searchQuery, breedFilter, genderFilter, statusFilter]);
+
+  // Handle edit animal
+  const handleEditAnimal = (animal: any) => {
+    setEditingAnimal(animal);
+    setShowEditAnimal(true);
+  };
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -174,7 +183,7 @@ export default function Animals() {
         {!isLoading && !isError && displayAnimals.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {displayAnimals.map((animal: any) => (
-              <AnimalCard key={animal.id} {...animal} />
+              <AnimalCard key={animal.id} {...animal} onEdit={() => handleEditAnimal(animal)} />
             ))}
           </div>
         )}
@@ -192,6 +201,22 @@ export default function Animals() {
 
         {/* Add Animal Dialog */}
         <AddAnimalDialog open={showAddAnimal} onOpenChange={setShowAddAnimal} />
+        
+        {/* Edit Animal Dialog */}
+        {editingAnimal && (
+          <EditAnimalDialog
+            open={showEditAnimal}
+            onOpenChange={setShowEditAnimal}
+            animalId={editingAnimal.id}
+            animalData={{
+              name: editingAnimal.name,
+              sex: editingAnimal.gender,
+              breed: editingAnimal.breed,
+              dateOfBirth: editingAnimal.dateOfBirth,
+              imageUrl: editingAnimal.imageUrl,
+            }}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, Calendar, Share2, Edit, Eye } from "lucide-react";
+import { Calendar, Share2, Edit, Eye } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -16,7 +16,6 @@ interface AnimalCardProps {
   lastMating?: Date;
   onEdit?: () => void;
   onShare?: () => void;
-  onFavorite?: () => void;
 }
 
 export function AnimalCard({
@@ -29,8 +28,7 @@ export function AnimalCard({
   status = 'available',
   lastMating,
   onEdit,
-  onShare,
-  onFavorite
+  onShare
 }: AnimalCardProps) {
   const age = Math.floor((Date.now() - dateOfBirth.getTime()) / (1000 * 60 * 60 * 24 * 365));
 
@@ -51,11 +49,6 @@ export function AnimalCard({
     onShare?.();
   };
 
-  const handleFavorite = () => {
-    console.log(`Favorite animal: ${name}`);
-    onFavorite?.();
-  };
-
   return (
     <Card className="group overflow-hidden bg-surface border border-primary/10 shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:-translate-y-2 hover:border-primary/30" data-testid={`card-animal-${id}`}>
       <CardHeader className="p-0">
@@ -69,7 +62,7 @@ export function AnimalCard({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-subtle">
-                <Heart className="w-12 h-12 text-primary/60 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
+                <Eye className="w-12 h-12 text-primary/60 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
               </div>
             )}
             {/* Gradient overlay for better text readability */}
@@ -159,15 +152,6 @@ export function AnimalCard({
               className="hover:bg-primary/10 hover:border-primary border-primary/20 shadow-md hover:shadow-lg transition-all duration-300"
             >
               <Edit className="w-3 h-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleFavorite}
-              data-testid={`button-favorite-${id}`}
-              className="hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 shadow-md hover:shadow-lg transition-all duration-300"
-            >
-              <Heart className="w-4 h-4" />
             </Button>
           </div>
         </div>
