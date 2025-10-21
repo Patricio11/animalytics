@@ -392,9 +392,8 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
       <ImageLightbox
         images={allPhotos}
         initialIndex={lightboxIndex}
-        isOpen={lightboxOpen}
-        onClose={() => setLightboxOpen(false)}
-        alt={animal.name}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
       />
     </div>
   );
