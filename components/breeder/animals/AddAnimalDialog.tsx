@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,11 +13,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PawPrint, ArrowLeft, ArrowRight, Check, CalendarIcon, ChevronsUpDown, Upload, X, ImageIcon } from "lucide-react";
+import { PawPrint, ArrowLeft, ArrowRight, Check, CalendarIcon, ChevronsUpDown, Upload, X, ImageIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { DOG_BREEDS } from "@/lib/data/dog-breeds";
 
 interface AddAnimalDialogProps {
   open: boolean;
@@ -47,10 +47,35 @@ interface AnimalFormData {
   location: string;
 }
 
+// Fetch breeds from API
+function useBreeds() {
+  return useQuery({
+    queryKey: ['breeds'],
+    queryFn: async () => {
+      const response = await fetch('/api/breeds');
+      if (!response.ok) throw new Error('Failed to fetch breeds');
+      return response.json();
+    },
+  });
+}
+
 export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [breedSearchOpen, setBreedSearchOpen] = useState(false);
+  const [breedSearch, setBreedSearch] = useState("");
+  
+  // Fetch breeds from API
+  const { data: breedsData, isLoading: breedsLoading } = useBreeds();
+  const breeds = breedsData?.breeds || [];
+  
+  // Filter breeds based on search
+  const filteredBreeds = useMemo(() => {
+    if (!breedSearch) return breeds;
+    return breeds.filter((breed: any) => 
+      breed.name.toLowerCase().includes(breedSearch.toLowerCase())
+    );
+  }, [breeds, breedSearch]);
   const [formData, setFormData] = useState<AnimalFormData>({
     profilePhoto: null,
     profilePhotoPreview: null,
@@ -199,30 +224,32 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
           </div>
         </DialogHeader>
 
-        {/* Progress Indicator */}
-        <div className="flex items-center justify-between mb-6">
-          {[1, 2, 3, 4].map((step) => (
-            <div key={step} className="flex items-center flex-1">
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                  currentStep >= step
-                    ? "bg-gradient-brand text-white shadow-md"
-                    : "bg-surface-secondary text-muted-foreground"
-                )}
-              >
-                {currentStep > step ? <Check className="w-4 h-4" /> : step}
-              </div>
-              {step < 4 && (
+        {/* Progress Indicator - Full Width */}
+        <div className="w-full mb-6">
+          <div className="flex items-center justify-between w-full">
+            {[1, 2, 3, 4].map((step) => (
+              <div key={step} className="flex items-center" style={{ flex: step < 4 ? '1' : '0 0 auto' }}>
                 <div
                   className={cn(
-                    "flex-1 h-1 mx-2 rounded transition-colors",
-                    currentStep > step ? "bg-gradient-brand" : "bg-surface-secondary"
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                    currentStep >= step
+                      ? "bg-gradient-brand text-white shadow-md"
+                      : "bg-surface-secondary text-muted-foreground"
                   )}
-                />
-              )}
-            </div>
-          ))}
+                >
+                  {currentStep > step ? <Check className="w-4 h-4" /> : step}
+                </div>
+                {step < 4 && (
+                  <div
+                    className={cn(
+                      "h-1 mx-2 rounded transition-colors flex-1",
+                      currentStep > step ? "bg-gradient-brand" : "bg-surface-secondary"
+                    )}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Step Content */}
@@ -235,73 +262,73 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 <p className="text-sm text-muted-foreground">Add a photo and essential details</p>
               </div>
 
-              {/* Profile Photo Upload */}
-              <div className="space-y-3">
-                <Label>Profile Photo (Optional)</Label>
-                {!formData.profilePhotoPreview ? (
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="profile-photo"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="profile-photo"
-                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/20 rounded-lg cursor-pointer hover:border-primary/40 hover:bg-surface-secondary transition-colors"
-                    >
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <div className="w-12 h-12 rounded-full bg-gradient-brand/10 flex items-center justify-center mb-3">
-                          <Upload className="w-6 h-6 text-primary" />
+              {/* Profile Photo and Animal Name - Same Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Profile Photo Upload */}
+                <div className="space-y-3">
+                  <Label>Profile Photo (Optional)</Label>
+                  {!formData.profilePhotoPreview ? (
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="profile-photo"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="profile-photo"
+                        className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/20 rounded-lg cursor-pointer hover:border-primary/40 hover:bg-surface-secondary transition-colors"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <div className="w-12 h-12 rounded-full bg-gradient-brand/10 flex items-center justify-center mb-3">
+                            <Upload className="w-6 h-6 text-primary" />
+                          </div>
+                          <p className="text-sm font-medium text-foreground mb-1">
+                            Click to upload
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            PNG, JPG up to 5MB
+                          </p>
                         </div>
-                        <p className="text-sm font-medium text-foreground mb-1">
-                          Click to upload photo
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          PNG, JPG up to 5MB
-                        </p>
-                      </div>
-                    </label>
-                  </div>
-                ) : (
-                  <div className="relative flex items-center gap-4 p-4 border border-primary/10 rounded-lg bg-surface-secondary">
-                    <Avatar className="w-20 h-20 border-2 border-primary/20">
-                      <AvatarImage src={formData.profilePhotoPreview} alt="Profile preview" />
-                      <AvatarFallback>
-                        <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">
-                        {formData.profilePhoto?.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formData.profilePhoto && (formData.profilePhoto.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
+                      </label>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={removePhoto}
-                      className="hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="relative flex flex-col items-center gap-3 p-4 border border-primary/10 rounded-lg bg-surface-secondary h-40 justify-center">
+                      <Avatar className="w-20 h-20 border-2 border-primary/20">
+                        <AvatarImage src={formData.profilePhotoPreview} alt="Profile preview" />
+                        <AvatarFallback>
+                          <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={removePhoto}
+                        className="hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="name">Animal Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => updateFormData("name", e.target.value)}
-                  placeholder="Enter animal name"
-                  className="bg-background border-primary/20 focus:border-primary"
-                />
+                {/* Animal Name */}
+                <div className="space-y-3">
+                  <Label htmlFor="name">Animal Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => updateFormData("name", e.target.value)}
+                    placeholder="Enter animal name"
+                    className="bg-background border-primary/20 focus:border-primary h-[160px] text-lg"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Choose a unique name for your animal
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -325,7 +352,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Breed * <span className="text-xs text-muted-foreground">({DOG_BREEDS.length} breeds available)</span></Label>
+                <Label>Breed * <span className="text-xs text-muted-foreground">({breeds.length} breeds available)</span></Label>
                 <Popover open={breedSearchOpen} onOpenChange={setBreedSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -333,36 +360,62 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                       role="combobox"
                       aria-expanded={breedSearchOpen}
                       className="w-full justify-between bg-background border-primary/20 hover:bg-surface-secondary"
+                      disabled={breedsLoading}
                     >
-                      {formData.breed ? formData.breed : "Search breed..."}
+                      {breedsLoading ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Loading breeds...
+                        </span>
+                      ) : formData.breed ? (
+                        formData.breed
+                      ) : (
+                        "Search breed..."
+                      )}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search breed..." />
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput 
+                        placeholder="Search breed..." 
+                        value={breedSearch}
+                        onValueChange={setBreedSearch}
+                      />
                       <CommandList>
-                        <CommandEmpty>No breed found.</CommandEmpty>
-                        <CommandGroup>
-                          {DOG_BREEDS.map((breed) => (
-                            <CommandItem
-                              key={breed}
-                              value={breed}
-                              onSelect={() => {
-                                updateFormData("breed", breed);
-                                setBreedSearchOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  formData.breed === breed ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {breed}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
+                        {filteredBreeds.length === 0 ? (
+                          <CommandEmpty>No breed found.</CommandEmpty>
+                        ) : (
+                          <CommandGroup>
+                            {filteredBreeds.map((breed: any) => (
+                              <CommandItem
+                                key={breed.id}
+                                value={breed.name}
+                                onSelect={() => {
+                                  updateFormData("breed", breed.name);
+                                  setBreedSearchOpen(false);
+                                  setBreedSearch("");
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.breed === breed.name ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{breed.name}</div>
+                                  {breed.sizeCategory && (
+                                    <div className="text-xs text-muted-foreground capitalize">
+                                      {breed.sizeCategory} breed
+                                    </div>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
                       </CommandList>
                     </Command>
                   </PopoverContent>
