@@ -340,9 +340,8 @@ export default function PublicListingDetailPage({ params }: ListingDetailPagePro
       <ImageLightbox
         images={listing.images}
         initialIndex={lightboxIndex}
-        isOpen={lightboxOpen}
-        onClose={() => setLightboxOpen(false)}
-        alt={listing.title}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
       />
     </div>
   );

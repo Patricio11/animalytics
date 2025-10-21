@@ -106,6 +106,7 @@ function transformAnimalToListing(animal: any): MarketplaceListing {
     currency: 'USD',
     images: animal.profileImageUrl ? [animal.profileImageUrl] : ['/images/placeholder-dog.png'],
     contact: {
+      name: animal.breederName || 'Unknown Breeder',
       email: animal.breederPublicEmail || '',
       phone: animal.breederPublicPhone || '',
       location: formatLocation(),
