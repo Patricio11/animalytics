@@ -57,7 +57,8 @@ export const animalsRelations = relations(animals, ({ one, many }) => ({
   // Has many
   matingsAsBitch: many(matings, { relationName: 'bitch' }),
   matingsAsDog: many(matings, { relationName: 'dog' }),
-  litters: many(litters),
+  littersAsBitch: many(litters, { relationName: 'bitch' }),
+  littersAsSire: many(litters, { relationName: 'sire' }),
   tasks: many(tasks),
   semenAssessments: many(semenAssessments),
   seasons: many(seasons),
@@ -97,10 +98,12 @@ export const littersRelations = relations(litters, ({ one, many }) => ({
   bitch: one(animals, {
     fields: [litters.bitchId],
     references: [animals.id],
+    relationName: 'bitch',
   }),
   sire: one(animals, {
     fields: [litters.sireId],
     references: [animals.id],
+    relationName: 'sire',
   }),
   puppies: many(puppies),
 }));

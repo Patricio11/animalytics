@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Share2, Edit, Eye } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInYears, differenceInMonths } from "date-fns";
 import Link from "next/link";
 
 interface AnimalCardProps {
@@ -30,7 +30,9 @@ export function AnimalCard({
   onEdit,
   onShare
 }: AnimalCardProps) {
-  const age = Math.floor((Date.now() - dateOfBirth.getTime()) / (1000 * 60 * 60 * 24 * 365));
+  const years = differenceInYears(new Date(), dateOfBirth);
+  const months = differenceInMonths(new Date(), dateOfBirth);
+  const ageDisplay = years >= 1 ? `${years} year${years > 1 ? 's' : ''}` : `${months} month${months !== 1 ? 's' : ''}`;
 
   const statusColors = {
     available: 'bg-chart-3 text-white',
@@ -117,7 +119,7 @@ export function AnimalCard({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex flex-col space-y-1">
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Age</span>
-              <span className="text-foreground font-semibold">{age} years</span>
+              <span className="text-foreground font-semibold">{ageDisplay}</span>
             </div>
             <div className="flex flex-col space-y-1">
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Born</span>

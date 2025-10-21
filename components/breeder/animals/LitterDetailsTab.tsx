@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Baby, Calendar, AlertCircle, CheckCircle2, Heart } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Baby, Calendar, AlertCircle, CheckCircle2, Heart, Loader2 } from "lucide-react";
 import { Litter } from "@/lib/mock-data/animal-profile-details";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -19,10 +22,88 @@ interface LitterDetailsTabProps {
 }
 
 export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDetailsTabProps) {
-  const [litters, setLitters] = useState<Litter[]>(initialLitters);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLitter, setEditingLitter] = useState<Litter | undefined>();
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+
+  // Fetch litters from API
+  const { data: littersData, isLoading } = useQuery({
+    queryKey: ['litters', animalId],
+    queryFn: async () => {
+      const response = await fetch(`/api/animals/${animalId}/litters`);
+      if (!response.ok) throw new Error('Failed to fetch litters');
+      return response.json();
+    },
+    initialData: { success: true, data: initialLitters },
+  });
+
+  const litters = littersData?.data || [];
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: Omit<Litter, 'id'>) => {
+      const response = await fetch(`/api/animals/${animalId}/litters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to create litter');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['litters', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Litter recorded successfully' });
+      setDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to record litter', variant: 'destructive' });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Omit<Litter, 'id'> }) => {
+      const response = await fetch(`/api/animals/${animalId}/litters/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update litter');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['litters', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Litter updated successfully' });
+      setDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to update litter', variant: 'destructive' });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/animals/${animalId}/litters/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete litter');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['litters', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Litter deleted successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to delete litter', variant: 'destructive' });
+    },
+  });
+
   const sortedLitters = [...litters].sort(
     (a, b) => new Date(b.matingDate).getTime() - new Date(a.matingDate).getTime()
   );
@@ -41,25 +122,15 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
 
   const handleSave = (newLitter: Omit<Litter, 'id'>) => {
     if (dialogMode === 'create') {
-      // Add new litter
-      const litter: Litter = {
-        ...newLitter,
-        id: `litter-${Date.now()}`,
-      };
-      setLitters([...litters, litter]);
+      createMutation.mutate(newLitter);
     } else if (editingLitter) {
-      // Update existing litter
-      setLitters(
-        litters.map((l) =>
-          l.id === editingLitter.id ? { ...newLitter, id: l.id } : l
-        )
-      );
+      updateMutation.mutate({ id: editingLitter.id, data: newLitter });
     }
   };
 
   const handleDelete = (litterId: string) => {
     if (confirm('Are you sure you want to delete this litter record? This action cannot be undone.')) {
-      setLitters(litters.filter((l) => l.id !== litterId));
+      deleteMutation.mutate(litterId);
     }
   };
 
@@ -72,9 +143,9 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
   const bitch = mockAnimals.find(a => a.id === animalId);
   const bitchName = bitch?.name || 'Unknown';
 
-  const expectedLitters = litters.filter(l => l.status === 'expected');
-  const whelpedLitters = litters.filter(l => l.status === 'whelped' || l.status === 'archived');
-  const totalPuppies = whelpedLitters.reduce((sum, l) => sum + (l.puppyCount || 0), 0);
+  const expectedLitters = litters.filter((l: Litter) => l.status === 'expected');
+  const whelpedLitters = litters.filter((l: Litter) => l.status === 'whelped' || l.status === 'archived');
+  const totalPuppies = whelpedLitters.reduce((sum: number, l: Litter) => sum + (l.puppyCount || 0), 0);
   const avgLitterSize = whelpedLitters.length > 0
     ? (totalPuppies / whelpedLitters.length).toFixed(1)
     : 0;
@@ -101,7 +172,16 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
   };
 
   // Find current pregnancy (expected litter without whelping date)
-  const currentPregnancy = expectedLitters.find(l => !l.whelpingDate);
+  const currentPregnancy = expectedLitters.find((l: Litter) => !l.whelpingDate);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -129,7 +209,7 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
               </div>
               <div>
                 <div className="text-2xl font-bold text-foreground">
-                  {litters.filter(l => !l.complications).length}
+                  {litters.filter((l: Litter) => !l.complications).length}
                 </div>
                 <div className="text-sm text-muted-foreground">No Complications</div>
               </div>

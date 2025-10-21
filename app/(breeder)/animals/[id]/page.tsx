@@ -21,7 +21,7 @@ import {
   ArrowLeft, Share2, Edit, Heart, Award, Shield, Calendar,
   Weight, Activity, Ruler, MapPin, Phone, Mail, Eye
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -65,17 +65,18 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
   // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string | Date) => {
-    const today = new Date();
     const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+    const years = differenceInYears(new Date(), birthDate);
+    const months = differenceInMonths(new Date(), birthDate);
+    
+    if (years >= 1) {
+      return `${years} year${years > 1 ? 's' : ''} old`;
+    } else {
+      return `${months} month${months !== 1 ? 's' : ''} old`;
     }
-    return age;
   };
 
-  const age = animal.dateOfBirth ? calculateAge(animal.dateOfBirth) : 0;
+  const age = animal.dateOfBirth ? calculateAge(animal.dateOfBirth) : '0 months old';
   const statusConfig = {
     'available': { color: 'bg-chart-3/10 text-chart-3 border-chart-3/20', label: 'Available' },
     'breeding': { color: 'bg-chart-4/10 text-chart-4 border-chart-4/20', label: 'Breeding' },
@@ -263,7 +264,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-sm text-muted-foreground">Age</div>
-                      <div className="font-medium text-foreground">{age} years old</div>
+                      <div className="font-medium text-foreground">{age}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Date of Birth</div>

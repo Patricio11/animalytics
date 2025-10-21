@@ -86,8 +86,8 @@ export async function GET(
         seasons: {
           orderBy: (seasons, { desc }) => [desc(seasons.startDate)],
         },
-        // Litters (for bitches)
-        litters: {
+        // Litters (for bitches) - use specific relation name
+        littersAsBitch: {
           orderBy: (litters, { desc }) => [desc(litters.matingDate)],
         },
         // Health records
@@ -108,6 +108,8 @@ export async function GET(
     return successResponse(animal);
   } catch (error) {
     console.error('Error fetching animal:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     return serverErrorResponse('Failed to fetch animal');
   }
 }
