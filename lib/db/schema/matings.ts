@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, decimal, date, jsonb, pgEnum, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, decimal, date, jsonb, pgEnum, integer, uuid } from 'drizzle-orm/pg-core';
 import { animals, frozenSemen } from './animals';
 import { users } from './users';
 
@@ -16,11 +16,11 @@ export const matingStatusEnum = pgEnum('mating_status', ['planned', 'confirmed',
 // ============================================================================
 
 export const matings = pgTable('matings', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  bitchId: text('bitch_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
-  dogId: text('dog_id').references(() => animals.id), // Can be null if frozen semen used
-  frozenSemenId: text('frozen_semen_id').references(() => frozenSemen.id),
+  bitchId: uuid('bitch_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  dogId: uuid('dog_id').references(() => animals.id), // Can be null if frozen semen used
+  frozenSemenId: uuid('frozen_semen_id').references(() => frozenSemen.id),
   matingDate: date('mating_date').notNull(),
   breedingMethod: breedingMethodEnum('breeding_method').notNull(),
   semenType: text('semen_type'), // fresh, chilled, frozen
@@ -201,8 +201,8 @@ export const matings = pgTable('matings', {
 // ============================================================================
 
 export const conceptionRatingHistory = pgTable('conception_rating_history', {
-  id: text('id').primaryKey(),
-  matingId: text('mating_id').references(() => matings.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  matingId: uuid('mating_id').references(() => matings.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   calculationType: text('calculation_type').notNull(), // 'full_wizard', 'quick_estimate', 'recalculation'

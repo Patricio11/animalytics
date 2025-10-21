@@ -22,6 +22,27 @@
       "when": 1760589225536,
       "tag": "0002_typical_tony_stark",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761083932375,
+      "tag": "0003_complete_makkari",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1761084779305,
+      "tag": "0004_fixed_natasha_romanoff",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1761084927784,
+      "tag": "0005_freezing_dracula",
+      "breakpoints": true
     }
   ]
 }

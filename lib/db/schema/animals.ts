@@ -1,9 +1,5 @@
-import { pgTable, text, timestamp, decimal, date, boolean, jsonb, pgEnum, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, decimal, date, boolean, jsonb, pgEnum, integer, uuid } from 'drizzle-orm/pg-core';
 import { users } from './users';
-// import { createId } from '@paralleldrive/cuid2';
-
-// Helper function to generate CUID2 IDs (compatible with Better Auth)
-// const cuid = () => createId();
 
 // ============================================================================
 // ENUMS
@@ -41,7 +37,7 @@ export const reminderTypeEnum = pgEnum('reminder_type', [
 // ============================================================================
 
 export const breeds = pgTable('breeds', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull().unique(),
   successRating: decimal('success_rating', { precision: 2, scale: 1 }), // 1.0, 2.0, 3.0
   sizeCategory: text('size_category'), // small, medium, large, giant
@@ -58,10 +54,10 @@ export const breeds = pgTable('breeds', {
 // ============================================================================
 
 export const animals = pgTable('animals', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: text('name').notNull(),
-  breedId: text('breed_id').references(() => breeds.id),
+  breedId: uuid('breed_id').references(() => breeds.id),
   sex: sexEnum('sex').notNull(),
   dateOfBirth: date('date_of_birth'),
   microchipNumber: text('microchip_number'),
@@ -83,8 +79,8 @@ export const animals = pgTable('animals', {
   titles: jsonb('titles').$type<string[]>(), // ['CH', 'GCH', etc.]
 
   // Pedigree
-  damId: text('dam_id'), // Mother - references animals.id
-  sireId: text('sire_id'), // Father - references animals.id
+  damId: uuid('dam_id'), // Mother - references animals.id
+  sireId: uuid('sire_id'), // Father - references animals.id
 
   // Status
   isActive: boolean('is_active').default(true),
@@ -102,8 +98,8 @@ export const animals = pgTable('animals', {
 // ============================================================================
 
 export const animalPhotos = pgTable('animal_photos', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   category: photoCategoryEnum('category').notNull(),
   fileUrl: text('file_url').notNull(),
   thumbnailUrl: text('thumbnail_url'), // Optimized thumbnail
@@ -122,8 +118,8 @@ export const animalPhotos = pgTable('animal_photos', {
 // ============================================================================
 
 export const animalDocuments = pgTable('animal_documents', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   documentType: text('document_type').notNull(), // pedigree, health_certificate, registration, vaccination_record, etc.
   title: text('title').notNull(),
   fileUrl: text('file_url').notNull(),
@@ -140,8 +136,8 @@ export const animalDocuments = pgTable('animal_documents', {
 // ============================================================================
 
 export const feedingPlans = pgTable('feeding_plans', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   foodType: text('food_type'), // Brand and type of food
   mealTimes: jsonb('meal_times').$type<Array<{
     time: string; // "08:00"
@@ -166,8 +162,8 @@ export const feedingPlans = pgTable('feeding_plans', {
 // ============================================================================
 
 export const semenAssessments = pgTable('semen_assessments', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   assessmentDate: date('assessment_date').notNull(),
   assessmentType: text('assessment_type').notNull(), // visual, full_lab
   technicianName: text('technician_name'),
@@ -197,8 +193,8 @@ export const semenAssessments = pgTable('semen_assessments', {
 // ============================================================================
 
 export const seasons = pgTable('seasons', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   startDate: date('start_date').notNull(),
   endDate: date('end_date'),
   status: text('status').default('active'), // active, completed
@@ -218,9 +214,9 @@ export const seasons = pgTable('seasons', {
 // ============================================================================
 
 export const progesteroneReadings = pgTable('progesterone_readings', {
-  id: text('id').primaryKey(),
-  seasonId: text('season_id').references(() => seasons.id, { onDelete: 'cascade' }).notNull(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  seasonId: uuid('season_id').references(() => seasons.id, { onDelete: 'cascade' }).notNull(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   readingDate: date('reading_date').notNull(),
   dayNumber: integer('day_number').notNull(), // Day 0, 1, 2, etc.
   level: decimal('level', { precision: 5, scale: 2 }).notNull(), // ng/ml or nmol/L
@@ -236,10 +232,10 @@ export const progesteroneReadings = pgTable('progesterone_readings', {
 // ============================================================================
 
 export const litters = pgTable('litters', {
-  id: text('id').primaryKey(),
-  bitchId: text('bitch_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
-  sireId: text('sire_id').references(() => animals.id), // Can be null if frozen semen used
-  frozenSemenId: text('frozen_semen_id'), // Reference to frozen semen if used
+  id: uuid('id').primaryKey().defaultRandom(),
+  bitchId: uuid('bitch_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  sireId: uuid('sire_id').references(() => animals.id), // Can be null if frozen semen used
+  frozenSemenId: uuid('frozen_semen_id'), // Reference to frozen semen if used
 
   // Mating information
   matingDate: date('mating_date').notNull(),
@@ -274,9 +270,9 @@ export const litters = pgTable('litters', {
 // ============================================================================
 
 export const puppies = pgTable('puppies', {
-  id: text('id').primaryKey(),
-  litterId: text('litter_id').references(() => litters.id, { onDelete: 'cascade' }).notNull(),
-  animalId: text('animal_id').references(() => animals.id), // Links to animal record if retained
+  id: uuid('id').primaryKey().defaultRandom(),
+  litterId: uuid('litter_id').references(() => litters.id, { onDelete: 'cascade' }).notNull(),
+  animalId: uuid('animal_id').references(() => animals.id), // Links to animal record if retained
 
   name: text('name'),
   sex: sexEnum('sex').notNull(),
@@ -312,9 +308,9 @@ export const puppies = pgTable('puppies', {
 // ============================================================================
 
 export const frozenSemen = pgTable('frozen_semen', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  sourceAnimalId: text('source_animal_id').references(() => animals.id),
+  sourceAnimalId: uuid('source_animal_id').references(() => animals.id),
 
   // Collection information
   collectionDate: date('collection_date').notNull(),
@@ -332,7 +328,7 @@ export const frozenSemen = pgTable('frozen_semen', {
   storageType: text('storage_type'), // nitrogen_tank, facility_name
 
   // Quality assessment (can link to semen assessment OR store directly)
-  semenAssessmentId: text('semen_assessment_id').references(() => semenAssessments.id),
+  semenAssessmentId: uuid('semen_assessment_id').references(() => semenAssessments.id),
   qualityRating: text('quality_rating'), // poor, fair, good, excellent
 
   // Quality metrics (stored directly for convenience)
@@ -360,10 +356,10 @@ export const frozenSemen = pgTable('frozen_semen', {
 // ============================================================================
 
 export const frozenSemenUsage = pgTable('frozen_semen_usage', {
-  id: text('id').primaryKey(),
-  frozenSemenId: text('frozen_semen_id').references(() => frozenSemen.id, { onDelete: 'cascade' }).notNull(),
-  litterId: text('litter_id').references(() => litters.id),
-  bitchId: text('bitch_id').references(() => animals.id).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  frozenSemenId: uuid('frozen_semen_id').references(() => frozenSemen.id, { onDelete: 'cascade' }).notNull(),
+  litterId: uuid('litter_id').references(() => litters.id),
+  bitchId: uuid('bitch_id').references(() => animals.id).notNull(),
 
   usageDate: date('usage_date').notNull(),
   strawsUsed: integer('straws_used').notNull(),
@@ -384,8 +380,8 @@ export const frozenSemenUsage = pgTable('frozen_semen_usage', {
 // ============================================================================
 
 export const animalReminders = pgTable('animal_reminders', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   reminderType: reminderTypeEnum('reminder_type').notNull(),
@@ -421,8 +417,8 @@ export const animalReminders = pgTable('animal_reminders', {
 // ============================================================================
 
 export const animalShares = pgTable('animal_shares', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   ownerId: text('owner_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   sharedWithUserId: text('shared_with_user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
@@ -448,8 +444,8 @@ export const animalShares = pgTable('animal_shares', {
 // ============================================================================
 
 export const healthRecords = pgTable('health_records', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   recordType: text('record_type').notNull(), // vaccination, checkup, illness, injury, surgery, medication
 
   recordDate: date('record_date').notNull(),

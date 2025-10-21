@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, decimal, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, decimal, boolean, jsonb, uuid } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 /**
@@ -7,7 +7,7 @@ import { users } from './users';
  * Accessible globally (not just to breeders)
  */
 export const breederProfiles = pgTable('breeder_profiles', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull().unique(),
 
   // Professional branding
@@ -142,8 +142,8 @@ export const breederProfiles = pgTable('breeder_profiles', {
  * Customer reviews and ratings for breeders
  */
 export const breederReviews = pgTable('breeder_reviews', {
-  id: text('id').primaryKey(),
-  breederId: text('breeder_id').references(() => breederProfiles.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  breederId: uuid('breeder_id').references(() => breederProfiles.id, { onDelete: 'cascade' }).notNull(),
   reviewerId: text('reviewer_id').references(() => users.id, { onDelete: 'set null' }),
   orderId: text('order_id'), // link to actual transaction
   listingId: text('listing_id'), // what was purchased
@@ -192,8 +192,8 @@ export const breederReviews = pgTable('breeder_reviews', {
  * Track helpful/not helpful votes
  */
 export const reviewVotes = pgTable('review_votes', {
-  id: text('id').primaryKey(),
-  reviewId: text('review_id').references(() => breederReviews.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  reviewId: uuid('review_id').references(() => breederReviews.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   voteType: text('vote_type').notNull(), // helpful, not_helpful
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -204,8 +204,8 @@ export const reviewVotes = pgTable('review_votes', {
  * User reports of inappropriate reviews
  */
 export const reviewReports = pgTable('review_reports', {
-  id: text('id').primaryKey(),
-  reviewId: text('review_id').references(() => breederReviews.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  reviewId: uuid('review_id').references(() => breederReviews.id, { onDelete: 'cascade' }).notNull(),
   reporterId: text('reporter_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   reason: text('reason').notNull(), // spam, fake, offensive, irrelevant, other
   description: text('description'),
@@ -220,8 +220,8 @@ export const reviewReports = pgTable('review_reports', {
  * Track profile visits for analytics
  */
 export const profileViews = pgTable('profile_views', {
-  id: text('id').primaryKey(),
-  profileId: text('profile_id').references(() => breederProfiles.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  profileId: uuid('profile_id').references(() => breederProfiles.id, { onDelete: 'cascade' }).notNull(),
   viewerId: text('viewer_id').references(() => users.id, { onDelete: 'set null' }), // null if anonymous
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),

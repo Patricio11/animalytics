@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Microscope, TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Microscope, TrendingUp, Loader2 } from "lucide-react";
 import { SemenAssessment } from "@/lib/mock-data/animal-profile-details";
 import { SemenAssessmentDialog } from "./SemenAssessmentDialog";
 import { SemenAssessmentCard } from "./SemenAssessmentCard";
@@ -16,10 +19,87 @@ interface SemenTabProps {
 }
 
 export function SemenTab({ animalId, assessments: initialAssessments }: SemenTabProps) {
-  const [assessments, setAssessments] = useState<SemenAssessment[]>(initialAssessments);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<SemenAssessment | undefined>();
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+
+  // Fetch semen assessments from API
+  const { data: assessmentsData, isLoading } = useQuery({
+    queryKey: ['semen-assessments', animalId],
+    queryFn: async () => {
+      const response = await fetch(`/api/animals/${animalId}/semen-assessments`);
+      if (!response.ok) throw new Error('Failed to fetch semen assessments');
+      return response.json();
+    },
+    initialData: { success: true, data: initialAssessments },
+  });
+
+  const assessments = assessmentsData?.data || [];
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: Omit<SemenAssessment, 'id'>) => {
+      const response = await fetch(`/api/animals/${animalId}/semen-assessments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to create assessment');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['semen-assessments', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Semen assessment created successfully' });
+      setDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to create assessment', variant: 'destructive' });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Omit<SemenAssessment, 'id'> }) => {
+      const response = await fetch(`/api/animals/${animalId}/semen-assessments/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update assessment');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['semen-assessments', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Assessment updated successfully' });
+      setDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to update assessment', variant: 'destructive' });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/animals/${animalId}/semen-assessments/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete assessment');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['semen-assessments', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Assessment deleted successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to delete assessment', variant: 'destructive' });
+    },
+  });
 
   const sortedAssessments = [...assessments].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -39,33 +119,31 @@ export function SemenTab({ animalId, assessments: initialAssessments }: SemenTab
 
   const handleSave = (newAssessment: Omit<SemenAssessment, 'id'>) => {
     if (dialogMode === 'create') {
-      // Add new assessment
-      const assessment: SemenAssessment = {
-        ...newAssessment,
-        id: `semen-${Date.now()}`,
-      };
-      setAssessments([...assessments, assessment]);
+      createMutation.mutate(newAssessment);
     } else if (editingAssessment) {
-      // Update existing assessment
-      setAssessments(
-        assessments.map((a) =>
-          a.id === editingAssessment.id ? { ...newAssessment, id: a.id } : a
-        )
-      );
+      updateMutation.mutate({ id: editingAssessment.id, data: newAssessment });
     }
   };
 
   const handleDelete = (assessmentId: string) => {
     if (confirm('Are you sure you want to delete this assessment? This action cannot be undone.')) {
-      setAssessments(assessments.filter((a) => a.id !== assessmentId));
+      deleteMutation.mutate(assessmentId);
     }
   };
 
-
   // Calculate average quality over time
   const averageMotility = assessments.length > 0
-    ? (assessments.reduce((sum, a) => sum + a.motility, 0) / assessments.length).toFixed(1)
+    ? (assessments.reduce((sum: number, a: SemenAssessment) => sum + a.motility, 0) / assessments.length).toFixed(1)
     : 0;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

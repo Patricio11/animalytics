@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, bigint, integer, jsonb, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, pgEnum, uuid, bigint, jsonb, decimal } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 /**
@@ -7,7 +7,7 @@ import { users } from './users';
  * Stores all monetary balances in cents to avoid floating-point errors
  */
 export const wallets = pgTable('wallets', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull().unique(),
 
   // Multi-currency balances (stored in cents)
@@ -43,8 +43,8 @@ export const wallets = pgTable('wallets', {
  * Complete audit trail of all wallet transactions
  */
 export const transactions = pgTable('transactions', {
-  id: text('id').primaryKey(),
-  walletId: text('wallet_id').references(() => wallets.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  walletId: uuid('wallet_id').references(() => wallets.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   // Transaction details
@@ -87,9 +87,9 @@ export const transactions = pgTable('transactions', {
  * User withdrawal requests with approval workflow
  */
 export const payoutRequests = pgTable('payout_requests', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  walletId: text('wallet_id').references(() => wallets.id, { onDelete: 'cascade' }).notNull(),
+  walletId: uuid('wallet_id').references(() => wallets.id, { onDelete: 'cascade' }).notNull(),
 
   // Payout details (in cents)
   amount: bigint('amount', { mode: 'number' }).notNull(),
@@ -135,7 +135,7 @@ export const payoutRequests = pgTable('payout_requests', {
  * Hold funds during marketplace transactions
  */
 export const escrows = pgTable('escrows', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   orderId: text('order_id').notNull().unique(),
   listingId: text('listing_id').notNull(),
 

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, date, boolean, decimal, pgEnum, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, pgEnum, date, uuid, decimal, jsonb } from 'drizzle-orm/pg-core';
 import { animals } from './animals';
 import { users } from './users';
 
@@ -46,9 +46,9 @@ export const taskPriorityEnum = pgEnum('task_priority', [
 // ============================================================================
 
 export const tasks = pgTable('tasks', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }), // Optional for general tasks
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }), // Optional for general tasks
 
   type: taskTypeEnum('type').notNull(),
   title: text('title').notNull(),
@@ -128,8 +128,8 @@ export const tasks = pgTable('tasks', {
 // ============================================================================
 
 export const taskReminders = pgTable('task_reminders', {
-  id: text('id').primaryKey(),
-  taskId: text('task_id').references(() => tasks.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   reminderTime: timestamp('reminder_time').notNull(),
@@ -147,8 +147,8 @@ export const taskReminders = pgTable('task_reminders', {
 // ============================================================================
 
 export const weightRecords = pgTable('weight_records', {
-  id: text('id').primaryKey(),
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   weight: decimal('weight', { precision: 5, scale: 2 }).notNull(), // kg
@@ -159,7 +159,7 @@ export const weightRecords = pgTable('weight_records', {
 
   // Context
   recordingMethod: text('recording_method'), // manual, task_completion, vet_visit
-  taskId: text('task_id').references(() => tasks.id), // If from weight task
+  taskId: uuid('task_id').references(() => tasks.id), // If from weight task
 
   // Metadata
   notes: text('notes'),
@@ -174,7 +174,7 @@ export const weightRecords = pgTable('weight_records', {
 // ============================================================================
 
 export const puppyFeedingGenerations = pgTable('puppy_feeding_generations', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   generatedAt: timestamp('generated_at').defaultNow(),

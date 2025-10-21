@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, date, pgEnum, jsonb, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, pgEnum, date, integer, uuid } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { matings } from './matings';
 
@@ -35,7 +35,7 @@ export const exportStatusEnum = pgEnum('export_status', [
 // ============================================================================
 
 export const reportGenerations = pgTable('report_generations', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   reportType: reportTypeEnum('report_type').notNull(),
@@ -164,9 +164,9 @@ export const reportGenerations = pgTable('report_generations', {
 // ============================================================================
 
 export const exportHistory = pgTable('export_history', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  reportGenerationId: text('report_generation_id').references(() => reportGenerations.id, { onDelete: 'set null' }),
+  reportGenerationId: uuid('report_generation_id').references(() => reportGenerations.id, { onDelete: 'set null' }),
 
   // Export details
   exportType: reportTypeEnum('export_type').notNull(),
@@ -214,7 +214,7 @@ export const exportHistory = pgTable('export_history', {
 // ============================================================================
 
 export const matingComparisons = pgTable('mating_comparisons', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   // Comparison metadata
@@ -223,9 +223,9 @@ export const matingComparisons = pgTable('mating_comparisons', {
   updatedAt: timestamp('updated_at').defaultNow(),
 
   // Up to 3 matings to compare
-  mating1Id: text('mating1_id').references(() => matings.id, { onDelete: 'cascade' }).notNull(),
-  mating2Id: text('mating2_id').references(() => matings.id, { onDelete: 'cascade' }),
-  mating3Id: text('mating3_id').references(() => matings.id, { onDelete: 'cascade' }),
+  mating1Id: uuid('mating1_id').references(() => matings.id, { onDelete: 'cascade' }).notNull(),
+  mating2Id: uuid('mating2_id').references(() => matings.id, { onDelete: 'cascade' }),
+  mating3Id: uuid('mating3_id').references(() => matings.id, { onDelete: 'cascade' }),
 
   // Filters applied
   filters: jsonb('filters').$type<{

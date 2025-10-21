@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, serial } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, serial, uuid } from 'drizzle-orm/pg-core';
 import { animals } from './animals';
 import { users } from './users';
 
@@ -9,7 +9,7 @@ import { users } from './users';
 
 export const pedigreeSnapshots = pgTable('pedigree_snapshots', {
   id: serial('id').primaryKey(),
-  animalId: text('animal_id')
+  animalId: uuid('animal_id')
     .references(() => animals.id, { onDelete: 'cascade' })
     .notNull(),
   snapshotJson: text('snapshot_json').notNull(), // Full pedigree tree as JSON
@@ -25,7 +25,7 @@ export const pedigreeSnapshots = pgTable('pedigree_snapshots', {
 
 export const pedigreeDocuments = pgTable('pedigree_documents', {
   id: serial('id').primaryKey(),
-  animalId: text('animal_id')
+  animalId: uuid('animal_id')
     .references(() => animals.id, { onDelete: 'cascade' })
     .notNull(),
   title: text('title'),

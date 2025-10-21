@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, primaryKey } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 /**
@@ -8,7 +8,7 @@ import { users } from './users';
  * This schema is provided for future extension if dynamic permissions are needed
  */
 export const permissions = pgTable('permissions', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull().unique(), // e.g., 'animals:create', 'matings:view'
   description: text('description'),
   resource: text('resource').notNull(), // e.g., 'animals', 'matings'
@@ -24,7 +24,7 @@ export const permissions = pgTable('permissions', {
  */
 export const rolePermissions = pgTable('role_permissions', {
   role: text('role').notNull(),
-  permissionId: text('permission_id').references(() => permissions.id, { onDelete: 'cascade' }).notNull(),
+  permissionId: uuid('permission_id').references(() => permissions.id, { onDelete: 'cascade' }).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.role, table.permissionId] }),
@@ -37,7 +37,7 @@ export const rolePermissions = pgTable('role_permissions', {
  */
 export const userPermissions = pgTable('user_permissions', {
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  permissionId: text('permission_id').references(() => permissions.id, { onDelete: 'cascade' }).notNull(),
+  permissionId: uuid('permission_id').references(() => permissions.id, { onDelete: 'cascade' }).notNull(),
   granted: boolean('granted').default(true), // true = granted, false = revoked
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

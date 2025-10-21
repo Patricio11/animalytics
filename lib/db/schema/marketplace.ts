@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, decimal, boolean, jsonb, pgEnum, integer, date } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, decimal, boolean, jsonb, pgEnum, integer, date, uuid } from 'drizzle-orm/pg-core';
 import { animals, frozenSemen } from './animals';
 import { users } from './users';
 
@@ -35,7 +35,7 @@ export const featuredTierEnum = pgEnum('featured_tier', [
 // ============================================================================
 
 export const clinics = pgTable('clinics', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   location: text('location').notNull(),
   address: text('address'),
@@ -83,13 +83,13 @@ export const clinics = pgTable('clinics', {
 // ============================================================================
 
 export const listings = pgTable('listings', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   category: listingCategoryEnum('category').notNull(),
 
   // Can be linked to animal or frozen semen
-  animalId: text('animal_id').references(() => animals.id, { onDelete: 'cascade' }),
-  frozenSemenId: text('frozen_semen_id').references(() => frozenSemen.id, { onDelete: 'cascade' }),
+  animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'cascade' }),
+  frozenSemenId: uuid('frozen_semen_id').references(() => frozenSemen.id, { onDelete: 'cascade' }),
 
   // ========================================================================
   // 3-STEP WIZARD DATA STRUCTURE ⭐ NEW
@@ -144,7 +144,7 @@ export const listings = pgTable('listings', {
   availabilityNotes: text('availability_notes'),
 
   // For reproductive services and frozen semen ⭐ CLINIC SELECTOR
-  clinicId: text('clinic_id').references(() => clinics.id),
+  clinicId: uuid('clinic_id').references(() => clinics.id),
 
   // Additional images (beyond animal profile)
   additionalImages: jsonb('additional_images').$type<string[]>().default([]),
@@ -195,8 +195,8 @@ export const listings = pgTable('listings', {
 // ============================================================================
 
 export const listingInquiries = pgTable('listing_inquiries', {
-  id: text('id').primaryKey(),
-  listingId: text('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
   inquirerUserId: text('inquirer_user_id').references(() => users.id, { onDelete: 'set null' }),
 
   // If not logged in
@@ -227,9 +227,9 @@ export const listingInquiries = pgTable('listing_inquiries', {
 // ============================================================================
 
 export const savedListings = pgTable('saved_listings', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  listingId: text('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
+  listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
 
   // Organization
   notes: text('notes'),
@@ -245,8 +245,8 @@ export const savedListings = pgTable('saved_listings', {
 // ============================================================================
 
 export const listingViews = pgTable('listing_views', {
-  id: text('id').primaryKey(),
-  listingId: text('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
 
   // Anonymous tracking (if not logged in)
@@ -267,8 +267,8 @@ export const listingViews = pgTable('listing_views', {
 // ============================================================================
 
 export const featuredListingHistory = pgTable('featured_listing_history', {
-  id: text('id').primaryKey(),
-  listingId: text('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   // Featured details

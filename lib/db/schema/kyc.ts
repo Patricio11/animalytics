@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, date, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, boolean, pgEnum, uuid, date, jsonb } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 /**
@@ -7,7 +7,7 @@ import { users } from './users';
  * 3-level verification system for different selling limits
  */
 export const kycVerifications = pgTable('kyc_verifications', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull().unique(),
 
   // Verification level
@@ -98,9 +98,9 @@ export const kycVerifications = pgTable('kyc_verifications', {
  * Individual document tracking with status
  */
 export const kycDocuments = pgTable('kyc_documents', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  verificationId: text('verification_id').references(() => kycVerifications.id, { onDelete: 'cascade' }),
+  verificationId: uuid('verification_id').references(() => kycVerifications.id, { onDelete: 'cascade' }),
 
   // Document details
   type: text('type').notNull(), // id_front, id_back, selfie, address_proof, business_license, tax_document
@@ -134,8 +134,8 @@ export const kycDocuments = pgTable('kyc_documents', {
  * Track all changes and reviews for compliance
  */
 export const kycAuditLog = pgTable('kyc_audit_log', {
-  id: text('id').primaryKey(),
-  verificationId: text('verification_id').references(() => kycVerifications.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  verificationId: uuid('verification_id').references(() => kycVerifications.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   // Action details
@@ -160,7 +160,7 @@ export const kycAuditLog = pgTable('kyc_audit_log', {
  * Platform-wide KYC configuration
  */
 export const kycSettings = pgTable('kyc_settings', {
-  id: text('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
 
   // Level 1: Basic (Email + Phone)
   level1Enabled: boolean('level1_enabled').default(true),
