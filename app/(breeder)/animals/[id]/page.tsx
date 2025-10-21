@@ -2,8 +2,7 @@
 
 import { use, useState } from "react";
 import { notFound, useRouter } from "next/navigation";
-import { mockAnimals } from "@/data/mockData";
-import { getAnimalProfileDetails } from "@/lib/mock-data/animal-profile-details";
+import { useAnimal } from "@/lib/api/queries/animals";
 import { ProfileTab } from "@/components/breeder/animals/ProfileTab";
 import { PhotosDocsTab } from "@/components/breeder/animals/PhotosDocsTab";
 import { FeedingPlanTab } from "@/components/breeder/animals/FeedingPlanTab";
@@ -39,20 +38,33 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   const resolvedParams = use(params);
   const resolvedSearchParams = use(searchParams || Promise.resolve({})) as { tab?: string };
 
-  const animal = mockAnimals.find((a) => a.id === resolvedParams.id);
-  const profileDetails = getAnimalProfileDetails(resolvedParams.id);
+  // Fetch animal data from API
+  const { data: animal, isLoading, isError } = useAnimal(resolvedParams.id);
 
   const initialTab = resolvedSearchParams?.tab || 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  if (!animal) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading animal profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error or not found
+  if (isError || !animal) {
     notFound();
   }
 
   // Calculate age from date of birth
-  const calculateAge = (dateOfBirth: string) => {
+  const calculateAge = (dateOfBirth: string | Date) => {
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -63,7 +75,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
     return age;
   };
 
-  const age = calculateAge(animal.dateOfBirth);
+  const age = animal.dateOfBirth ? calculateAge(animal.dateOfBirth) : 0;
   const statusConfig = {
     'available': { color: 'bg-chart-3/10 text-chart-3 border-chart-3/20', label: 'Available' },
     'breeding': { color: 'bg-chart-4/10 text-chart-4 border-chart-4/20', label: 'Breeding' },
@@ -72,9 +84,9 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   };
 
   // Get primary photo or use first photo
-  const primaryPhoto = animal.photos?.[0] || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=600&fit=crop&crop=face";
-  const additionalPhotos = animal.photos?.slice(1, 5) || [];
-  const allPhotos = animal.photos || [primaryPhoto];
+  const primaryPhoto = animal.profileImageUrl || animal.photos?.[0]?.fileUrl || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=600&fit=crop&crop=face";
+  const additionalPhotos = animal.photos?.slice(1, 5).map((p:any) => p.fileUrl) || [];
+  const allPhotos = animal.photos?.map((p:any) => p.fileUrl) || [primaryPhoto];
 
   // Determine available tabs based on animal type
   const tabs = [
@@ -83,7 +95,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
     { value: 'photos-docs', label: 'Photos & Docs', icon: Award },
     { value: 'feeding', label: 'Feeding', icon: Calendar },
     { value: 'semen', label: 'Semen', icon: Shield },
-    ...(animal.type === 'bitch' ? [
+    ...(animal.sex === 'female' ? [
       { value: 'seasons', label: 'Seasons', icon: Heart },
       { value: 'litters', label: 'Litter Details', icon: Activity },
     ] : []),
@@ -127,7 +139,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                 </div>
                 {additionalPhotos.length > 0 && (
                   <div className="p-4 grid grid-cols-4 gap-2">
-                    {additionalPhotos.map((photo, index) => (
+                    {additionalPhotos.map((photo:any, index:any) => (
                       <div 
                         key={index} 
                         className="aspect-square rounded-lg overflow-hidden cursor-pointer group relative"
@@ -185,31 +197,30 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   <TabsContent value="feeding" className="mt-0">
                     <FeedingPlanTab
                       animalId={animal.id}
-                      schedule={profileDetails?.feedingPlan.schedule || []}
-                      specialDietaryNotes={profileDetails?.feedingPlan.specialDietaryNotes}
+                      feedingPlans={animal.feedingPlans || []}
                     />
                   </TabsContent>
 
                   <TabsContent value="semen" className="mt-0">
                     <SemenTab
                       animalId={animal.id}
-                      assessments={profileDetails?.semenAssessments || []}
+                      assessments={animal.semenAssessments || []}
                     />
                   </TabsContent>
 
-                  {animal.type === 'bitch' && (
+                  {animal.sex === 'female' && (
                     <>
                       <TabsContent value="seasons" className="mt-0">
                         <SeasonsTab
                           animalId={animal.id}
-                          seasons={profileDetails?.seasons || []}
+                          seasons={animal.seasons || []}
                         />
                       </TabsContent>
 
                       <TabsContent value="litters" className="mt-0">
                         <LitterDetailsTab
                           animalId={animal.id}
-                          litters={profileDetails?.litters || []}
+                          litters={animal.litters || []}
                         />
                       </TabsContent>
                     </>
@@ -218,16 +229,8 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   <TabsContent value="reminders" className="mt-0">
                     <RemindersTab
                       animalId={animal.id}
-                      animalType={animal.type}
-                      reminders={profileDetails?.reminders || {
-                        enabled: true,
-                        vaccinations: true,
-                        vetCheckups: true,
-                        heatCycles: false,
-                        seasonTracking: false,
-                        feedingSchedule: false,
-                        customReminders: [],
-                      }}
+                      animalSex={animal.sex}
+                      reminders={animal.reminders || []}
                     />
                   </TabsContent>
                 </div>
@@ -243,13 +246,13 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <Badge className="bg-gradient-brand text-white shadow-card">
-                      {animal.type === 'bitch' ? '♀ Female' : '♂ Male'}
+                      {animal.sex === 'female' ? '♀ Female' : '♂ Male'}
                     </Badge>
                   </div>
 
                   <h1 className="text-3xl font-bold text-foreground">{animal.name}</h1>
 
-                  <div className="text-lg text-muted-foreground">{animal.breed}</div>
+                  <div className="text-lg text-muted-foreground">{animal.breed?.name || 'Unknown Breed'}</div>
                 </div>
 
                 <Separator />
@@ -280,10 +283,10 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                         <div className="font-medium text-foreground">{animal.color}</div>
                       </div>
                     )}
-                    {animal.microchipId && (
+                    {animal.microchipNumber && (
                       <div className="col-span-2">
                         <div className="text-sm text-muted-foreground">Microchip ID</div>
-                        <div className="font-medium text-foreground">{animal.microchipId}</div>
+                        <div className="font-medium text-foreground">{animal.microchipNumber}</div>
                       </div>
                     )}
                     {animal.registrationNumber && (
@@ -296,7 +299,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                 </div>
 
                 {/* Health Badges */}
-                {(animal.achievements && animal.achievements.length > 0) && (
+                {(animal.titles && animal.titles.length > 0) || (animal.healthRecords && animal.healthRecords.length > 0) ? (
                   <>
                     <Separator />
                     <div className="flex gap-2 flex-wrap">
@@ -306,15 +309,21 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                           Health Records
                         </Badge>
                       )}
-                      {animal.achievements && animal.achievements.length > 0 && (
+                      {animal.titles && animal.titles.length > 0 && (
                         <Badge className="bg-chart-2/10 text-chart-2 border-chart-2/20">
                           <Award className="w-4 h-4 mr-2" />
-                          Achievements
+                          Titles ({animal.titles.length})
+                        </Badge>
+                      )}
+                      {animal.isChampion && (
+                        <Badge className="bg-chart-4/10 text-chart-4 border-chart-4/20">
+                          <Award className="w-4 h-4 mr-2" />
+                          Champion
                         </Badge>
                       )}
                     </div>
                   </>
-                )}
+                ) : null}
               </CardContent>
             </Card>
             {/* Actions Card */}

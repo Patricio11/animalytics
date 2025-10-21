@@ -12,7 +12,7 @@ interface ProfileTabProps {
 }
 
 export function ProfileTab({ animal }: ProfileTabProps) {
-  const calculateAge = (dateOfBirth: string) => {
+  const calculateAge = (dateOfBirth: string | Date) => {
     const dob = new Date(dateOfBirth);
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
@@ -24,6 +24,18 @@ export function ProfileTab({ animal }: ProfileTabProps) {
   };
 
   const age = animal.dateOfBirth ? calculateAge(animal.dateOfBirth) : 'Unknown';
+
+  // Extract breed name from API structure
+  const breedName = typeof animal.breed === 'string' ? animal.breed : animal.breed?.name || 'Unknown Breed';
+
+  // Map sex to type for display
+  const animalType = (animal as any).sex || (animal as any).type;
+
+  // Map microchipNumber to microchipId for compatibility
+  const microchipId = (animal as any).microchipNumber || (animal as any).microchipId;
+
+  // Map bio to description for compatibility
+  const description = (animal as any).bio || (animal as any).description;
 
   return (
     <div className="space-y-6">
@@ -63,13 +75,13 @@ export function ProfileTab({ animal }: ProfileTabProps) {
             </div>
 
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Type</div>
-              <Badge className="capitalize">{animal.type === 'bitch' ? 'Female' : 'Male'}</Badge>
+              <div className="text-sm text-muted-foreground mb-1">Sex</div>
+              <Badge className="capitalize">{animalType === 'female' || animalType === 'bitch' ? 'Female' : 'Male'}</Badge>
             </div>
 
             <div>
               <div className="text-sm text-muted-foreground mb-1">Breed</div>
-              <div className="font-semibold text-foreground">{animal.breed}</div>
+              <div className="font-semibold text-foreground">{breedName}</div>
             </div>
 
             <div>
@@ -95,21 +107,25 @@ export function ProfileTab({ animal }: ProfileTabProps) {
               </div>
             )}
 
-            {animal.location && (
-              <div className="md:col-span-2">
-                <div className="text-sm text-muted-foreground mb-1">Location</div>
-                <div className="font-semibold text-foreground flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  {animal.location}
-                </div>
+            {(animal as any).temperament && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Temperament</div>
+                <div className="font-semibold text-foreground">{(animal as any).temperament}</div>
+              </div>
+            )}
+
+            {(animal as any).healthStatus && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Health Status</div>
+                <Badge variant="outline" className="capitalize">{(animal as any).healthStatus}</Badge>
               </div>
             )}
           </div>
 
-          {animal.description && (
+          {description && (
             <div className="pt-4 border-t border-primary/10">
-              <div className="text-sm text-muted-foreground mb-2">Description</div>
-              <p className="text-foreground">{animal.description}</p>
+              <div className="text-sm text-muted-foreground mb-2">Bio</div>
+              <p className="text-foreground">{description}</p>
             </div>
           )}
         </CardContent>
@@ -122,10 +138,10 @@ export function ProfileTab({ animal }: ProfileTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {animal.microchipId && (
+            {microchipId && (
               <div>
                 <div className="text-sm text-muted-foreground mb-1">Microchip ID</div>
-                <div className="font-semibold text-foreground font-mono">{animal.microchipId}</div>
+                <div className="font-semibold text-foreground font-mono">{microchipId}</div>
               </div>
             )}
 
@@ -136,10 +152,10 @@ export function ProfileTab({ animal }: ProfileTabProps) {
               </div>
             )}
 
-            {animal.bloodline && (
-              <div className="md:col-span-2">
-                <div className="text-sm text-muted-foreground mb-1">Bloodline</div>
-                <div className="font-semibold text-foreground">{animal.bloodline}</div>
+            {(animal as any).height && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Height</div>
+                <div className="font-semibold text-foreground">{(animal as any).height} cm</div>
               </div>
             )}
 
@@ -153,41 +169,39 @@ export function ProfileTab({ animal }: ProfileTabProps) {
         </CardContent>
       </Card>
 
-      {/* Achievements */}
-      {animal.achievements && animal.achievements.length > 0 && (
+      {/* Titles & Champion Status */}
+      {((animal as any).titles && (animal as any).titles.length > 0) || (animal as any).isChampion ? (
         <Card className="shadow-card border-primary/10">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Award className="w-5 h-5 text-chart-4" />
-              Achievements
+              Titles & Achievements
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {animal.achievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className="p-4 rounded-lg border border-primary/10 bg-background hover:bg-accent transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="font-semibold text-foreground mb-1">{achievement.title}</div>
-                    <div className="text-sm text-muted-foreground mb-2">{achievement.organization}</div>
-                    {achievement.description && (
-                      <p className="text-sm text-foreground">{achievement.description}</p>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(new Date(achievement.date), 'MMM yyyy')}
-                  </div>
+            {(animal as any).isChampion && (
+              <div className="p-4 rounded-lg border border-primary/10 bg-chart-4/5">
+                <div className="flex items-center gap-2">
+                  <Award className="w-5 h-5 text-chart-4" />
+                  <span className="font-semibold text-foreground">Champion</span>
                 </div>
               </div>
-            ))}
+            )}
+            {(animal as any).titles && (animal as any).titles.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {(animal as any).titles.map((title: string, idx: number) => (
+                  <Badge key={idx} variant="outline" className="text-sm">
+                    {title}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {/* Health Records */}
-      {animal.healthRecords && animal.healthRecords.length > 0 && (
+      {(animal as any).healthRecords && (animal as any).healthRecords.length > 0 && (
         <Card className="shadow-card border-primary/10">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -196,15 +210,15 @@ export function ProfileTab({ animal }: ProfileTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {animal.healthRecords.slice(0, 3).map((record) => (
+            {(animal as any).healthRecords.slice(0, 3).map((record: any) => (
               <div
                 key={record.id}
                 className="p-4 rounded-lg border border-primary/10 bg-background"
               >
                 <div className="flex items-start justify-between gap-4 mb-2">
-                  <div className="font-semibold text-foreground capitalize">{record.type}</div>
+                  <div className="font-semibold text-foreground capitalize">{record.recordType || record.type}</div>
                   <div className="text-sm text-muted-foreground">
-                    {format(new Date(record.date), 'MMM dd, yyyy')}
+                    {format(new Date(record.recordDate || record.date), 'MMM dd, yyyy')}
                   </div>
                 </div>
                 <div className="text-sm text-foreground mb-1">{record.description}</div>
@@ -220,30 +234,26 @@ export function ProfileTab({ animal }: ProfileTabProps) {
         </Card>
       )}
 
-      {/* Owner Information */}
-      {animal.owner && (
+      {/* Breeding Status */}
+      {(animal as any).isBreedingActive !== undefined && (
         <Card className="shadow-card border-primary/10">
           <CardHeader>
-            <CardTitle className="text-lg">Owner Information</CardTitle>
+            <CardTitle className="text-lg">Breeding Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              {animal.owner.avatar && (
-                <img
-                  src={animal.owner.avatar}
-                  alt={animal.owner.name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-              )}
-              <div>
-                <div className="font-semibold text-foreground">{animal.owner.name}</div>
-                {animal.owner.email && (
-                  <div className="text-sm text-muted-foreground">{animal.owner.email}</div>
-                )}
-                {animal.owner.phone && (
-                  <div className="text-sm text-muted-foreground">{animal.owner.phone}</div>
-                )}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Breeding Active</span>
+                <Badge variant={(animal as any).isBreedingActive ? "default" : "secondary"}>
+                  {(animal as any).isBreedingActive ? 'Yes' : 'No'}
+                </Badge>
               </div>
+              {(animal as any).notes && (
+                <div className="pt-3 border-t border-primary/10">
+                  <div className="text-sm text-muted-foreground mb-2">Notes</div>
+                  <p className="text-sm text-foreground">{(animal as any).notes}</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
