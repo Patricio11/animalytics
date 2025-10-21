@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Activity, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Calendar, Activity, TrendingUp, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { Season } from "@/lib/mock-data/animal-profile-details";
 import { format, differenceInDays } from "date-fns";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { SeasonDialog } from "./SeasonDialog";
 import { SeasonCard } from "./SeasonCard";
@@ -17,10 +20,87 @@ interface SeasonsTabProps {
 }
 
 export function SeasonsTab({ animalId, seasons: initialSeasons }: SeasonsTabProps) {
-  const [seasons, setSeasons] = useState<Season[]>(initialSeasons);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSeason, setEditingSeason] = useState<Season | undefined>();
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+
+  // Fetch seasons from API
+  const { data: seasonsData, isLoading } = useQuery({
+    queryKey: ['seasons', animalId],
+    queryFn: async () => {
+      const response = await fetch(`/api/animals/${animalId}/seasons`);
+      if (!response.ok) throw new Error('Failed to fetch seasons');
+      return response.json();
+    },
+    initialData: { success: true, data: initialSeasons },
+  });
+
+  const seasons = seasonsData?.data || [];
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: Omit<Season, 'id'>) => {
+      const response = await fetch(`/api/animals/${animalId}/seasons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to create season');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seasons', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Heat cycle recorded successfully' });
+      setDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to record heat cycle', variant: 'destructive' });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Omit<Season, 'id'> }) => {
+      const response = await fetch(`/api/animals/${animalId}/seasons/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update season');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seasons', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Heat cycle updated successfully' });
+      setDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to update heat cycle', variant: 'destructive' });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/animals/${animalId}/seasons/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete season');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seasons', animalId] });
+      queryClient.invalidateQueries({ queryKey: ['animal', animalId] });
+      toast({ title: 'Success', description: 'Heat cycle deleted successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to delete heat cycle', variant: 'destructive' });
+    },
+  });
 
   const sortedSeasons = [...seasons].sort(
     (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
@@ -40,37 +120,36 @@ export function SeasonsTab({ animalId, seasons: initialSeasons }: SeasonsTabProp
 
   const handleSave = (newSeason: Omit<Season, 'id'>) => {
     if (dialogMode === 'create') {
-      // Add new season
-      const season: Season = {
-        ...newSeason,
-        id: `season-${Date.now()}`,
-      };
-      setSeasons([...seasons, season]);
+      createMutation.mutate(newSeason);
     } else if (editingSeason) {
-      // Update existing season
-      setSeasons(
-        seasons.map((s) =>
-          s.id === editingSeason.id ? { ...newSeason, id: s.id } : s
-        )
-      );
+      updateMutation.mutate({ id: editingSeason.id, data: newSeason });
     }
   };
 
   const handleDelete = (seasonId: string) => {
     if (confirm('Are you sure you want to delete this heat cycle? This action cannot be undone.')) {
-      setSeasons(seasons.filter((s) => s.id !== seasonId));
+      deleteMutation.mutate(seasonId);
     }
   };
 
   // Calculate average cycle length
-  const completedSeasons = seasons.filter(s => s.endDate);
+  const completedSeasons = seasons.filter((s: Season) => s.endDate);
   const avgCycleLength = completedSeasons.length > 0
     ? Math.round(
-        completedSeasons.reduce((sum, s) => {
+        completedSeasons.reduce((sum: number, s: Season) => {
           return sum + differenceInDays(new Date(s.endDate!), new Date(s.startDate));
         }, 0) / completedSeasons.length
       )
     : 0;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -95,7 +174,7 @@ export function SeasonsTab({ animalId, seasons: initialSeasons }: SeasonsTabProp
               </div>
               <div>
                 <div className="text-2xl font-bold text-foreground">
-                  {seasons.filter(s => !s.endDate).length}
+                  {seasons.filter((s: Season) => !s.endDate).length}
                 </div>
                 <div className="text-sm text-muted-foreground">Active Now</div>
               </div>
