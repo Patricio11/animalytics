@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimalCombobox, AnimalOption } from "@/components/ui/animal-combobox";
 import { Calendar } from "@/components/ui/calendar";
@@ -27,7 +28,8 @@ import {
   Syringe,
   Snowflake,
   Info,
-  CheckCircle2
+  CheckCircle2,
+  Globe
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -53,8 +55,8 @@ export function CreateMatingDialog({
   onSubmit,
   isLoading = false,
 }: CreateMatingDialogProps) {
-  const { data: animalsData } = useAnimals();
-  const allAnimals = animalsData || [];
+  const { data: myAnimalsData } = useAnimals();
+  const myAnimals = myAnimalsData || [];
 
   // Form state
   const [bitchId, setBitchId] = useState("");
@@ -65,30 +67,70 @@ export function CreateMatingDialog({
   const [matingDate, setMatingDate] = useState<Date>(new Date());
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Toggle for searching all animals
+  const [searchAllBitches, setSearchAllBitches] = useState(false);
+  const [searchAllDogs, setSearchAllDogs] = useState(false);
+  const [allBitchesData, setAllBitchesData] = useState<any[]>([]);
+  const [allDogsData, setAllDogsData] = useState<any[]>([]);
+  const [loadingAllAnimals, setLoadingAllAnimals] = useState(false);
 
-  // Filter animals
-  const bitches = allAnimals
-    .filter(a => a.sex === 'female')
-    .map(animal => ({
-      id: animal.id,
-      name: animal.name,
-      breed: animal.breed?.name,
-      profileImageUrl: animal.profileImageUrl,
-      sex: animal.sex,
-    }));
+  // Fetch all animals from system when toggle is enabled
+  const fetchAllAnimals = async (sex: 'male' | 'female') => {
+    setLoadingAllAnimals(true);
+    try {
+      const response = await fetch(`/api/mating-partners?sex=${sex}&limit=100`);
+      if (!response.ok) throw new Error('Failed to fetch animals');
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      console.error('Error fetching all animals:', error);
+      return [];
+    } finally {
+      setLoadingAllAnimals(false);
+    }
+  };
 
-  const dogs = allAnimals
-    .filter(a => a.sex === 'male')
-    .map(animal => ({
-      id: animal.id,
-      name: animal.name,
-      breed: animal.breed?.name,
-      profileImageUrl: animal.profileImageUrl,
-      sex: animal.sex,
-    }));
+  // Handle toggle for bitches
+  const handleSearchAllBitchesToggle = async (enabled: boolean) => {
+    setSearchAllBitches(enabled);
+    if (enabled && allBitchesData.length === 0) {
+      const data = await fetchAllAnimals('female');
+      setAllBitchesData(data);
+    }
+  };
 
-  const selectedBitch = allAnimals.find(a => a.id === bitchId);
-  const selectedDog = allAnimals.find(a => a.id === dogId);
+  // Handle toggle for dogs
+  const handleSearchAllDogsToggle = async (enabled: boolean) => {
+    setSearchAllDogs(enabled);
+    if (enabled && allDogsData.length === 0) {
+      const data = await fetchAllAnimals('male');
+      setAllDogsData(data);
+    }
+  };
+
+  // Filter animals based on toggle
+  const bitchesSource = searchAllBitches ? allBitchesData : myAnimals.filter((a: any) => a.sex === 'female');
+  const dogsSource = searchAllDogs ? allDogsData : myAnimals.filter((a: any) => a.sex === 'male');
+
+  const bitches = bitchesSource.map((animal: any) => ({
+    id: animal.id,
+    name: animal.name,
+    breed: animal.breed?.name,
+    profileImageUrl: animal.profileImageUrl,
+    sex: animal.sex,
+  }));
+
+  const dogs = dogsSource.map((animal: any) => ({
+    id: animal.id,
+    name: animal.name,
+    breed: animal.breed?.name,
+    profileImageUrl: animal.profileImageUrl,
+    sex: animal.sex,
+  }));
+
+  const selectedBitch = bitchesSource.find((a: any) => a.id === bitchId);
+  const selectedDog = dogsSource.find((a: any) => a.id === dogId);
 
   const breedingMethods = [
     { value: 'natural_ai', label: 'Natural/AI', icon: Heart, description: 'Natural mating or artificial insemination' },
@@ -191,19 +233,40 @@ export function CreateMatingDialog({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Bitch Selection - Left */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <Heart className="w-4 h-4 text-pink-500" />
-                Select Bitch <span className="text-destructive">*</span>
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-pink-500" />
+                  Select Bitch <span className="text-destructive">*</span>
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="search-all-bitches" className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    Search All
+                  </Label>
+                  <Switch
+                    id="search-all-bitches"
+                    checked={searchAllBitches}
+                    onCheckedChange={handleSearchAllBitchesToggle}
+                    disabled={loadingAllAnimals}
+                  />
+                </div>
+              </div>
               <AnimalCombobox
                 animals={bitches}
                 value={bitchId}
                 onValueChange={setBitchId}
-                placeholder="Choose the female..."
-                emptyText="No female animals found. Add a bitch first."
+                placeholder={searchAllBitches ? "Search all bitches in system..." : "Choose from your bitches..."}
+                emptyText={searchAllBitches ? "No bitches found in system." : "No female animals found. Add a bitch first."}
+                disabled={loadingAllAnimals}
               />
               {errors.bitchId && (
                 <p className="text-sm text-destructive">{errors.bitchId}</p>
+              )}
+              {searchAllBitches && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  Showing all available bitches from public breeders
+                </p>
               )}
 
               {/* Selected Bitch Card */}
@@ -241,19 +304,40 @@ export function CreateMatingDialog({
             <div className="space-y-3">
               {breedingType === 'natural' ? (
                 <>
-                  <Label className="text-base font-semibold flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-blue-500" />
-                    Select Dog <span className="text-destructive">*</span>
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-blue-500" />
+                      Select Dog <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="search-all-dogs" className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5" />
+                        Search All
+                      </Label>
+                      <Switch
+                        id="search-all-dogs"
+                        checked={searchAllDogs}
+                        onCheckedChange={handleSearchAllDogsToggle}
+                        disabled={loadingAllAnimals}
+                      />
+                    </div>
+                  </div>
                   <AnimalCombobox
                     animals={dogs}
                     value={dogId}
                     onValueChange={setDogId}
-                    placeholder="Choose the male..."
-                    emptyText="No male animals found. Add a dog first."
+                    placeholder={searchAllDogs ? "Search all dogs in system..." : "Choose from your dogs..."}
+                    emptyText={searchAllDogs ? "No dogs found in system." : "No male animals found. Add a dog first."}
+                    disabled={loadingAllAnimals}
                   />
                   {errors.dogId && (
                     <p className="text-sm text-destructive">{errors.dogId}</p>
+                  )}
+                  {searchAllDogs && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Info className="w-3 h-3" />
+                      Showing all available studs from public breeders
+                    </p>
                   )}
 
                   {/* Selected Dog Card */}
