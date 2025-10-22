@@ -155,9 +155,41 @@ export function CreateMatingDialog({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Animal Selection Grid */}
+          {/* Breeding Type Selection - Full Width */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold flex items-center gap-2">
+              <Dna className="w-4 h-4 text-blue-500" />
+              Breeding Type <span className="text-destructive">*</span>
+            </Label>
+            <RadioGroup value={breedingType} onValueChange={(v) => setBreedingType(v as 'natural' | 'frozen')}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent cursor-pointer">
+                  <RadioGroupItem value="natural" id="natural" />
+                  <Label htmlFor="natural" className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4" />
+                      <span className="font-medium">Natural / AI with Dog</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Select a male dog from your kennel</p>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent cursor-pointer">
+                  <RadioGroupItem value="frozen" id="frozen" />
+                  <Label htmlFor="frozen" className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Snowflake className="w-4 h-4" />
+                      <span className="font-medium">Frozen Semen</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Use frozen semen from external source</p>
+                  </Label>
+                </div>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Animal Selection Grid - Side by Side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Bitch Selection */}
+            {/* Bitch Selection - Left */}
             <div className="space-y-3">
               <Label className="text-base font-semibold flex items-center gap-2">
                 <Heart className="w-4 h-4 text-pink-500" />
@@ -205,39 +237,14 @@ export function CreateMatingDialog({
               )}
             </div>
 
-            {/* Breeding Type Selection */}
+            {/* Dog Selection or Frozen Semen - Right */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <Dna className="w-4 h-4 text-blue-500" />
-                Breeding Type <span className="text-destructive">*</span>
-              </Label>
-              <RadioGroup value={breedingType} onValueChange={(v) => setBreedingType(v as 'natural' | 'frozen')}>
-                <div className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent cursor-pointer">
-                  <RadioGroupItem value="natural" id="natural" />
-                  <Label htmlFor="natural" className="flex-1 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4" />
-                      <span className="font-medium">Natural / AI with Dog</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Select a male dog from your kennel</p>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent cursor-pointer">
-                  <RadioGroupItem value="frozen" id="frozen" />
-                  <Label htmlFor="frozen" className="flex-1 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Snowflake className="w-4 h-4" />
-                      <span className="font-medium">Frozen Semen</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Use frozen semen from external source</p>
-                  </Label>
-                </div>
-              </RadioGroup>
-
-              {/* Dog Selection or Frozen Semen ID */}
               {breedingType === 'natural' ? (
-                <div className="space-y-2">
-                  <Label>Select Dog <span className="text-destructive">*</span></Label>
+                <>
+                  <Label className="text-base font-semibold flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-blue-500" />
+                    Select Dog <span className="text-destructive">*</span>
+                  </Label>
                   <AnimalCombobox
                     animals={dogs}
                     value={dogId}
@@ -278,10 +285,11 @@ export function CreateMatingDialog({
                       </CardContent>
                     </Card>
                   )}
-                </div>
+                </>
               ) : (
-                <div className="space-y-2">
-                  <Label htmlFor="frozenSemenId">
+                <>
+                  <Label htmlFor="frozenSemenId" className="text-base font-semibold flex items-center gap-2">
+                    <Snowflake className="w-4 h-4 text-blue-500" />
                     Frozen Semen Batch ID <span className="text-destructive">*</span>
                   </Label>
                   <Input
@@ -289,11 +297,28 @@ export function CreateMatingDialog({
                     value={frozenSemenId}
                     onChange={(e) => setFrozenSemenId(e.target.value)}
                     placeholder="Enter batch ID..."
+                    className="h-11"
                   />
                   {errors.frozenSemenId && (
                     <p className="text-sm text-destructive">{errors.frozenSemenId}</p>
                   )}
-                </div>
+                  <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900">
+                          <Snowflake className="w-8 h-8 text-blue-600 dark:text-blue-300" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg">Frozen Semen</h4>
+                          <p className="text-sm text-muted-foreground">External source</p>
+                          <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 mt-2">
+                            Frozen
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
               )}
             </div>
           </div>
