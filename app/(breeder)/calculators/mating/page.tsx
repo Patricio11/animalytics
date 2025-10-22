@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MatingCard } from "@/components/breeder/calculators/MatingCard";
 import { MatingEmptyState } from "@/components/breeder/calculators/MatingEmptyState";
-import { AnimalPickerDialog } from "@/components/breeder/calculators/AnimalPickerDialog";
+import { CreateMatingDialog } from "@/components/breeder/calculators/CreateMatingDialog";
 import { Heart, Plus, Search, Filter, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMatings, useCreateMating } from "@/lib/api/queries/matings";
@@ -18,7 +18,7 @@ import { APIMating, APIAnimal } from "@/lib/api/types";
 export default function MatingCalculatorPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [showAnimalPicker, setShowAnimalPicker] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch data from API
@@ -44,28 +44,28 @@ export default function MatingCalculatorPage() {
   }, [matingsData, searchQuery]);
 
   const handleCreateMating = () => {
-    setShowAnimalPicker(true);
+    setShowCreateDialog(true);
   };
 
-  const handleAnimalSelectionComplete = async (
-    bitchId: string,
-    dogId: string | null,
-    frozenSemenId: string | null
-  ) => {
+  const handleMatingSubmit = async (data: {
+    bitchId: string;
+    dogId?: string;
+    frozenSemenId?: string;
+    matingDate: string;
+    breedingMethod: 'natural_ai' | 'tci' | 'surgical_ai' | 'frozen';
+    notes?: string;
+  }) => {
     try {
       const newMating = await createMatingMutation.mutateAsync({
-        bitchId,
-        dogId: dogId || undefined,
-        frozenSemenId: frozenSemenId || undefined,
-        matingDate: new Date().toISOString().split('T')[0],
+        ...data,
         status: 'planned',
       });
 
-      setShowAnimalPicker(false);
+      setShowCreateDialog(false);
 
       toast({
         title: "Mating record created",
-        description: "You can now enter progesterone readings."
+        description: "You can now enter progesterone readings and run calculations."
       });
 
       // Navigate to the mating detail page
@@ -252,18 +252,12 @@ export default function MatingCalculatorPage() {
           </>
         )}
 
-        {/* Animal Picker Dialog */}
-        <AnimalPickerDialog
-          open={showAnimalPicker}
-          onOpenChange={setShowAnimalPicker}
-          animals={animalsData?.map((a: APIAnimal) => ({
-            id: a.id,
-            name: a.name,
-            breed: a.breed?.name || 'Unknown',
-            type: a.sex === 'male' ? 'dog' : 'bitch',
-            photos: [a.profileImageUrl || '']
-          })) || []}
-          onComplete={handleAnimalSelectionComplete}
+        {/* Create Mating Dialog */}
+        <CreateMatingDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSubmit={handleMatingSubmit}
+          isLoading={createMatingMutation.isPending}
         />
       </div>
     </div>

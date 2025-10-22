@@ -8,7 +8,7 @@ import type { ConceptionInputs } from '@/lib/calculations/conception-types';
 interface CreateMatingData {
   bitchId: string;
   dogId?: string;
-  frozenSemenBatchId?: string;
+  frozenSemenId?: string;
   matingDate: string;
   breedingMethod: 'natural_ai' | 'tci' | 'surgical_ai' | 'frozen';
   notes?: string;
