@@ -127,7 +127,7 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
               Mating Record Details
             </h1>
             <p className="text-muted-foreground mt-1">
-              {bitch.name} × {dog.name}
+              {bitch?.name || 'Unknown'} × {dog?.name || 'Unknown'}
             </p>
           </div>
           <Badge
@@ -163,34 +163,38 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
                 {/* Bitch */}
                 <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-primary/10">
                   <Avatar className="w-14 h-14 border-2 border-primary/20">
-                    <AvatarImage src={bitch.photos[0]} alt={bitch.name} />
-                    <AvatarFallback>{bitch.name[0]}</AvatarFallback>
+                    <AvatarImage src={bitch?.profileImageUrl || undefined} alt={bitch?.name} />
+                    <AvatarFallback className="bg-gradient-brand text-white">
+                      {bitch?.name?.[0]?.toUpperCase() || 'B'}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold text-foreground truncate">
-                        {bitch.name}
+                        {bitch?.name || 'Unknown'}
                       </span>
-                      <Badge variant="outline" className="text-xs">Bitch</Badge>
+                      <Badge variant="outline" className="text-xs bg-pink-100 dark:bg-pink-900">Bitch</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{bitch.breed}</p>
+                    <p className="text-sm text-muted-foreground truncate">{bitch?.breed?.name || 'Unknown breed'}</p>
                   </div>
                 </div>
 
                 {/* Dog */}
                 <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-primary/10">
                   <Avatar className="w-14 h-14 border-2 border-primary/20">
-                    <AvatarImage src={dog.photos[0]} alt={dog.name} />
-                    <AvatarFallback>{dog.name[0]}</AvatarFallback>
+                    <AvatarImage src={dog?.profileImageUrl || undefined} alt={dog?.name} />
+                    <AvatarFallback className="bg-gradient-brand text-white">
+                      {dog?.name?.[0]?.toUpperCase() || 'D'}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold text-foreground truncate">
-                        {dog.name}
+                        {dog?.name || 'Unknown'}
                       </span>
-                      <Badge variant="outline" className="text-xs">Dog</Badge>
+                      <Badge variant="outline" className="text-xs bg-blue-100 dark:bg-blue-900">Dog</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{dog.breed}</p>
+                    <p className="text-sm text-muted-foreground truncate">{dog?.breed?.name || 'Unknown breed'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -209,22 +213,22 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Progesterone Cycle</span>
-                    <span className={cn("font-semibold", getRatingColor(mating.progesteroneCycleRating))}>
-                      {mating.progesteroneCycleRating.toFixed(1)}%
+                    <span className={cn("font-semibold", getRatingColor(mating.progesteroneCycleRating || 0))}>
+                      {(mating.progesteroneCycleRating || 0).toFixed(1)}%
                     </span>
                   </div>
-                  <Progress value={mating.progesteroneCycleRating} className="h-2.5" />
+                  <Progress value={mating.progesteroneCycleRating || 0} className="h-2.5" />
                 </div>
 
                 {/* Conception Rating */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Conception Rating</span>
-                    <span className={cn("font-semibold", getRatingColor(mating.conceptionRating))}>
-                      {mating.conceptionRating.toFixed(1)}%
+                    <span className={cn("font-semibold", getRatingColor(mating.conceptionRating || 0))}>
+                      {(mating.conceptionRating || 0).toFixed(1)}%
                     </span>
                   </div>
-                  <Progress value={mating.conceptionRating} className="h-2.5" />
+                  <Progress value={mating.conceptionRating || 0} className="h-2.5" />
                 </div>
 
                 <Separator />
@@ -233,19 +237,19 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
                 <div className="flex items-center justify-between p-4 bg-gradient-subtle rounded-lg border border-primary/10">
                   <div>
                     <div className="text-sm text-muted-foreground mb-1">Overall Rating</div>
-                    <div className={cn("text-3xl font-bold", getRatingColor(mating.overallRating))}>
-                      {mating.overallRating.toFixed(1)}%
+                    <div className={cn("text-3xl font-bold", getRatingColor(mating.overallRating || 0))}>
+                      {(mating.overallRating || 0).toFixed(1)}%
                     </div>
                   </div>
                   <Badge
                     className={cn(
                       "font-semibold text-white text-sm px-3 py-1",
-                      getRatingBgColor(mating.overallRating)
+                      getRatingBgColor(mating.overallRating || 0)
                     )}
                   >
-                    {mating.overallRating >= 80 ? 'Excellent' :
-                     mating.overallRating >= 60 ? 'Good' :
-                     mating.overallRating >= 40 ? 'Fair' : 'Poor'}
+                    {(mating.overallRating || 0) >= 80 ? 'Excellent' :
+                     (mating.overallRating || 0) >= 60 ? 'Good' :
+                     (mating.overallRating || 0) >= 40 ? 'Fair' : 'Poor'}
                   </Badge>
                 </div>
               </CardContent>
