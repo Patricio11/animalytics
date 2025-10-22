@@ -17,12 +17,12 @@ import {
   FileText,
   CheckCircle2,
   Clock,
-  Loader2,
   AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ProgesteroneInputForm } from "@/components/breeder/calculators/ProgesteroneInputForm";
+import { MatingDetailSkeleton } from "@/components/breeder/calculators/MatingDetailSkeleton";
 import { useMating } from "@/lib/api/queries/matings";
 
 export default function MatingDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,14 +33,7 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
 
   // Loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="text-muted-foreground">Loading mating details...</span>
-        </div>
-      </div>
-    );
+    return <MatingDetailSkeleton />;
   }
 
   // Error state
@@ -161,42 +154,46 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Bitch */}
-                <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-primary/10">
-                  <Avatar className="w-14 h-14 border-2 border-primary/20">
-                    <AvatarImage src={bitch?.profileImageUrl || undefined} alt={bitch?.name} />
-                    <AvatarFallback className="bg-gradient-brand text-white">
-                      {bitch?.name?.[0]?.toUpperCase() || 'B'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-foreground truncate">
-                        {bitch?.name || 'Unknown'}
-                      </span>
-                      <Badge variant="outline" className="text-xs bg-pink-100 dark:bg-pink-900">Bitch</Badge>
+                <Link href={`/animals/${bitch?.id}`}>
+                  <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-primary/10 hover:bg-accent hover:border-primary/30 transition-colors cursor-pointer mb-2">
+                    <Avatar className="w-14 h-14 border-2 border-primary/20">
+                      <AvatarImage src={bitch?.profileImageUrl || undefined} alt={bitch?.name} />
+                      <AvatarFallback className="bg-gradient-brand text-white">
+                        {bitch?.name?.[0]?.toUpperCase() || 'B'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-foreground truncate">
+                          {bitch?.name || 'Unknown'}
+                        </span>
+                        <Badge variant="outline" className="text-xs bg-pink-100 dark:bg-pink-900">Bitch</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{bitch?.breed?.name || 'Unknown breed'}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{bitch?.breed?.name || 'Unknown breed'}</p>
                   </div>
-                </div>
+                </Link>
 
                 {/* Dog */}
-                <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-primary/10">
-                  <Avatar className="w-14 h-14 border-2 border-primary/20">
-                    <AvatarImage src={dog?.profileImageUrl || undefined} alt={dog?.name} />
-                    <AvatarFallback className="bg-gradient-brand text-white">
-                      {dog?.name?.[0]?.toUpperCase() || 'D'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-foreground truncate">
-                        {dog?.name || 'Unknown'}
-                      </span>
-                      <Badge variant="outline" className="text-xs bg-blue-100 dark:bg-blue-900">Dog</Badge>
+                <Link href={`/animals/${dog?.id}`}>
+                  <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-primary/10 hover:bg-accent hover:border-primary/30 transition-colors cursor-pointer">
+                    <Avatar className="w-14 h-14 border-2 border-primary/20">
+                      <AvatarImage src={dog?.profileImageUrl || undefined} alt={dog?.name} />
+                      <AvatarFallback className="bg-gradient-brand text-white">
+                        {dog?.name?.[0]?.toUpperCase() || 'D'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-foreground truncate">
+                          {dog?.name || 'Unknown'}
+                        </span>
+                        <Badge variant="outline" className="text-xs bg-blue-100 dark:bg-blue-900">Dog</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{dog?.breed?.name || 'Unknown breed'}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{dog?.breed?.name || 'Unknown breed'}</p>
                   </div>
-                </div>
+                </Link>
               </CardContent>
             </Card>
 

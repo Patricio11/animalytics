@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { MatingCard } from "@/components/breeder/calculators/MatingCard";
 import { MatingEmptyState } from "@/components/breeder/calculators/MatingEmptyState";
 import { CreateMatingDialog } from "@/components/breeder/calculators/CreateMatingDialog";
-import { Heart, Plus, Search, Filter, Loader2, AlertCircle } from "lucide-react";
+import { MatingCardSkeleton } from "@/components/breeder/calculators/MatingCardSkeleton";
+import { Heart, Plus, Search, Filter, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMatings, useCreateMating } from "@/lib/api/queries/matings";
 import { useAnimals } from "@/lib/api/queries/animals";
@@ -136,10 +137,28 @@ export default function MatingCalculatorPage() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="ml-2 text-muted-foreground">Loading matings...</span>
-          </div>
+          <>
+            {/* Stats Skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="shadow-card border-primary/10">
+                  <CardHeader className="pb-3">
+                    <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-9 w-16 bg-muted animate-pulse rounded" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Mating Cards Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <MatingCardSkeleton key={i} />
+              ))}
+            </div>
+          </>
         )}
 
         {/* Error State */}

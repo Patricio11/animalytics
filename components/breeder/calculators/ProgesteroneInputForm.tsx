@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DailyReadingInput } from './DailyReadingInput';
 import { LabSelectorCard } from './LabSelectorCard';
 import { ProgesteroneRatingDisplay } from './ProgesteroneRatingDisplay';
-import { Calculator, Save, RotateCcw, Info, Clock } from 'lucide-react';
+import { Calculator, Save, RotateCcw, Info, Clock, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProgesteroneStore } from '@/lib/stores/progesterone-store';
 import {
@@ -43,42 +43,59 @@ export function ProgesteroneInputForm() {
   // Convert Zustand readings to local state format
   const initializeReadings = (): DailyReading[] => {
     if (progesteroneStore.readings.length > 0) {
-      // Create array with all 6 days
-      const allDays: DailyReading[] = [
-        { day: 0, value: '', date: undefined },
-        { day: 1, value: '', date: undefined },
-        { day: 2, value: '', date: undefined },
-        { day: 3, value: '', date: undefined },
-        { day: 4, value: '', date: undefined },
-        { day: 5, value: '', date: undefined },
-      ];
-
-      // Fill in saved readings
+      // Create array with saved days
+      const savedDays: DailyReading[] = [];
+      
       progesteroneStore.readings.forEach(reading => {
         if (reading.day >= 0 && reading.day <= 5) {
-          allDays[reading.day] = {
+          savedDays.push({
             day: reading.day as DayNumber,
             value: reading.value.toString(),
             date: new Date(reading.date)
-          };
+          });
         }
       });
 
-      return allDays;
+      // Sort by day
+      savedDays.sort((a, b) => a.day - b.day);
+      
+      // If no Day 0, add it
+      if (savedDays.length === 0 || savedDays[0].day !== 0) {
+        savedDays.unshift({ day: 0, value: '', date: undefined });
+      }
+
+      return savedDays;
     }
 
+    // Start with just Day 0
     return [
       { day: 0, value: '', date: undefined },
-      { day: 1, value: '', date: undefined },
-      { day: 2, value: '', date: undefined },
-      { day: 3, value: '', date: undefined },
-      { day: 4, value: '', date: undefined },
-      { day: 5, value: '', date: undefined },
     ];
   };
 
-  // Daily readings state (6 days: 0-5)
+  // Daily readings state (dynamic: start with Day 0, add as needed)
   const [readings, setReadings] = useState<DailyReading[]>(initializeReadings);
+  
+  // Add a new day
+  const addDay = () => {
+    const nextDay = readings.length as DayNumber;
+    if (nextDay <= 5) {
+      setReadings([...readings, { day: nextDay, value: '', date: undefined }]);
+    }
+  };
+  
+  // Remove a day (only if it's the last day and empty)
+  const removeDay = (day: DayNumber) => {
+    if (day === readings.length - 1 && day > 0) {
+      const reading = readings.find(r => r.day === day);
+      if (!reading?.value || reading.value.trim() === '') {
+        setReadings(readings.filter(r => r.day !== day));
+      }
+    }
+  };
+  
+  const canAddDay = readings.length < 6;
+  const canRemoveLastDay = readings.length > 1 && (!readings[readings.length - 1].value || readings[readings.length - 1].value.trim() === '');
 
   // Calculation results state
   const [calculationResult, setCalculationResult] = useState<{
@@ -283,11 +300,6 @@ export function ProgesteroneInputForm() {
   const handleReset = () => {
     setReadings([
       { day: 0, value: '', date: undefined },
-      { day: 1, value: '', date: undefined },
-      { day: 2, value: '', date: undefined },
-      { day: 3, value: '', date: undefined },
-      { day: 4, value: '', date: undefined },
-      { day: 5, value: '', date: undefined },
     ]);
     setValidationErrors({});
     setCalculationResult(null);
@@ -366,10 +378,28 @@ export function ProgesteroneInputForm() {
           {/* Daily Readings */}
           <Card className="shadow-card border-primary/10">
             <CardHeader>
-              <CardTitle className="text-lg">Daily Progesterone Readings</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Enter readings for Day 0 through Day 5. At least 2 readings are recommended for accurate calculations.
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    Daily Progesterone Readings
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Start with Day 0 and add more days as needed. At least 2 readings are recommended.
+                  </p>
+                </div>
+                {canAddDay && (
+                  <Button
+                    onClick={addDay}
+                    variant="outline"
+                    size="sm"
+                    className="hover:bg-primary/10 hover:border-primary"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Day {readings.length}
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {readings.map((reading) => {
@@ -389,6 +419,17 @@ export function ProgesteroneInputForm() {
                   />
                 );
               })}
+              
+              {readings.length < 6 && (
+                <Button
+                  onClick={addDay}
+                  variant="ghost"
+                  className="w-full border-2 border-dashed hover:bg-primary/5 hover:border-primary"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Day {readings.length}
+                </Button>
+              )}
             </CardContent>
           </Card>
 
