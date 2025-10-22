@@ -128,8 +128,9 @@ export async function GET(request: NextRequest) {
         healthCertifications: animals.healthCertifications,
         geneticTests: animals.geneticTests,
         
-        // Pedigree info
-        pedigreeInfo: animals.pedigreeInfo,
+        // Pedigree references (use damId/sireId to build tree)
+        damId: animals.damId,
+        sireId: animals.sireId,
         
         // Timestamps
         createdAt: animals.createdAt,

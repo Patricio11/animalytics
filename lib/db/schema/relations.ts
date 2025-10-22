@@ -88,6 +88,10 @@ export const matingsRelations = relations(matings, ({ one }) => ({
     references: [animals.id],
     relationName: 'dog',
   }),
+  frozenSemen: one(frozenSemen, {
+    fields: [matings.frozenSemenId],
+    references: [frozenSemen.id],
+  }),
 }));
 
 // ============================================================================

@@ -77,8 +77,26 @@ export const animals = pgTable('animals', {
   isBreedingActive: boolean('is_breeding_active').default(false),
   isChampion: boolean('is_champion').default(false),
   titles: jsonb('titles').$type<string[]>(), // ['CH', 'GCH', etc.]
+  breedingNotes: text('breeding_notes'),
+  studFee: decimal('stud_fee', { precision: 10, scale: 2 }), // For males
+  
+  // Health & Genetic Testing
+  healthCertifications: jsonb('health_certifications').$type<{
+    name: string;
+    issueDate: string;
+    expiryDate?: string;
+    issuedBy: string;
+    certificateUrl?: string;
+  }[]>(),
+  geneticTests: jsonb('genetic_tests').$type<{
+    testName: string;
+    result: string; // 'clear', 'carrier', 'affected'
+    testDate: string;
+    laboratory: string;
+    certificateUrl?: string;
+  }[]>(),
 
-  // Pedigree
+  // Pedigree (use damId/sireId for relational pedigree tree)
   damId: uuid('dam_id'), // Mother - references animals.id
   sireId: uuid('sire_id'), // Father - references animals.id
 

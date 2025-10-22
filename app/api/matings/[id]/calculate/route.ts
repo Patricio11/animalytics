@@ -9,7 +9,7 @@ import {
   validationErrorResponse,
   serverErrorResponse,
 } from '@/lib/api/response';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { calculateProgesteroneRating } from '@/lib/calculations/progesterone-calculator';
 import { calculateConceptionRating } from '@/lib/calculations/conception-rating';
 import { z } from 'zod';
@@ -27,8 +27,9 @@ const calculateSchema = z.object({
       breedingMethod: z.enum(['natural_ai', 'tci', 'surgical_ai', 'frozen']),
       readings: z.array(
         z.object({
-          day: z.number().min(0).max(5),
+          day: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
           value: z.number(),
+          date: z.date().optional(),
         })
       ),
     })
@@ -84,7 +85,7 @@ export async function POST(
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -102,11 +103,18 @@ export async function POST(
     // ========================================================================
 
     if (progesterone) {
+      // Add date field to readings if not present
+      const readingsWithDate = progesterone.readings.map((reading) => ({
+        day: reading.day,
+        value: reading.value,
+        date: reading.date || new Date(),
+      }));
+
       progesteroneResult = calculateProgesteroneRating({
         laboratory: progesterone.laboratory,
         unit: progesterone.unit,
         breedingMethod: progesterone.breedingMethod,
-        readings: progesterone.readings,
+        readings: readingsWithDate,
       });
     }
 
@@ -154,21 +162,21 @@ export async function POST(
       .update(matings)
       .set({
         progesteroneRating: progesteroneResult
-          ? progesteroneResult.rating * 10
+          ? (progesteroneResult.rating * 10).toString()
           : null,
         conceptionRating: conceptionResult
-          ? conceptionResult.overallRating
+          ? conceptionResult.overallRating.toString()
           : null,
-        overallRating,
+        overallRating: overallRating !== null ? overallRating.toString() : null,
         informationAccuracy: conceptionResult
-          ? conceptionResult.informationAccuracy
+          ? conceptionResult.informationAccuracy.toString()
           : null,
         calculationData: {
           ...(existing.calculationData || {}),
           ...conception,
-        },
+        } as any,
         ratingBreakdown: conceptionResult?.breakdown || null,
-        updatedAt: new Date(),
+        updatedAt: sql`now()`,
       })
       .where(and(eq(matings.id, id), eq(matings.userId, session.user.id)))
       .returning();

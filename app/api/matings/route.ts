@@ -22,7 +22,7 @@ const createMatingSchema = z.object({
   frozenSemenId: z.string().optional(),
   matingDate: z.string().min(1, 'Mating date is required'),
   breedingMethod: z.enum(['natural_ai', 'tci', 'surgical_ai', 'frozen'], {
-    required_error: 'Breeding method is required',
+    message: 'Breeding method is required',
   }),
   semenType: z.string().optional(),
   notes: z.string().optional(),
@@ -56,11 +56,27 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       with: {
         bitch: {
+          columns: {
+            id: true,
+            name: true,
+            sex: true,
+            dateOfBirth: true,
+            profileImageUrl: true,
+            breedId: true,
+          },
           with: {
             breed: true,
           },
         },
         dog: {
+          columns: {
+            id: true,
+            name: true,
+            sex: true,
+            dateOfBirth: true,
+            profileImageUrl: true,
+            breedId: true,
+          },
           with: {
             breed: true,
           },
@@ -98,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))

@@ -9,7 +9,7 @@ import {
   validationErrorResponse,
   serverErrorResponse,
 } from '@/lib/api/response';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 // ============================================================================
@@ -51,6 +51,16 @@ export async function GET(
       where: and(eq(matings.id, id), eq(matings.userId, session.user.id)),
       with: {
         bitch: {
+          columns: {
+            id: true,
+            name: true,
+            sex: true,
+            dateOfBirth: true,
+            profileImageUrl: true,
+            breedId: true,
+            weight: true,
+            color: true,
+          },
           with: {
             breed: true,
             seasons: {
@@ -60,6 +70,14 @@ export async function GET(
           },
         },
         dog: {
+          columns: {
+            id: true,
+            name: true,
+            sex: true,
+            dateOfBirth: true,
+            profileImageUrl: true,
+            breedId: true,
+          },
           with: {
             breed: true,
           },
@@ -67,6 +85,14 @@ export async function GET(
         frozenSemen: {
           with: {
             sourceAnimal: {
+              columns: {
+                id: true,
+                name: true,
+                sex: true,
+                dateOfBirth: true,
+                profileImageUrl: true,
+                breedId: true,
+              },
               with: {
                 breed: true,
               },
@@ -110,7 +136,7 @@ export async function PATCH(
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -119,12 +145,29 @@ export async function PATCH(
 
     const validatedData = validation.data;
 
+    // Prepare update data with proper type conversions
+    const updateData: any = { ...validatedData };
+    
+    // Convert numeric ratings to strings for decimal fields
+    if (updateData.progesteroneRating !== undefined) {
+      updateData.progesteroneRating = updateData.progesteroneRating.toString();
+    }
+    if (updateData.conceptionRating !== undefined) {
+      updateData.conceptionRating = updateData.conceptionRating.toString();
+    }
+    if (updateData.overallRating !== undefined) {
+      updateData.overallRating = updateData.overallRating.toString();
+    }
+    if (updateData.informationAccuracy !== undefined) {
+      updateData.informationAccuracy = updateData.informationAccuracy.toString();
+    }
+
     // Update mating
     const updated = await db
       .update(matings)
       .set({
-        ...validatedData,
-        updatedAt: new Date(),
+        ...updateData,
+        updatedAt: sql`now()`,
       })
       .where(and(eq(matings.id, id), eq(matings.userId, session.user.id)))
       .returning();
