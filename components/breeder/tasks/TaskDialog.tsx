@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AnimalCombobox } from "@/components/ui/animal-combobox";
+import { useAnimals } from "@/lib/api/queries/animals";
 import { Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon } from "lucide-react";
 import { Task, TaskType } from "@/lib/mock-data/tasks";
 import { format } from "date-fns";
@@ -44,6 +46,19 @@ export function TaskDialog({
   mode = 'create',
   availableAnimals = [],
 }: TaskDialogProps) {
+  // Fetch user's animals
+  const { data: animalsData } = useAnimals();
+  const userAnimals = animalsData || [];
+  
+  // Use provided animals or fetch from API
+  const animals = availableAnimals.length > 0 ? availableAnimals : userAnimals.map(animal => ({
+    id: animal.id,
+    name: animal.name,
+    breed: animal.breed?.name,
+    profileImageUrl: animal.profileImageUrl,
+    sex: animal.sex,
+  }));
+
   const [taskType, setTaskType] = useState<TaskType>('feeding');
   const [animalId, setAnimalId] = useState('');
   const [animalName, setAnimalName] = useState('');
@@ -196,9 +211,11 @@ export function TaskDialog({
 
   const handleAnimalChange = (value: string) => {
     setAnimalId(value);
-    const selected = availableAnimals.find(a => a.id === value);
+    const selected = animals.find(a => a.id === value);
     if (selected) {
       setAnimalName(selected.name);
+    } else {
+      setAnimalName('');
     }
   };
 
@@ -334,21 +351,14 @@ export function TaskDialog({
               <Label htmlFor="animal">
                 Animal {needsAnimal && <span className="text-destructive">*</span>}
               </Label>
-              <Select value={animalId} onValueChange={handleAnimalChange}>
-                <SelectTrigger id="animal" className="bg-background border-primary/20">
-                  <SelectValue placeholder="Select animal..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {taskType === 'event' && (
-                    <SelectItem value="">None (General event)</SelectItem>
-                  )}
-                  {availableAnimals.map((animal) => (
-                    <SelectItem key={animal.id} value={animal.id}>
-                      {animal.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AnimalCombobox
+                animals={animals}
+                value={animalId}
+                onValueChange={handleAnimalChange}
+                placeholder="Select animal..."
+                emptyText="No animals found. Add an animal first."
+                allowClear={taskType === 'event'}
+              />
               {errors.animalId && <p className="text-sm text-destructive">{errors.animalId}</p>}
             </div>
           )}
