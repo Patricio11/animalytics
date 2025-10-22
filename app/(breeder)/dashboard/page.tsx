@@ -7,6 +7,7 @@ import { CalculatorCard } from "@/components/breeder/CalculatorCard";
 import { ActivityCard } from "@/components/breeder/ActivityCard";
 import { TaskCard } from "@/components/breeder/TaskCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
+import { TaskDialog } from "@/components/breeder/tasks/TaskDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import { APIAnimal, APITask } from "@/lib/api/types";
 
 export default function Dashboard() {
   const [showAddAnimal, setShowAddAnimal] = useState(false);
+  const [showCreateTask, setShowCreateTask] = useState(false);
 
   // Fetch dashboard stats from API
   const { data: stats, isLoading, isError } = useDashboardStats();
@@ -276,8 +278,15 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-surface shadow-card rounded-lg p-8 text-center">
-                    <p className="text-muted-foreground">No upcoming tasks</p>
+                  <div className="bg-surface shadow-card rounded-lg p-8 text-center space-y-4">
+                    <p className="text-muted-foreground mb-4">No upcoming tasks</p>
+                    <Button
+                      onClick={() => setShowCreateTask(true)}
+                      className="bg-gradient-brand hover:opacity-90"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Task
+                    </Button>
                   </div>
                 )}
               </section>
@@ -288,6 +297,9 @@ export default function Dashboard() {
 
       {/* Add Animal Dialog */}
       <AddAnimalDialog open={showAddAnimal} onOpenChange={setShowAddAnimal} />
+      
+      {/* Create Task Dialog */}
+      <TaskDialog open={showCreateTask} onOpenChange={setShowCreateTask} />
     </div>
     </div>
   );

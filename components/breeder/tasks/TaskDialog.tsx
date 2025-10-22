@@ -21,10 +21,10 @@ import { format } from "date-fns";
 interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (task: Omit<Task, 'id' | 'completed'>) => void;
+  onSave?: (task: Omit<Task, 'id' | 'completed'>) => void;
   existingTask?: Task;
   mode?: 'create' | 'edit';
-  availableAnimals: { id: string; name: string }[];
+  availableAnimals?: { id: string; name: string }[];
 }
 
 const taskTypeConfig = {
@@ -42,7 +42,7 @@ export function TaskDialog({
   onSave,
   existingTask,
   mode = 'create',
-  availableAnimals,
+  availableAnimals = [],
 }: TaskDialogProps) {
   const [taskType, setTaskType] = useState<TaskType>('feeding');
   const [animalId, setAnimalId] = useState('');
@@ -278,7 +278,9 @@ export function TaskDialog({
         break;
     }
 
-    onSave(task);
+    if (onSave) {
+      onSave(task);
+    }
     onOpenChange(false);
   };
 
