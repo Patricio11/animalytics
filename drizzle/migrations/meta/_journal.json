@@ -43,6 +43,13 @@
       "when": 1761084927784,
       "tag": "0005_freezing_dracula",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1761234821227,
+      "tag": "0006_hesitant_maestro",
+      "breakpoints": true
     }
   ]
 }
