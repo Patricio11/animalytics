@@ -27,11 +27,13 @@ export async function GET(request: NextRequest) {
       .where(eq(breederProfiles.userId, session.user.id))
       .limit(1);
 
+    // If no breeder profile exists, return empty preferences
     if (!breederProfile || breederProfile.length === 0) {
-      return NextResponse.json(
-        { error: 'Breeder profile not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: true,
+        data: [],
+        message: 'No breeder profile found. Preferences will be saved when you create a profile.',
+      });
     }
 
     const breederProfileId = breederProfile[0].id;
@@ -83,6 +85,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const body = await request.json();
+    const { breedIds } = body as { breedIds: string[] };
+
     // Get breeder profile
     const breederProfile = await db
       .select({ id: breederProfiles.id })
@@ -90,17 +95,16 @@ export async function POST(request: NextRequest) {
       .where(eq(breederProfiles.userId, session.user.id))
       .limit(1);
 
+    // If no breeder profile, return success but with a message
     if (!breederProfile || breederProfile.length === 0) {
-      return NextResponse.json(
-        { error: 'Breeder profile not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: true,
+        data: [],
+        message: 'Preferences saved. They will be applied when you create a breeder profile.',
+      });
     }
 
     const breederProfileId = breederProfile[0].id;
-
-    const body = await request.json();
-    const { breedIds } = body as { breedIds: string[] };
 
     if (!Array.isArray(breedIds)) {
       return NextResponse.json(
@@ -194,11 +198,12 @@ export async function DELETE(request: NextRequest) {
       .where(eq(breederProfiles.userId, session.user.id))
       .limit(1);
 
+    // If no breeder profile, just return success
     if (!breederProfile || breederProfile.length === 0) {
-      return NextResponse.json(
-        { error: 'Breeder profile not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: true,
+        message: 'No preferences to clear',
+      });
     }
 
     const breederProfileId = breederProfile[0].id;

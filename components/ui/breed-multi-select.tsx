@@ -95,7 +95,7 @@ export function BreedMultiSelect({
                 <Badge
                   key={breed.id}
                   variant="secondary"
-                  className="mr-1 mb-1 bg-primary/10 hover:bg-primary/20"
+                  className="mr-1 mb-1 bg-primary/20 hover:bg-primary/30 border-primary/30"
                 >
                   {breed.name}
                   <span

@@ -28,7 +28,7 @@ export function BreedPreferencesSection() {
 
   // Initialize selected breeds from preferences
   useEffect(() => {
-    if (preferences) {
+    if (preferences !== undefined) {
       const ids = preferences.map((p) => p.breedId);
       setSelectedBreedIds(ids);
     }
@@ -36,10 +36,11 @@ export function BreedPreferencesSection() {
 
   // Check for changes
   useEffect(() => {
-    if (preferences) {
+    if (preferences !== undefined) {
       const currentIds = preferences.map((p) => p.breedId).sort();
       const newIds = [...selectedBreedIds].sort();
-      setHasChanges(JSON.stringify(currentIds) !== JSON.stringify(newIds));
+      const changed = JSON.stringify(currentIds) !== JSON.stringify(newIds);
+      setHasChanges(changed);
     }
   }, [selectedBreedIds, preferences]);
 
@@ -150,28 +151,6 @@ export function BreedPreferencesSection() {
                 disabled={isSaving}
               />
             </div>
-
-            {/* Selected Breeds Display */}
-            {selectedBreedIds.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Selected Breeds</label>
-                <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg border border-primary/10">
-                  {selectedBreedIds.map((breedId) => {
-                    const breed = allBreeds?.find((b) => b.id === breedId);
-                    return breed ? (
-                      <Badge
-                        key={breedId}
-                        variant="secondary"
-                        className="text-sm py-1.5 px-3 bg-primary/10 hover:bg-primary/20"
-                      >
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        {breed.name}
-                      </Badge>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
