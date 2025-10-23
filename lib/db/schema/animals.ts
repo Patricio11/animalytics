@@ -57,6 +57,7 @@ export const animals = pgTable('animals', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: text('name').notNull(),
+  registeredName: text('registered_name'), // Official kennel club name
   breedId: uuid('breed_id').references(() => breeds.id),
   sex: sexEnum('sex').notNull(),
   dateOfBirth: date('date_of_birth'),
@@ -97,8 +98,14 @@ export const animals = pgTable('animals', {
   }[]>(),
 
   // Pedigree (use damId/sireId for relational pedigree tree)
-  damId: uuid('dam_id'), // Mother - references animals.id
-  sireId: uuid('sire_id'), // Father - references animals.id
+  damId: uuid('dam_id'), // Mother - references animals.id (if in system)
+  sireId: uuid('sire_id'), // Father - references animals.id (if in system)
+  
+  // Manual parent entry (for parents not in system)
+  damName: text('dam_name'),
+  damRegisteredName: text('dam_registered_name'),
+  sireName: text('sire_name'),
+  sireRegisteredName: text('sire_registered_name'),
 
   // Status
   isActive: boolean('is_active').default(true),

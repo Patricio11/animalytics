@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useCreateAnimal } from "@/lib/api/queries/animals";
+import { useCreateAnimal, useAnimals } from "@/lib/api/queries/animals";
 import { useBreedPreferences } from "@/lib/api/queries/breed-preferences";
 import { useBreeds } from "@/lib/api/queries/breeds";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -44,6 +44,16 @@ interface AnimalFormData {
   // Step 3: Registration & Parentage
   microchipId: string;
   registrationNumber: string;
+  
+  // Parent selection mode
+  sireMode: 'manual' | 'select';
+  damMode: 'manual' | 'select';
+  
+  // For selecting from animals (if in system)
+  sireId: string;
+  damId: string;
+  
+  // For manual entry (if not in system)
   sireName: string;
   sireRegisteredName: string;
   damName: string;
@@ -62,9 +72,44 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAllBreeds, setShowAllBreeds] = useState(false);
   
+  // Form data state - must be declared before useMemo hooks that depend on it
+  const [formData, setFormData] = useState<AnimalFormData>({
+    profilePhoto: null,
+    profilePhotoPreview: null,
+    name: "",
+    registeredName: "",
+    type: "bitch",
+    breed: "",
+    dateOfBirth: undefined,
+    color: "",
+    markings: "",
+    weight: "",
+    microchipId: "",
+    registrationNumber: "",
+    sireMode: "manual",
+    damMode: "manual",
+    sireId: "",
+    damId: "",
+    sireName: "",
+    sireRegisteredName: "",
+    damName: "",
+    damRegisteredName: "",
+    description: "",
+    location: ""
+  });
+
+  const totalSteps = 4;
+
+  const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   // Fetch breeds and preferences
   const { data: allBreeds, isLoading: breedsLoading } = useBreeds();
   const { data: preferences } = useBreedPreferences();
+  
+  // Fetch user's animals for parent selection
+  const { data: allAnimals } = useAnimals({ isActive: true });
   
   // Create animal mutation
   const createAnimalMutation = useCreateAnimal();
@@ -94,32 +139,24 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       breed.name.toLowerCase().includes(breedSearch.toLowerCase())
     );
   }, [breeds, breedSearch]);
-  const [formData, setFormData] = useState<AnimalFormData>({
-    profilePhoto: null,
-    profilePhotoPreview: null,
-    name: "",
-    registeredName: "",
-    type: "bitch",
-    breed: "",
-    dateOfBirth: undefined,
-    color: "",
-    markings: "",
-    weight: "",
-    microchipId: "",
-    registrationNumber: "",
-    sireName: "",
-    sireRegisteredName: "",
-    damName: "",
-    damRegisteredName: "",
-    description: "",
-    location: ""
-  });
-
-  const totalSteps = 4;
-
-  const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  
+  // Filter animals for sire selection (males only, same breed if selected)
+  const availableSires = useMemo(() => {
+    if (!allAnimals) return [];
+    return allAnimals.filter((animal: any) => 
+      animal.sex === 'male' && 
+      (!formData.breed || animal.breed === formData.breed)
+    );
+  }, [allAnimals, formData.breed]);
+  
+  // Filter animals for dam selection (females only, same breed if selected)
+  const availableDams = useMemo(() => {
+    if (!allAnimals) return [];
+    return allAnimals.filter((animal: any) => 
+      animal.sex === 'female' && 
+      (!formData.breed || animal.breed === formData.breed)
+    );
+  }, [allAnimals, formData.breed]);
 
   // Handle profile photo upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,6 +236,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       // Map form data to API format
       const animalData = {
         name: formData.name,
+        registeredName: formData.registeredName || undefined,
         breedId: selectedBreed.id,
         sex: formData.type === 'dog' ? 'male' as const : 'female' as const,
         dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split('T')[0] : undefined,
@@ -210,6 +248,14 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         bio: formData.description || undefined,
         // TODO: Handle photo upload separately
         profileImageUrl: undefined,
+        
+        // Parent information - send based on mode
+        sireId: formData.sireMode === 'select' ? formData.sireId || undefined : undefined,
+        damId: formData.damMode === 'select' ? formData.damId || undefined : undefined,
+        sireName: formData.sireMode === 'manual' ? formData.sireName || undefined : undefined,
+        sireRegisteredName: formData.sireMode === 'manual' ? formData.sireRegisteredName || undefined : undefined,
+        damName: formData.damMode === 'manual' ? formData.damName || undefined : undefined,
+        damRegisteredName: formData.damMode === 'manual' ? formData.damRegisteredName || undefined : undefined,
       };
 
       // Create animal via API
@@ -239,6 +285,10 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         weight: "",
         microchipId: "",
         registrationNumber: "",
+        sireMode: "manual",
+        damMode: "manual",
+        sireId: "",
+        damId: "",
         sireName: "",
         sireRegisteredName: "",
         damName: "",
@@ -267,7 +317,14 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       case 2:
         return formData.color && formData.markings && formData.weight; // Required fields
       case 3:
-        return true; // Optional fields
+        // Validate parent selection based on mode
+        const sireValid = formData.sireMode === 'select' 
+          ? formData.sireId !== '' 
+          : (formData.sireName !== '' && formData.sireRegisteredName !== '');
+        const damValid = formData.damMode === 'select'
+          ? formData.damId !== ''
+          : (formData.damName !== '' && formData.damRegisteredName !== '');
+        return sireValid && damValid;
       case 4:
         return true; // Optional fields
       default:
@@ -330,87 +387,84 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 <p className="text-sm text-muted-foreground">Add a photo and essential details</p>
               </div>
 
-              {/* Profile Photo and Animal Name - Same Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Profile Photo Upload */}
-                <div className="space-y-3">
-                  <Label>Profile Photo (Optional)</Label>
-                  {!formData.profilePhotoPreview ? (
-                    <div className="relative">
-                      <input
-                        type="file"
-                        id="profile-photo"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                      <label
-                        htmlFor="profile-photo"
-                        className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/20 rounded-lg cursor-pointer hover:border-primary/40 hover:bg-surface-secondary transition-colors"
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <div className="w-12 h-12 rounded-full bg-gradient-brand/10 flex items-center justify-center mb-3">
-                            <Upload className="w-6 h-6 text-primary" />
-                          </div>
-                          <p className="text-sm font-medium text-foreground mb-1">
-                            Click to upload
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            PNG, JPG up to 5MB
-                          </p>
+              {/* Profile Photo Upload */}
+              <div className="space-y-3">
+                <Label>Profile Photo (Optional)</Label>
+                {!formData.profilePhotoPreview ? (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="profile-photo"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="profile-photo"
+                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/20 rounded-lg cursor-pointer hover:border-primary/40 hover:bg-surface-secondary transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <div className="w-12 h-12 rounded-full bg-gradient-brand/10 flex items-center justify-center mb-3">
+                          <Upload className="w-6 h-6 text-primary" />
                         </div>
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="relative flex flex-col items-center gap-3 p-4 border border-primary/10 rounded-lg bg-surface-secondary h-40 justify-center">
-                      <Avatar className="w-20 h-20 border-2 border-primary/20">
-                        <AvatarImage src={formData.profilePhotoPreview} alt="Profile preview" />
-                        <AvatarFallback>
-                          <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={removePhoto}
-                        className="hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <X className="w-3 h-3 mr-1" />
-                        Remove
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Animal Names - Side by Side */}
-                <div className="space-y-3 flex flex-col justify-center">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name (Call Name) *</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => updateFormData("name", e.target.value)}
-                        placeholder="e.g., Max"
-                        className="bg-background border-primary/20 focus:border-primary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="registeredName">Registered Name</Label>
-                      <Input
-                        id="registeredName"
-                        value={formData.registeredName}
-                        onChange={(e) => updateFormData("registeredName", e.target.value)}
-                        placeholder="e.g., Champion Goldcrest's Maximus Rex"
-                        className="bg-background border-primary/20 focus:border-primary"
-                      />
-                    </div>
+                        <p className="text-sm font-medium text-foreground mb-1">
+                          Click to upload
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG up to 5MB
+                        </p>
+                      </div>
+                    </label>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Call name is for everyday use. Registered name is the official kennel club name (optional).
-                  </p>
+                ) : (
+                  <div className="relative flex flex-col items-center gap-3 p-4 border border-primary/10 rounded-lg bg-surface-secondary h-40 justify-center">
+                    <Avatar className="w-20 h-20 border-2 border-primary/20">
+                      <AvatarImage src={formData.profilePhotoPreview} alt="Profile preview" />
+                      <AvatarFallback>
+                        <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removePhoto}
+                      className="hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Animal Names - Side by Side */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name (Call Name) *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => updateFormData("name", e.target.value)}
+                      placeholder="e.g., Max"
+                      className="bg-background border-primary/20 focus:border-primary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="registeredName">Registered Name</Label>
+                    <Input
+                      id="registeredName"
+                      value={formData.registeredName}
+                      onChange={(e) => updateFormData("registeredName", e.target.value)}
+                      placeholder="e.g., Champion Goldcrest's Maximus Rex"
+                      className="bg-background border-primary/20 focus:border-primary"
+                    />
+                  </div>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Call name is for everyday use. Registered name is the official kennel club name (optional).
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -644,56 +698,238 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
 
               {/* Sire (Father) Information - Fieldset */}
               <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
-                <legend className="text-sm font-semibold px-2 text-primary">Sire (Father)</legend>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sireName">Name</Label>
-                    <Input
-                      id="sireName"
-                      value={formData.sireName}
-                      onChange={(e) => updateFormData("sireName", e.target.value)}
-                      placeholder="e.g., Max"
-                      className="bg-background border-primary/20"
-                    />
+                <legend className="text-sm font-semibold px-2 text-primary">Sire (Father) *</legend>
+                
+                {/* Mode Selection */}
+                <RadioGroup 
+                  value={formData.sireMode} 
+                  onValueChange={(value: 'manual' | 'select') => {
+                    updateFormData("sireMode", value);
+                    // Clear fields when switching modes
+                    if (value === 'manual') {
+                      updateFormData("sireId", "");
+                    } else {
+                      updateFormData("sireName", "");
+                      updateFormData("sireRegisteredName", "");
+                    }
+                  }}
+                  className="mb-4"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="manual" id="sire-manual" />
+                      <Label htmlFor="sire-manual" className="font-normal cursor-pointer">
+                        Enter manually
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="select" id="sire-select" />
+                      <Label htmlFor="sire-select" className="font-normal cursor-pointer">
+                        Select from my animals ({availableSires.length})
+                      </Label>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sireRegisteredName">Registered Name</Label>
-                    <Input
-                      id="sireRegisteredName"
-                      value={formData.sireRegisteredName}
-                      onChange={(e) => updateFormData("sireRegisteredName", e.target.value)}
-                      placeholder="e.g., Champion Goldcrest's Maximus Rex"
-                      className="bg-background border-primary/20"
-                    />
+                </RadioGroup>
+
+                {/* Manual Entry */}
+                {formData.sireMode === 'manual' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="sireName">Name *</Label>
+                      <Input
+                        id="sireName"
+                        value={formData.sireName}
+                        onChange={(e) => updateFormData("sireName", e.target.value)}
+                        placeholder="e.g., Max"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sireRegisteredName">Registered Name *</Label>
+                      <Input
+                        id="sireRegisteredName"
+                        value={formData.sireRegisteredName}
+                        onChange={(e) => updateFormData("sireRegisteredName", e.target.value)}
+                        placeholder="e.g., Champion Goldcrest's Maximus Rex"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Select from Animals */}
+                {formData.sireMode === 'select' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="sireId">Select Sire *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between bg-background border-primary/20"
+                        >
+                          {formData.sireId ? (
+                            availableSires.find((a: any) => a.id === formData.sireId)?.name || "Select sire..."
+                          ) : (
+                            "Select sire..."
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Search sires..." />
+                          <CommandList>
+                            {availableSires.length === 0 ? (
+                              <CommandEmpty>No male animals found. Add a male animal first.</CommandEmpty>
+                            ) : (
+                              <CommandGroup>
+                                {availableSires.map((animal: any) => (
+                                  <CommandItem
+                                    key={animal.id}
+                                    value={animal.id}
+                                    onSelect={() => updateFormData("sireId", animal.id)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        formData.sireId === animal.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{animal.name}</span>
+                                      {animal.registeredName && (
+                                        <span className="text-xs text-muted-foreground">{animal.registeredName}</span>
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            )}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
               </fieldset>
 
               {/* Dam (Mother) Information - Fieldset */}
               <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
-                <legend className="text-sm font-semibold px-2 text-primary">Dam (Mother)</legend>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="damName">Name</Label>
-                    <Input
-                      id="damName"
-                      value={formData.damName}
-                      onChange={(e) => updateFormData("damName", e.target.value)}
-                      placeholder="e.g., Bella"
-                      className="bg-background border-primary/20"
-                    />
+                <legend className="text-sm font-semibold px-2 text-primary">Dam (Mother) *</legend>
+                
+                {/* Mode Selection */}
+                <RadioGroup 
+                  value={formData.damMode} 
+                  onValueChange={(value: 'manual' | 'select') => {
+                    updateFormData("damMode", value);
+                    // Clear fields when switching modes
+                    if (value === 'manual') {
+                      updateFormData("damId", "");
+                    } else {
+                      updateFormData("damName", "");
+                      updateFormData("damRegisteredName", "");
+                    }
+                  }}
+                  className="mb-4"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="manual" id="dam-manual" />
+                      <Label htmlFor="dam-manual" className="font-normal cursor-pointer">
+                        Enter manually
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="select" id="dam-select" />
+                      <Label htmlFor="dam-select" className="font-normal cursor-pointer">
+                        Select from my animals ({availableDams.length})
+                      </Label>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="damRegisteredName">Registered Name</Label>
-                    <Input
-                      id="damRegisteredName"
-                      value={formData.damRegisteredName}
-                      onChange={(e) => updateFormData("damRegisteredName", e.target.value)}
-                      placeholder="e.g., Grand Champion Silverstone's Bella Luna"
-                      className="bg-background border-primary/20"
-                    />
+                </RadioGroup>
+
+                {/* Manual Entry */}
+                {formData.damMode === 'manual' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="damName">Name *</Label>
+                      <Input
+                        id="damName"
+                        value={formData.damName}
+                        onChange={(e) => updateFormData("damName", e.target.value)}
+                        placeholder="e.g., Bella"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="damRegisteredName">Registered Name *</Label>
+                      <Input
+                        id="damRegisteredName"
+                        value={formData.damRegisteredName}
+                        onChange={(e) => updateFormData("damRegisteredName", e.target.value)}
+                        placeholder="e.g., Grand Champion Silverstone's Bella Luna"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Select from Animals */}
+                {formData.damMode === 'select' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="damId">Select Dam *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between bg-background border-primary/20"
+                        >
+                          {formData.damId ? (
+                            availableDams.find((a: any) => a.id === formData.damId)?.name || "Select dam..."
+                          ) : (
+                            "Select dam..."
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Search dams..." />
+                          <CommandList>
+                            {availableDams.length === 0 ? (
+                              <CommandEmpty>No female animals found. Add a female animal first.</CommandEmpty>
+                            ) : (
+                              <CommandGroup>
+                                {availableDams.map((animal: any) => (
+                                  <CommandItem
+                                    key={animal.id}
+                                    value={animal.id}
+                                    onSelect={() => updateFormData("damId", animal.id)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        formData.damId === animal.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{animal.name}</span>
+                                      {animal.registeredName && (
+                                        <span className="text-xs text-muted-foreground">{animal.registeredName}</span>
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            )}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
               </fieldset>
             </div>
           )}

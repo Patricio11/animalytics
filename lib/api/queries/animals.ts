@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/client';
 
 interface CreateAnimalData {
   name: string;
+  registeredName?: string;
   breedId?: string;
   sex: 'male' | 'female';
   dateOfBirth?: string;
@@ -24,6 +25,14 @@ interface CreateAnimalData {
   isChampion?: boolean;
   titles?: string[];
   notes?: string;
+  
+  // Parent information (relational or manual)
+  sireId?: string;
+  damId?: string;
+  sireName?: string;
+  sireRegisteredName?: string;
+  damName?: string;
+  damRegisteredName?: string;
 }
 
 interface UpdateAnimalData extends Partial<CreateAnimalData> {

@@ -19,6 +19,7 @@ import { z } from 'zod';
 
 const createAnimalSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
+  registeredName: z.string().optional(),
   breedId: z.string().min(1, 'Breed is required'),
   sex: z.enum(['male', 'female'], { required_error: 'Sex is required' }),
   dateOfBirth: z.string().optional(),
@@ -36,6 +37,14 @@ const createAnimalSchema = z.object({
   isChampion: z.boolean().optional(),
   titles: z.array(z.string()).optional(),
   notes: z.string().optional(),
+  
+  // Parent information (relational or manual)
+  sireId: z.string().optional(),
+  damId: z.string().optional(),
+  sireName: z.string().optional(),
+  sireRegisteredName: z.string().optional(),
+  damName: z.string().optional(),
+  damRegisteredName: z.string().optional(),
 });
 
 // ============================================================================
