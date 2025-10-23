@@ -45,7 +45,7 @@ export function useBreeds() {
         throw new Error('Failed to fetch breeds');
       }
       const data = await response.json();
-      return data.data as Breed[];
+      return data.breeds as Breed[];
     },
   });
 }

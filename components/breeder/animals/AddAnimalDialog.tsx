@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCreateAnimal } from "@/lib/api/queries/animals";
+import { useBreedPreferences } from "@/lib/api/queries/breed-preferences";
+import { useBreeds } from "@/lib/api/queries/breeds";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,31 +50,38 @@ interface AnimalFormData {
   location: string;
 }
 
-// Fetch breeds from API
-function useBreeds() {
-  return useQuery({
-    queryKey: ['breeds'],
-    queryFn: async () => {
-      const response = await fetch('/api/breeds');
-      if (!response.ok) throw new Error('Failed to fetch breeds');
-      return response.json();
-    },
-  });
-}
-
 export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [breedSearchOpen, setBreedSearchOpen] = useState(false);
   const [breedSearch, setBreedSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAllBreeds, setShowAllBreeds] = useState(false);
   
-  // Fetch breeds from API
-  const { data: breedsData, isLoading: breedsLoading } = useBreeds();
-  const breeds = breedsData?.breeds || [];
+  // Fetch breeds and preferences
+  const { data: allBreeds, isLoading: breedsLoading } = useBreeds();
+  const { data: preferences } = useBreedPreferences();
   
   // Create animal mutation
   const createAnimalMutation = useCreateAnimal();
+  
+  // Get preferred breed IDs
+  const preferredBreedIds = useMemo(() => {
+    return preferences?.map(p => p.breedId) || [];
+  }, [preferences]);
+  
+  // Filter and sort breeds: preferred first, then others
+  const breeds = useMemo(() => {
+    if (!allBreeds) return [];
+    
+    // If showing all breeds or no preferences, return all
+    if (showAllBreeds || preferredBreedIds.length === 0) {
+      return allBreeds;
+    }
+    
+    // Only show preferred breeds
+    return allBreeds.filter(breed => preferredBreedIds.includes(breed.id));
+  }, [allBreeds, preferredBreedIds, showAllBreeds]);
   
   // Filter breeds based on search
   const filteredBreeds = useMemo(() => {
@@ -399,7 +408,20 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Breed * <span className="text-xs text-muted-foreground">({breeds.length} breeds available)</span></Label>
+                <div className="flex items-center justify-between">
+                  <Label>Breed * <span className="text-xs text-muted-foreground">({breeds.length} {showAllBreeds || preferredBreedIds.length === 0 ? 'breeds' : 'preferred breeds'})</span></Label>
+                  {preferredBreedIds.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllBreeds(!showAllBreeds)}
+                      className="text-xs h-7"
+                    >
+                      {showAllBreeds ? '✨ Show Preferred' : '🌍 Show All'}
+                    </Button>
+                  )}
+                </div>
                 <Popover open={breedSearchOpen} onOpenChange={setBreedSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -431,7 +453,22 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                       />
                       <CommandList>
                         {filteredBreeds.length === 0 ? (
-                          <CommandEmpty>No breed found.</CommandEmpty>
+                          <CommandEmpty>
+                            <div className="text-center py-4">
+                              <p className="text-sm text-muted-foreground mb-2">No breed found.</p>
+                              {!showAllBreeds && preferredBreedIds.length > 0 && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowAllBreeds(true)}
+                                  className="text-xs"
+                                >
+                                  Show all breeds
+                                </Button>
+                              )}
+                            </div>
+                          </CommandEmpty>
                         ) : (
                           <CommandGroup>
                             {filteredBreeds.map((breed: any) => (

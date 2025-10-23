@@ -10,10 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Settings as SettingsIcon, User, Bell, Shield, Palette, Database, Mail, Phone, MapPin, Camera, Globe, DollarSign } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Shield, Palette, Database, Mail, Phone, MapPin, Camera, Globe, DollarSign, Heart } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth/client";
 import { CURRENCIES } from "@/lib/utils/currency";
+import { BreedPreferencesSection } from "@/components/settings/BreedPreferencesSection";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -56,10 +57,14 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 gap-1 bg-surface shadow-card">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 gap-1 bg-surface shadow-card">
           <TabsTrigger value="profile" data-testid="tab-profile" className="text-xs sm:text-sm">
             <User className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Profile</span>
+          </TabsTrigger>
+          <TabsTrigger value="breeds" data-testid="tab-breeds" className="text-xs sm:text-sm">
+            <Heart className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Breeds</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" data-testid="tab-notifications" className="text-xs sm:text-sm">
             <Bell className="w-4 h-4 sm:mr-2" />
@@ -198,6 +203,11 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+
+          {/* Breed Preferences */}
+          <TabsContent value="breeds" className="space-y-6">
+            <BreedPreferencesSection />
+          </TabsContent>
 
           {/* Notification Settings */}
           <TabsContent value="notifications" className="space-y-6">

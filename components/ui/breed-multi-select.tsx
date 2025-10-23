@@ -98,8 +98,10 @@ export function BreedMultiSelect({
                   className="mr-1 mb-1 bg-primary/10 hover:bg-primary/20"
                 >
                   {breed.name}
-                  <button
-                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer inline-flex"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         removeBreed(breed.id, e as any);
@@ -112,19 +114,26 @@ export function BreedMultiSelect({
                     onClick={(e) => removeBreed(breed.id, e)}
                   >
                     <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </button>
+                  </span>
                 </Badge>
               ))
             )}
           </div>
           <div className="flex items-center gap-2 ml-2">
             {selectedBreeds.length > 0 && (
-              <button
+              <span
+                role="button"
+                tabIndex={0}
                 onClick={clearAll}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    clearAll(e as any);
+                  }
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer inline-flex"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </span>
             )}
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </div>
