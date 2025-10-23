@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Edit2, Plus } from "lucide-react";
 import { EditParentsDialog } from "@/components/breeder/animals/EditParentsDialog";
+import { AddPedigreeEntryDialog } from "@/components/breeder/animals/AddPedigreeEntryDialog";
 
 type PedigreeNode = {
   id: string;
@@ -32,6 +33,13 @@ interface PedigreeTreeHorizontalProps {
 export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: PedigreeTreeHorizontalProps) {
   const [editingAnimal, setEditingAnimal] = useState<PedigreeNode | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
+  const [manualEntryConfig, setManualEntryConfig] = useState<{
+    position: string;
+    generation: number;
+    label: string;
+    requiredSex?: "male" | "female";
+  } | null>(null);
 
   const handleEditClick = (animal: PedigreeNode | null | undefined) => {
     if (animal && !animal.isManualEntry) {
@@ -40,9 +48,24 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
     }
   };
 
+  const handleAddManualClick = (position: string, generation: number, label: string) => {
+    // Determine required sex based on position
+    const requiredSex = position.endsWith("dam") ? "female" : position.endsWith("sire") ? "male" : undefined;
+    setManualEntryConfig({ position, generation, label, requiredSex });
+    setAddManualDialogOpen(true);
+  };
+
   const handleEditSuccess = () => {
     setEditDialogOpen(false);
     setEditingAnimal(null);
+    if (onUpdate) {
+      onUpdate();
+    }
+  };
+
+  const handleManualEntrySuccess = () => {
+    setAddManualDialogOpen(false);
+    setManualEntryConfig(null);
     if (onUpdate) {
       onUpdate();
     }
@@ -66,18 +89,19 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
               generation={0} 
               position="subject" 
               onEdit={handleEditClick}
+              onAddManual={handleAddManualClick}
             />
           </div>
 
           {/* Generation 1 - Parents */}
           <div className="col-span-1 flex flex-col justify-center gap-8">
             <div className="relative">
-              <PedigreeCard animal={node.dam} generation={1} position="dam" label="DAM" onEdit={handleEditClick} />
+              <PedigreeCard animal={node.dam} generation={1} position="dam" label="DAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               {/* Connecting line to subject */}
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.sire} generation={1} position="sire" label="SIRE" onEdit={handleEditClick} />
+              <PedigreeCard animal={node.sire} generation={1} position="sire" label="SIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               {/* Connecting line to subject */}
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
@@ -87,20 +111,20 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
           <div className="col-span-1 flex flex-col justify-center gap-4">
             {/* Dam's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.dam?.dam} generation={2} position="granddam-dam" label="GRANDDAM" onEdit={handleEditClick} />
+              <PedigreeCard animal={node.dam?.dam} generation={2} position="dam.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.dam?.sire} generation={2} position="grandsire-dam" label="GRANDSIRE" onEdit={handleEditClick} />
+              <PedigreeCard animal={node.dam?.sire} generation={2} position="dam.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             {/* Sire's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.sire?.dam} generation={2} position="granddam-sire" label="GRANDDAM" onEdit={handleEditClick} />
+              <PedigreeCard animal={node.sire?.dam} generation={2} position="sire.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.sire?.sire} generation={2} position="grandsire-sire" label="GRANDSIRE" onEdit={handleEditClick} />
+              <PedigreeCard animal={node.sire?.sire} generation={2} position="sire.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
           </div>
@@ -109,38 +133,38 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
           <div className="col-span-1 flex flex-col justify-center gap-2">
             {/* Dam's Dam's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="ggd-dd" compact onEdit={handleEditClick} />
+              <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="ggs-dd" compact onEdit={handleEditClick} />
+              <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             {/* Dam's Sire's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="ggd-ds" compact onEdit={handleEditClick} />
+              <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="ggs-ds" compact onEdit={handleEditClick} />
+              <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             {/* Sire's Dam's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="ggd-sd" compact onEdit={handleEditClick} />
+              <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="ggs-sd" compact onEdit={handleEditClick} />
+              <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             {/* Sire's Sire's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="ggd-ss" compact onEdit={handleEditClick} />
+              <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="sire.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="ggs-ss" compact onEdit={handleEditClick} />
+              <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
           </div>
@@ -164,6 +188,20 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
           onSuccess={handleEditSuccess}
         />
       )}
+
+      {/* Add Pedigree Entry Dialog */}
+      {manualEntryConfig && (
+        <AddPedigreeEntryDialog
+          open={addManualDialogOpen}
+          onOpenChange={setAddManualDialogOpen}
+          animalId={node.id}
+          position={manualEntryConfig.position}
+          generation={manualEntryConfig.generation}
+          positionLabel={manualEntryConfig.label}
+          requiredSex={manualEntryConfig.requiredSex}
+          onSuccess={handleManualEntrySuccess}
+        />
+      )}
     </div>
   );
 }
@@ -179,17 +217,24 @@ interface PedigreeCardProps {
   label?: string;
   compact?: boolean;
   onEdit?: (animal: PedigreeNode | null | undefined) => void;
+  onAddManual?: (position: string, generation: number, label: string) => void;
 }
 
-function PedigreeCard({ animal, generation, position, label, compact = false, onEdit }: PedigreeCardProps) {
+function PedigreeCard({ animal, generation, position, label, compact = false, onEdit, onAddManual }: PedigreeCardProps) {
   if (!animal) {
     return (
-      <Card className={cn(
-        "border-dashed border-muted-foreground/20 bg-muted/10",
-        compact ? "p-2 min-h-[60px]" : "p-3 min-h-[100px]",
-        "flex items-center justify-center"
-      )}>
-        <p className="text-xs text-muted-foreground text-center">Unknown</p>
+      <Card 
+        className={cn(
+          "border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10",
+          compact ? "p-2 min-h-[60px]" : "p-3 min-h-[100px]",
+          "flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors group"
+        )}
+        onClick={() => onAddManual && onAddManual(position, generation, label || position)}
+      >
+        <Plus className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+        <p className="text-xs text-primary font-medium text-center">
+          {compact ? "Add" : `Add ${label || "Parent"}`}
+        </p>
       </Card>
     );
   }

@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
-import { animals } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { animals, manualPedigreeEntries } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 
 // ============================================================================
 // PEDIGREE NODE TYPE
@@ -26,19 +26,62 @@ export type PedigreeNode = {
 // ============================================================================
 
 /**
+ * Fetch manual pedigree entries for an animal and build nodes
+ * @param animalId - Animal ID to fetch entries for
+ * @param position - Position in tree ('dam', 'sire', 'dam.dam', etc.)
+ * @returns Map of position to PedigreeNode
+ */
+async function fetchManualEntries(animalId: string): Promise<Map<string, PedigreeNode>> {
+  const entries = await db
+    .select()
+    .from(manualPedigreeEntries)
+    .where(eq(manualPedigreeEntries.animalId, animalId));
+
+  const manualNodes = new Map<string, PedigreeNode>();
+
+  for (const entry of entries) {
+    manualNodes.set(entry.position, {
+      id: entry.id,
+      name: entry.name,
+      registeredName: entry.registeredName,
+      breed: entry.breed,
+      sex: entry.sex,
+      registrationNumber: entry.registrationNumber,
+      dateOfBirth: entry.dateOfBirth?.toString() ?? null,
+      color: entry.color,
+      profileImageUrl: null,
+      dam: null,
+      sire: null,
+      isManualEntry: true,
+    });
+  }
+
+  return manualNodes;
+}
+
+/**
  * Recursively fetch pedigree tree up to specified generations
- * Handles both linked animals (via damId/sireId) and manual entries
+ * Handles both linked animals (via damId/sireId) and manual entries from database
  * @param nodeId - Animal ID to start from
  * @param depth - Current depth in recursion
  * @param maxGens - Maximum generations to fetch
+ * @param rootAnimalId - Root animal ID (for fetching manual entries)
+ * @param currentPath - Current path in tree (e.g., 'dam', 'dam.sire')
  * @returns Pedigree node with nested parents
  */
 export async function fetchPedigree(
   nodeId: string | null,
   depth = 0,
-  maxGens = 4
+  maxGens = 4,
+  rootAnimalId?: string,
+  currentPath = ''
 ): Promise<PedigreeNode | null> {
   if (!nodeId || depth >= maxGens) return null;
+
+  // Fetch manual entries for root animal
+  const manualEntries = rootAnimalId && depth === 0 
+    ? await fetchManualEntries(rootAnimalId) 
+    : new Map<string, PedigreeNode>();
 
   const [animal] = await db
     .select()
@@ -48,15 +91,20 @@ export async function fetchPedigree(
 
   if (!animal) return null;
 
-  // Fetch dam - either linked animal or create manual entry node
+  // Determine paths for dam and sire
+  const damPath = currentPath ? `${currentPath}.dam` : 'dam';
+  const sirePath = currentPath ? `${currentPath}.sire` : 'sire';
+
+  // Fetch dam - check manual entries first, then linked animals
   let dam: PedigreeNode | null = null;
-  if (animal.damId) {
-    // Dam is in the system - fetch recursively
-    dam = await fetchPedigree(animal.damId, depth + 1, maxGens);
+  if (manualEntries.has(damPath)) {
+    dam = manualEntries.get(damPath)!;
+  } else if (animal.damId) {
+    dam = await fetchPedigree(animal.damId, depth + 1, maxGens, rootAnimalId, damPath);
   } else if (animal.damName && animal.damRegisteredName) {
-    // Dam is manual entry - create node without recursion
+    // Legacy manual entry from animal table
     dam = {
-      id: `manual-dam-${animal.id}`, // Unique ID for manual entry
+      id: `manual-dam-${animal.id}`,
       name: animal.damName,
       registeredName: animal.damRegisteredName,
       breed: null,
@@ -71,15 +119,16 @@ export async function fetchPedigree(
     };
   }
 
-  // Fetch sire - either linked animal or create manual entry node
+  // Fetch sire - check manual entries first, then linked animals
   let sire: PedigreeNode | null = null;
-  if (animal.sireId) {
-    // Sire is in the system - fetch recursively
-    sire = await fetchPedigree(animal.sireId, depth + 1, maxGens);
+  if (manualEntries.has(sirePath)) {
+    sire = manualEntries.get(sirePath)!;
+  } else if (animal.sireId) {
+    sire = await fetchPedigree(animal.sireId, depth + 1, maxGens, rootAnimalId, sirePath);
   } else if (animal.sireName && animal.sireRegisteredName) {
-    // Sire is manual entry - create node without recursion
+    // Legacy manual entry from animal table
     sire = {
-      id: `manual-sire-${animal.id}`, // Unique ID for manual entry
+      id: `manual-sire-${animal.id}`,
       name: animal.sireName,
       registeredName: animal.sireRegisteredName,
       breed: null,

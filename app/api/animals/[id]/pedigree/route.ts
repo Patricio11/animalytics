@@ -57,8 +57,8 @@ export async function GET(
       );
     }
 
-    // Fetch pedigree tree
-    const pedigree = await fetchPedigree(id, 0, gens);
+    // Fetch pedigree tree (pass id as rootAnimalId for manual entries)
+    const pedigree = await fetchPedigree(id, 0, gens, id);
 
     // Calculate statistics
     const stats = calculatePedigreeStats(pedigree, gens);

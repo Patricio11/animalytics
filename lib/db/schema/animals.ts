@@ -547,3 +547,38 @@ export type NewAnimalShare = typeof animalShares.$inferInsert;
 
 export type HealthRecord = typeof healthRecords.$inferSelect;
 export type NewHealthRecord = typeof healthRecords.$inferInsert;
+
+// ============================================================================
+// MANUAL PEDIGREE ENTRIES
+// ============================================================================
+// For storing external animals not in the system (e.g., from certificates)
+
+export const manualPedigreeEntries = pgTable('manual_pedigree_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  animalId: uuid('animal_id').notNull().references(() => animals.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Position in tree: 'dam', 'sire', 'dam.dam', 'dam.sire', 'sire.dam', 'sire.sire', etc.
+  position: text('position').notNull(),
+  generation: integer('generation').notNull(), // 1=parents, 2=grandparents, 3=great-grandparents
+  
+  // Animal details
+  name: text('name').notNull(),
+  registeredName: text('registered_name'),
+  registrationNumber: text('registration_number'),
+  microchipNumber: text('microchip_number'),
+  breed: text('breed'),
+  sex: sexEnum('sex'),
+  dateOfBirth: date('date_of_birth'),
+  color: text('color'),
+  
+  // Optional additional info
+  titles: jsonb('titles').$type<string[]>(),
+  notes: text('notes'),
+  
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export type ManualPedigreeEntry = typeof manualPedigreeEntries.$inferSelect;
+export type NewManualPedigreeEntry = typeof manualPedigreeEntries.$inferInsert;
