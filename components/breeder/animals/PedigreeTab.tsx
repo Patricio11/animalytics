@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PedigreeTree } from "@/components/breeder/animals/PedigreeTree";
+import { PedigreeTreeHorizontal } from "@/components/breeder/animals/PedigreeTreeHorizontal";
 import { EditParentsDialog } from "@/components/breeder/animals/EditParentsDialog";
 import { PedigreeDocumentsList } from "@/components/breeder/animals/PedigreeDocumentsList";
 import { ImportPedigreeDialog } from "@/components/breeder/animals/ImportPedigreeDialog";
@@ -19,8 +20,11 @@ import {
   CheckCircle2,
   TrendingUp,
   Upload,
+  LayoutGrid,
+  LayoutList,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface PedigreeTabProps {
   animalId: string;
@@ -33,6 +37,7 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [generations, setGenerations] = useState(4);
+  const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('horizontal');
 
   // Fetch pedigree data
   const { data, isLoading, error } = useQuery({
@@ -143,6 +148,34 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-1 border border-primary/20 rounded-md p-1">
+            <Button
+              variant={viewMode === 'horizontal' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('horizontal')}
+              className={cn(
+                "h-8 px-3",
+                viewMode === 'horizontal' && "bg-gradient-brand text-white shadow-card"
+              )}
+            >
+              <LayoutList className="w-4 h-4 mr-1" />
+              Certificate
+            </Button>
+            <Button
+              variant={viewMode === 'vertical' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('vertical')}
+              className={cn(
+                "h-8 px-3",
+                viewMode === 'vertical' && "bg-gradient-brand text-white shadow-card"
+              )}
+            >
+              <LayoutGrid className="w-4 h-4 mr-1" />
+              Grid
+            </Button>
+          </div>
+
           <Button
             variant="outline"
             size="sm"
@@ -251,21 +284,57 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
         <div className="lg:col-span-2">
           <Card className="shadow-elevated bg-surface border-0">
             <CardHeader>
-              <CardTitle className="text-base">Family Tree</CardTitle>
+              <CardTitle className="text-base">
+                {viewMode === 'horizontal' ? 'Pedigree Certificate' : 'Family Tree'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <div className="space-y-4">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                      {[...Array(Math.pow(2, i))].map((_, j) => (
-                        <Skeleton key={j} className="h-24 w-full" />
-                      ))}
+                  {viewMode === 'horizontal' ? (
+                    // Horizontal skeleton
+                    <div className="space-y-4">
+                      <Skeleton className="h-20 w-full" />
+                      <div className="grid grid-cols-4 gap-4">
+                        <Skeleton className="h-32 w-full" />
+                        <div className="space-y-4">
+                          <Skeleton className="h-24 w-full" />
+                          <Skeleton className="h-24 w-full" />
+                        </div>
+                        <div className="space-y-2">
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                        </div>
+                        <div className="space-y-1">
+                          {[...Array(8)].map((_, i) => (
+                            <Skeleton key={i} className="h-12 w-full" />
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  ))}
+                  ) : (
+                    // Vertical skeleton
+                    [...Array(4)].map((_, i) => (
+                      <div key={i} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        {[...Array(Math.pow(2, i))].map((_, j) => (
+                          <Skeleton key={j} className="h-24 w-full" />
+                        ))}
+                      </div>
+                    ))
+                  )}
                 </div>
               ) : data?.pedigree ? (
-                <PedigreeTree node={data.pedigree} generations={generations} />
+                viewMode === 'horizontal' ? (
+                  <PedigreeTreeHorizontal 
+                    node={data.pedigree} 
+                    generations={3} 
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["pedigree", animalId] })}
+                  />
+                ) : (
+                  <PedigreeTree node={data.pedigree} generations={generations} />
+                )
               ) : (
                 <div className="text-center py-12">
                   <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
