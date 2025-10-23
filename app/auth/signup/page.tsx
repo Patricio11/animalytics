@@ -9,11 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PawPrint, Eye, EyeOff, User, Mail, Lock, AlertCircle, Stethoscope, Users, Calendar } from "lucide-react";
+import { PawPrint, Eye, EyeOff, User, Mail, Lock, AlertCircle, Stethoscope, Users, Calendar, Heart } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BreedMultiSelect } from "@/components/ui/breed-multi-select";
+import { useBreeds } from "@/lib/api/queries/breeds";
 
 export default function SignUp() {
   const router = useRouter();
@@ -26,11 +28,15 @@ export default function SignUp() {
     confirmPassword: "",
     role: "breeder" as "breeder" | "veterinarian" | "admin" | "event_organizer",
   });
+  const [selectedBreedIds, setSelectedBreedIds] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Fetch breeds for breed selector
+  const { data: allBreeds, isLoading: breedsLoading } = useBreeds();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -73,6 +79,20 @@ export default function SignUp() {
         name: `${formData.firstName} ${formData.lastName}`,
         callbackURL: "/dashboard",
       });
+
+      // Save breed preferences if user is a breeder and selected breeds
+      if (formData.role === "breeder" && selectedBreedIds.length > 0) {
+        try {
+          await fetch('/api/breeders/breed-preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ breedIds: selectedBreedIds }),
+          });
+        } catch (prefError) {
+          console.error('Failed to save breed preferences:', prefError);
+          // Don't block signup if preferences fail to save
+        }
+      }
 
       toast({
         title: "Success",
@@ -309,6 +329,33 @@ export default function SignUp() {
                     </button>
                   </div>
                 </div>
+
+                {/* Breed Preferences - Only show for breeders */}
+                {formData.role === "breeder" && (
+                  <div className="space-y-2 p-4 bg-muted/30 rounded-lg border border-primary/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Heart className="h-4 w-4 text-primary" />
+                      <Label>Breed Preferences (Optional)</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Select the breeds you work with to personalize your experience
+                    </p>
+                    <BreedMultiSelect
+                      breeds={
+                        allBreeds?.map((breed) => ({
+                          id: breed.id,
+                          name: breed.name,
+                          sizeCategory: breed.sizeCategory,
+                        })) || []
+                      }
+                      selectedBreedIds={selectedBreedIds}
+                      onSelectionChange={setSelectedBreedIds}
+                      placeholder="Search and select breeds..."
+                      emptyText="No breeds found."
+                      disabled={breedsLoading}
+                    />
+                  </div>
+                )}
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
