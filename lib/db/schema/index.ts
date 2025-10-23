@@ -9,4 +9,5 @@ export * from './matings';
 export * from './tasks';
 export * from './reports';
 export * from './marketplace';
+export * from './user-breed-preferences';
 export * from './relations';

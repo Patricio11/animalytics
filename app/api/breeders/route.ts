@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { breederProfiles } from '@/lib/db/schema/profiles';
-import { eq, desc, ilike, or, sql } from 'drizzle-orm';
+import { eq, desc, ilike, or, and, sql } from 'drizzle-orm';
 
 // ============================================================================
 // GET /api/breeders
@@ -16,8 +16,29 @@ export async function GET(request: NextRequest) {
     const limit = Number(searchParams.get('limit') || '50');
     const offset = Number(searchParams.get('offset') || '0');
 
-    // Build query
-    let query = db
+    // Build where conditions
+    const conditions: any[] = [eq(breederProfiles.isPublic, true)];
+
+    // Apply search filter
+    if (search) {
+      conditions.push(
+        or(
+          ilike(breederProfiles.displayName, `%${search}%`),
+          ilike(breederProfiles.tagline, `%${search}%`),
+          sql`${breederProfiles.primaryBreeds}::text ILIKE ${`%${search}%`}`
+        )
+      );
+    }
+
+    // Apply breed filter
+    if (breed) {
+      conditions.push(
+        sql`${breederProfiles.primaryBreeds}::jsonb @> ${JSON.stringify([breed])}`
+      );
+    }
+
+    // Build query with all conditions
+    const breeders = await db
       .select({
         id: breederProfiles.id,
         userId: breederProfiles.userId,
@@ -42,28 +63,7 @@ export async function GET(request: NextRequest) {
         createdAt: breederProfiles.createdAt,
       })
       .from(breederProfiles)
-      .where(eq(breederProfiles.isPublic, true));
-
-    // Apply search filter
-    if (search) {
-      query = query.where(
-        or(
-          ilike(breederProfiles.displayName, `%${search}%`),
-          ilike(breederProfiles.tagline, `%${search}%`),
-          sql`${breederProfiles.primaryBreeds}::text ILIKE ${`%${search}%`}`
-        )
-      );
-    }
-
-    // Apply breed filter
-    if (breed) {
-      query = query.where(
-        sql`${breederProfiles.primaryBreeds}::jsonb @> ${JSON.stringify([breed])}`
-      );
-    }
-
-    // Order by premium first, then by rating
-    const breeders = await query
+      .where(and(...conditions))
       .orderBy(
         desc(breederProfiles.premiumMember),
         desc(breederProfiles.averageRating),

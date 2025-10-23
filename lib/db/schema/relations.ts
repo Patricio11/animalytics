@@ -18,6 +18,8 @@ import {
 import { matings } from './matings';
 import { tasks } from './tasks';
 import { listings } from './marketplace';
+import { breederBreedPreferences } from './user-breed-preferences';
+import { breederProfiles } from './profiles';
 
 // ============================================================================
 // USER RELATIONS
@@ -37,6 +39,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const breedsRelations = relations(breeds, ({ many }) => ({
   animals: many(animals),
+  breederPreferences: many(breederBreedPreferences),
 }));
 
 // ============================================================================
@@ -266,5 +269,32 @@ export const animalRemindersRelations = relations(animalReminders, ({ one }) => 
   user: one(users, {
     fields: [animalReminders.userId],
     references: [users.id],
+  }),
+}));
+
+// ============================================================================
+// BREEDER PROFILE RELATIONS
+// ============================================================================
+
+export const breederProfilesRelations = relations(breederProfiles, ({ many, one }) => ({
+  user: one(users, {
+    fields: [breederProfiles.userId],
+    references: [users.id],
+  }),
+  breedPreferences: many(breederBreedPreferences),
+}));
+
+// ============================================================================
+// BREEDER BREED PREFERENCES RELATIONS
+// ============================================================================
+
+export const breederBreedPreferencesRelations = relations(breederBreedPreferences, ({ one }) => ({
+  breederProfile: one(breederProfiles, {
+    fields: [breederBreedPreferences.breederProfileId],
+    references: [breederProfiles.id],
+  }),
+  breed: one(breeds, {
+    fields: [breederBreedPreferences.breedId],
+    references: [breeds.id],
   }),
 }));
