@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 export type PedigreeNode = {
   id: string;
   name: string;
+  registeredName?: string | null;
   breed?: string | null;
   sex?: string | null;
   registrationNumber?: string | null;
@@ -17,6 +18,7 @@ export type PedigreeNode = {
   profileImageUrl?: string | null;
   dam?: PedigreeNode | null;
   sire?: PedigreeNode | null;
+  isManualEntry?: boolean; // True if this is a manual entry (not in system)
 };
 
 // ============================================================================
@@ -25,6 +27,7 @@ export type PedigreeNode = {
 
 /**
  * Recursively fetch pedigree tree up to specified generations
+ * Handles both linked animals (via damId/sireId) and manual entries
  * @param nodeId - Animal ID to start from
  * @param depth - Current depth in recursion
  * @param maxGens - Maximum generations to fetch
@@ -45,13 +48,56 @@ export async function fetchPedigree(
 
   if (!animal) return null;
 
-  // Recursively fetch parents
-  const dam = await fetchPedigree(animal.damId ?? null, depth + 1, maxGens);
-  const sire = await fetchPedigree(animal.sireId ?? null, depth + 1, maxGens);
+  // Fetch dam - either linked animal or create manual entry node
+  let dam: PedigreeNode | null = null;
+  if (animal.damId) {
+    // Dam is in the system - fetch recursively
+    dam = await fetchPedigree(animal.damId, depth + 1, maxGens);
+  } else if (animal.damName && animal.damRegisteredName) {
+    // Dam is manual entry - create node without recursion
+    dam = {
+      id: `manual-dam-${animal.id}`, // Unique ID for manual entry
+      name: animal.damName,
+      registeredName: animal.damRegisteredName,
+      breed: null,
+      sex: 'female',
+      registrationNumber: null,
+      dateOfBirth: null,
+      color: null,
+      profileImageUrl: null,
+      dam: null,
+      sire: null,
+      isManualEntry: true,
+    };
+  }
+
+  // Fetch sire - either linked animal or create manual entry node
+  let sire: PedigreeNode | null = null;
+  if (animal.sireId) {
+    // Sire is in the system - fetch recursively
+    sire = await fetchPedigree(animal.sireId, depth + 1, maxGens);
+  } else if (animal.sireName && animal.sireRegisteredName) {
+    // Sire is manual entry - create node without recursion
+    sire = {
+      id: `manual-sire-${animal.id}`, // Unique ID for manual entry
+      name: animal.sireName,
+      registeredName: animal.sireRegisteredName,
+      breed: null,
+      sex: 'male',
+      registrationNumber: null,
+      dateOfBirth: null,
+      color: null,
+      profileImageUrl: null,
+      dam: null,
+      sire: null,
+      isManualEntry: true,
+    };
+  }
 
   return {
     id: animal.id,
     name: animal.name,
+    registeredName: animal.registeredName,
     breed: animal.breedId,
     sex: animal.sex,
     registrationNumber: animal.registrationNumber,
@@ -60,6 +106,7 @@ export async function fetchPedigree(
     profileImageUrl: animal.profileImageUrl,
     dam,
     sire,
+    isManualEntry: false,
   };
 }
 
@@ -179,11 +226,13 @@ export async function validateParentSex(
 export type FlatPedigreeRow = {
   generation: number;
   name: string;
+  registeredName: string | null;
   registrationNumber: string | null;
   sex: string | null;
   breed: string | null;
   relationship: string;
   dateOfBirth: string | null;
+  isManualEntry: boolean;
 };
 
 /**
@@ -204,11 +253,13 @@ export function flattenPedigree(
     {
       generation,
       name: node.name,
+      registeredName: node.registeredName ?? null,
       registrationNumber: node.registrationNumber ?? null,
       sex: node.sex ?? null,
       breed: node.breed ?? null,
       relationship,
       dateOfBirth: node.dateOfBirth ?? null,
+      isManualEntry: node.isManualEntry ?? false,
     },
   ];
 

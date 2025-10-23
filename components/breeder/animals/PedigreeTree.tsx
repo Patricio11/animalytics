@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 type PedigreeNode = {
   id: string;
   name: string;
+  registeredName?: string | null;
   breed?: string | null;
   sex?: string | null;
   registrationNumber?: string | null;
@@ -16,6 +17,7 @@ type PedigreeNode = {
   profileImageUrl?: string | null;
   dam?: PedigreeNode | null;
   sire?: PedigreeNode | null;
+  isManualEntry?: boolean;
 };
 
 interface PedigreeTreeProps {
@@ -125,14 +127,29 @@ function AnimalNode({ animal, generation }: AnimalNodeProps) {
       className={cn(
         "p-3 transition-all duration-200 hover:shadow-elevated hover:scale-[1.02] cursor-pointer",
         "bg-surface border-primary/10",
-        generation === 0 && "border-2 border-primary shadow-card"
+        generation === 0 && "border-2 border-primary shadow-card",
+        animal.isManualEntry && "border-dashed border-amber-500/40 bg-amber-50/5"
       )}
     >
       <div className="space-y-2">
+        {/* Manual Entry Indicator */}
+        {animal.isManualEntry && (
+          <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-700 border-amber-500/30">
+            External
+          </Badge>
+        )}
+        
         {/* Name */}
         <div className="font-semibold text-sm leading-tight line-clamp-1">
           {animal.name}
         </div>
+        
+        {/* Registered Name */}
+        {animal.registeredName && (
+          <p className="text-xs text-muted-foreground italic line-clamp-1" title={animal.registeredName}>
+            {animal.registeredName}
+          </p>
+        )}
 
         {/* Sex Badge */}
         {animal.sex && (

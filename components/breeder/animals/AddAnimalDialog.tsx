@@ -326,7 +326,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
           : (formData.damName !== '' && formData.damRegisteredName !== '');
         return sireValid && damValid;
       case 4:
-        return true; // Optional fields
+        return formData.location !== ''; // Location is required
       default:
         return false;
     }
@@ -939,17 +939,18 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold mb-2">Additional Information</h3>
-                <p className="text-sm text-muted-foreground">Optional - You can skip this step</p>
+                <p className="text-sm text-muted-foreground">Location is required for your animal profile</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location">Location *</Label>
                 <Input
                   id="location"
                   value={formData.location}
                   onChange={(e) => updateFormData("location", e.target.value)}
                   placeholder="City, State"
                   className="bg-background border-primary/20"
+                  required
                 />
               </div>
 
