@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { animals, manualPedigreeEntries } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 
 // ============================================================================
 // PEDIGREE NODE TYPE
@@ -164,43 +164,51 @@ export async function fetchPedigree(
 // ============================================================================
 
 /**
- * Check if candidateId is an ancestor of targetId
+ * Check if targetId is a descendant of candidateId
  * This prevents circular references in the pedigree tree
- * @param candidateId - Potential parent ID
- * @param targetId - Animal ID we're checking against
+ * @param candidateId - Potential parent ID (the animal we want to set as parent)
+ * @param targetId - Animal ID we're editing (the child)
  * @returns true if circular relationship would be created
  */
-export async function isAncestor(
+export async function isDescendant(
   candidateId: string,
   targetId: string
 ): Promise<boolean> {
-  if (!candidateId || candidateId === targetId) return true;
+  if (!candidateId || !targetId || candidateId === targetId) return true;
 
+  // Check if targetId is a descendant of candidateId
+  // Start from targetId and traverse DOWN the tree (to children)
   const seen = new Set<string>();
-  const queue = [candidateId];
+  const queue = [targetId];
 
   while (queue.length > 0) {
-    const id = queue.shift()!;
+    const currentId = queue.shift()!;
 
-    if (seen.has(id)) continue;
-    seen.add(id);
+    if (seen.has(currentId)) continue;
+    seen.add(currentId);
 
-    const [animal] = await db
-      .select()
-      .from(animals)
-      .where(eq(animals.id, id))
-      .limit(1);
-
-    if (!animal) continue;
-
-    // Check if this animal has the target as a parent
-    if (animal.damId === targetId || animal.sireId === targetId) {
+    // If we find the candidate in the descendants, it's circular
+    if (currentId === candidateId) {
       return true;
     }
 
-    // Add parents to queue for further checking
-    if (animal.damId) queue.push(animal.damId);
-    if (animal.sireId) queue.push(animal.sireId);
+    // Find all animals that have currentId as a parent (children of currentId)
+    const children = await db
+      .select()
+      .from(animals)
+      .where(
+        or(
+          eq(animals.damId, currentId),
+          eq(animals.sireId, currentId)
+        )
+      );
+
+    // Add children to queue to continue searching
+    for (const child of children) {
+      if (!seen.has(child.id)) {
+        queue.push(child.id);
+      }
+    }
   }
 
   return false;
@@ -224,12 +232,12 @@ export async function validateParentLinks(
   }
 
   // Check if dam would create circular relationship
-  if (damId && (await isAncestor(damId, animalId))) {
+  if (damId && (await isDescendant(damId, animalId))) {
     return 'Setting this dam would create a circular relationship in the pedigree';
   }
 
   // Check if sire would create circular relationship
-  if (sireId && (await isAncestor(sireId, animalId))) {
+  if (sireId && (await isDescendant(sireId, animalId))) {
     return 'Setting this sire would create a circular relationship in the pedigree';
   }
 

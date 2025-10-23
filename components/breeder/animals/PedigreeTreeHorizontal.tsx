@@ -1,13 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Edit2, Plus } from "lucide-react";
+import { Edit2, Plus, Download, Loader2 } from "lucide-react";
 import { EditParentsDialog } from "@/components/breeder/animals/EditParentsDialog";
 import { AddPedigreeEntryDialog } from "@/components/breeder/animals/AddPedigreeEntryDialog";
+import { PedigreeCertificatePDF } from "@/components/breeder/animals/PedigreeCertificatePDF";
+import { generatePDFWithMetadata } from "@/lib/utils/pdf-generator";
+import { useToast } from "@/hooks/use-toast";
 
 type PedigreeNode = {
   id: string;
@@ -31,9 +35,12 @@ interface PedigreeTreeHorizontalProps {
 }
 
 export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: PedigreeTreeHorizontalProps) {
+  const { toast } = useToast();
+  const pdfRef = useRef<HTMLDivElement>(null);
   const [editingAnimal, setEditingAnimal] = useState<PedigreeNode | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [manualEntryConfig, setManualEntryConfig] = useState<{
     position: string;
     generation: number;
@@ -71,12 +78,65 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
     }
   };
 
+  const handleDownloadPDF = async () => {
+    if (!pdfRef.current) return;
+
+    setIsGeneratingPDF(true);
+    try {
+      await generatePDFWithMetadata(
+        pdfRef.current,
+        {
+          title: `Pedigree Certificate - ${node.name}`,
+          subject: `Three Generation Pedigree for ${node.name}`,
+          author: 'Animalytics',
+          keywords: 'pedigree, certificate, breeding, genealogy',
+          creator: 'Animalytics Professional Pedigree System',
+        },
+        {
+          filename: `pedigree-${node.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.pdf`,
+          quality: 2,
+          orientation: 'landscape',
+        }
+      );
+
+      toast({
+        title: "PDF Generated",
+        description: "Your pedigree certificate has been downloaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <div className="w-full overflow-x-auto">
       {/* Certificate Header */}
-      <div className="mb-8 text-center border-b-2 border-primary/20 pb-6">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Three Generation Pedigree</h1>
-        <p className="text-muted-foreground">Certified Family Tree • Click any animal to edit parents</p>
+      <div className="mb-8 border-b-2 border-primary/20 pb-6">
+        <div className="flex items-center justify-between">
+          <div className="text-center flex-1">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Three Generation Pedigree</h1>
+            <p className="text-muted-foreground">Certified Family Tree • Click any animal to edit parents</p>
+          </div>
+          <Button
+            onClick={handleDownloadPDF}
+            disabled={isGeneratingPDF}
+            className="bg-gradient-brand hover:opacity-90"
+            size="icon"
+            title="Download PDF Certificate"
+          >
+            {isGeneratingPDF ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Download className="w-5 h-5" />
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Horizontal Tree Layout */}
@@ -202,6 +262,17 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
           onSuccess={handleManualEntrySuccess}
         />
       )}
+
+      {/* Hidden PDF Component for Generation */}
+      <div className="fixed left-[-9999px] top-0">
+        <PedigreeCertificatePDF
+          ref={pdfRef}
+          node={node}
+          generations={generations}
+          breederName="Professional Breeder"
+          breederKennel="Premium Kennel"
+        />
+      </div>
     </div>
   );
 }
