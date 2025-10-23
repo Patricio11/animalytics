@@ -31,6 +31,7 @@ interface AnimalFormData {
   profilePhoto: File | null;
   profilePhotoPreview: string | null;
   name: string;
+  registeredName: string;
   type: 'dog' | 'bitch';
   breed: string;
   dateOfBirth: Date | undefined;
@@ -40,10 +41,13 @@ interface AnimalFormData {
   markings: string;
   weight: string;
 
-  // Step 3: Registration
+  // Step 3: Registration & Parentage
   microchipId: string;
   registrationNumber: string;
-  bloodline: string;
+  sireName: string;
+  sireRegisteredName: string;
+  damName: string;
+  damRegisteredName: string;
 
   // Step 4: Additional Info
   description: string;
@@ -94,6 +98,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     profilePhoto: null,
     profilePhotoPreview: null,
     name: "",
+    registeredName: "",
     type: "bitch",
     breed: "",
     dateOfBirth: undefined,
@@ -102,7 +107,10 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     weight: "",
     microchipId: "",
     registrationNumber: "",
-    bloodline: "",
+    sireName: "",
+    sireRegisteredName: "",
+    damName: "",
+    damRegisteredName: "",
     description: "",
     location: ""
   });
@@ -222,6 +230,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         profilePhoto: null,
         profilePhotoPreview: null,
         name: "",
+        registeredName: "",
         type: "bitch",
         breed: "",
         dateOfBirth: undefined,
@@ -230,7 +239,10 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         weight: "",
         microchipId: "",
         registrationNumber: "",
-        bloodline: "",
+        sireName: "",
+        sireRegisteredName: "",
+        damName: "",
+        damRegisteredName: "",
         description: "",
         location: ""
       });
@@ -253,7 +265,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       case 1:
         return formData.name && formData.type && formData.breed && formData.dateOfBirth;
       case 2:
-        return true; // Optional fields
+        return formData.color && formData.markings && formData.weight; // Required fields
       case 3:
         return true; // Optional fields
       case 4:
@@ -371,18 +383,32 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   )}
                 </div>
 
-                {/* Animal Name */}
+                {/* Animal Names - Side by Side */}
                 <div className="space-y-3 flex flex-col justify-center">
-                  <Label htmlFor="name">Animal Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => updateFormData("name", e.target.value)}
-                    placeholder="Enter animal name"
-                    className="bg-background border-primary/20 focus:border-primary text-lg"
-                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name (Call Name) *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => updateFormData("name", e.target.value)}
+                        placeholder="e.g., Max"
+                        className="bg-background border-primary/20 focus:border-primary"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="registeredName">Registered Name</Label>
+                      <Input
+                        id="registeredName"
+                        value={formData.registeredName}
+                        onChange={(e) => updateFormData("registeredName", e.target.value)}
+                        placeholder="e.g., Champion Goldcrest's Maximus Rex"
+                        className="bg-background border-primary/20 focus:border-primary"
+                      />
+                    </div>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Choose a unique name for your animal
+                    Call name is for everyday use. Registered name is the official kennel club name (optional).
                   </p>
                 </div>
               </div>
@@ -541,33 +567,35 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold mb-2">Physical Details</h3>
-                <p className="text-sm text-muted-foreground">Optional - You can skip this step</p>
+                <p className="text-sm text-muted-foreground">Essential information about your animal</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="color">Color</Label>
+                <Label htmlFor="color">Color *</Label>
                 <Input
                   id="color"
                   value={formData.color}
                   onChange={(e) => updateFormData("color", e.target.value)}
                   placeholder="e.g., Black, Brown, White"
                   className="bg-background border-primary/20"
+                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="markings">Markings</Label>
+                <Label htmlFor="markings">Markings *</Label>
                 <Input
                   id="markings"
                   value={formData.markings}
                   onChange={(e) => updateFormData("markings", e.target.value)}
                   placeholder="e.g., White chest, Black mask"
                   className="bg-background border-primary/20"
+                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg)</Label>
+                <Label htmlFor="weight">Weight (kg) *</Label>
                 <Input
                   id="weight"
                   type="number"
@@ -575,51 +603,98 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   onChange={(e) => updateFormData("weight", e.target.value)}
                   placeholder="Enter weight in kg"
                   className="bg-background border-primary/20"
+                  required
                 />
               </div>
             </div>
           )}
 
-          {/* Step 3: Registration */}
+          {/* Step 3: Registration & Parentage */}
           {currentStep === 3 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Registration Details</h3>
-                <p className="text-sm text-muted-foreground">Optional - You can skip this step</p>
+                <h3 className="text-lg font-semibold mb-2">Registration & Parentage</h3>
+                <p className="text-sm text-muted-foreground">Official registration and parent information</p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="microchipId">Microchip ID</Label>
-                <Input
-                  id="microchipId"
-                  value={formData.microchipId}
-                  onChange={(e) => updateFormData("microchipId", e.target.value)}
-                  placeholder="Enter microchip number"
-                  className="bg-background border-primary/20"
-                />
+              {/* Registration Numbers - Side by Side */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="microchipId">Microchip ID</Label>
+                  <Input
+                    id="microchipId"
+                    value={formData.microchipId}
+                    onChange={(e) => updateFormData("microchipId", e.target.value)}
+                    placeholder="Enter microchip number"
+                    className="bg-background border-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="registrationNumber">Registration Number</Label>
+                  <Input
+                    id="registrationNumber"
+                    value={formData.registrationNumber}
+                    onChange={(e) => updateFormData("registrationNumber", e.target.value)}
+                    placeholder="Kennel club number"
+                    className="bg-background border-primary/20"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="registrationNumber">Registration Number</Label>
-                <Input
-                  id="registrationNumber"
-                  value={formData.registrationNumber}
-                  onChange={(e) => updateFormData("registrationNumber", e.target.value)}
-                  placeholder="Enter registration number"
-                  className="bg-background border-primary/20"
-                />
-              </div>
+              {/* Sire (Father) Information - Fieldset */}
+              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+                <legend className="text-sm font-semibold px-2 text-primary">Sire (Father)</legend>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="sireName">Name</Label>
+                    <Input
+                      id="sireName"
+                      value={formData.sireName}
+                      onChange={(e) => updateFormData("sireName", e.target.value)}
+                      placeholder="e.g., Max"
+                      className="bg-background border-primary/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sireRegisteredName">Registered Name</Label>
+                    <Input
+                      id="sireRegisteredName"
+                      value={formData.sireRegisteredName}
+                      onChange={(e) => updateFormData("sireRegisteredName", e.target.value)}
+                      placeholder="e.g., Champion Goldcrest's Maximus Rex"
+                      className="bg-background border-primary/20"
+                    />
+                  </div>
+                </div>
+              </fieldset>
 
-              <div className="space-y-2">
-                <Label htmlFor="bloodline">Bloodline</Label>
-                <Input
-                  id="bloodline"
-                  value={formData.bloodline}
-                  onChange={(e) => updateFormData("bloodline", e.target.value)}
-                  placeholder="Enter bloodline information"
-                  className="bg-background border-primary/20"
-                />
-              </div>
+              {/* Dam (Mother) Information - Fieldset */}
+              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+                <legend className="text-sm font-semibold px-2 text-primary">Dam (Mother)</legend>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="damName">Name</Label>
+                    <Input
+                      id="damName"
+                      value={formData.damName}
+                      onChange={(e) => updateFormData("damName", e.target.value)}
+                      placeholder="e.g., Bella"
+                      className="bg-background border-primary/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="damRegisteredName">Registered Name</Label>
+                    <Input
+                      id="damRegisteredName"
+                      value={formData.damRegisteredName}
+                      onChange={(e) => updateFormData("damRegisteredName", e.target.value)}
+                      placeholder="e.g., Grand Champion Silverstone's Bella Luna"
+                      className="bg-background border-primary/20"
+                    />
+                  </div>
+                </div>
+              </fieldset>
             </div>
           )}
 
