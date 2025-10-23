@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
   ArrowLeft, Share2, Edit, Heart, Award, Shield, Calendar,
@@ -69,10 +70,110 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading animal profile...</p>
+      <div className="min-h-screen bg-surface-secondary">
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+          {/* Back Button Skeleton */}
+          <Skeleton className="h-10 w-40" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content Skeleton */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Image Gallery Skeleton */}
+              <Card className="shadow-card bg-surface border-0">
+                <CardContent className="p-0">
+                  <Skeleton className="aspect-video w-full rounded-t-lg" />
+                  <div className="p-4 grid grid-cols-4 gap-2">
+                    <Skeleton className="aspect-square rounded-lg" />
+                    <Skeleton className="aspect-square rounded-lg" />
+                    <Skeleton className="aspect-square rounded-lg" />
+                    <Skeleton className="aspect-square rounded-lg" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tabs Skeleton */}
+              <Card className="shadow-card bg-surface border-0">
+                <div className="border-b border-primary/10 px-6 pt-6">
+                  <div className="flex gap-2 mb-4">
+                    <Skeleton className="h-10 w-24" />
+                    <Skeleton className="h-10 w-28" />
+                    <Skeleton className="h-10 w-32" />
+                    <Skeleton className="h-10 w-24" />
+                    <Skeleton className="h-10 w-24" />
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <div className="grid grid-cols-2 gap-4 mt-6">
+                    <Skeleton className="h-20 rounded-lg" />
+                    <Skeleton className="h-20 rounded-lg" />
+                    <Skeleton className="h-20 rounded-lg" />
+                    <Skeleton className="h-20 rounded-lg" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Sidebar Skeleton */}
+            <div className="space-y-6">
+              <Card className="shadow-card bg-surface border-0">
+                <CardContent className="p-6 space-y-6">
+                  {/* Badge and Title */}
+                  <div className="space-y-4">
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-9 w-48" />
+                    <Skeleton className="h-6 w-32" />
+                  </div>
+
+                  <Separator />
+
+                  {/* Quick Info */}
+                  <div className="space-y-3">
+                    <Skeleton className="h-6 w-40" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-5 w-20" />
+                      </div>
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-5 w-16" />
+                      </div>
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-5 w-20" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Additional Card Skeleton */}
+              <Card className="shadow-card bg-surface border-0">
+                <CardContent className="p-6 space-y-4">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     );
