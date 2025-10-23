@@ -147,7 +147,7 @@ export function useCreateAnimal() {
     mutationFn: createAnimal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['animals'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate all dashboard queries
     },
   });
 }
@@ -160,7 +160,7 @@ export function useUpdateAnimal() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['animals'] });
       queryClient.invalidateQueries({ queryKey: ['animals', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate all dashboard queries
     },
   });
 }
@@ -172,7 +172,7 @@ export function useDeleteAnimal() {
     mutationFn: deleteAnimal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['animals'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate all dashboard queries
     },
   });
 }
