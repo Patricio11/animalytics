@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { breederBreedPreferences, breeds, breederProfiles } from '@/lib/db/schema';
 import { auth } from '@/lib/auth/config';
 import { eq, inArray } from 'drizzle-orm';
+import { ensureBreederProfile } from '@/lib/api/ensure-breeder-profile';
 
 // ============================================================================
 // GET /api/breeders/breed-preferences
@@ -20,23 +21,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get breeder profile
-    const breederProfile = await db
-      .select({ id: breederProfiles.id })
-      .from(breederProfiles)
-      .where(eq(breederProfiles.userId, session.user.id))
-      .limit(1);
+    // Ensure breeder profile exists (auto-create if needed)
+    const breederProfile = await ensureBreederProfile(
+      session.user.id,
+      session.user.name,
+      session.user.email
+    );
 
-    // If no breeder profile exists, return empty preferences
-    if (!breederProfile || breederProfile.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        message: 'No breeder profile found. Preferences will be saved when you create a profile.',
-      });
-    }
-
-    const breederProfileId = breederProfile[0].id;
+    const breederProfileId = breederProfile.id;
 
     // Fetch breeder's breed preferences with breed details
     const preferences = await db
@@ -88,23 +80,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { breedIds } = body as { breedIds: string[] };
 
-    // Get breeder profile
-    const breederProfile = await db
-      .select({ id: breederProfiles.id })
-      .from(breederProfiles)
-      .where(eq(breederProfiles.userId, session.user.id))
-      .limit(1);
+    // Ensure breeder profile exists (auto-create if needed)
+    const breederProfile = await ensureBreederProfile(
+      session.user.id,
+      session.user.name,
+      session.user.email
+    );
 
-    // If no breeder profile, return success but with a message
-    if (!breederProfile || breederProfile.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        message: 'Preferences saved. They will be applied when you create a breeder profile.',
-      });
-    }
-
-    const breederProfileId = breederProfile[0].id;
+    const breederProfileId = breederProfile.id;
 
     if (!Array.isArray(breedIds)) {
       return NextResponse.json(
@@ -191,22 +174,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get breeder profile
-    const breederProfile = await db
-      .select({ id: breederProfiles.id })
-      .from(breederProfiles)
-      .where(eq(breederProfiles.userId, session.user.id))
-      .limit(1);
+    // Ensure breeder profile exists (auto-create if needed)
+    const breederProfile = await ensureBreederProfile(
+      session.user.id,
+      session.user.name,
+      session.user.email
+    );
 
-    // If no breeder profile, just return success
-    if (!breederProfile || breederProfile.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No preferences to clear',
-      });
-    }
-
-    const breederProfileId = breederProfile[0].id;
+    const breederProfileId = breederProfile.id;
 
     await db
       .delete(breederBreedPreferences)

@@ -28,16 +28,10 @@ export async function GET(request: NextRequest) {
       .where(eq(breederProfiles.userId, session.user.id))
       .limit(1);
 
-    if (!profile) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
-      );
-    }
-
+    // Return null if no profile exists (not an error)
     return NextResponse.json({
       success: true,
-      profile,
+      profile: profile || null,
     });
   } catch (error) {
     console.error('Error fetching breeder profile:', error);
