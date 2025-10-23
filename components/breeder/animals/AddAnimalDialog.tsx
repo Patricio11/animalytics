@@ -143,20 +143,32 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   // Filter animals for sire selection (males only, same breed if selected)
   const availableSires = useMemo(() => {
     if (!allAnimals) return [];
-    return allAnimals.filter((animal: any) => 
-      animal.sex === 'male' && 
-      (!formData.breed || animal.breed === formData.breed)
-    );
-  }, [allAnimals, formData.breed]);
+    
+    // Get selected breed ID
+    const selectedBreed = breeds.find((b: any) => b.name === formData.breed);
+    const selectedBreedId = selectedBreed?.id;
+    
+    return allAnimals.filter((animal: any) => {
+      const isMale = animal.sex === 'male';
+      const breedMatches = !selectedBreedId || animal.breedId === selectedBreedId;
+      return isMale && breedMatches;
+    });
+  }, [allAnimals, formData.breed, breeds]);
   
   // Filter animals for dam selection (females only, same breed if selected)
   const availableDams = useMemo(() => {
     if (!allAnimals) return [];
-    return allAnimals.filter((animal: any) => 
-      animal.sex === 'female' && 
-      (!formData.breed || animal.breed === formData.breed)
-    );
-  }, [allAnimals, formData.breed]);
+    
+    // Get selected breed ID
+    const selectedBreed = breeds.find((b: any) => b.name === formData.breed);
+    const selectedBreedId = selectedBreed?.id;
+    
+    return allAnimals.filter((animal: any) => {
+      const isFemale = animal.sex === 'female';
+      const breedMatches = !selectedBreedId || animal.breedId === selectedBreedId;
+      return isFemale && breedMatches;
+    });
+  }, [allAnimals, formData.breed, breeds]);
 
   // Handle profile photo upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -776,12 +788,12 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
+                      <PopoverContent className="w-[400px] p-0">
                         <Command>
-                          <CommandInput placeholder="Search sires..." />
+                          <CommandInput placeholder="Search sires..." className="h-9" />
                           <CommandList>
                             {availableSires.length === 0 ? (
-                              <CommandEmpty>No male animals found. Add a male animal first.</CommandEmpty>
+                              <CommandEmpty className="py-6 text-center text-sm">No male animals found. Add a male animal first.</CommandEmpty>
                             ) : (
                               <CommandGroup>
                                 {availableSires.map((animal: any) => (
@@ -789,17 +801,18 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                                     key={animal.id}
                                     value={animal.id}
                                     onSelect={() => updateFormData("sireId", animal.id)}
+                                    className="px-3 py-3"
                                   >
                                     <Check
                                       className={cn(
-                                        "mr-2 h-4 w-4",
+                                        "mr-3 h-4 w-4 shrink-0",
                                         formData.sireId === animal.id ? "opacity-100" : "opacity-0"
                                       )}
                                     />
-                                    <div className="flex flex-col">
-                                      <span className="font-medium">{animal.name}</span>
+                                    <div className="flex flex-col gap-1 min-w-0">
+                                      <span className="font-medium truncate">{animal.name}</span>
                                       {animal.registeredName && (
-                                        <span className="text-xs text-muted-foreground">{animal.registeredName}</span>
+                                        <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>
                                       )}
                                     </div>
                                   </CommandItem>
@@ -894,12 +907,12 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
+                      <PopoverContent className="w-[400px] p-0">
                         <Command>
-                          <CommandInput placeholder="Search dams..." />
+                          <CommandInput placeholder="Search dams..." className="h-9" />
                           <CommandList>
                             {availableDams.length === 0 ? (
-                              <CommandEmpty>No female animals found. Add a female animal first.</CommandEmpty>
+                              <CommandEmpty className="py-6 text-center text-sm">No female animals found. Add a female animal first.</CommandEmpty>
                             ) : (
                               <CommandGroup>
                                 {availableDams.map((animal: any) => (
@@ -907,17 +920,18 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                                     key={animal.id}
                                     value={animal.id}
                                     onSelect={() => updateFormData("damId", animal.id)}
+                                    className="px-3 py-3"
                                   >
                                     <Check
                                       className={cn(
-                                        "mr-2 h-4 w-4",
+                                        "mr-3 h-4 w-4 shrink-0",
                                         formData.damId === animal.id ? "opacity-100" : "opacity-0"
                                       )}
                                     />
-                                    <div className="flex flex-col">
-                                      <span className="font-medium">{animal.name}</span>
+                                    <div className="flex flex-col gap-1 min-w-0">
+                                      <span className="font-medium truncate">{animal.name}</span>
                                       {animal.registeredName && (
-                                        <span className="text-xs text-muted-foreground">{animal.registeredName}</span>
+                                        <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>
                                       )}
                                     </div>
                                   </CommandItem>
