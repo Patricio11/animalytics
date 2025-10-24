@@ -16,12 +16,20 @@ interface ImageLightboxProps {
 export function ImageLightbox({ images, open, onOpenChange, initialIndex = 0 }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
+  // Filter out empty or invalid image URLs
+  const validImages = images.filter((img) => img && img.trim() !== "");
+
+  // If no valid images, don't render
+  if (validImages.length === 0) {
+    return null;
+  }
+
   const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? validImages.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -48,7 +56,7 @@ export function ImageLightbox({ images, open, onOpenChange, initialIndex = 0 }: 
           </Button>
 
           {/* Previous Button */}
-          {images.length > 1 && (
+          {validImages.length > 1 && (
             <Button
               variant="ghost"
               size="icon"
@@ -61,17 +69,19 @@ export function ImageLightbox({ images, open, onOpenChange, initialIndex = 0 }: 
 
           {/* Image */}
           <div className="relative w-full h-full flex items-center justify-center p-12">
-            <Image
-              src={images[currentIndex]}
-              alt={`Image ${currentIndex + 1}`}
-              fill
-              className="object-contain"
-              priority
-            />
+            {validImages[currentIndex] && (
+              <Image
+                src={validImages[currentIndex]}
+                alt={`Image ${currentIndex + 1}`}
+                fill
+                className="object-contain"
+                priority
+              />
+            )}
           </div>
 
           {/* Next Button */}
-          {images.length > 1 && (
+          {validImages.length > 1 && (
             <Button
               variant="ghost"
               size="icon"
@@ -83,9 +93,9 @@ export function ImageLightbox({ images, open, onOpenChange, initialIndex = 0 }: 
           )}
 
           {/* Image Counter */}
-          {images.length > 1 && (
+          {validImages.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 bg-black/60 text-white px-4 py-2 rounded-full text-sm">
-              {currentIndex + 1} / {images.length}
+              {currentIndex + 1} / {validImages.length}
             </div>
           )}
         </div>
