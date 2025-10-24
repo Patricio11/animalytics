@@ -7,9 +7,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DailyReadingInput } from './DailyReadingInput';
 import { LabSelectorCard } from './LabSelectorCard';
 import { ProgesteroneRatingDisplay } from './ProgesteroneRatingDisplay';
-import { Calculator, Save, RotateCcw, Info, Clock, Plus } from 'lucide-react';
+import { Calculator, Save, RotateCcw, Info, Clock, Plus, Database, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProgesteroneStore } from '@/lib/stores/progesterone-store';
+import { useCreateProgesteroneTest } from '@/lib/api/queries/progesterone-tests';
+import { useAnimals } from '@/lib/api/queries/animals';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   Laboratory,
   Unit,
@@ -39,6 +44,11 @@ export function ProgesteroneInputForm() {
   const [unit, setUnit] = useState<Unit>(progesteroneStore.unit || 'nanograms');
   const [breedingMethod, setBreedingMethod] = useState<BreedingMethod>(progesteroneStore.breedingMethod || 'natural_ai');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [selectedAnimal, setSelectedAnimal] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Database mutation
+  const createTestMutation = useCreateProgesteroneTest();
 
   // Convert Zustand readings to local state format
   const initializeReadings = (): DailyReading[] => {

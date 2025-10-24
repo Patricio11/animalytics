@@ -5,49 +5,34 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calculator, Activity, Heart, Beaker, ArrowRight, Calendar, TrendingUp, FileText } from "lucide-react";
+import { Calculator, Activity, Heart, Beaker, ArrowRight, Calendar, TrendingUp, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { useMatings } from "@/lib/api/queries/matings";
+import { format } from "date-fns";
 
 export default function CalculatorPage() {
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Mock data for recent calculations
-  const recentMatingCalculations = [
-    {
-      id: "1",
-      dogName: "Max",
-      bitchName: "Bella",
-      date: "2024-01-15",
-      rating: 87.5,
-      status: "excellent" as const,
-    },
-    {
-      id: "2",
-      dogName: "Duke",
-      bitchName: "Luna",
-      date: "2024-01-12",
-      rating: 72.3,
-      status: "good" as const,
-    },
-  ];
+  // Fetch real data from API
+  const { data: matingsData, isLoading: matingsLoading } = useMatings();
 
-  const recentProgesteroneTests = [
-    {
-      id: "1",
-      bitchName: "Bella",
-      date: "2024-01-16",
-      readings: 3,
-      rating: 92.0,
-    },
-    {
-      id: "2",
-      bitchName: "Luna",
-      date: "2024-01-14",
-      readings: 4,
-      rating: 88.5,
-    },
-  ];
+  // Get recent matings (last 2)
+  const recentMatingCalculations = matingsData?.slice(0, 2).map((mating: any) => {
+    const ratingValue = parseFloat(mating.overallRating || '0');
+    return {
+      id: mating.id,
+      dogName: mating.dog?.name || mating.frozenSemen?.dogName || 'Unknown',
+      bitchName: mating.bitch?.name || 'Unknown',
+      date: mating.matingDate,
+      rating: ratingValue,
+      status: (ratingValue >= 80 ? 'excellent' : 'good') as 'excellent' | 'good',
+    };
+  }) || [];
+
+  // TODO: Implement progesterone tests API
+  // For now, show empty state
+  const recentProgesteroneTests: any[] = [];
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -219,41 +204,62 @@ export default function CalculatorPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {recentMatingCalculations.map((calc) => (
-                    <Card key={calc.id} className="shadow-card bg-surface-secondary border-0">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-foreground">
-                              {calc.dogName} × {calc.bitchName}
+                  {matingsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  ) : recentMatingCalculations.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p className="text-sm">No mating records yet</p>
+                      <Button
+                        variant="outline"
+                        className="mt-4"
+                        asChild
+                      >
+                        <Link href="/calculators/mating">
+                          Create First Record
+                        </Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      {recentMatingCalculations.map((calc: any) => (
+                        <Card key={calc.id} className="shadow-card bg-surface-secondary border-0">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-foreground">
+                                  {calc.dogName} × {calc.bitchName}
+                                </div>
+                                <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {calc.date}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-foreground">{calc.rating.toFixed(1)}%</div>
+                                <Badge
+                                  className={calc.status === 'excellent' ? 'bg-chart-3 text-white' : 'bg-chart-4 text-white'}
+                                >
+                                  {calc.status}
+                                </Badge>
+                              </div>
                             </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                              <Calendar className="w-3 h-3" />
-                              {calc.date}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-bold text-foreground">{calc.rating}%</div>
-                            <Badge
-                              className={calc.status === 'excellent' ? 'bg-chart-3 text-white' : 'bg-chart-4 text-white'}
-                            >
-                              {calc.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  <Button
-                    variant="outline"
-                    className="w-full hover:bg-primary/10 hover:border-primary shadow-card"
-                    asChild
-                  >
-                    <Link href="/calculators/mating">
-                      <FileText className="w-4 h-4 mr-2" />
-                      View All Records
-                    </Link>
-                  </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      <Button
+                        variant="outline"
+                        className="w-full hover:bg-primary/10 hover:border-primary shadow-card"
+                        asChild
+                      >
+                        <Link href="/calculators/mating">
+                          <FileText className="w-4 h-4 mr-2" />
+                          View All Records
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -266,36 +272,52 @@ export default function CalculatorPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {recentProgesteroneTests.map((test) => (
-                    <Card key={test.id} className="shadow-card bg-surface-secondary border-0">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-foreground">{test.bitchName}</div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                              <Calendar className="w-3 h-3" />
-                              {test.date}
-                              <Badge variant="outline" className="text-xs">
-                                {test.readings} readings
-                              </Badge>
+                  {recentProgesteroneTests.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p className="text-sm mb-2">No progesterone tests yet</p>
+                      <p className="text-xs mb-4">Track progesterone levels to determine optimal breeding timing</p>
+                      <Button
+                        variant="outline"
+                        onClick={() => setActiveTab("progesterone")}
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Start First Test
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      {recentProgesteroneTests.map((test: any) => (
+                        <Card key={test.id} className="shadow-card bg-surface-secondary border-0">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-foreground">{test.bitchName}</div>
+                                <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {test.date}
+                                  <Badge variant="outline" className="text-xs">
+                                    {test.readings} readings
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-foreground">{test.rating}%</div>
+                                <div className="text-xs text-muted-foreground">rating</div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-bold text-foreground">{test.rating}%</div>
-                            <div className="text-xs text-muted-foreground">rating</div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  <Button
-                    variant="outline"
-                    className="w-full hover:bg-primary/10 hover:border-primary shadow-card"
-                    onClick={() => setActiveTab("progesterone")}
-                  >
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    New Test
-                  </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      <Button
+                        variant="outline"
+                        className="w-full hover:bg-primary/10 hover:border-primary shadow-card"
+                        onClick={() => setActiveTab("progesterone")}
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        New Test
+                      </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -359,7 +381,7 @@ export default function CalculatorPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentMatingCalculations.map((calc) => (
+                  {recentMatingCalculations.map((calc: any) => (
                     <Card key={calc.id} className="shadow-card bg-surface-secondary border-0">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-4">

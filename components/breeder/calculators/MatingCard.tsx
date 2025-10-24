@@ -26,6 +26,17 @@ interface MatingCardProps {
 }
 
 export function MatingCard({ mating, bitch, dog }: MatingCardProps) {
+  // Convert string/number ratings to numbers
+  const progesteroneRating = typeof mating.progesteroneCycleRating === 'number' 
+    ? mating.progesteroneCycleRating 
+    : parseFloat(mating.progesteroneCycleRating || '0');
+  const conceptionRating = typeof mating.conceptionRating === 'number'
+    ? mating.conceptionRating
+    : parseFloat(mating.conceptionRating || '0');
+  const overallRating = typeof mating.overallRating === 'number'
+    ? mating.overallRating
+    : parseFloat(mating.overallRating || '0');
+
   // Rating color logic
   const getRatingColor = (rating: number) => {
     if (rating >= 80) return 'text-chart-3';
@@ -151,22 +162,22 @@ export function MatingCard({ mating, bitch, dog }: MatingCardProps) {
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Progesterone Cycle</span>
-              <span className={cn("font-semibold", getRatingColor(mating.progesteroneCycleRating))}>
-                {mating.progesteroneCycleRating.toFixed(1)}%
+              <span className={cn("font-semibold", getRatingColor(progesteroneRating))}>
+                {progesteroneRating.toFixed(1)}%
               </span>
             </div>
-            <Progress value={mating.progesteroneCycleRating} className="h-2" />
+            <Progress value={progesteroneRating} className="h-2" />
           </div>
 
           {/* Conception Rating */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Conception Rating</span>
-              <span className={cn("font-semibold", getRatingColor(mating.conceptionRating))}>
-                {mating.conceptionRating.toFixed(1)}%
+              <span className={cn("font-semibold", getRatingColor(conceptionRating))}>
+                {conceptionRating.toFixed(1)}%
               </span>
             </div>
-            <Progress value={mating.conceptionRating} className="h-2" />
+            <Progress value={conceptionRating} className="h-2" />
           </div>
 
           {/* Overall Rating */}
@@ -176,10 +187,10 @@ export function MatingCard({ mating, bitch, dog }: MatingCardProps) {
               <Badge
                 className={cn(
                   "font-semibold text-white",
-                  getRatingBgColor(mating.overallRating)
+                  getRatingBgColor(overallRating)
                 )}
               >
-                {mating.overallRating.toFixed(1)}%
+                {overallRating.toFixed(1)}%
               </Badge>
             </div>
           </div>

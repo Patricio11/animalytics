@@ -6,6 +6,7 @@ export * from './profiles';
 export * from './animals';
 export * from './pedigree';
 export * from './matings';
+export * from './progesterone-tests';
 export * from './tasks';
 export * from './reports';
 export * from './marketplace';
