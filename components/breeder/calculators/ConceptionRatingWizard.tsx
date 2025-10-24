@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WizardContainer } from "@/components/breeder/calculators/wizard/WizardContainer";
 import { WizardStep } from "@/components/breeder/calculators/wizard/WizardStep";
-import { BreedSelectionStep } from "@/components/breeder/calculators/wizard/steps/BreedSelectionStep";
+import { AnimalSelectionStep } from "@/components/breeder/calculators/wizard/steps/AnimalSelectionStep";
 import { BitchInformationStep } from "@/components/breeder/calculators/wizard/steps/BitchInformationStep";
 import { BitchHistoryStep } from "@/components/breeder/calculators/wizard/steps/BitchHistoryStep";
 import { LitterHistoryStep } from "@/components/breeder/calculators/wizard/steps/LitterHistoryStep";
@@ -18,7 +18,7 @@ import { calculateConceptionRating } from "@/lib/calculations/conception-rating"
 import { ConceptionInputs, ConceptionRating } from "@/lib/calculations/conception-types";
 
 const wizardSteps = [
-  { id: "1", title: "Breed Selection", icon: "🐕", description: "Select the breed for assessment" },
+  { id: "1", title: "Animal Selection", icon: "🐕", description: "Select the breeding pair" },
   { id: "2", title: "Bitch Information", icon: "🐾", description: "Basic information about the female" },
   { id: "3", title: "Bitch History", icon: "📋", description: "Breeding history and health" },
   { id: "4", title: "Litter History", icon: "🐶", description: "Previous litter outcomes" },
@@ -42,7 +42,27 @@ export function ConceptionRatingWizard({
   const { toast } = useToast();
   const zustandStore = useConceptionWizardStore();
 
-  const handleComplete = (wizardData: WizardData) => {
+  const handleComplete = async (wizardData: WizardData) => {
+    // Helper to convert string/number to number
+    const toNumber = (val: string | number | undefined): number | undefined => {
+      if (val === undefined || val === null) return undefined;
+      return typeof val === 'string' ? parseFloat(val) : val;
+    };
+
+    // Helper to convert to yes/no
+    const toYesNo = (val: string | boolean | undefined): 'yes' | 'no' | undefined => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === 'boolean') return val ? 'yes' : 'no';
+      return val === 'yes' ? 'yes' : 'no';
+    };
+
+    // Calculate litter statistics from litter history
+    const litters = wizardData.litters || [];
+    const totalLitters = litters.length;
+    const totalPuppies = litters.reduce((sum, l) => sum + (l.puppyCount || 0), 0);
+    const successfulLitters = litters.filter(l => !l.complications).length;
+    const averageLitterSize = totalLitters > 0 ? totalPuppies / totalLitters : undefined;
+
     // Transform wizard data to ConceptionInputs format
     const inputs: ConceptionInputs = {
       breed: wizardData.bitchBreed,
@@ -51,57 +71,91 @@ export function ConceptionRatingWizard({
         age: wizardData.bitchAge,
         weight: wizardData.bitchWeight,
         bodyConditionScore: wizardData.bodyConditionScore,
-        healthStatus: wizardData.healthStatus,
+        healthStatus: wizardData.generalHealth as 'excellent' | 'good' | 'fair' | 'poor' | undefined,
       },
       bitchHistory: {
-        hasBeenBred: wizardData.hasBeenBred,
+        hasBeenBred: toYesNo(wizardData.hasBeenBred),
         previousLitters: wizardData.previousLitters,
-        monthsSinceLastLitter: wizardData.monthsSinceLastLitter,
-        hasComplications: wizardData.hasComplications,
+        monthsSinceLastLitter: toNumber(wizardData.lastLitterDate),
+        hasComplications: wizardData.complications ? 'yes' : 'no',
       },
       litterHistory: {
-        totalLitters: wizardData.totalLitters,
-        successfulLitters: wizardData.successfulLitters,
-        averageLitterSize: wizardData.averageLitterSize,
+        totalLitters,
+        totalPuppies,
+        successfulLitters,
+        averageLitterSize,
       },
       dogHistory: {
-        hasBeenUsed: wizardData.hasBeenUsedForBreeding,
-        previousLitters: wizardData.dogPreviousLitters,
-        successRate: wizardData.dogSuccessRate,
+        hasBeenUsed: toYesNo(wizardData.hasBeenUsed),
+        previousLitters: wizardData.previousLittersCount,
+        successRate: toNumber(wizardData.successRate),
       },
       breederHistory: {
-        yearsExperience: wizardData.yearsOfExperience,
-        totalLitters: wizardData.breederTotalLitters,
-        breedFamiliarity: wizardData.breedFamiliarity,
+        yearsExperience: toNumber(wizardData.yearsExperience),
+        totalLitters: wizardData.totalLitters,
+        breedFamiliarity: wizardData.breedFamiliarity as 'expert' | 'experienced' | 'moderate' | 'limited' | 'novice' | undefined,
       },
       semenInformation: {
-        type: wizardData.semenType,
-        shippingDuration: wizardData.shippingDuration,
-        storageTime: wizardData.storageTime,
+        type: wizardData.type as 'fresh' | 'chilled' | 'frozen' | undefined,
+        shippingDuration: toNumber(wizardData.shippingDuration),
+        storageTime: toNumber(wizardData.storageTime),
       },
       semenQuality: {
-        quality: wizardData.semenQuality,
-        motility: wizardData.motility,
-        concentration: wizardData.concentration,
-        morphology: wizardData.morphology,
+        quality: wizardData.quality as 'excellent' | 'good' | 'fair' | 'poor' | undefined,
+        motility: toNumber(wizardData.motility),
+        concentration: toNumber(wizardData.concentration),
+        morphology: toNumber(wizardData.morphology),
       },
       semenAssessment: {
-        type: wizardData.assessmentType,
+        type: 'full' as 'full' | 'visual' | 'none',
       },
     };
 
     // Calculate conception rating
     const rating = calculateConceptionRating(inputs);
 
-    toast({
-      title: "Calculation complete!",
-      description: `Conception rating: ${rating.overallRating.toFixed(1)}%`,
-    });
+    // Save to database
+    try {
+      const response = await fetch('/api/conception-ratings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bitchId: wizardData.bitchId,
+          dogId: wizardData.dogId,
+          frozenSemenId: wizardData.frozenSemenId,
+          matingDate: new Date().toISOString().split('T')[0],
+          breedingMethod: wizardData.useFrozenSemen ? 'frozen' : 'natural_ai',
+          calculationData: wizardData,
+          ratingBreakdown: rating.breakdown,
+          conceptionRating: rating.overallRating,
+          overallRating: rating.overallRating,
+          informationAccuracy: rating.informationAccuracy,
+        }),
+      });
 
-    // Clear store and close wizard
-    zustandStore.reset();
-    onComplete(rating);
-    onOpenChange(false);
+      if (!response.ok) {
+        throw new Error('Failed to save rating');
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "Rating saved!",
+        description: `Conception rating: ${rating.overallRating.toFixed(1)}%`,
+      });
+
+      // Clear store and close wizard
+      zustandStore.reset();
+      onComplete(rating);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving rating:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save rating. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -119,6 +173,7 @@ export function ConceptionRatingWizard({
         <div className="px-6 pb-6">
           <WizardContainer
             steps={wizardSteps}
+            initialData={{}}
             onComplete={handleComplete}
             onCancel={handleCancel}
             saveLabel="Calculate Rating"
@@ -127,7 +182,7 @@ export function ConceptionRatingWizard({
             {({ currentStep, data, updateData, nextStep, prevStep }) => (
               <>
                 <WizardStep isActive={currentStep === 0}>
-                  <BreedSelectionStep
+                  <AnimalSelectionStep
                     data={data}
                     onUpdate={updateData}
                     onNext={nextStep}

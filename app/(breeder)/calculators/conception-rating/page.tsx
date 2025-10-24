@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConceptionRatingCard } from "@/components/breeder/calculators/ConceptionRatingCard";
 import { ConceptionRatingEmptyState } from "@/components/breeder/calculators/ConceptionRatingEmptyState";
 import { ConceptionRatingWizard } from "@/components/breeder/calculators/ConceptionRatingWizard";
-import { Heart, Plus, Search } from "lucide-react";
+import { Heart, Plus, Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConceptionRating } from "@/lib/calculations/conception-types";
 
@@ -21,6 +21,42 @@ export default function ConceptionRatingPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [ratings, setRatings] = useState<StoredRating[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch ratings from database
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const response = await fetch('/api/conception-ratings');
+        if (!response.ok) throw new Error('Failed to fetch ratings');
+        const result = await response.json();
+        
+        // Transform API data to match component expectations
+        const transformedRatings = (result.ratings || []).map((mating: any) => ({
+          id: mating.id,
+          overallRating: parseFloat(mating.conceptionRating || mating.overallRating || 0),
+          informationAccuracy: parseFloat(mating.informationAccuracy || 0),
+          breakdown: mating.ratingBreakdown || {},
+          totalWeight: 100,
+          missingWeight: 0,
+          createdAt: new Date(mating.createdAt),
+        }));
+        
+        setRatings(transformedRatings);
+      } catch (error) {
+        console.error('Error fetching ratings:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load ratings",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRatings();
+  }, [toast]);
 
   // Filter ratings based on search
   const filteredRatings = useMemo(() => {
@@ -37,20 +73,27 @@ export default function ConceptionRatingPage() {
     setShowWizard(true);
   };
 
-  const handleWizardComplete = (rating: ConceptionRating) => {
-    // Add new rating to the list
-    const newRating: StoredRating = {
-      ...rating,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-
-    setRatings((prev) => [newRating, ...prev]);
-
-    toast({
-      title: "Rating calculated!",
-      description: `Conception rating: ${rating.overallRating.toFixed(1)}%`,
-    });
+  const handleWizardComplete = async (rating: ConceptionRating) => {
+    // Refetch ratings from database to get the newly saved one
+    try {
+      const response = await fetch('/api/conception-ratings');
+      if (!response.ok) throw new Error('Failed to fetch ratings');
+      const result = await response.json();
+      
+      const transformedRatings = (result.ratings || []).map((mating: any) => ({
+        id: mating.id,
+        overallRating: parseFloat(mating.conceptionRating || mating.overallRating || 0),
+        informationAccuracy: parseFloat(mating.informationAccuracy || 0),
+        breakdown: mating.ratingBreakdown || {},
+        totalWeight: 100,
+        missingWeight: 0,
+        createdAt: new Date(mating.createdAt),
+      }));
+      
+      setRatings(transformedRatings);
+    } catch (error) {
+      console.error('Error refreshing ratings:', error);
+    }
   };
 
   const handleDeleteRating = (id: string) => {
@@ -109,8 +152,15 @@ export default function ConceptionRatingPage() {
           </Card>
         )}
 
-        {/* Content */}
-        {ratings.length === 0 ? (
+        {/* Loading State */}
+        {loading ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-4" />
+              <p className="text-muted-foreground">Loading ratings...</p>
+            </CardContent>
+          </Card>
+        ) : ratings.length === 0 ? (
           <ConceptionRatingEmptyState onCreateNew={handleCreateNew} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

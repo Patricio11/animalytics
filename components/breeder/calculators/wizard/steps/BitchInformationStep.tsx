@@ -19,11 +19,27 @@ interface BitchInformationStepProps {
 }
 
 export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: BitchInformationStepProps) {
-  // Use mock data or existing wizard data
-  const [age, setAge] = useState(data?.bitchAge || 3);
-  const [weight, setWeight] = useState(data?.bitchWeight || 25);
+  // Get real data from selected bitch
+  const selectedBitch = data?.selectedBitch;
+  
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth: string | Date | null | undefined) => {
+    if (!dateOfBirth) return 3;
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    const ageInYears = (today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    return Math.round(ageInYears * 10) / 10; // Round to 1 decimal
+  };
+
+  const bitchAge = selectedBitch?.dateOfBirth ? calculateAge(selectedBitch.dateOfBirth) : 3;
+  const bitchWeight = selectedBitch?.weight ? parseFloat(selectedBitch.weight) : 25;
+  const bitchHealth = selectedBitch?.healthStatus || 'excellent';
+
+  // Use real data or existing wizard data
+  const [age, setAge] = useState(data?.bitchAge || bitchAge);
+  const [weight, setWeight] = useState(data?.bitchWeight || bitchWeight);
   const [bodyConditionScore, setBodyConditionScore] = useState(data?.bodyConditionScore || 5);
-  const [healthStatus, setHealthStatus] = useState(data?.generalHealth || 'excellent');
+  const [healthStatus, setHealthStatus] = useState(data?.generalHealth || bitchHealth);
 
   const handleContinue = () => {
     onUpdate({

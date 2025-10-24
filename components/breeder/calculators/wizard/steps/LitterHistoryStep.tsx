@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,28 +16,45 @@ interface LitterHistoryStepProps {
   onPrevious: () => void;
 }
 
-// Mock litter data - in production this would come from the animal profile
-const mockLitters = [
-  {
-    id: '1',
-    date: '2023-03-15',
-    sireId: 'dog1',
-    sireName: 'Champion Max',
-    puppyCount: 7,
-    complications: false
-  },
-  {
-    id: '2',
-    date: '2022-05-20',
-    sireId: 'dog2',
-    sireName: 'Duke',
-    puppyCount: 5,
-    complications: false
-  }
-];
+interface Litter {
+  id: string;
+  date: string;
+  sireId: string;
+  sireName: string;
+  puppyCount: number;
+  complications: boolean;
+}
 
 export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: LitterHistoryStepProps) {
-  const litters = mockLitters; // TODO: Get from animal profile
+  const [litters, setLitters] = useState<Litter[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const selectedBitch = data?.selectedBitch;
+  const bitchId = data?.bitchId;
+
+  // Fetch real litter data from API
+  useEffect(() => {
+    const fetchLitters = async () => {
+      if (!bitchId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/animals/${bitchId}/litters`);
+        if (!response.ok) throw new Error('Failed to fetch litters');
+        const result = await response.json();
+        setLitters(result.litters || []);
+      } catch (error) {
+        console.error('Error fetching litters:', error);
+        setLitters([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLitters();
+  }, [bitchId]);
 
   const handleContinue = () => {
     onUpdate({
