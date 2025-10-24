@@ -208,7 +208,11 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   // Get primary photo or use first photo
   const primaryPhoto = animal.profileImageUrl || animal.photos?.[0]?.fileUrl || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=600&fit=crop&crop=face";
   const additionalPhotos = animal.photos?.slice(1, 5).map((p:any) => p.fileUrl) || [];
-  const allPhotos = animal.photos?.map((p:any) => p.fileUrl) || [primaryPhoto];
+  
+  // Build allPhotos array - ensure primaryPhoto is always first
+  const allPhotos = animal.photos && animal.photos.length > 0
+    ? animal.photos.map((p:any) => p.fileUrl).filter((url: string) => url) // Filter out empty URLs
+    : [primaryPhoto]; // Fallback to primaryPhoto if no photos in array
 
   // Determine available tabs based on animal type
   const tabs = [
@@ -245,7 +249,9 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
               <CardContent className="p-0">
                 <div 
                   className="relative aspect-video overflow-hidden rounded-t-lg cursor-pointer group"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('Main image clicked, allPhotos:', allPhotos);
                     setLightboxIndex(0);
                     setLightboxOpen(true);
                   }}

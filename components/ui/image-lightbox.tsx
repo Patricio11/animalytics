@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
@@ -16,11 +17,24 @@ interface ImageLightboxProps {
 export function ImageLightbox({ images, open, onOpenChange, initialIndex = 0 }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
+  // Update currentIndex when initialIndex changes
+  useEffect(() => {
+    setCurrentIndex(initialIndex);
+  }, [initialIndex]);
+
+  // Debug logging
+  useEffect(() => {
+    if (open) {
+      console.log('ImageLightbox opened:', { images, initialIndex, open });
+    }
+  }, [open, images, initialIndex]);
+
   // Filter out empty or invalid image URLs
   const validImages = images.filter((img) => img && img.trim() !== "");
 
   // If no valid images, don't render
   if (validImages.length === 0) {
+    console.log('No valid images in lightbox');
     return null;
   }
 
@@ -44,6 +58,9 @@ export function ImageLightbox({ images, open, onOpenChange, initialIndex = 0 }: 
         className="max-w-7xl w-full h-[90vh] p-0 bg-black/95 border-0"
         onKeyDown={handleKeyDown}
       >
+        <VisuallyHidden>
+          <DialogTitle>Image Gallery</DialogTitle>
+        </VisuallyHidden>
         <div className="relative w-full h-full flex items-center justify-center">
           {/* Close Button */}
           <Button
