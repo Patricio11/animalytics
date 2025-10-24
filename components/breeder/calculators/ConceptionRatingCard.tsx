@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConceptionRating } from "@/lib/calculations/conception-types";
 import { 
   Heart, 
@@ -13,18 +14,37 @@ import {
   ChevronDown, 
   ChevronUp,
   Trash2,
-  Calendar
+  Calendar,
+  ArrowRight
 } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
+import Link from "next/link";
+
+interface Animal {
+  id: string;
+  name: string;
+  registrationNumber?: string | null;
+  avatarUrl?: string | null;
+  breed?: {
+    name: string;
+  };
+}
 
 interface ConceptionRatingCardProps {
   rating: ConceptionRating;
   createdAt?: Date;
+  bitch?: Animal;
+  dog?: Animal;
+  frozenSemen?: {
+    id: string;
+    dogName: string;
+    registrationNumber?: string | null;
+  };
   onDelete?: () => void;
 }
 
-export function ConceptionRatingCard({ rating, createdAt, onDelete }: ConceptionRatingCardProps) {
+export function ConceptionRatingCard({ rating, createdAt, bitch, dog, frozenSemen, onDelete }: ConceptionRatingCardProps) {
   const [showBreakdown, setShowBreakdown] = useState(false);
 
   // Determine rating category
@@ -84,6 +104,93 @@ export function ConceptionRatingCard({ rating, createdAt, onDelete }: Conception
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Animals Involved */}
+        {(bitch || dog || frozenSemen) && (
+          <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 border border-primary/20 rounded-lg">
+            <p className="text-sm font-semibold text-muted-foreground mb-3">Breeding Pair</p>
+            <div className="flex items-center justify-center gap-4">
+              {/* Bitch */}
+              {bitch && (
+                <Link href={`/animals/${bitch.id}`} className="flex-1">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg hover:shadow-md transition-all cursor-pointer group">
+                    <Avatar className="h-12 w-12 border-2 border-pink-200">
+                      <AvatarImage src={bitch.avatarUrl || undefined} alt={bitch.name} />
+                      <AvatarFallback className="bg-pink-100 text-pink-700">
+                        {bitch.name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
+                        {bitch.name}
+                      </p>
+                      {bitch.breed && (
+                        <p className="text-xs text-muted-foreground truncate">{bitch.breed.name}</p>
+                      )}
+                      {bitch.registrationNumber && (
+                        <p className="text-xs text-muted-foreground truncate">{bitch.registrationNumber}</p>
+                      )}
+                    </div>
+                    <Badge variant="secondary" className="bg-pink-100 text-pink-700 text-xs">♀ Dam</Badge>
+                  </div>
+                </Link>
+              )}
+
+              {/* Arrow */}
+              <div className="flex-shrink-0">
+                <div className="p-2 rounded-full bg-white shadow-sm">
+                  <Heart className="w-5 h-5 text-primary" />
+                </div>
+              </div>
+
+              {/* Dog or Frozen Semen */}
+              {dog ? (
+                <Link href={`/animals/${dog.id}`} className="flex-1">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg hover:shadow-md transition-all cursor-pointer group">
+                    <Avatar className="h-12 w-12 border-2 border-blue-200">
+                      <AvatarImage src={dog.avatarUrl || undefined} alt={dog.name} />
+                      <AvatarFallback className="bg-blue-100 text-blue-700">
+                        {dog.name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
+                        {dog.name}
+                      </p>
+                      {dog.breed && (
+                        <p className="text-xs text-muted-foreground truncate">{dog.breed.name}</p>
+                      )}
+                      {dog.registrationNumber && (
+                        <p className="text-xs text-muted-foreground truncate">{dog.registrationNumber}</p>
+                      )}
+                    </div>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">♂ Sire</Badge>
+                  </div>
+                </Link>
+              ) : frozenSemen ? (
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                    <Avatar className="h-12 w-12 border-2 border-purple-200">
+                      <AvatarFallback className="bg-purple-100 text-purple-700">
+                        {frozenSemen.dogName.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">
+                        {frozenSemen.dogName}
+                      </p>
+                      {frozenSemen.registrationNumber && (
+                        <p className="text-xs text-muted-foreground truncate">{frozenSemen.registrationNumber}</p>
+                      )}
+                      <p className="text-xs text-purple-600">Frozen Semen</p>
+                    </div>
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">♂ Sire</Badge>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
+
         {/* Overall Rating Display */}
         <div className={`p-6 rounded-lg ${category.bg} border-2 border-${category.color.replace('text-', '')}`}>
           <div className="flex items-center justify-between mb-3">

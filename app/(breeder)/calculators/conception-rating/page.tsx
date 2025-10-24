@@ -11,9 +11,26 @@ import { Heart, Plus, Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConceptionRating } from "@/lib/calculations/conception-types";
 
+interface Animal {
+  id: string;
+  name: string;
+  registrationNumber?: string | null;
+  avatarUrl?: string | null;
+  breed?: {
+    name: string;
+  };
+}
+
 interface StoredRating extends ConceptionRating {
   id: string;
   createdAt: Date;
+  bitch?: Animal;
+  dog?: Animal;
+  frozenSemen?: {
+    id: string;
+    dogName: string;
+    registrationNumber?: string | null;
+  };
 }
 
 export default function ConceptionRatingPage() {
@@ -40,6 +57,9 @@ export default function ConceptionRatingPage() {
           totalWeight: 100,
           missingWeight: 0,
           createdAt: new Date(mating.createdAt),
+          bitch: mating.bitch,
+          dog: mating.dog,
+          frozenSemen: mating.frozenSemen,
         }));
         
         setRatings(transformedRatings);
@@ -88,6 +108,9 @@ export default function ConceptionRatingPage() {
         totalWeight: 100,
         missingWeight: 0,
         createdAt: new Date(mating.createdAt),
+        bitch: mating.bitch,
+        dog: mating.dog,
+        frozenSemen: mating.frozenSemen,
       }));
       
       setRatings(transformedRatings);
@@ -178,6 +201,9 @@ export default function ConceptionRatingPage() {
                   key={rating.id}
                   rating={rating}
                   createdAt={rating.createdAt}
+                  bitch={rating.bitch}
+                  dog={rating.dog}
+                  frozenSemen={rating.frozenSemen}
                   onDelete={() => handleDeleteRating(rating.id)}
                 />
               ))
