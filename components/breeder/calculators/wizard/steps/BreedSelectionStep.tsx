@@ -18,8 +18,8 @@ interface BreedSelectionStepProps {
 
 export function BreedSelectionStep({ data, onUpdate, onNext }: BreedSelectionStepProps) {
   // For now, use mock breed data until we integrate animal selection
-  const bitchBreed = data.bitchBreed || "Golden Retriever";
-  const dogBreed = data.dogBreed || "Golden Retriever";
+  const bitchBreed = data?.bitchBreed || "Golden Retriever";
+  const dogBreed = data?.dogBreed || "Golden Retriever";
 
   const bitchBreedRating = getBreedRating(bitchBreed);
   const dogBreedRating = getBreedRating(dogBreed);

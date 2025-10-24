@@ -18,9 +18,9 @@ interface BreederHistoryStepProps {
 }
 
 export function BreederHistoryStep({ data, onUpdate, onNext, onPrevious }: BreederHistoryStepProps) {
-  const [yearsExperience, setYearsExperience] = useState(data.yearsExperience || '');
-  const [totalLitters, setTotalLitters] = useState(data.totalLitters || 0);
-  const [breedFamiliarity, setBreedFamiliarity] = useState(data.breedFamiliarity || 'moderate');
+  const [yearsExperience, setYearsExperience] = useState(data?.yearsExperience || '');
+  const [totalLitters, setTotalLitters] = useState(data?.totalLitters || 0);
+  const [breedFamiliarity, setBreedFamiliarity] = useState(data?.breedFamiliarity || 'moderate');
 
   const handleContinue = () => {
     onUpdate({

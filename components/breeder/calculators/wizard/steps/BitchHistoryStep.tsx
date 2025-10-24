@@ -19,11 +19,11 @@ interface BitchHistoryStepProps {
 }
 
 export function BitchHistoryStep({ data, onUpdate, onNext, onPrevious }: BitchHistoryStepProps) {
-  const [hasBeenBred, setHasBeenBred] = useState(data.hasBeenBred || 'no');
-  const [previousLitters, setPreviousLitters] = useState(data.previousLitters || 0);
-  const [monthsSinceLastLitter, setMonthsSinceLastLitter] = useState(data.lastLitterDate || '');
-  const [hasComplications, setHasComplications] = useState(data.complications ? 'yes' : 'no');
-  const [complications, setComplications] = useState(data.complicationDetails || '');
+  const [hasBeenBred, setHasBeenBred] = useState(data?.hasBeenBred || 'no');
+  const [previousLitters, setPreviousLitters] = useState(data?.previousLitters || 0);
+  const [monthsSinceLastLitter, setMonthsSinceLastLitter] = useState(data?.lastLitterDate || '');
+  const [hasComplications, setHasComplications] = useState(data?.complications ? 'yes' : 'no');
+  const [complications, setComplications] = useState(data?.complicationDetails || '');
 
   const handleContinue = () => {
     onUpdate({

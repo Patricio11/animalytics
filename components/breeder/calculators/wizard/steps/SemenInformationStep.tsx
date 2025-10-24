@@ -19,10 +19,10 @@ interface SemenInformationStepProps {
 }
 
 export function SemenInformationStep({ data, onUpdate, onNext, onPrevious }: SemenInformationStepProps) {
-  const [semenType, setSemenType] = useState(data.type || 'fresh');
-  const [collectionDate, setCollectionDate] = useState(data.collectionDate || '');
-  const [storageTime, setStorageTime] = useState(data.storageTime || '');
-  const [shippingDuration, setShippingDuration] = useState(data.shippingDuration || '');
+  const [semenType, setSemenType] = useState(data?.type || 'fresh');
+  const [collectionDate, setCollectionDate] = useState(data?.collectionDate || '');
+  const [storageTime, setStorageTime] = useState(data?.storageTime || '');
+  const [shippingDuration, setShippingDuration] = useState(data?.shippingDuration || '');
 
   const handleContinue = () => {
     onUpdate({

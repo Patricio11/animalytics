@@ -20,10 +20,10 @@ interface BitchInformationStepProps {
 
 export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: BitchInformationStepProps) {
   // Use mock data or existing wizard data
-  const [age, setAge] = useState(data.bitchAge || 3);
-  const [weight, setWeight] = useState(data.bitchWeight || 25);
-  const [bodyConditionScore, setBodyConditionScore] = useState(data.bodyConditionScore || 5);
-  const [healthStatus, setHealthStatus] = useState(data.generalHealth || 'excellent');
+  const [age, setAge] = useState(data?.bitchAge || 3);
+  const [weight, setWeight] = useState(data?.bitchWeight || 25);
+  const [bodyConditionScore, setBodyConditionScore] = useState(data?.bodyConditionScore || 5);
+  const [healthStatus, setHealthStatus] = useState(data?.generalHealth || 'excellent');
 
   const handleContinue = () => {
     onUpdate({

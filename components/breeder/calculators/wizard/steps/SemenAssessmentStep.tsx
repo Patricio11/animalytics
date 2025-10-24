@@ -20,13 +20,13 @@ interface SemenAssessmentStepProps {
 }
 
 export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: SemenAssessmentStepProps) {
-  const [assessmentType, setAssessmentType] = useState(data.type || 'visual');
-  const [quality, setQuality] = useState(data.quality || 'good');
-  const [volume, setVolume] = useState(data.volume || '');
-  const [concentration, setConcentration] = useState(data.concentration || '');
-  const [motility, setMotility] = useState(data.motility || '');
-  const [morphology, setMorphology] = useState(data.morphology || '');
-  const [visualNotes, setVisualNotes] = useState(data.visualNotes || '');
+  const [assessmentType, setAssessmentType] = useState(data?.type || 'visual');
+  const [quality, setQuality] = useState(data?.quality || 'good');
+  const [volume, setVolume] = useState(data?.volume || '');
+  const [concentration, setConcentration] = useState(data?.concentration || '');
+  const [motility, setMotility] = useState(data?.motility || '');
+  const [morphology, setMorphology] = useState(data?.morphology || '');
+  const [visualNotes, setVisualNotes] = useState(data?.visualNotes || '');
 
   const handleContinue = () => {
     onUpdate({

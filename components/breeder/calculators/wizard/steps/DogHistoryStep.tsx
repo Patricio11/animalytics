@@ -18,10 +18,10 @@ interface DogHistoryStepProps {
 }
 
 export function DogHistoryStep({ data, onUpdate, onNext, onPrevious }: DogHistoryStepProps) {
-  const [hasBeenUsed, setHasBeenUsed] = useState(data.hasBeenUsed || 'no');
-  const [previousLitters, setPreviousLitters] = useState(data.previousLitters || 0);
-  const [successRate, setSuccessRate] = useState(data.successRate || '');
-  const [ageAtFirstUse, setAgeAtFirstUse] = useState(data.ageAtFirstUse || '');
+  const [hasBeenUsed, setHasBeenUsed] = useState(data?.hasBeenUsed || 'no');
+  const [previousLitters, setPreviousLitters] = useState(data?.previousLitters || 0);
+  const [successRate, setSuccessRate] = useState(data?.successRate || '');
+  const [ageAtFirstUse, setAgeAtFirstUse] = useState(data?.ageAtFirstUse || '');
 
   const handleContinue = () => {
     onUpdate({
