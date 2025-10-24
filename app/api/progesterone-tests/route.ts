@@ -92,7 +92,18 @@ export async function GET(request: NextRequest) {
     const matingId = searchParams.get('matingId');
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
 
-    // Build query
+    // Build where conditions
+    const whereConditions = [eq(progesteroneTests.userId, userId)];
+    
+    if (animalId) {
+      whereConditions.push(eq(progesteroneTests.animalId, animalId));
+    }
+    
+    if (matingId) {
+      whereConditions.push(eq(progesteroneTests.matingId, matingId));
+    }
+
+    // Build query with all conditions
     let query = db
       .select({
         id: progesteroneTests.id,
@@ -122,32 +133,13 @@ export async function GET(request: NextRequest) {
           id: animals.id,
           name: animals.name,
           registrationNumber: animals.registrationNumber,
-          avatarUrl: animals.avatarUrl,
+          profileImageUrl: animals.profileImageUrl,
         },
       })
       .from(progesteroneTests)
       .leftJoin(animals, eq(progesteroneTests.animalId, animals.id))
-      .where(eq(progesteroneTests.userId, userId))
+      .where(and(...whereConditions))
       .orderBy(desc(progesteroneTests.createdAt));
-
-    // Apply filters
-    if (animalId) {
-      query = query.where(
-        and(
-          eq(progesteroneTests.userId, userId),
-          eq(progesteroneTests.animalId, animalId)
-        )
-      ) as any;
-    }
-
-    if (matingId) {
-      query = query.where(
-        and(
-          eq(progesteroneTests.userId, userId),
-          eq(progesteroneTests.matingId, matingId)
-        )
-      ) as any;
-    }
 
     // Execute query
     let tests = await query;

@@ -16,6 +16,7 @@ import {
   animalReminders
 } from './animals';
 import { matings } from './matings';
+import { progesteroneTests } from './progesterone-tests';
 import { tasks } from './tasks';
 import { listings } from './marketplace';
 import { breederBreedPreferences } from './user-breed-preferences';
@@ -296,5 +297,24 @@ export const breederBreedPreferencesRelations = relations(breederBreedPreference
   breed: one(breeds, {
     fields: [breederBreedPreferences.breedId],
     references: [breeds.id],
+  }),
+}));
+
+// ============================================================================
+// PROGESTERONE TESTS RELATIONS
+// ============================================================================
+
+export const progesteroneTestsRelations = relations(progesteroneTests, ({ one }) => ({
+  user: one(users, {
+    fields: [progesteroneTests.userId],
+    references: [users.id],
+  }),
+  animal: one(animals, {
+    fields: [progesteroneTests.animalId],
+    references: [animals.id],
+  }),
+  mating: one(matings, {
+    fields: [progesteroneTests.matingId],
+    references: [matings.id],
   }),
 }));

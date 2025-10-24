@@ -56,7 +56,7 @@ export async function GET(
           id: animals.id,
           name: animals.name,
           registrationNumber: animals.registrationNumber,
-          avatarUrl: animals.avatarUrl,
+          profileImageUrl: animals.profileImageUrl,
         },
       })
       .from(progesteroneTests)
