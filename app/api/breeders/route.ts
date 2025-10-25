@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const limit = Number(searchParams.get('limit') || '50');
     const offset = Number(searchParams.get('offset') || '0');
 
-    // Build where conditions
+    // Build where conditions - only show public profiles
     const conditions: any[] = [eq(breederProfiles.isPublic, true)];
 
     // Apply search filter
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query with all conditions
-    const breeders = await db
+    let query = db
       .select({
         id: breederProfiles.id,
         userId: breederProfiles.userId,
@@ -62,8 +62,12 @@ export async function GET(request: NextRequest) {
         responseRate: breederProfiles.responseRate,
         createdAt: breederProfiles.createdAt,
       })
-      .from(breederProfiles)
-      .where(and(...conditions))
+      .from(breederProfiles);
+
+    // Apply conditions
+    query = query.where(and(...conditions)) as any;
+
+    const breeders = await query
       .orderBy(
         desc(breederProfiles.premiumMember),
         desc(breederProfiles.averageRating),
@@ -76,7 +80,7 @@ export async function GET(request: NextRequest) {
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(breederProfiles)
-      .where(eq(breederProfiles.isPublic, true));
+      .where(and(...conditions));
 
     return NextResponse.json({
       success: true,

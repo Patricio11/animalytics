@@ -15,6 +15,8 @@ import {
   Edit,
   CheckCircle2,
   RefreshCw,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +55,36 @@ export default function BreederProfilePage() {
   const queryClient = useQueryClient();
   const { data: profile, isLoading, error, refetch } = useBreederProfile();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Toggle visibility mutation
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: async (isPublic: boolean) => {
+      const response = await fetch('/api/profile/visibility', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update visibility');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.isPublic ? 'Profile is Public' : 'Profile is Private',
+        description: data.message,
+      });
+      refetch();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Update Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Initialize profile mutation
   const initializeMutation = useMutation({
@@ -190,22 +222,69 @@ export default function BreederProfilePage() {
 
       {/* Action Buttons */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="flex flex-wrap gap-3 justify-end">
-          <ShareButton
-            url={`/breeders/${profile.slug}`}
-            title={profile.displayName}
-            description={profile.tagline || `Check out ${profile.displayName} on Animalytics`}
-          />
-          <Button
-            onClick={() => setIsEditDialogOpen(true)}
-            variant="outline"
-            className="hover-elevate"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Profile
-          </Button>
+        <div className="flex flex-wrap gap-3 justify-between items-center">
+          {/* Visibility Status */}
+          <div className="flex items-center gap-3">
+            <Badge variant={profile.isPublic ? "default" : "secondary"} className="text-sm">
+              {profile.isPublic ? (
+                <>
+                  <Eye className="w-3.5 h-3.5 mr-1.5" />
+                  Public Profile
+                </>
+              ) : (
+                <>
+                  <EyeOff className="w-3.5 h-3.5 mr-1.5" />
+                  Private Profile
+                </>
+              )}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toggleVisibilityMutation.mutate(!profile.isPublic)}
+              disabled={toggleVisibilityMutation.isPending}
+            >
+              {toggleVisibilityMutation.isPending ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : profile.isPublic ? (
+                <EyeOff className="w-4 h-4 mr-2" />
+              ) : (
+                <Eye className="w-4 h-4 mr-2" />
+              )}
+              {profile.isPublic ? 'Make Private' : 'Make Public'}
+            </Button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <ShareButton
+              url={`/breeders/${profile.slug}`}
+              title={profile.displayName}
+              description={profile.tagline || `Check out ${profile.displayName} on Animalytics`}
+            />
+            <Button
+              onClick={() => setIsEditDialogOpen(true)}
+              variant="outline"
+              className="hover-elevate"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Profile
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Visibility Info Alert */}
+      {!profile.isPublic && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          <Alert className="bg-muted border-muted-foreground/20">
+            <EyeOff className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Your profile is currently private.</strong> It won't appear in the breeders directory or search results. Make it public when you're ready to connect with buyers.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <ProfileStats

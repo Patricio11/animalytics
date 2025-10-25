@@ -16,7 +16,7 @@ export async function GET(
   try {
     const { slug } = await params;
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status'); // available, sold, reserved
+    const activeOnly = searchParams.get('active') === 'true'; // Filter for active animals only
     const limit = Number(searchParams.get('limit') || '50');
 
     // First, get the breeder profile
@@ -33,22 +33,19 @@ export async function GET(
       );
     }
 
-    // Build query for animals
-    let query = db
-      .select()
-      .from(animals)
-      .where(eq(animals.breederId, profile.userId));
-
-    // Filter by status if provided
-    if (status) {
-      query = query.where(and(
-        eq(animals.breederId, profile.userId),
-        eq(animals.status, status)
-      ));
+    // Build query conditions
+    const conditions = [eq(animals.userId, profile.userId)];
+    
+    // Filter for active animals only if requested
+    if (activeOnly) {
+      conditions.push(eq(animals.isActive, true));
     }
 
     // Fetch animals
-    const breederAnimals = await query
+    const breederAnimals = await db
+      .select()
+      .from(animals)
+      .where(and(...conditions))
       .orderBy(desc(animals.createdAt))
       .limit(limit);
 
