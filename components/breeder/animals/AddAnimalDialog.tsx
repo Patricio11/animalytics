@@ -108,7 +108,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const { data: allBreeds, isLoading: breedsLoading } = useBreeds();
   const { data: preferences } = useBreedPreferences();
   
-  // Fetch user's animals for parent selection
+  // Fetch user's animals for parent selection (no breeding filter - all active animals can be parents)
   const { data: allAnimals } = useAnimals({ isActive: true });
   
   // Create animal mutation
@@ -140,35 +140,43 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     );
   }, [breeds, breedSearch]);
   
-  // Filter animals for sire selection (males only, same breed if selected)
+  // Filter animals for sire selection (males only, old enough to breed)
   const availableSires = useMemo(() => {
     if (!allAnimals) return [];
     
-    // Get selected breed ID
-    const selectedBreed = breeds.find((b: any) => b.name === formData.breed);
-    const selectedBreedId = selectedBreed?.id;
-    
     return allAnimals.filter((animal: any) => {
       const isMale = animal.sex === 'male';
-      const breedMatches = !selectedBreedId || animal.breedId === selectedBreedId;
-      return isMale && breedMatches;
+      
+      // Check age - must be at least 6 months old to be a parent
+      let isOldEnough = true;
+      if (animal.dateOfBirth) {
+        const birthDate = new Date(animal.dateOfBirth);
+        const ageInMonths = (new Date().getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+        isOldEnough = ageInMonths >= 6;
+      }
+      
+      return isMale && isOldEnough;
     });
-  }, [allAnimals, formData.breed, breeds]);
+  }, [allAnimals]);
   
-  // Filter animals for dam selection (females only, same breed if selected)
+  // Filter animals for dam selection (females only, old enough to breed)
   const availableDams = useMemo(() => {
     if (!allAnimals) return [];
     
-    // Get selected breed ID
-    const selectedBreed = breeds.find((b: any) => b.name === formData.breed);
-    const selectedBreedId = selectedBreed?.id;
-    
     return allAnimals.filter((animal: any) => {
       const isFemale = animal.sex === 'female';
-      const breedMatches = !selectedBreedId || animal.breedId === selectedBreedId;
-      return isFemale && breedMatches;
+      
+      // Check age - must be at least 6 months old to be a parent
+      let isOldEnough = true;
+      if (animal.dateOfBirth) {
+        const birthDate = new Date(animal.dateOfBirth);
+        const ageInMonths = (new Date().getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+        isOldEnough = ageInMonths >= 6;
+      }
+      
+      return isFemale && isOldEnough;
     });
-  }, [allAnimals, formData.breed, breeds]);
+  }, [allAnimals]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
