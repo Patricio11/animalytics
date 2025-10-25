@@ -26,6 +26,7 @@ export async function GET(
           },
           with: {
             breed: true,
+            photos: true,
           },
         },
       },
