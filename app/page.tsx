@@ -1,10 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LandingHeader } from "@/components/layout/LandingHeader";
+import { authClient } from "@/lib/auth/client";
 import {
   PawPrint,
   Heart,
@@ -18,6 +21,15 @@ import {
 import Link from "next/link";
 
 export default function LandingPage() {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!isPending && session) {
+      router.replace('/dashboard');
+    }
+  }, [session, isPending, router]);
   const features = [
     {
       icon: PawPrint,

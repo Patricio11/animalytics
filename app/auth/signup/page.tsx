@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { useBreeds } from "@/lib/api/queries/breeds";
 export default function SignUp() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session, isPending } = authClient.useSession();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -37,6 +38,13 @@ export default function SignUp() {
 
   // Fetch breeds for breed selector
   const { data: allBreeds, isLoading: breedsLoading } = useBreeds();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!isPending && session) {
+      router.replace('/dashboard');
+    }
+  }, [session, isPending, router]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
