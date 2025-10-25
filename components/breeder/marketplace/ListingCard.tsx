@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Edit, Trash2 } from "lucide-react";
+import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Edit, Trash2, Share2 } from "lucide-react";
 import { MarketplaceListing, getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -39,8 +39,34 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onEd
 
   const statusStyle = statusConfig[listing.status];
   
-  // Use public route if this is public view
-  const detailUrl = isPublicView ? `/global-marketplace/${listing.id}` : `/marketplace/${listing.id}`;
+  // All routes now use unified marketplace
+  const detailUrl = `/marketplace/${listing.id}`;
+
+  // Handle share
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}${detailUrl}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: listing.title,
+          text: listing.description,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or error occurred
+        console.log('Share cancelled or failed');
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Link copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
 
   return (
     <Card className={cn(
@@ -208,10 +234,22 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onEd
                   variant="outline"
                   size="icon"
                   className="hover:bg-primary/10 hover:border-primary shadow-card"
-                  onClick={() => onInterested?.(listing.id)}
+                  onClick={handleShare}
+                  title="Share listing"
                 >
-                  <Heart className="w-4 h-4" />
+                  <Share2 className="w-4 h-4" />
                 </Button>
+                {!isPublicView && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="hover:bg-primary/10 hover:border-primary shadow-card"
+                    onClick={() => onInterested?.(listing.id)}
+                    title="Mark as interested"
+                  >
+                    <Heart className="w-4 h-4" />
+                  </Button>
+                )}
               </>
             )}
           </div>

@@ -52,6 +52,25 @@ export async function POST(request: NextRequest) {
       
       console.log('✅ Animal found:', animal.name);
       
+      // Check if animal already has an active listing
+      console.log('🔍 Checking for existing active listings...');
+      const existingListing = await db.query.listings.findFirst({
+        where: and(
+          eq(listings.animalId, body.animalId),
+          eq(listings.status, 'active')
+        ),
+      });
+      
+      if (existingListing) {
+        console.log('❌ Animal already has an active listing');
+        return NextResponse.json(
+          { error: 'This animal already has an active listing. You can only list each animal once at a time.' },
+          { status: 400 }
+        );
+      }
+      
+      console.log('✅ No existing listing found');
+      
       // Update animal to be breeding active
       console.log('📝 Updating animal to breeding active...');
       await db
@@ -118,43 +137,115 @@ export async function POST(request: NextRequest) {
 }
 
 // ============================================================================
-// GET /api/marketplace/listings - Get user's listings
+// GET /api/marketplace/listings - Get listings (user's own or public)
 // ============================================================================
 
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const publicOnly = searchParams.get('public') === 'true';
+    const userOnly = searchParams.get('userOnly') === 'true';
+    
     const session = await auth.api.getSession({ headers: request.headers });
     
-    if (!session) {
+    // If requesting user's own listings, require auth
+    if (userOnly && !session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
+    let listingsQuery;
     
-    const userListings = await db.query.listings.findMany({
-      where: eq(listings.userId, userId),
-      with: {
-        animal: {
-          columns: {
-            id: true,
-            name: true,
-            profileImageUrl: true,
-          },
-          with: {
-            breed: true,
+    if (publicOnly) {
+      // Get all active public listings
+      listingsQuery = await db.query.listings.findMany({
+        where: eq(listings.status, 'active'),
+        with: {
+          animal: {
+            columns: {
+              id: true,
+              name: true,
+              profileImageUrl: true,
+              dateOfBirth: true,
+            },
+            with: {
+              breed: true,
+            },
           },
         },
-      },
-      orderBy: [desc(listings.createdAt)],
-    });
-    
-    return NextResponse.json({
-      success: true,
-      listings: userListings,
-    });
+        orderBy: [desc(listings.createdAt)],
+      });
+      
+      // Add isOwner flag for each listing
+      const listingsWithOwnership = listingsQuery.map(listing => ({
+        ...listing,
+        isOwner: session ? listing.userId === session.user.id : false,
+      }));
+      
+      return NextResponse.json({
+        success: true,
+        listings: listingsWithOwnership,
+      });
+    } else if (userOnly && session) {
+      // Get user's own listings
+      const userId = session.user.id;
+      
+      listingsQuery = await db.query.listings.findMany({
+        where: eq(listings.userId, userId),
+        with: {
+          animal: {
+            columns: {
+              id: true,
+              name: true,
+              profileImageUrl: true,
+              dateOfBirth: true,
+            },
+            with: {
+              breed: true,
+            },
+          },
+        },
+        orderBy: [desc(listings.createdAt)],
+      });
+      
+      return NextResponse.json({
+        success: true,
+        listings: listingsQuery,
+      });
+    } else if (session) {
+      // Default: Get user's own listings when authenticated
+      const userId = session.user.id;
+      
+      listingsQuery = await db.query.listings.findMany({
+        where: eq(listings.userId, userId),
+        with: {
+          animal: {
+            columns: {
+              id: true,
+              name: true,
+              profileImageUrl: true,
+              dateOfBirth: true,
+            },
+            with: {
+              breed: true,
+            },
+          },
+        },
+        orderBy: [desc(listings.createdAt)],
+      });
+      
+      return NextResponse.json({
+        success: true,
+        listings: listingsQuery,
+      });
+    } else {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
     
   } catch (error) {
     console.error('Error fetching listings:', error);

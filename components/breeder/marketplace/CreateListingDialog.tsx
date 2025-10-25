@@ -42,12 +42,16 @@ interface ListingFormData {
   description: string;
   price?: number;
   clinicId?: string;
+
+  // Step 4: Additional Images (optional)
+  additionalImages?: string[];
 }
 
 const steps = [
   { id: 1, name: 'Animal Selection', icon: '🐕' },
   { id: 2, name: 'Contact Details', icon: '📞' },
   { id: 3, name: 'Listing Details', icon: '📝' },
+  { id: 4, name: 'Images (Optional)', icon: '📸' },
 ];
 
 interface CreateListingDialogProps {
@@ -68,6 +72,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
     contactLocation: '',
     title: '',
     description: '',
+    additionalImages: [],
   });
 
   // Fetch user's animals
@@ -81,6 +86,17 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
     enabled: open, // Only fetch when dialog is open
   });
 
+  // Fetch user's active listings to filter out already listed animals
+  const { data: listingsData, isLoading: listingsLoading } = useQuery({
+    queryKey: ['user-listings'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace/listings?userOnly=true');
+      if (!response.ok) throw new Error('Failed to fetch listings');
+      return response.json();
+    },
+    enabled: open,
+  });
+
   // Fetch breeder profile for contact details
   const { data: profileData } = useQuery({
     queryKey: ['breeder-profile'],
@@ -92,8 +108,19 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
     enabled: open,
   });
 
-  const animals = animalsData?.data || []; // Fix: use .data instead of .animals
+  const allAnimals = animalsData?.data || [];
+  const activeListings = listingsData?.listings || [];
   const profile = profileData?.profile;
+
+  // Filter out animals that are already listed (have active listings)
+  const listedAnimalIds = new Set(
+    activeListings
+      .filter((listing: any) => listing.status === 'active' && listing.animalId)
+      .map((listing: any) => listing.animalId)
+  );
+
+  const availableAnimals = allAnimals.filter((animal: any) => !listedAnimalIds.has(animal.id));
+  const animals = availableAnimals;
 
   // Pre-fill contact details from breeder profile
   useEffect(() => {
@@ -110,7 +137,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
     }
   }, [profile, open]);
 
-  const updateFormData = (field: keyof ListingFormData, value: string | number | undefined) => {
+  const updateFormData = (field: keyof ListingFormData, value: string | number | string[] | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -134,6 +161,9 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
           return basicValid && !!formData.clinicId;
         }
         return basicValid;
+      case 4:
+        // Images are optional, always valid
+        return true;
       default:
         return false;
     }
@@ -141,7 +171,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 3));
+      setCurrentStep(prev => Math.min(prev + 1, 4));
     }
   };
 
@@ -234,6 +264,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
       contactLocation: '',
       title: '',
       description: '',
+      additionalImages: [],
     });
   };
 
@@ -336,21 +367,37 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                     className="bg-background border-primary/20 focus:border-primary"
                   />
                 ) : (
-                  <AnimalCombobox
-                    animals={animals.map((animal: any) => ({
-                      id: animal.id,
-                      name: animal.name,
-                      breed: animal.breed?.name,
-                      profileImageUrl: animal.profileImageUrl,
-                      sex: animal.sex,
-                    }))}
-                    value={formData.animalId}
-                    onValueChange={(value) => updateFormData('animalId', value)}
-                    placeholder={animalsLoading ? "Loading animals..." : "Select an animal"}
-                    emptyText={animalsLoading ? "Loading..." : "No animals found. Add an animal first."}
-                    disabled={false}
-                    className="bg-background border-primary/20 focus:border-primary"
-                  />
+                  <>
+                    <AnimalCombobox
+                      animals={animals.map((animal: any) => ({
+                        id: animal.id,
+                        name: animal.name,
+                        breed: animal.breed?.name,
+                        profileImageUrl: animal.profileImageUrl,
+                        sex: animal.sex,
+                      }))}
+                      value={formData.animalId}
+                      onValueChange={(value) => updateFormData('animalId', value)}
+                      placeholder={animalsLoading || listingsLoading ? "Loading animals..." : "Select an animal"}
+                      emptyText={
+                        animalsLoading || listingsLoading 
+                          ? "Loading..." 
+                          : allAnimals.length === 0 
+                            ? "No animals found. Add an animal first." 
+                            : "All your animals are already listed. Remove a listing to create a new one."
+                      }
+                      disabled={false}
+                      className="bg-background border-primary/20 focus:border-primary"
+                    />
+                    {allAnimals.length > 0 && animals.length === 0 && !animalsLoading && !listingsLoading && (
+                      <Alert className="border-yellow-500/50 bg-yellow-500/10">
+                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                        <AlertDescription className="ml-2 text-sm">
+                          <strong>All animals already listed:</strong> You have {allAnimals.length} animal(s), but they all have active listings. You can only list each animal once at a time.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -567,6 +614,61 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
             </div>
           )}
 
+          {/* Step 4: Additional Images */}
+          {currentStep === 4 && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Additional Images (Optional)</h3>
+                <p className="text-sm text-muted-foreground">
+                  The main image will be from your animal's profile. Add additional images here for your listing (e.g., facility photos, certificates, etc.)
+                </p>
+              </div>
+
+              <Alert className="border-chart-3/50 bg-chart-3/10">
+                <CheckCircle className="h-4 w-4 text-chart-3" />
+                <AlertDescription className="ml-2 text-sm">
+                  <strong>Note:</strong> The animal's profile image will be used as the main listing image. Additional images are optional and can showcase your facility, certificates, or other relevant photos.
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-3">
+                <Label>Image URLs</Label>
+                <p className="text-xs text-muted-foreground">
+                  Add image URLs one per line. You can skip this step if you only want to use the animal's profile image.
+                </p>
+                <Textarea
+                  placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
+                  rows={6}
+                  value={formData.additionalImages?.join('\n') || ''}
+                  onChange={(e) => {
+                    const urls = e.target.value.split('\n').filter(url => url.trim());
+                    updateFormData('additionalImages', urls);
+                  }}
+                  className="bg-background border-primary/20 focus:border-primary font-mono text-sm"
+                />
+                {formData.additionalImages && formData.additionalImages.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    {formData.additionalImages.length} image(s) added
+                  </div>
+                )}
+              </div>
+
+              <Alert className="border-primary/50 bg-gradient-subtle">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                <AlertDescription className="ml-2">
+                  <strong>Ready to publish!</strong>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <div>Animal: {selectedAnimal?.name || 'Selected'}</div>
+                    <div>Category: <Badge variant="outline">{getCategoryLabel(formData.category)}</Badge></div>
+                    <div>Title: {formData.title}</div>
+                    {formData.price && <div>Price: ${formData.price.toLocaleString()} AUD</div>}
+                    <div>Additional Images: {formData.additionalImages?.length || 0}</div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between pt-4 border-t border-primary/10">
             {currentStep > 1 ? (
@@ -582,7 +684,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
               <div />
             )}
 
-            {currentStep < 3 ? (
+            {currentStep < 4 ? (
               <Button
                 onClick={handleNext}
                 disabled={!validateStep(currentStep)}

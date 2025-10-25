@@ -65,8 +65,8 @@ export function AnimalCard({ animal, featured = false, onInterested, isPublicVie
     return parts.join(', ') || 'Location not specified';
   };
 
-  // Detail URL
-  const detailUrl = isPublicView ? `/global-marketplace/${animal.id}` : `/marketplace/${animal.id}`;
+  // All routes now use unified marketplace
+  const detailUrl = `/marketplace/${animal.id}`;
 
   // Sex icon
   const sexIcon = animal.sex === 'male' ? '♂' : animal.sex === 'female' ? '♀' : '';

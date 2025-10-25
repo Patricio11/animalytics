@@ -23,7 +23,7 @@ export function LandingHeader() {
           <Link href="/global-breeders" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Find Breeders
           </Link>
-          <Link href="/global-marketplace" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/marketplace" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Marketplace
           </Link>
           <a href="/#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">

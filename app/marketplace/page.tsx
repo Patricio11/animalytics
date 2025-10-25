@@ -1,50 +1,48 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth/client";
+import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
+import { CreateListingDialog } from "@/components/breeder/marketplace/CreateListingDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BreedCombobox } from "@/components/ui/breed-combobox";
-import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
-import { MarketplaceListing } from "@/lib/mock-data/marketplace-listings";
 import { 
+  Plus, 
   Search, 
   MapPin, 
   Store, 
-  LogIn, 
-  Filter,
-  X,
   SlidersHorizontal,
-  Heart,
+  X,
   Award,
-  Calendar
+  LogIn
 } from "lucide-react";
 import Link from "next/link";
 
-// Fetch marketplace animals
-function useMarketplaceAnimals(filters: {
+// Fetch all marketplace listings (public)
+function useMarketplaceListings(filters: {
   search?: string;
   breed?: string;
   sex?: string;
   location?: string;
-  ageRange?: string;
-  isChampion?: boolean;
 }) {
   return useQuery({
-    queryKey: ['marketplace-animals', filters],
+    queryKey: ['marketplace-listings', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filters.search) params.append('search', filters.search);
       if (filters.breed) params.append('breed', filters.breed);
       if (filters.sex) params.append('sex', filters.sex);
       if (filters.location) params.append('location', filters.location);
+      params.append('public', 'true'); // Get all public listings
       
-      const response = await fetch(`/api/marketplace?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch animals');
+      const response = await fetch(`/api/marketplace/listings?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch listings');
       return response.json();
     },
   });
@@ -62,73 +60,11 @@ function useBreeds() {
   });
 }
 
-// Transform API animal data to MarketplaceListing format
-function transformAnimalToListing(animal: any): MarketplaceListing {
-  // Calculate age from dateOfBirth
-  const calculateAge = (dateOfBirth: string) => {
-    const birth = new Date(dateOfBirth);
-    const today = new Date();
-    const years = today.getFullYear() - birth.getFullYear();
-    const months = today.getMonth() - birth.getMonth();
-    
-    if (years === 0) {
-      return `${months} months`;
-    } else if (years === 1 && months === 0) {
-      return '1 year';
-    } else if (months < 0) {
-      return `${years - 1} years ${12 + months} months`;
-    } else if (months === 0) {
-      return `${years} years`;
-    } else {
-      return `${years} years ${months} months`;
-    }
-  };
+export default function Marketplace() {
+  const { data: session } = authClient.useSession();
+  const isAuthenticated = !!session;
+  const isBreeder = (session?.user as any)?.role === 'breeder';
 
-  // Format location
-  const formatLocation = () => {
-    if (!animal.breederLocation) return 'Location not specified';
-    const { city, state, country } = animal.breederLocation;
-    const parts = [city, state, country].filter(Boolean);
-    return parts.join(', ') || 'Location not specified';
-  };
-
-  return {
-    id: animal.id,
-    category: 'stud-dog' as any, // Default category for breeding animals
-    animalId: animal.id,
-    animalName: animal.name,
-    breederId: animal.breederId || 'unknown',
-    breederName: animal.breederName || 'Unknown Breeder',
-    breederAvatar: undefined,
-    breederReputation: animal.breederRating || 4.5,
-    title: `${animal.name} - ${animal.breedName || 'Unknown Breed'}`,
-    description: animal.bio || `Beautiful ${animal.breedName || 'dog'} available for breeding. ${animal.isChampion ? 'Champion bloodlines. ' : ''}Contact breeder for more details.`,
-    price: undefined,
-    currency: 'USD',
-    images: animal.profileImageUrl ? [animal.profileImageUrl] : ['/images/placeholder-dog.png'],
-    contact: {
-      name: animal.breederName || 'Unknown Breeder',
-      email: animal.breederPublicEmail || '',
-      phone: animal.breederPublicPhone || '',
-      location: formatLocation(),
-    },
-    status: 'active' as any,
-    createdAt: animal.createdAt || new Date().toISOString(),
-    updatedAt: animal.updatedAt || new Date().toISOString(),
-    views: 0,
-    interested: 0,
-    featured: animal.breederPremium || false,
-    breed: animal.breedName,
-    sex: animal.sex,
-    age: animal.dateOfBirth ? calculateAge(animal.dateOfBirth) : undefined,
-    color: animal.color,
-    registrationNumber: animal.registrationNumber,
-    healthCertified: animal.healthStatus === 'excellent',
-    championLines: animal.isChampion || false,
-  };
-}
-
-export default function GlobalMarketplace() {
   const [searchQuery, setSearchQuery] = useState("");
   const [breedFilter, setBreedFilter] = useState("");
   const [sexFilter, setSexFilter] = useState("");
@@ -136,79 +72,102 @@ export default function GlobalMarketplace() {
   const [ageRangeFilter, setAgeRangeFilter] = useState("");
   const [championOnlyFilter, setChampionOnlyFilter] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Fetch data
   const { data: breedsData, isLoading: breedsLoading } = useBreeds();
-  const { data: animalsData, isLoading: animalsLoading } = useMarketplaceAnimals({
+  const { data: listingsData, isLoading: listingsLoading, refetch: refetchListings } = useMarketplaceListings({
     search: searchQuery,
     breed: breedFilter,
     sex: sexFilter,
     location: locationFilter,
-    ageRange: ageRangeFilter,
-    isChampion: championOnlyFilter,
   });
 
   const breeds = breedsData?.breeds || [];
-  const animals = animalsData?.animals || [];
+  const allListings = listingsData?.listings || [];
+  
+  // Handle delete listing
+  const handleDeleteListing = async (listingId: string) => {
+    if (!confirm('Are you sure you want to delete this listing?')) return;
+    
+    try {
+      const response = await fetch(`/api/marketplace/listings/${listingId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete listing');
+      
+      // Refresh listings
+      refetchListings();
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      alert('Failed to delete listing. Please try again.');
+    }
+  };
 
-  // Calculate age from date of birth
-  const calculateAge = (dateOfBirth: string) => {
+  // Calculate age from dateOfBirth
+  const calculateAge = (dateOfBirth: string | null) => {
+    if (!dateOfBirth) return null;
     const birth = new Date(dateOfBirth);
     const today = new Date();
     const years = today.getFullYear() - birth.getFullYear();
     const months = today.getMonth() - birth.getMonth();
     
-    if (years === 0) {
-      return `${months} months`;
-    } else if (years === 1 && months === 0) {
-      return '1 year';
-    } else if (months < 0) {
-      return `${years - 1} years ${12 + months} months`;
-    } else if (months === 0) {
-      return `${years} years`;
-    } else {
-      return `${years} years ${months} months`;
-    }
+    if (years === 0) return `${months} months`;
+    if (years === 1 && months === 0) return '1 year';
+    if (months < 0) return `${years - 1} years ${12 + months} months`;
+    if (months === 0) return `${years} years`;
+    return `${years} years ${months} months`;
   };
 
-  // Filter animals by age range
-  const filteredAnimals = useMemo(() => {
-    if (!ageRangeFilter || !animals) return animals;
+  // Transform listings to display format
+  const listings = useMemo(() => {
+    return allListings.map((listing: any) => ({
+      id: listing.id,
+      category: listing.category?.replace(/_/g, '-') || 'stud-dog',
+      animalId: listing.animalId,
+      animalName: listing.animal?.name || 'Unknown',
+      breederId: listing.userId,
+      breederName: listing.isOwner ? 'You' : (listing.breederName || 'Breeder'),
+      breederAvatar: undefined,
+      breederReputation: listing.breederReputation || 4.5,
+      title: listing.title,
+      description: listing.description,
+      price: listing.price ? listing.price / 100 : undefined, // Convert from cents
+      currency: listing.currency || 'USD',
+      images: listing.additionalImages?.length > 0 
+        ? listing.additionalImages 
+        : [listing.animal?.profileImageUrl || '/placeholder-dog.jpg'],
+      breed: listing.breed,
+      sex: listing.sex,
+      age: listing.animal?.dateOfBirth ? calculateAge(listing.animal.dateOfBirth) : undefined,
+      color: listing.color,
+      registrationNumber: listing.registrationNumber,
+      healthCertified: listing.healthCertified,
+      championLines: listing.championLines,
+      location: listing.location,
+      contact: {
+        name: listing.contactName,
+        phone: listing.contactPhone,
+        email: listing.contactEmail,
+        location: listing.location,
+      },
+      status: listing.status,
+      featured: listing.isFeatured || false,
+      views: listing.viewCount || 0,
+      interested: listing.interestedCount || 0,
+      createdAt: listing.createdAt,
+      isOwner: listing.isOwner || false,
+    }));
+  }, [allListings]);
 
-    return animals.filter((animal: any) => {
-      if (!animal.dateOfBirth) return true;
-      
-      const birth = new Date(animal.dateOfBirth);
-      const today = new Date();
-      const ageInMonths = (today.getFullYear() - birth.getFullYear()) * 12 + 
-                          (today.getMonth() - birth.getMonth());
-
-      switch (ageRangeFilter) {
-        case 'puppy': // 0-12 months
-          return ageInMonths <= 12;
-        case 'young': // 1-3 years
-          return ageInMonths > 12 && ageInMonths <= 36;
-        case 'adult': // 3-7 years
-          return ageInMonths > 36 && ageInMonths <= 84;
-        case 'senior': // 7+ years
-          return ageInMonths > 84;
-        default:
-          return true;
-      }
-    });
-  }, [animals, ageRangeFilter]);
-
-  // Filter by champion status
-  const finalAnimals = useMemo(() => {
-    if (!championOnlyFilter) return filteredAnimals;
-    return filteredAnimals.filter((animal: any) => animal.isChampion);
-  }, [filteredAnimals, championOnlyFilter]);
+  // Featured listings
+  const featuredListings = listings.filter((l: any) => l.featured);
 
   // Active filters count
   const activeFiltersCount = [
     breedFilter,
     sexFilter,
-    locationFilter,
     ageRangeFilter,
     championOnlyFilter,
   ].filter(Boolean).length;
@@ -225,34 +184,68 @@ export default function GlobalMarketplace() {
 
   return (
     <div className="min-h-screen bg-surface-secondary">
-      {/* Header */}
-      <div className="bg-gradient-brand text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Store className="w-6 h-6 text-white" />
+      {/* Header - Different for authenticated vs public */}
+      {!isAuthenticated ? (
+        // Public Header
+        <div className="bg-gradient-brand text-white py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Store className="w-6 h-6 text-white" />
+                  </div>
+                  <h1 className="text-4xl font-bold">Marketplace</h1>
                 </div>
-                <h1 className="text-4xl font-bold">Global Marketplace</h1>
+                <p className="text-lg opacity-90">
+                  Browse quality breeding animals from verified breeders worldwide
+                </p>
               </div>
-              <p className="text-lg opacity-90">
-                Browse quality breeding animals from verified breeders worldwide
-              </p>
+              
+              {/* Sign In CTA */}
+              <Link href="/auth/signin">
+                <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white/30 text-white backdrop-blur-sm">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In to List
+                </Button>
+              </Link>
             </div>
-            
-            {/* Sign In CTA */}
-            <Link href="/auth/signin">
-              <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white/30 text-white backdrop-blur-sm">
-                <LogIn className="w-4 h-4 mr-2" />
-                Sign In to List
-              </Button>
-            </Link>
           </div>
         </div>
-      </div>
+      ) : (
+        // Breeder Header
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Marketplace</h1>
+              <p className="text-muted-foreground">Browse and manage breeding animal listings</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {isBreeder && (
+                <>
+                  <Link href="/marketplace/my-listings">
+                    <Button variant="outline" className="hover:bg-primary/10 hover:border-primary">
+                      My Listings
+                    </Button>
+                  </Link>
+                  <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center">
+                    <Store className="w-5 h-5 text-white" />
+                  </div>
+                  <Button
+                    onClick={() => setCreateDialogOpen(true)}
+                    className="bg-gradient-brand hover:opacity-90 shadow-card"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Listing
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 pb-12">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${!isAuthenticated ? '-mt-8' : ''} pb-12`}>
         
         {/* Search and Filters */}
         <Card className="shadow-elevated bg-surface border-0 mb-6">
@@ -365,12 +358,12 @@ export default function GlobalMarketplace() {
                 <div className="flex items-center gap-2 pt-2">
                   <input
                     type="checkbox"
-                    id="champion-filter"
+                    id="champion-filter-marketplace"
                     checked={championOnlyFilter}
                     onChange={(e) => setChampionOnlyFilter(e.target.checked)}
                     className="w-4 h-4 rounded border-primary/20"
                   />
-                  <label htmlFor="champion-filter" className="text-sm cursor-pointer flex items-center gap-2">
+                  <label htmlFor="champion-filter-marketplace" className="text-sm cursor-pointer flex items-center gap-2">
                     <Award className="w-4 h-4 text-chart-2" />
                     Show Champions Only
                   </label>
@@ -408,15 +401,6 @@ export default function GlobalMarketplace() {
                     />
                   </Badge>
                 )}
-                {locationFilter && (
-                  <Badge variant="secondary" className="gap-1">
-                    Location: {locationFilter}
-                    <X
-                      className="w-3 h-3 cursor-pointer"
-                      onClick={() => setLocationFilter("")}
-                    />
-                  </Badge>
-                )}
                 {championOnlyFilter && (
                   <Badge variant="secondary" className="gap-1">
                     Champions Only
@@ -434,11 +418,11 @@ export default function GlobalMarketplace() {
         {/* Results Count */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-muted-foreground">
-            {animalsLoading ? (
+            {listingsLoading ? (
               'Loading...'
             ) : (
               <>
-                Showing <span className="font-semibold text-foreground">{finalAnimals.length}</span> {finalAnimals.length === 1 ? 'animal' : 'animals'}
+                Showing <span className="font-semibold text-foreground">{listings.length}</span> {listings.length === 1 ? 'listing' : 'listings'}
                 {activeFiltersCount > 0 && ' with active filters'}
               </>
             )}
@@ -446,7 +430,7 @@ export default function GlobalMarketplace() {
         </div>
 
         {/* Loading State */}
-        {animalsLoading && (
+        {listingsLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="shadow-card">
@@ -474,44 +458,106 @@ export default function GlobalMarketplace() {
           </div>
         )}
 
-        {/* Animals Grid */}
-        {!animalsLoading && finalAnimals.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {finalAnimals.map((animal: any) => {
-              const listing = transformAnimalToListing(animal);
-              return (
-                <ListingCard
-                  key={listing.id}
+        {/* Featured Listings */}
+        {!listingsLoading && featuredListings.length > 0 && (
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-foreground">Featured Listings</h2>
+              <Badge className="bg-gradient-brand text-white">
+                {featuredListings.length}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredListings.map((listing: any) => (
+                <ListingCard 
+                  key={listing.id} 
                   listing={listing}
-                  isPublicView={true}
+                  isOwner={listing.isOwner}
+                  isPublicView={!isAuthenticated}
+                  onDelete={handleDeleteListing}
                   onInterested={(id) => {
-                    // Handle interested action (could add to favorites, etc.)
-                    console.log('Interested in animal:', id);
+                    console.log('Interested in listing:', id);
                   }}
                 />
-              );
-            })}
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* All Listings */}
+        {!listingsLoading && listings.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-foreground">
+                {featuredListings.length > 0 ? 'All Listings' : 'Listings'}
+              </h2>
+              <Badge variant="outline">
+                {listings.length} {listings.length === 1 ? 'listing' : 'listings'}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {listings.map((listing: any) => (
+                <ListingCard 
+                  key={listing.id} 
+                  listing={listing}
+                  isOwner={listing.isOwner}
+                  isPublicView={!isAuthenticated}
+                  onDelete={handleDeleteListing}
+                  onInterested={(id) => {
+                    console.log('Interested in listing:', id);
+                  }}
+                />
+              ))}
+            </div>
           </div>
         )}
 
         {/* Empty State */}
-        {!animalsLoading && finalAnimals.length === 0 && (
+        {!listingsLoading && listings.length === 0 && (
           <Card className="shadow-card">
             <CardContent className="p-12 text-center">
               <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-20" />
-              <h3 className="text-lg font-semibold mb-2">No animals found</h3>
+              <h3 className="text-lg font-semibold mb-2">No listings found</h3>
               <p className="text-muted-foreground mb-4">
                 {activeFiltersCount > 0
                   ? 'Try adjusting your filters to see more results'
-                  : 'No animals are currently listed in the marketplace'}
+                  : isBreeder 
+                    ? 'Be the first to create a listing'
+                    : 'No listings are currently available'}
               </p>
-              {activeFiltersCount > 0 && (
+              {activeFiltersCount > 0 ? (
                 <Button onClick={clearAllFilters} variant="outline">
                   Clear All Filters
                 </Button>
+              ) : isBreeder ? (
+                <Button
+                  onClick={() => setCreateDialogOpen(true)}
+                  className="bg-gradient-brand hover:opacity-90 shadow-card"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Listing
+                </Button>
+              ) : (
+                <Link href="/auth/signin">
+                  <Button className="bg-gradient-brand hover:opacity-90">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In to List
+                  </Button>
+                </Link>
               )}
             </CardContent>
           </Card>
+        )}
+
+        {/* Create Listing Dialog - Only for breeders */}
+        {isBreeder && (
+          <CreateListingDialog
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+            onSuccess={() => {
+              refetchListings();
+            }}
+          />
         )}
       </div>
     </div>

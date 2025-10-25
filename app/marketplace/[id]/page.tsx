@@ -1,7 +1,8 @@
 "use client";
 
 import { use, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,14 +11,16 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EditListingDialog } from "@/components/breeder/marketplace/EditListingDialog";
 import {
   ArrowLeft, Heart, Share2, Flag, Eye, MapPin, Phone, Mail, Calendar,
-  Star, Award, Shield, Building2, Edit, Trash2
+  Star, Award, Shield, Building2, Edit, Trash2, LogIn
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 interface ListingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -26,11 +29,14 @@ interface ListingDetailPageProps {
 export default function ListingDetailPage({ params }: ListingDetailPageProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
   const { id } = use(params);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   // Fetch listing from API
   const { data: listingData, isLoading, error } = useQuery({
@@ -43,6 +49,8 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
   });
 
   const listing = listingData?.listing;
+  const isOwner = session?.user?.id === listing?.userId;
+  const isAuthenticated = !!session;
 
   // Delete handler
   const handleDelete = async () => {
@@ -73,6 +81,33 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Handle share
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/marketplace/${id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: listing?.title,
+          text: listing?.description,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.log('Share cancelled or failed');
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: "Link Copied",
+          description: "Listing link copied to clipboard!",
+        });
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
     }
   };
 
@@ -166,27 +201,41 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
             Back to Marketplace
           </Button>
 
-          {/* Owner Actions - Show Edit/Delete buttons */}
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/marketplace/${id}/edit`)}
-              className="gap-2 hover:bg-primary/10 hover:border-primary"
-            >
-              <Edit className="w-4 h-4" />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="gap-2 text-destructive hover:bg-destructive/10 hover:border-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </div>
+          {/* Owner Actions - Show Edit/Delete buttons only for owners */}
+          {isOwner && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setEditDialogOpen(true)}
+                className="gap-2 hover:bg-primary/10 hover:border-primary"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="gap-2 text-destructive hover:bg-destructive/10 hover:border-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* Edit Listing Dialog */}
+        {isOwner && (
+          <EditListingDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            listingId={id}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['listing', id] });
+            }}
+          />
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
@@ -217,11 +266,13 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                       </Badge>
                     </div>
                   )}
-                  <div className="absolute top-4 right-4">
-                    <Badge className="bg-green-500 text-white shadow-card">
-                      Your Listing
-                    </Badge>
-                  </div>
+                  {isOwner && (
+                    <div className="absolute top-4 right-4">
+                      <Badge className="bg-green-500 text-white shadow-card">
+                        Your Listing
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 {images.length > 1 && (
                   <div className="p-4 grid grid-cols-4 gap-2">
@@ -364,6 +415,17 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
               <CardContent className="p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Contact Seller</h3>
 
+                {!isAuthenticated && (
+                  <Alert className="border-primary/50 bg-gradient-subtle">
+                    <LogIn className="w-4 h-4 text-primary" />
+                    <AlertDescription className="text-sm">
+                      <Link href="/auth/signin" className="font-medium text-primary hover:underline">
+                        Sign in
+                      </Link> to view contact details and send messages.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <div className="space-y-3">
                   {listing.contactName && (
                     <div>
@@ -382,7 +444,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                     </div>
                   )}
 
-                  {listing.contactPhone && (
+                  {isAuthenticated && listing.contactPhone && (
                     <div className="flex items-center gap-3">
                       <Phone className="w-5 h-5 text-muted-foreground" />
                       <div>
@@ -394,7 +456,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                     </div>
                   )}
 
-                  {listing.contactEmail && (
+                  {isAuthenticated && listing.contactEmail && (
                     <div className="flex items-center gap-3">
                       <Mail className="w-5 h-5 text-muted-foreground" />
                       <div>
@@ -407,61 +469,100 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                   )}
                 </div>
 
-                <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Send Message
-                </Button>
+                {isAuthenticated ? (
+                  <>
+                    <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
+                      <Mail className="w-4 h-4 mr-2" />
+                      Send Message
+                    </Button>
 
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
-                    <Heart className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
-                    <Flag className="w-4 h-4" />
-                  </Button>
-                </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
+                        <Heart className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card"
+                        onClick={handleShare}
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
+                        <Flag className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <Link href="/auth/signin">
+                    <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In to Contact
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
 
-            {/* Breeder Info */}
-            <Card className="shadow-card bg-surface border-0">
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Your Listing</h3>
+            {/* Breeder/Owner Info */}
+            {isOwner ? (
+              <Card className="shadow-card bg-surface border-0">
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Your Listing</h3>
 
-                <Alert className="border-green-500/20 bg-green-500/10">
-                  <Shield className="w-4 h-4 text-green-500" />
-                  <AlertDescription className="text-sm">
-                    This is your listing. You can edit or delete it using the buttons above.
-                  </AlertDescription>
-                </Alert>
+                  <Alert className="border-green-500/20 bg-green-500/10">
+                    <Shield className="w-4 h-4 text-green-500" />
+                    <AlertDescription className="text-sm">
+                      This is your listing. You can edit or delete it using the buttons above.
+                    </AlertDescription>
+                  </Alert>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status</span>
-                    <Badge variant="outline" className="capitalize">{listing.status}</Badge>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Status</span>
+                      <Badge variant="outline" className="capitalize">{listing.status}</Badge>
+                    </div>
+                    {listing.publishedAt && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Published</span>
+                        <span className="font-medium text-foreground">
+                          {format(new Date(listing.publishedAt), 'MMM dd, yyyy')}
+                        </span>
+                      </div>
+                    )}
+                    {listing.updatedAt && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Last Updated</span>
+                        <span className="font-medium text-foreground">
+                          {format(new Date(listing.updatedAt), 'MMM dd, yyyy')}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  {listing.publishedAt && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Published</span>
-                      <span className="font-medium text-foreground">
-                        {format(new Date(listing.publishedAt), 'MMM dd, yyyy')}
-                      </span>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-card bg-surface border-0">
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Seller Information</h3>
+                  
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={listing.breederAvatar} />
+                      <AvatarFallback className="bg-gradient-brand text-white">
+                        {listing.contactName?.charAt(0) || 'B'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium text-foreground">{listing.contactName || 'Breeder'}</div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Star className="w-4 h-4 text-chart-2 fill-current" />
+                        <span>4.5</span>
+                      </div>
                     </div>
-                  )}
-                  {listing.updatedAt && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Last Updated</span>
-                      <span className="font-medium text-foreground">
-                        {format(new Date(listing.updatedAt), 'MMM dd, yyyy')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Stats */}
             <Card className="shadow-card bg-surface border-0">
