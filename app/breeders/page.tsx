@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, MapPin, Star } from "lucide-react";
+import { Search, Filter, MapPin, Star, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,26 +45,17 @@ export default function BreedersDirectoryPage() {
 
   const { data, isLoading, error } = useBreeders(debouncedSearch, selectedBreed);
 
-  // Common breeds for filter
-  const popularBreeds = [
-    "Golden Retriever",
-    "Labrador Retriever",
-    "German Shepherd",
-    "French Bulldog",
-    "Bulldog",
-    "Poodle",
-    "Beagle",
-    "Rottweiler",
-    "Yorkshire Terrier",
-    "Boxer",
-  ];
-
   return (
     <div className="min-h-screen bg-surface-secondary">
       {/* Header */}
       <div className="bg-gradient-brand text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold mb-3">Find Trusted Breeders</h1>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold">Find Trusted Breeders</h1>
+          </div>
           <p className="text-lg opacity-90">
             Connect with verified, professional breeders in your area
           </p>

@@ -62,7 +62,7 @@ function useBreederAnimals(slug: string) {
   });
 }
 
-export default function PublicBreederProfilePage({
+export default function BreederProfilePage({
   params,
 }: {
   params: Promise<{ slug: string }>;
