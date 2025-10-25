@@ -289,7 +289,6 @@ export default function TasksPage() {
         {/* Puppy Feeding Generator */}
         {showPuppyGenerator && (
           <PuppyFeedingGenerator
-            litters={[]}
             onGenerateTasks={handleGeneratePuppyTasks}
           />
         )}
