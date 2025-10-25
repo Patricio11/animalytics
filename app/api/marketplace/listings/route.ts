@@ -172,6 +172,7 @@ export async function GET(request: NextRequest) {
             },
             with: {
               breed: true,
+              photos: true,
             },
           },
         },
@@ -204,6 +205,7 @@ export async function GET(request: NextRequest) {
             },
             with: {
               breed: true,
+              photos: true,
             },
           },
         },
@@ -230,6 +232,7 @@ export async function GET(request: NextRequest) {
             },
             with: {
               breed: true,
+              photos: true,
             },
           },
         },

@@ -137,7 +137,14 @@ export default function Marketplace() {
       currency: listing.currency || 'USD',
       images: listing.additionalImages?.length > 0 
         ? listing.additionalImages 
-        : [listing.animal?.profileImageUrl || '/placeholder-dog.jpg'],
+        : (() => {
+            // Get profile photo from animal_photos table (category='profile') or fallback
+            const profilePhoto = listing.animal?.photos?.find((p: any) => p.category === 'profile');
+            const fallbackImage = profilePhoto?.fileUrl || 
+                                  listing.animal?.photos?.[0]?.fileUrl || 
+                                  '/placeholder-dog.jpg';
+            return [fallbackImage];
+          })(),
       breed: listing.breed,
       sex: listing.sex,
       age: listing.animal?.dateOfBirth ? calculateAge(listing.animal.dateOfBirth) : undefined,
