@@ -27,6 +27,7 @@ import { ProfileBanner } from "@/components/breeder/profile/ProfileBanner";
 import { ProfileHeader } from "@/components/breeder/profile/ProfileHeader";
 import { ProfileStats } from "@/components/breeder/profile/ProfileStats";
 import { ShareButton } from "@/components/shared/ShareButton";
+import { AnimalCard } from "@/components/animals/AnimalCard";
 import Link from "next/link";
 
 // Fetch public breeder profile
@@ -329,35 +330,21 @@ export default function BreederProfilePage({
             ) : animals && animals.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {animals.map((animal: any) => (
-                  <Card key={animal.id} className="shadow-card hover-elevate">
-                    <CardContent className="p-0">
-                      {animal.imageUrl && (
-                        <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                          <img
-                            src={animal.imageUrl}
-                            alt={animal.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="p-4">
-                        <h3 className="font-semibold mb-1">{animal.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {animal.breed} • {animal.sex}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <Badge variant={animal.status === 'available' ? 'default' : 'secondary'}>
-                            {animal.status}
-                          </Badge>
-                          <Link href={`/animals/${animal.id}`}>
-                            <Button size="sm" variant="ghost">
-                              View Details
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <AnimalCard
+                    key={animal.id}
+                    id={animal.id}
+                    name={animal.name}
+                    breed={animal.breed?.name}
+                    sex={animal.sex}
+                    dateOfBirth={animal.dateOfBirth}
+                    profileImageUrl={animal.profileImageUrl}
+                    isBreedingActive={animal.isBreedingActive}
+                    isChampion={animal.isChampion}
+                    titles={animal.titles}
+                    color={animal.color}
+                    isActive={animal.isActive}
+                    healthStatus={animal.healthStatus}
+                  />
                 ))}
               </div>
             ) : (

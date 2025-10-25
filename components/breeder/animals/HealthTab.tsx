@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { format, formatDistanceToNow, isBefore, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { AddHealthRecordDialog } from "./AddHealthRecordDialog";
+import { AddHealthRecordDialog } from "@/components/breeder/animals/AddHealthRecordDialog";
 import { cn } from "@/lib/utils";
 
 interface HealthTabProps {
