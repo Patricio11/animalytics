@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ImageUpload } from "@/components/upload";
+import { STORAGE_PATHS } from "@/lib/supabase";
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -31,6 +33,7 @@ export function EditProfileDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
+    logoUrl: profile?.logoUrl || "",
     displayName: profile?.displayName || "",
     tagline: profile?.tagline || "",
     bio: profile?.bio || "",
@@ -112,6 +115,22 @@ export function EditProfileDialog({
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4 mt-4">
+              {/* Avatar Upload */}
+              <div className="space-y-2">
+                <ImageUpload
+                  storagePath={STORAGE_PATHS.USER_AVATARS}
+                  onUploadSuccess={(result) => {
+                    handleChange("logoUrl", result.url!);
+                  }}
+                  currentImageUrl={formData.logoUrl || undefined}
+                  label="Profile Logo/Avatar"
+                  helperText="Upload your kennel logo or profile picture"
+                  showPreview={true}
+                  aspectRatio="square"
+                  maxSizeInMB={2}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="displayName">Display Name *</Label>
                 <Input

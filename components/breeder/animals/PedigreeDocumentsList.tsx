@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FileUpload } from "@/components/shared/FileUpload";
+import { DocumentUpload } from "@/components/upload";
+import { STORAGE_PATHS } from "@/lib/supabase";
 import {
   FileText,
   Download,
@@ -186,11 +187,22 @@ export function PedigreeDocumentsList({ animalId }: PedigreeDocumentsListProps) 
         {/* Upload Section */}
         {showUpload && (
           <div className="p-4 border border-primary/20 rounded-lg bg-primary/5">
-            <FileUpload
-              category="pedigree"
-              onUploadComplete={(url) => uploadMutation.mutate(url)}
-              accept="application/pdf,image/*"
-              maxSize={30}
+            <DocumentUpload
+              storagePath={STORAGE_PATHS.PEDIGREE_DOCUMENTS}
+              onUploadSuccess={(result) => {
+                uploadMutation.mutate(result.url!);
+                setShowUpload(false);
+              }}
+              onUploadError={(error) => {
+                toast({
+                  title: "Upload Failed",
+                  description: error,
+                  variant: "destructive",
+                });
+              }}
+              label="Upload Pedigree Document"
+              helperText="PDF, DOC, or image files up to 10MB"
+              maxSizeInMB={10}
             />
           </div>
         )}
