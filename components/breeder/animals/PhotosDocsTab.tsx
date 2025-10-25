@@ -11,7 +11,7 @@ import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useUploadThing } from "@/lib/uploadthing";
+import { uploadMultipleFiles, STORAGE_PATHS, FILE_VALIDATION } from "@/lib/supabase";
 
 interface PhotosDocsTabProps {
   animalId: string;
@@ -64,23 +64,37 @@ export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
     },
   });
 
-  // UploadThing integration
-  const { startUpload } = useUploadThing('animalImage', {
-    onClientUploadComplete: async (res) => {
-      if (!res || res.length === 0) {
-        setUploading(false);
-        return;
+  // Handle upload with Supabase
+  const handleUploadToSupabase = async (files: File[]) => {
+    try {
+      // Determine validation based on file type
+      const validation = fileType === 'photo' ? FILE_VALIDATION.IMAGE : FILE_VALIDATION.DOCUMENT;
+      
+      // Upload files to Supabase
+      const results = await uploadMultipleFiles(
+        files,
+        STORAGE_PATHS.ANIMAL_PHOTOS,
+        validation
+      );
+
+      // Check for errors
+      const errors = results.filter(r => !r.success);
+      if (errors.length > 0) {
+        throw new Error(`Failed to upload ${errors.length} file(s)`);
       }
 
       // Save each uploaded file to database
-      for (const file of res) {
-        try {
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const file = files[i];
+        
+        if (result.success && result.url) {
           const response = await fetch(`/api/animals/${animalId}/photos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               category: selectedCategory,
-              fileUrl: file.url,
+              fileUrl: result.url,
               fileName: file.name,
               fileSize: file.size,
               caption: caption || null,
@@ -91,38 +105,28 @@ export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
             const error = await response.json();
             throw new Error(error.error || 'Failed to save photo');
           }
-        } catch (error) {
-          console.error('Error saving photo:', error);
-          toast({
-            title: "Upload Error",
-            description: error instanceof Error ? error.message : 'Failed to save photo',
-            variant: "destructive",
-          });
         }
       }
 
       // Refresh photos list
       queryClient.invalidateQueries({ queryKey: ['animal-photos', animalId] });
 
-      setUploading(false);
       setUploadedFiles([]);
       setCaption('');
 
       toast({
         title: "Upload Successful!",
-        description: `${res.length} file(s) uploaded to ${categoryDefinitions.find(c => c.id === selectedCategory)?.name}.`,
+        description: `${results.length} file(s) uploaded to ${categoryDefinitions.find(c => c.id === selectedCategory)?.name}.`,
       });
-    },
-    onUploadError: (error) => {
-      setUploading(false);
+    } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: error.message || "Failed to upload files",
+        description: error instanceof Error ? error.message : "Failed to upload files",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
   // Delete photo mutation
   const deleteMutation = useMutation({
@@ -272,7 +276,8 @@ export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
     }
 
     setUploading(true);
-    await startUpload(uploadedFiles);
+    await handleUploadToSupabase(uploadedFiles);
+    setUploading(false);
   };
 
   return (

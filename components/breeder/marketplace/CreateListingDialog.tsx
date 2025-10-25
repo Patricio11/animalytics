@@ -23,6 +23,8 @@ import { ListingCategory, categoryRequiresClinic, getCategoryLabel } from "@/lib
 import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { MultipleImageUpload } from "@/components/upload";
+import { STORAGE_PATHS } from "@/lib/supabase";
 
 interface ListingFormData {
   // Step 1: Animal Selection
@@ -631,27 +633,18 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                 </AlertDescription>
               </Alert>
 
-              <div className="space-y-3">
-                <Label>Image URLs</Label>
-                <p className="text-xs text-muted-foreground">
-                  Add image URLs one per line. You can skip this step if you only want to use the animal's profile image.
-                </p>
-                <Textarea
-                  placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                  rows={6}
-                  value={formData.additionalImages?.join('\n') || ''}
-                  onChange={(e) => {
-                    const urls = e.target.value.split('\n').filter(url => url.trim());
-                    updateFormData('additionalImages', urls);
-                  }}
-                  className="bg-background border-primary/20 focus:border-primary font-mono text-sm"
-                />
-                {formData.additionalImages && formData.additionalImages.length > 0 && (
-                  <div className="text-sm text-muted-foreground">
-                    {formData.additionalImages.length} image(s) added
-                  </div>
-                )}
-              </div>
+              <MultipleImageUpload
+                storagePath={STORAGE_PATHS.MARKETPLACE_IMAGES}
+                onUploadSuccess={(results) => {
+                  const urls = results.map(r => r.url!);
+                  updateFormData('additionalImages', [...(formData.additionalImages || []), ...urls]);
+                }}
+                currentImages={formData.additionalImages || []}
+                maxFiles={10}
+                maxSizeInMB={5}
+                label="Listing Images"
+                helperText="Upload images to showcase your listing"
+              />
 
               <Alert className="border-primary/50 bg-gradient-subtle">
                 <CheckCircle className="h-4 w-4 text-primary" />

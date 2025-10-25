@@ -25,8 +25,8 @@ export interface FileValidationOptions {
 export const FILE_VALIDATION = {
   IMAGE: {
     maxSizeInMB: 5,
-    allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
-    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
+    allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'] as string[],
+    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif'] as string[],
   },
   DOCUMENT: {
     maxSizeInMB: 10,
@@ -36,15 +36,15 @@ export const FILE_VALIDATION = {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ],
-    allowedExtensions: ['.pdf', '.doc', '.docx', '.xls', '.xlsx'],
+    ] as string[],
+    allowedExtensions: ['.pdf', '.doc', '.docx', '.xls', '.xlsx'] as string[],
   },
   ANY: {
     maxSizeInMB: 20,
-    allowedTypes: [],
-    allowedExtensions: [],
+    allowedTypes: [] as string[],
+    allowedExtensions: [] as string[],
   },
-} as const;
+};
 
 /**
  * Validate file before upload
