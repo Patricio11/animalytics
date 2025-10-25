@@ -495,6 +495,9 @@ export const healthRecords = pgTable('health_records', {
   cost: integer('cost'), // in cents
   currency: text('currency').default('USD'),
 
+  // Document
+  certificateUrl: text('certificate_url'),
+
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

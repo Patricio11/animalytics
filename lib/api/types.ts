@@ -37,6 +37,13 @@ export interface APIAnimal {
     createdAt: Date;
     updatedAt: Date;
   } | null;
+  photos?: {
+    id: string;
+    fileUrl: string;
+    category: string;
+    displayOrder: number;
+    isPrimary: boolean;
+  }[];
 }
 
 export interface APIMating {

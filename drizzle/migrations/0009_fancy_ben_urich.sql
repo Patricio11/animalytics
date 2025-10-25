@@ -1,0 +1,1 @@
+ALTER TABLE "health_records" ADD COLUMN "certificate_url" text;

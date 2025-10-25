@@ -11,6 +11,7 @@ import { SeasonsTab } from "@/components/breeder/animals/SeasonsTab";
 import { LitterDetailsTab } from "@/components/breeder/animals/LitterDetailsTab";
 import { RemindersTab } from "@/components/breeder/animals/RemindersTab";
 import { PedigreeTab } from "@/components/breeder/animals/PedigreeTab";
+import { HealthTab } from "@/components/breeder/animals/HealthTab";
 import { EditAnimalDialog } from "@/components/breeder/animals/EditAnimalDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -226,6 +227,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   // Determine available tabs based on animal type
   const tabs = [
     { value: 'profile', label: 'Profile', icon: Activity },
+    { value: 'health', label: 'Health', icon: Heart },
     { value: 'pedigree', label: 'Pedigree', icon: Share2 },
     { value: 'photos-docs', label: 'Photos & Docs', icon: Award },
     { value: 'feeding', label: 'Feeding', icon: Calendar },
@@ -321,6 +323,10 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                 <div className="p-6">
                   <TabsContent value="profile" className="mt-0">
                     <ProfileTab animal={animal} onEdit={() => setShowEditDialog(true)} />
+                  </TabsContent>
+
+                  <TabsContent value="health" className="mt-0">
+                    <HealthTab animalId={animal.id} animalName={animal.name} />
                   </TabsContent>
 
                   <TabsContent value="pedigree" className="mt-0">

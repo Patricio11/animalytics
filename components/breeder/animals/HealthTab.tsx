@@ -1,0 +1,477 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Heart,
+  Syringe,
+  Calendar,
+  FileText,
+  Plus,
+  Download,
+  Trash2,
+  AlertCircle,
+  Pill,
+  Activity,
+  Stethoscope,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Building2,
+} from "lucide-react";
+import { format, formatDistanceToNow, isBefore, addDays } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { AddHealthRecordDialog } from "./AddHealthRecordDialog";
+import { cn } from "@/lib/utils";
+
+interface HealthTabProps {
+  animalId: string;
+  animalName: string;
+}
+
+export function HealthTab({ animalId, animalName }: HealthTabProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showAddRecord, setShowAddRecord] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Fetch health records
+  const { data: healthData, isLoading } = useQuery({
+    queryKey: ["health-records", animalId],
+    queryFn: async () => {
+      const response = await fetch(`/api/animals/${animalId}/health`);
+      if (!response.ok) throw new Error("Failed to fetch health records");
+      return response.json();
+    },
+  });
+
+  const records = healthData?.records || [];
+  const vaccinations = records.filter((r: any) => r.recordType === "vaccination");
+  const medications = records.filter((r: any) => r.recordType === "medication");
+  const checkups = records.filter((r: any) => r.recordType === "checkup");
+
+  // Calculate health stats
+  const upcomingVaccinations = vaccinations.filter((v: any) => 
+    v.nextDueDate && isBefore(new Date(), new Date(v.nextDueDate))
+  );
+  const overdueVaccinations = vaccinations.filter((v: any) => 
+    v.nextDueDate && isBefore(new Date(v.nextDueDate), new Date())
+  );
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (recordId: string) => {
+      const response = await fetch(`/api/animals/${animalId}/health/${recordId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete record");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["health-records", animalId] });
+      toast({
+        title: "Record Deleted",
+        description: "Health record has been deleted successfully",
+      });
+    },
+  });
+
+  const getRecordIcon = (type: string) => {
+    switch (type) {
+      case "vaccination": return Syringe;
+      case "checkup": return Stethoscope;
+      case "medication": return Pill;
+      case "illness": return AlertTriangle;
+      case "injury": return Heart;
+      case "surgery": return Activity;
+      default: return FileText;
+    }
+  };
+
+  const getRecordColor = (type: string) => {
+    switch (type) {
+      case "vaccination": return "text-blue-500 bg-blue-500/10";
+      case "checkup": return "text-green-500 bg-green-500/10";
+      case "medication": return "text-purple-500 bg-purple-500/10";
+      case "illness": return "text-orange-500 bg-orange-500/10";
+      case "injury": return "text-red-500 bg-red-500/10";
+      case "surgery": return "text-pink-500 bg-pink-500/10";
+      default: return "text-gray-500 bg-gray-500/10";
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Health Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="shadow-card border-primary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Total Records</p>
+                <p className="text-3xl font-bold text-foreground">{records.length}</p>
+              </div>
+              <div className="p-3 rounded-full bg-blue-500/10">
+                <FileText className="w-6 h-6 text-blue-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card border-primary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Vaccinations</p>
+                <p className="text-3xl font-bold text-foreground">{vaccinations.length}</p>
+              </div>
+              <div className="p-3 rounded-full bg-green-500/10">
+                <Syringe className="w-6 h-6 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card border-primary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Upcoming</p>
+                <p className="text-3xl font-bold text-foreground">{upcomingVaccinations.length}</p>
+              </div>
+              <div className="p-3 rounded-full bg-yellow-500/10">
+                <Clock className="w-6 h-6 text-yellow-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card border-primary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Overdue</p>
+                <p className="text-3xl font-bold text-red-500">{overdueVaccinations.length}</p>
+              </div>
+              <div className="p-3 rounded-full bg-red-500/10">
+                <AlertCircle className="w-6 h-6 text-red-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Alerts */}
+      {overdueVaccinations.length > 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {overdueVaccinations.length} vaccination{overdueVaccinations.length > 1 ? 's are' : ' is'} overdue. 
+            Please schedule an appointment with your veterinarian.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex items-center justify-between mb-4">
+          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="vaccinations">Vaccinations</TabsTrigger>
+            <TabsTrigger value="medications">Medications</TabsTrigger>
+            <TabsTrigger value="appointments">Appointments</TabsTrigger>
+            <TabsTrigger value="veterinary">Veterinary</TabsTrigger>
+          </TabsList>
+          
+          <Button onClick={() => setShowAddRecord(true)} className="ml-4">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Record
+          </Button>
+        </div>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <Card className="shadow-card border-primary/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                Recent Health Records
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {records.length === 0 ? (
+                <div className="text-center py-12">
+                  <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">No health records yet</p>
+                  <Button onClick={() => setShowAddRecord(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add First Record
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {records.slice(0, 10).map((record: any) => {
+                    const Icon = getRecordIcon(record.recordType);
+                    return (
+                      <div
+                        key={record.id}
+                        className="flex items-start gap-4 p-4 rounded-lg border border-primary/10 hover:bg-primary/5 transition-colors"
+                      >
+                        <div className={cn("p-3 rounded-full", getRecordColor(record.recordType))}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div>
+                              <h4 className="font-semibold text-foreground capitalize">
+                                {record.recordType}
+                                {record.vaccinationType && ` - ${record.vaccinationType}`}
+                                {record.medicationName && ` - ${record.medicationName}`}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {format(new Date(record.recordDate), "MMM dd, yyyy")}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="capitalize">
+                              {record.recordType}
+                            </Badge>
+                          </div>
+                          
+                          {record.veterinarianName && (
+                            <p className="text-sm text-muted-foreground">
+                              Dr. {record.veterinarianName}
+                              {record.clinicName && ` • ${record.clinicName}`}
+                            </p>
+                          )}
+                          
+                          {record.diagnosis && (
+                            <p className="text-sm text-foreground mt-2">{record.diagnosis}</p>
+                          )}
+                          
+                          {record.nextDueDate && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <Calendar className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">
+                                Next due: {format(new Date(record.nextDueDate), "MMM dd, yyyy")}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {record.certificateUrl && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => window.open(record.certificateUrl, '_blank')}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              View Certificate
+                            </Button>
+                          )}
+                        </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteMutation.mutate(record.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Vaccinations Tab */}
+        <TabsContent value="vaccinations" className="space-y-6">
+          <Card className="shadow-card border-primary/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Syringe className="w-5 h-5 text-green-500" />
+                Vaccination History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {vaccinations.length === 0 ? (
+                <div className="text-center py-12">
+                  <Syringe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No vaccination records</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {vaccinations.map((vax: any) => (
+                    <div
+                      key={vax.id}
+                      className="flex items-start gap-4 p-4 rounded-lg border border-primary/10"
+                    >
+                      <div className="p-3 rounded-full bg-green-500/10">
+                        <Syringe className="w-5 h-5 text-green-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-semibold">{vax.vaccinationType}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(vax.recordDate), "MMM dd, yyyy")}
+                            </p>
+                          </div>
+                          {vax.nextDueDate && (
+                            <Badge
+                              variant={isBefore(new Date(vax.nextDueDate), new Date()) ? "destructive" : "outline"}
+                            >
+                              {isBefore(new Date(vax.nextDueDate), new Date()) ? "Overdue" : "Upcoming"}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {vax.nextDueDate && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            Next due: {format(new Date(vax.nextDueDate), "MMM dd, yyyy")}
+                            <span className="text-xs">
+                              ({formatDistanceToNow(new Date(vax.nextDueDate), { addSuffix: true })})
+                            </span>
+                          </div>
+                        )}
+                        
+                        {vax.certificateUrl && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => window.open(vax.certificateUrl, '_blank')}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Certificate
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Medications Tab */}
+        <TabsContent value="medications" className="space-y-6">
+          <Card className="shadow-card border-primary/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Pill className="w-5 h-5 text-purple-500" />
+                Medication History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {medications.length === 0 ? (
+                <div className="text-center py-12">
+                  <Pill className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No medication records</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {medications.map((med: any) => (
+                    <div
+                      key={med.id}
+                      className="flex items-start gap-4 p-4 rounded-lg border border-primary/10"
+                    >
+                      <div className="p-3 rounded-full bg-purple-500/10">
+                        <Pill className="w-5 h-5 text-purple-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold">{med.medicationName}</h4>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {med.dosage} • {med.frequency}
+                        </p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>Start: {format(new Date(med.startDate), "MMM dd, yyyy")}</span>
+                          {med.endDate && (
+                            <span>End: {format(new Date(med.endDate), "MMM dd, yyyy")}</span>
+                          )}
+                        </div>
+                        {med.notes && (
+                          <p className="text-sm text-muted-foreground mt-2">{med.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Appointments Tab */}
+        <TabsContent value="appointments" className="space-y-6">
+          <Card className="shadow-card border-primary/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-500" />
+                Upcoming Appointments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-2">Appointment scheduling coming soon!</p>
+                <p className="text-sm text-muted-foreground">
+                  You'll be able to schedule and manage veterinary appointments here.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Veterinary Tab */}
+        <TabsContent value="veterinary" className="space-y-6">
+          <Card className="shadow-card border-primary/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-primary" />
+                Veterinary Clinics & Contacts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-2">Veterinary management coming soon!</p>
+                <p className="text-sm text-muted-foreground">
+                  Save your preferred veterinary clinics and contacts for quick access.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Add Health Record Dialog */}
+      <AddHealthRecordDialog
+        open={showAddRecord}
+        onOpenChange={setShowAddRecord}
+        animalId={animalId}
+        animalName={animalName}
+      />
+    </div>
+  );
+}
