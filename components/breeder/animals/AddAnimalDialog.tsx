@@ -364,18 +364,20 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
               </div>
 
               {/* Profile Photo Upload */}
-              <ImageUpload
-                storagePath={STORAGE_PATHS.ANIMAL_PHOTOS}
-                onUploadSuccess={(result) => {
-                  setFormData(prev => ({ ...prev, profilePhotoUrl: result.url! }));
-                }}
-                currentImageUrl={formData.profilePhotoUrl || undefined}
-                label="Profile Photo (Optional)"
-                helperText="PNG, JPG up to 5MB"
-                showPreview={true}
-                aspectRatio="square"
-                maxSizeInMB={5}
-              />
+              <div className="max-w-[200px]">
+                <ImageUpload
+                  storagePath={STORAGE_PATHS.ANIMAL_PHOTOS}
+                  onUploadSuccess={(result) => {
+                    setFormData(prev => ({ ...prev, profilePhotoUrl: result.url! }));
+                  }}
+                  currentImageUrl={formData.profilePhotoUrl || undefined}
+                  label="Profile Photo (Optional)"
+                  helperText="PNG, JPG up to 5MB"
+                  showPreview={true}
+                  aspectRatio="square"
+                  maxSizeInMB={5}
+                />
+              </div>
 
               {/* Animal Names - Side by Side */}
               <div className="space-y-2">
