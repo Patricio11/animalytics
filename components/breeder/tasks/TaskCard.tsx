@@ -72,11 +72,17 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
         return (
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground">
-              {task.foodType}
+              {task.taskData?.foodType || task.foodType || 'Feeding'}
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span className="font-medium text-foreground">{task.amount} {task.unit}</span>
-              <span className="text-muted-foreground">at {task.time}</span>
+              {(task.taskData?.amount || task.amount) && (
+                <span className="font-medium text-foreground">
+                  {task.taskData?.amount || task.amount} {task.taskData?.unit || task.unit}
+                </span>
+              )}
+              {(task.taskData?.time || task.time) && (
+                <span className="text-muted-foreground">at {task.taskData?.time || task.time}</span>
+              )}
             </div>
           </div>
         );
@@ -84,32 +90,38 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
         return (
           <div className="space-y-1">
             <div className="text-sm capitalize text-muted-foreground">
-              {task.exerciseType}
+              {task.taskData?.exerciseType || task.exerciseType || 'Exercise'}
             </div>
-            <div className="text-sm">
-              <span className="font-medium text-foreground">{task.duration} minutes</span>
-            </div>
+            {(task.taskData?.duration || task.duration) && (
+              <div className="text-sm">
+                <span className="font-medium text-foreground">{task.taskData?.duration || task.duration} minutes</span>
+              </div>
+            )}
           </div>
         );
       case 'grooming':
         return (
           <div className="space-y-1">
             <div className="text-sm capitalize text-muted-foreground">
-              {task.groomingType.replace('-', ' ')}
+              {(task.taskData?.groomingType || task.groomingType || 'grooming').replace('-', ' ')}
             </div>
-            <div className="text-sm">
-              <Badge variant="outline" className="text-xs capitalize">
-                {task.frequency}
-              </Badge>
-            </div>
+            {(task.taskData?.frequency || task.frequency) && (
+              <div className="text-sm">
+                <Badge variant="outline" className="text-xs capitalize">
+                  {task.taskData?.frequency || task.frequency}
+                </Badge>
+              </div>
+            )}
           </div>
         );
       case 'weight':
         return (
           <div className="space-y-1">
-            {task.weight ? (
+            {(task.taskData?.weight || task.weight) ? (
               <div className="text-sm">
-                <span className="font-medium text-foreground">{task.weight} kg</span>
+                <span className="font-medium text-foreground">
+                  {task.taskData?.weight || task.weight} {task.taskData?.weightUnit || 'kg'}
+                </span>
               </div>
             ) : (
               <div className="text-sm text-muted-foreground">
@@ -122,25 +134,29 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
         return (
           <div className="space-y-1">
             <div className="text-sm capitalize text-muted-foreground">
-              {task.area.replace('-', ' ')} - {task.cleaningType.replace('-', ' ')}
+              {(task.taskData?.area || task.area || 'area').replace('-', ' ')} - {(task.taskData?.cleaningType || task.cleaningType || 'cleaning').replace('-', ' ')}
             </div>
-            <div className="text-sm">
-              <Badge variant="outline" className="text-xs capitalize">
-                {task.frequency}
-              </Badge>
-            </div>
+            {(task.taskData?.frequency || task.frequency) && (
+              <div className="text-sm">
+                <Badge variant="outline" className="text-xs capitalize">
+                  {task.taskData?.frequency || task.frequency}
+                </Badge>
+              </div>
+            )}
           </div>
         );
       case 'event':
         return (
           <div className="space-y-1">
             <div className="text-sm font-medium text-foreground">
-              {task.title}
+              {task.title || 'Event'}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="capitalize">{task.eventType.replace('-', ' ')}</span>
-              {task.time && <span>• {task.time}</span>}
-              {task.recurring && (
+              {(task.taskData?.eventType || task.eventType) && (
+                <span className="capitalize">{(task.taskData?.eventType || task.eventType).replace('-', ' ')}</span>
+              )}
+              {(task.taskData?.time || task.time) && <span>• {task.taskData?.time || task.time}</span>}
+              {(task.isRecurring || task.recurring) && (
                 <Badge variant="outline" className="text-xs">
                   Recurring
                 </Badge>
