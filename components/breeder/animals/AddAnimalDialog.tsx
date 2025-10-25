@@ -20,6 +20,8 @@ import { PawPrint, ArrowLeft, ArrowRight, Check, CalendarIcon, ChevronsUpDown, U
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUpload } from "@/components/upload";
+import { STORAGE_PATHS } from "@/lib/supabase";
 
 interface AddAnimalDialogProps {
   open: boolean;
@@ -28,8 +30,7 @@ interface AddAnimalDialogProps {
 
 interface AnimalFormData {
   // Step 1: Basic Info & Photo
-  profilePhoto: File | null;
-  profilePhotoPreview: string | null;
+  profilePhotoUrl: string | null;
   name: string;
   registeredName: string;
   type: 'dog' | 'bitch';
@@ -74,8 +75,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   
   // Form data state - must be declared before useMemo hooks that depend on it
   const [formData, setFormData] = useState<AnimalFormData>({
-    profilePhoto: null,
-    profilePhotoPreview: null,
+    profilePhotoUrl: null,
     name: "",
     registeredName: "",
     type: "bitch",
@@ -170,52 +170,6 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     });
   }, [allAnimals, formData.breed, breeds]);
 
-  // Handle profile photo upload
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload an image file (JPG, PNG, etc.)",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "Please upload an image smaller than 5MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Create preview URL
-    const previewUrl = URL.createObjectURL(file);
-
-    setFormData(prev => ({
-      ...prev,
-      profilePhoto: file,
-      profilePhotoPreview: previewUrl
-    }));
-  };
-
-  const removePhoto = () => {
-    if (formData.profilePhotoPreview) {
-      URL.revokeObjectURL(formData.profilePhotoPreview);
-    }
-    setFormData(prev => ({
-      ...prev,
-      profilePhoto: null,
-      profilePhotoPreview: null
-    }));
-  };
-
   const handleNext = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
@@ -258,8 +212,6 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         microchipNumber: formData.microchipId || undefined,
         registrationNumber: formData.registrationNumber || undefined,
         bio: formData.description || undefined,
-        // TODO: Handle photo upload separately
-        profileImageUrl: undefined,
         
         // Parent information - send based on mode
         sireId: formData.sireMode === 'select' ? formData.sireId || undefined : undefined,
@@ -271,22 +223,34 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       };
 
       // Create animal via API
-      await createAnimalMutation.mutateAsync(animalData);
+      const createdAnimal = await createAnimalMutation.mutateAsync(animalData);
+
+      // If profile photo was uploaded, save it to animal_photos table
+      if (formData.profilePhotoUrl && createdAnimal?.id) {
+        try {
+          await fetch(`/api/animals/${createdAnimal.id}/photos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              category: 'profile',
+              fileUrl: formData.profilePhotoUrl,
+              fileName: 'profile-photo.jpg',
+            }),
+          });
+        } catch (photoError) {
+          console.error('Failed to save profile photo:', photoError);
+          // Don't fail the whole operation if photo save fails
+        }
+      }
 
       toast({
         title: "Animal Added Successfully!",
         description: `${formData.name} has been added to your animals.`,
       });
 
-      // Cleanup photo URL
-      if (formData.profilePhotoPreview) {
-        URL.revokeObjectURL(formData.profilePhotoPreview);
-      }
-
       // Reset and close
       setFormData({
-        profilePhoto: null,
-        profilePhotoPreview: null,
+        profilePhotoUrl: null,
         name: "",
         registeredName: "",
         type: "bitch",
@@ -400,55 +364,18 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
               </div>
 
               {/* Profile Photo Upload */}
-              <div className="space-y-3">
-                <Label>Profile Photo (Optional)</Label>
-                {!formData.profilePhotoPreview ? (
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="profile-photo"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="profile-photo"
-                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/20 rounded-lg cursor-pointer hover:border-primary/40 hover:bg-surface-secondary transition-colors"
-                    >
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <div className="w-12 h-12 rounded-full bg-gradient-brand/10 flex items-center justify-center mb-3">
-                          <Upload className="w-6 h-6 text-primary" />
-                        </div>
-                        <p className="text-sm font-medium text-foreground mb-1">
-                          Click to upload
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          PNG, JPG up to 5MB
-                        </p>
-                      </div>
-                    </label>
-                  </div>
-                ) : (
-                  <div className="relative flex flex-col items-center gap-3 p-4 border border-primary/10 rounded-lg bg-surface-secondary h-40 justify-center">
-                    <Avatar className="w-20 h-20 border-2 border-primary/20">
-                      <AvatarImage src={formData.profilePhotoPreview} alt="Profile preview" />
-                      <AvatarFallback>
-                        <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={removePhoto}
-                      className="hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <X className="w-3 h-3 mr-1" />
-                      Remove
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <ImageUpload
+                storagePath={STORAGE_PATHS.ANIMAL_PHOTOS}
+                onUploadSuccess={(result) => {
+                  setFormData(prev => ({ ...prev, profilePhotoUrl: result.url! }));
+                }}
+                currentImageUrl={formData.profilePhotoUrl || undefined}
+                label="Profile Photo (Optional)"
+                helperText="PNG, JPG up to 5MB"
+                showPreview={true}
+                aspectRatio="square"
+                maxSizeInMB={5}
+              />
 
               {/* Animal Names - Side by Side */}
               <div className="space-y-2">

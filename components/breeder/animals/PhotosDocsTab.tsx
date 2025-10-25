@@ -19,7 +19,7 @@ interface PhotosDocsTabProps {
 
 type FileType = 'photo' | 'document';
 
-type CategoryId = 'shelter' | 'whelping_areas' | 'vaccinations' | 'pedigree' | 'council_registration' | 'parents' | 'baby_photos' | 'training' | 'shows' | 'health';
+type CategoryId = 'profile' | 'gallery' | 'shelter' | 'whelping_areas' | 'vaccinations' | 'pedigree' | 'council_registration' | 'parents' | 'baby_photos' | 'training' | 'shows' | 'health';
 
 interface CategoryDefinition {
   id: CategoryId;
@@ -31,6 +31,8 @@ interface CategoryDefinition {
 }
 
 const categoryDefinitions: CategoryDefinition[] = [
+  { id: 'profile', name: 'Profile Photo', description: 'Main profile picture for this animal', icon: '📸', types: ['photo'], limit: 1 },
+  { id: 'gallery', name: 'Gallery', description: 'General photos of this animal', icon: '🖼️', types: ['photo'], limit: 20 },
   { id: 'shelter', name: 'Shelter', description: 'Photos of living quarters and kennels', icon: '🏠', types: ['photo'], limit: 10 },
   { id: 'whelping_areas', name: 'Whelping Areas', description: 'Whelping box and maternity areas', icon: '🐾', types: ['photo'], limit: 10 },
   { id: 'vaccinations', name: 'Vaccinations', description: 'Vaccination records and certificates', icon: '💉', types: ['document'], limit: 10 },
@@ -48,7 +50,7 @@ export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fileType, setFileType] = useState<FileType>('photo');
-  const [selectedCategory, setSelectedCategory] = useState<CategoryId>('shelter');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryId>('gallery');
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [caption, setCaption] = useState('');

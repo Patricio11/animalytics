@@ -9,6 +9,7 @@ export const sexEnum = pgEnum('sex', ['male', 'female']);
 export const semenTypeEnum = pgEnum('semen_type', ['fresh', 'chilled', 'frozen']);
 export const photoCategoryEnum = pgEnum('photo_category', [
   'profile',
+  'gallery',
   'training',
   'shows',
   'pedigree',

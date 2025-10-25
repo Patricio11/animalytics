@@ -17,6 +17,8 @@ import { PawPrint, Check, CalendarIcon, ChevronsUpDown, Upload, X, ImageIcon, Lo
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUpload } from "@/components/upload";
+import { STORAGE_PATHS } from "@/lib/supabase";
 
 interface EditAnimalDialogProps {
   open: boolean;
@@ -40,8 +42,7 @@ interface EditAnimalDialogProps {
 }
 
 interface AnimalFormData {
-  profilePhoto: File | null;
-  profilePhotoPreview: string | null;
+  profilePhotoUrl: string | null;
   name: string;
   type: 'dog' | 'bitch';
   breed: string;
@@ -91,8 +92,7 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
   }, [breeds, breedSearch]);
 
   const [formData, setFormData] = useState<AnimalFormData>({
-    profilePhoto: null,
-    profilePhotoPreview: animalData.imageUrl || null,
+    profilePhotoUrl: animalData.imageUrl || null,
     name: animalData.name,
     type: animalData.sex === 'male' ? 'dog' : 'bitch',
     breed: animalData.breed,
@@ -111,8 +111,7 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
   useEffect(() => {
     if (open) {
       setFormData({
-        profilePhoto: null,
-        profilePhotoPreview: animalData.imageUrl || null,
+        profilePhotoUrl: animalData.imageUrl || null,
         name: animalData.name,
         type: animalData.sex === 'male' ? 'dog' : 'bitch',
         breed: animalData.breed,
@@ -133,40 +132,6 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select an image under 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          profilePhoto: file,
-          profilePhotoPreview: reader.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removePhoto = () => {
-    if (formData.profilePhotoPreview && formData.profilePhoto) {
-      URL.revokeObjectURL(formData.profilePhotoPreview);
-    }
-    setFormData(prev => ({
-      ...prev,
-      profilePhoto: null,
-      profilePhotoPreview: animalData.imageUrl || null
-    }));
-  };
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.breed || !formData.dateOfBirth) {
@@ -198,26 +163,45 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
         bio: formData.description || undefined,
       };
 
-      // TODO: Handle photo upload if new photo selected
-      // if (formData.profilePhoto) {
-      //   const uploadedUrl = await uploadPhoto(formData.profilePhoto);
-      //   updateData.profileImageUrl = uploadedUrl;
-      // }
-
       await updateAnimalMutation.mutateAsync({
         id: animalId,
         data: updateData
       });
 
+      // If profile photo was changed, update it in animal_photos table
+      if (formData.profilePhotoUrl && formData.profilePhotoUrl !== animalData.imageUrl) {
+        try {
+          // First, delete existing profile photo if any
+          const existingPhotos = await fetch(`/api/animals/${animalId}/photos?category=profile`);
+          const photosData = await existingPhotos.json();
+          
+          if (photosData.photos && photosData.photos.length > 0) {
+            // Delete old profile photo
+            await fetch(`/api/animals/${animalId}/photos/${photosData.photos[0].id}`, {
+              method: 'DELETE',
+            });
+          }
+
+          // Add new profile photo
+          await fetch(`/api/animals/${animalId}/photos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              category: 'profile',
+              fileUrl: formData.profilePhotoUrl,
+              fileName: 'profile-photo.jpg',
+            }),
+          });
+        } catch (photoError) {
+          console.error('Failed to update profile photo:', photoError);
+          // Don't fail the whole operation if photo update fails
+        }
+      }
+
       toast({
         title: "Animal Updated Successfully!",
         description: `${formData.name} has been updated.`,
       });
-
-      // Cleanup photo URL if it was a new upload
-      if (formData.profilePhotoPreview && formData.profilePhoto) {
-        URL.revokeObjectURL(formData.profilePhotoPreview);
-      }
 
       setIsSubmitting(false);
       onOpenChange(false);
@@ -253,55 +237,18 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
           {/* Profile Photo and Animal Name */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Profile Photo Upload */}
-            <div className="space-y-3">
-              <Label>Profile Photo</Label>
-              {!formData.profilePhotoPreview ? (
-                <div className="relative">
-                  <input
-                    type="file"
-                    id="edit-profile-photo"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="edit-profile-photo"
-                    className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/20 rounded-lg cursor-pointer hover:border-primary/40 hover:bg-surface-secondary transition-colors"
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <div className="w-12 h-12 rounded-full bg-gradient-brand/10 flex items-center justify-center mb-3">
-                        <Upload className="w-6 h-6 text-primary" />
-                      </div>
-                      <p className="text-sm font-medium text-foreground mb-1">
-                        Click to upload
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        PNG, JPG up to 5MB
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              ) : (
-                <div className="relative flex flex-col items-center gap-3 p-4 border border-primary/10 rounded-lg bg-surface-secondary h-40 justify-center">
-                  <Avatar className="w-20 h-20 border-2 border-primary/20">
-                    <AvatarImage src={formData.profilePhotoPreview} alt="Profile preview" />
-                    <AvatarFallback>
-                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={removePhoto}
-                    className="hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <X className="w-3 h-3 mr-1" />
-                    Remove
-                  </Button>
-                </div>
-              )}
-            </div>
+            <ImageUpload
+              storagePath={STORAGE_PATHS.ANIMAL_PHOTOS}
+              onUploadSuccess={(result) => {
+                setFormData(prev => ({ ...prev, profilePhotoUrl: result.url! }));
+              }}
+              currentImageUrl={formData.profilePhotoUrl || undefined}
+              label="Profile Photo"
+              helperText="PNG, JPG up to 5MB"
+              showPreview={true}
+              aspectRatio="square"
+              maxSizeInMB={5}
+            />
 
             {/* Animal Name */}
             <div className="space-y-3 flex flex-col justify-center">

@@ -205,13 +205,22 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
     'retired': { color: 'bg-muted text-muted-foreground border-muted', label: 'Retired' },
   };
 
-  // Get primary photo or use first photo
-  const primaryPhoto = animal.profileImageUrl || animal.photos?.[0]?.fileUrl || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=600&fit=crop&crop=face";
-  const additionalPhotos = animal.photos?.slice(1, 5).map((p:any) => p.fileUrl) || [];
+  // Get primary photo from animal_photos table (category: 'profile') or use first photo
+  const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
+  const primaryPhoto = profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=600&fit=crop&crop=face";
   
-  // Build allPhotos array - ensure primaryPhoto is always first
+  // Get additional photos (excluding profile photo)
+  const additionalPhotos = animal.photos
+    ?.filter((p: any) => p.category !== 'profile')
+    .slice(0, 4)
+    .map((p: any) => p.fileUrl) || [];
+  
+  // Build allPhotos array - profile photo first, then others
   const allPhotos = animal.photos && animal.photos.length > 0
-    ? animal.photos.map((p:any) => p.fileUrl).filter((url: string) => url) // Filter out empty URLs
+    ? [
+        profilePhoto?.fileUrl,
+        ...animal.photos.filter((p: any) => p.category !== 'profile').map((p: any) => p.fileUrl)
+      ].filter((url: string | undefined) => url) // Filter out empty/undefined URLs
     : [primaryPhoto]; // Fallback to primaryPhoto if no photos in array
 
   // Determine available tabs based on animal type
