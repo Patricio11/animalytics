@@ -46,6 +46,18 @@ function useMarketplaceAnimals(filters: {
   });
 }
 
+// Fetch user's own listings
+function useMyListings() {
+  return useQuery({
+    queryKey: ['my-listings'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace/listings');
+      if (!response.ok) throw new Error('Failed to fetch listings');
+      return response.json();
+    },
+  });
+}
+
 // Fetch breeds
 function useBreeds() {
   return useQuery({
@@ -142,9 +154,31 @@ export default function Marketplace() {
     sex: sexFilter,
     location: locationFilter,
   });
+  const { data: myListingsData, refetch: refetchMyListings } = useMyListings();
 
   const breeds = breedsData?.breeds || [];
   const animals = animalsData?.animals || [];
+  const myListings = myListingsData?.listings || [];
+  
+  // Handle delete listing
+  const handleDeleteListing = async (listingId: string) => {
+    if (!confirm('Are you sure you want to delete this listing?')) return;
+    
+    try {
+      const response = await fetch(`/api/marketplace/listings/${listingId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete listing');
+      
+      // Refresh listings
+      refetchMyListings();
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      alert('Failed to delete listing. Please try again.');
+    }
+  };
 
   // Filter animals by age range
   const filteredAnimals = useMemo(() => {
@@ -179,10 +213,51 @@ export default function Marketplace() {
     return filteredAnimals.filter((animal: any) => animal.isChampion);
   }, [filteredAnimals, championOnlyFilter]);
 
-  // Transform to listings
-  const listings = useMemo(() => {
+  // Transform animals to listings format
+  const animalListings = useMemo(() => {
     return finalAnimals.map(transformAnimalToListing);
   }, [finalAnimals]);
+
+  // Combine user's actual listings with animal-based listings
+  const allListings = useMemo(() => {
+    // Convert myListings to the same format
+    const userListingsFormatted = myListings.map((listing: any) => ({
+      ...listing,
+      id: listing.id,
+      category: listing.category?.replace(/_/g, '-') || 'stud-dog',
+      animalId: listing.animalId,
+      animalName: listing.animal?.name || 'Unknown',
+      breederId: listing.userId,
+      breederName: 'You',
+      breederAvatar: undefined,
+      breederReputation: 5.0,
+      title: listing.title,
+      description: listing.description,
+      price: listing.price ? listing.price / 100 : undefined, // Convert from cents
+      currency: listing.currency || 'USD',
+      images: [listing.animal?.profileImageUrl || '/placeholder-dog.jpg'],
+      breed: listing.breed,
+      sex: listing.sex,
+      age: listing.age,
+      color: listing.color,
+      location: listing.location,
+      contact: {
+        name: listing.contactName,
+        phone: listing.contactPhone,
+        email: listing.contactEmail,
+        location: listing.location,
+      },
+      status: listing.status,
+      featured: listing.isFeatured || false,
+      views: listing.viewCount || 0,
+      interested: listing.interestedCount || 0,
+      createdAt: listing.createdAt,
+    }));
+
+    return [...userListingsFormatted, ...animalListings];
+  }, [myListings, animalListings]);
+
+  const listings = allListings;
 
   // Featured listings
   const featuredListings = listings.filter((l: any) => l.featured);
@@ -449,15 +524,20 @@ export default function Marketplace() {
               </Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredListings.map((listing: any) => (
-                <ListingCard 
-                  key={listing.id} 
-                  listing={listing}
-                  onInterested={(id) => {
-                    console.log('Interested in listing:', id);
-                  }}
-                />
-              ))}
+              {featuredListings.map((listing: any) => {
+                const isOwner = myListings.some((ml: any) => ml.id === listing.id);
+                return (
+                  <ListingCard 
+                    key={listing.id} 
+                    listing={listing}
+                    isOwner={isOwner}
+                    onDelete={handleDeleteListing}
+                    onInterested={(id) => {
+                      console.log('Interested in listing:', id);
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
@@ -474,15 +554,20 @@ export default function Marketplace() {
               </Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {listings.map((listing: any) => (
-                <ListingCard 
-                  key={listing.id} 
-                  listing={listing}
-                  onInterested={(id) => {
-                    console.log('Interested in listing:', id);
-                  }}
-                />
-              ))}
+              {listings.map((listing: any) => {
+                const isOwner = myListings.some((ml: any) => ml.id === listing.id);
+                return (
+                  <ListingCard 
+                    key={listing.id} 
+                    listing={listing}
+                    isOwner={isOwner}
+                    onDelete={handleDeleteListing}
+                    onInterested={(id) => {
+                      console.log('Interested in listing:', id);
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
@@ -519,6 +604,11 @@ export default function Marketplace() {
         <CreateListingDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
+          onSuccess={() => {
+            // Refetch both marketplace animals and user's listings
+            refetchMyListings();
+            window.location.reload(); // Temporary - will optimize later
+          }}
         />
       </div>
     </div>

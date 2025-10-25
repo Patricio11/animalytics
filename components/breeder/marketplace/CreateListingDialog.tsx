@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -15,10 +16,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { AnimalCombobox } from "@/components/ui/animal-combobox";
 import { ListingCategorySelector } from "./ListingCategorySelector";
 import { ClinicSelector } from "./ClinicSelector";
 import { ListingCategory, categoryRequiresClinic, getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
-import { mockAnimals } from "@/data/mockData";
 import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -52,11 +53,13 @@ const steps = [
 interface CreateListingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void; // Callback to refresh marketplace data
 }
 
-export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogProps) {
+export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateListingDialogProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ListingFormData>({
     category: 'stud-dog',
     contactName: '',
@@ -66,6 +69,46 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
     title: '',
     description: '',
   });
+
+  // Fetch user's animals
+  const { data: animalsData, isLoading: animalsLoading } = useQuery({
+    queryKey: ['user-animals'],
+    queryFn: async () => {
+      const response = await fetch('/api/animals');
+      if (!response.ok) throw new Error('Failed to fetch animals');
+      return response.json();
+    },
+    enabled: open, // Only fetch when dialog is open
+  });
+
+  // Fetch breeder profile for contact details
+  const { data: profileData } = useQuery({
+    queryKey: ['breeder-profile'],
+    queryFn: async () => {
+      const response = await fetch('/api/breeder/profile');
+      if (!response.ok) throw new Error('Failed to fetch profile');
+      return response.json();
+    },
+    enabled: open,
+  });
+
+  const animals = animalsData?.data || []; // Fix: use .data instead of .animals
+  const profile = profileData?.profile;
+
+  // Pre-fill contact details from breeder profile
+  useEffect(() => {
+    if (profile && open) {
+      setFormData(prev => ({
+        ...prev,
+        contactName: profile.displayName || prev.contactName,
+        contactEmail: profile.publicEmail || prev.contactEmail,
+        contactPhone: profile.publicPhone || prev.contactPhone,
+        contactLocation: profile.location ? 
+          `${profile.location.city || ''}, ${profile.location.state || ''}, ${profile.location.country || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',') 
+          : prev.contactLocation,
+      }));
+    }
+  }, [profile, open]);
 
   const updateFormData = (field: keyof ListingFormData, value: string | number | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -106,10 +149,55 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = () => {
-    if (validateStep(3)) {
-      // Here you would normally save the listing
-      console.log('Listing created:', formData);
+  const handleSubmit = async () => {
+    if (!validateStep(3)) {
+      toast({
+        title: "Incomplete Form",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      console.log('Submitting listing with data:', formData);
+
+      // Convert category from hyphen format to underscore format for database
+      const categoryMap: Record<string, string> = {
+        'dog-for-sale': 'dog_for_sale',
+        'pups-for-sale': 'pups_for_sale',
+        'reproductive-services': 'reproductive_services',
+        'frozen-semen': 'frozen_semen',
+        'stud-dog': 'stud_dog',
+      };
+
+      const submissionData = {
+        ...formData,
+        category: categoryMap[formData.category] || formData.category,
+      };
+
+      console.log('Converted submission data:', submissionData);
+
+      const response = await fetch('/api/marketplace/listings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      const data = await response.json();
+      console.log('API Response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create listing');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to create listing');
+      }
 
       toast({
         title: "Listing Created!",
@@ -119,6 +207,20 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
       // Reset form and close dialog
       resetForm();
       onOpenChange(false);
+      
+      // Refresh marketplace data without full page reload
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error: any) {
+      console.error('Error creating listing:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create listing. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -142,7 +244,7 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
     onOpenChange(open);
   };
 
-  const selectedAnimal = mockAnimals.find(a => a.id === formData.animalId);
+  const selectedAnimal = animals.find((a: any) => a.id === formData.animalId);
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
@@ -234,21 +336,21 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
                     className="bg-background border-primary/20 focus:border-primary"
                   />
                 ) : (
-                  <Select
+                  <AnimalCombobox
+                    animals={animals.map((animal: any) => ({
+                      id: animal.id,
+                      name: animal.name,
+                      breed: animal.breed?.name,
+                      profileImageUrl: animal.profileImageUrl,
+                      sex: animal.sex,
+                    }))}
                     value={formData.animalId}
                     onValueChange={(value) => updateFormData('animalId', value)}
-                  >
-                    <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
-                      <SelectValue placeholder="Choose an animal" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockAnimals.map((animal) => (
-                        <SelectItem key={animal.id} value={animal.id}>
-                          {animal.name} - {animal.breed} ({animal.type === 'bitch' ? 'Female' : 'Male'})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder={animalsLoading ? "Loading animals..." : "Select an animal"}
+                    emptyText={animalsLoading ? "Loading..." : "No animals found. Add an animal first."}
+                    disabled={false}
+                    className="bg-background border-primary/20 focus:border-primary"
+                  />
                 )}
               </div>
 
@@ -257,11 +359,22 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
                 <Alert className="border-chart-3/50 bg-chart-3/10">
                   <CheckCircle className="h-4 w-4 text-chart-3" />
                   <AlertDescription className="ml-2">
-                    <strong>Selected:</strong> {selectedAnimal.name} - {selectedAnimal.breed}
+                    <strong>Selected:</strong> {selectedAnimal.name} - {selectedAnimal.breed?.name || 'Unknown Breed'}
                     <div className="mt-1 flex gap-2">
-                      <Badge variant="outline" className="text-xs">{selectedAnimal.type === 'bitch' ? 'Female' : 'Male'}</Badge>
-                      <Badge variant="outline" className="text-xs">{selectedAnimal.age}</Badge>
-                      <Badge variant="outline" className="text-xs">{selectedAnimal.color}</Badge>
+                      <Badge variant="outline" className="text-xs">{selectedAnimal.sex === 'female' ? 'Female' : 'Male'}</Badge>
+                      {selectedAnimal.dateOfBirth && (
+                        <Badge variant="outline" className="text-xs">
+                          {(() => {
+                            const birth = new Date(selectedAnimal.dateOfBirth);
+                            const today = new Date();
+                            const years = today.getFullYear() - birth.getFullYear();
+                            return years > 0 ? `${years} years` : 'Less than 1 year';
+                          })()}
+                        </Badge>
+                      )}
+                      {selectedAnimal.color && (
+                        <Badge variant="outline" className="text-xs">{selectedAnimal.color}</Badge>
+                      )}
                     </div>
                   </AlertDescription>
                 </Alert>
@@ -284,9 +397,18 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">Contact Information</h3>
                 <p className="text-sm text-muted-foreground">
-                  Provide contact details for interested buyers
+                  Contact details pre-filled from your breeder profile. You can edit them if needed.
                 </p>
               </div>
+
+              {profile && (
+                <Alert className="border-chart-3/50 bg-chart-3/10">
+                  <CheckCircle className="h-4 w-4 text-chart-3" />
+                  <AlertDescription className="ml-2 text-sm">
+                    <strong>Info:</strong> These details are from your breeder profile and can be updated here for this listing only.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -472,11 +594,20 @@ export function CreateListingDialog({ open, onOpenChange }: CreateListingDialogP
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={!validateStep(3)}
+                disabled={!validateStep(3) || isSubmitting}
                 className="bg-gradient-brand hover:opacity-90 shadow-card"
               >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Create Listing
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Create Listing
+                  </>
+                )}
               </Button>
             )}
           </div>

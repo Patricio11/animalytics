@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield } from "lucide-react";
+import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Edit, Trash2 } from "lucide-react";
 import { MarketplaceListing, getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -14,9 +14,12 @@ interface ListingCardProps {
   listing: MarketplaceListing;
   onInterested?: (listingId: string) => void;
   isPublicView?: boolean;
+  isOwner?: boolean;
+  onEdit?: (listingId: string) => void;
+  onDelete?: (listingId: string) => void;
 }
 
-export function ListingCard({ listing, onInterested, isPublicView }: ListingCardProps) {
+export function ListingCard({ listing, onInterested, isPublicView, isOwner, onEdit, onDelete }: ListingCardProps) {
   const categoryConfig = {
     'dog-for-sale': { color: 'bg-chart-1 text-white', icon: '🐕' },
     'pups-for-sale': { color: 'bg-chart-3 text-white', icon: '🐶' },
@@ -173,22 +176,44 @@ export function ListingCard({ listing, onInterested, isPublicView }: ListingCard
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button
-              asChild
-              className="flex-1 bg-gradient-brand hover:opacity-90 shadow-card"
-            >
-              <Link href={detailUrl}>
-                View Details
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="hover:bg-primary/10 hover:border-primary shadow-card"
-              onClick={() => onInterested?.(listing.id)}
-            >
-              <Heart className="w-4 h-4" />
-            </Button>
+            {isOwner ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card"
+                  onClick={() => onEdit?.(listing.id)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  className="hover:bg-destructive/10 hover:border-destructive hover:text-destructive shadow-card"
+                  onClick={() => onDelete?.(listing.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  asChild
+                  className="flex-1 bg-gradient-brand hover:opacity-90 shadow-card"
+                >
+                  <Link href={detailUrl}>
+                    View Details
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="hover:bg-primary/10 hover:border-primary shadow-card"
+                  onClick={() => onInterested?.(listing.id)}
+                >
+                  <Heart className="w-4 h-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </CardContent>
