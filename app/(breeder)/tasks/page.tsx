@@ -51,12 +51,65 @@ export default function TasksPage() {
 
   const handleSave = async (newTask: any) => {
     try {
+      // Transform task data to match API schema
+      const taskData: any = {};
+      let title = '';
+      
+      // Build title and taskData based on task type
+      switch (newTask.type) {
+        case 'feeding':
+          title = `Feeding - ${newTask.foodType}`;
+          taskData.foodType = newTask.foodType;
+          taskData.amount = newTask.amount;
+          taskData.unit = newTask.unit;
+          taskData.time = newTask.time;
+          break;
+        case 'exercise':
+          title = `Exercise - ${newTask.exerciseType}`;
+          taskData.exerciseType = newTask.exerciseType;
+          taskData.duration = newTask.duration;
+          break;
+        case 'grooming':
+          title = `Grooming - ${newTask.groomingType}`;
+          taskData.groomingType = newTask.groomingType;
+          taskData.frequency = newTask.frequency;
+          break;
+        case 'weight':
+          title = 'Weight Check';
+          taskData.weight = newTask.weight;
+          taskData.weightUnit = 'kg';
+          break;
+        case 'cleaning':
+          title = `Cleaning - ${newTask.area}`;
+          taskData.area = newTask.area;
+          taskData.cleaningType = newTask.cleaningType;
+          taskData.frequency = newTask.frequency;
+          break;
+        case 'event':
+          title = newTask.title || 'Event';
+          taskData.eventType = newTask.eventType;
+          taskData.time = newTask.time;
+          break;
+      }
+      
+      const apiTask = {
+        type: newTask.type,
+        title,
+        description: newTask.notes,
+        dueDate: newTask.date,
+        dueTime: newTask.time,
+        animalId: newTask.animalId,
+        notes: newTask.notes,
+        taskData,
+        isRecurring: newTask.recurring,
+      };
+      
       if (dialogMode === 'create') {
-        await createTaskMutation.mutateAsync(newTask);
+        await createTaskMutation.mutateAsync(apiTask);
       } else if (editingTask) {
         await updateTaskMutation.mutateAsync({
           id: editingTask.id,
-          ...newTask,
+          data: apiTask,
         });
       }
       setDialogOpen(false);
@@ -398,6 +451,7 @@ export default function TasksPage() {
         existingTask={editingTask}
         mode={dialogMode}
         availableAnimals={availableAnimals}
+        isLoading={createTaskMutation.isPending || updateTaskMutation.isPending}
       />
     </div>
   );

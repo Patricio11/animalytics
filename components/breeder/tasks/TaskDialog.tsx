@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnimalCombobox } from "@/components/ui/animal-combobox";
 import { useAnimals } from "@/lib/api/queries/animals";
-import { Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon } from "lucide-react";
+import { Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { Task, TaskType } from "@/lib/mock-data/tasks";
 import { format } from "date-fns";
 
@@ -27,6 +27,7 @@ interface TaskDialogProps {
   existingTask?: Task;
   mode?: 'create' | 'edit';
   availableAnimals?: { id: string; name: string }[];
+  isLoading?: boolean;
 }
 
 const taskTypeConfig = {
@@ -45,13 +46,14 @@ export function TaskDialog({
   existingTask,
   mode = 'create',
   availableAnimals = [],
+  isLoading = false,
 }: TaskDialogProps) {
   // Fetch user's animals
   const { data: animalsData } = useAnimals();
   const userAnimals = animalsData || [];
   
   // Use provided animals or fetch from API
-  const animals = availableAnimals.length > 0 ? availableAnimals : userAnimals.map(animal => ({
+  const animals = availableAnimals.length > 0 ? availableAnimals : userAnimals.map((animal: any) => ({
     id: animal.id,
     name: animal.name,
     breed: animal.breed?.name,
@@ -211,7 +213,7 @@ export function TaskDialog({
 
   const handleAnimalChange = (value: string) => {
     setAnimalId(value);
-    const selected = animals.find(a => a.id === value);
+    const selected = animals.find((a: any) => a.id === value);
     if (selected) {
       setAnimalName(selected.name);
     } else {
@@ -659,14 +661,26 @@ export function TaskDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             className="bg-gradient-brand hover:opacity-90 shadow-card"
+            disabled={isLoading}
           >
-            {mode === 'edit' ? 'Save Changes' : 'Create Task'}
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {mode === 'edit' ? 'Saving...' : 'Creating...'}
+              </>
+            ) : (
+              mode === 'edit' ? 'Save Changes' : 'Create Task'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

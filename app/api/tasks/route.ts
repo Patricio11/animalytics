@@ -20,19 +20,15 @@ const taskDataSchemas = {
   feeding: z.object({
     foodType: z.string().min(1, 'Food type is required'),
     amount: z.number().positive('Amount must be positive'),
-    unit: z.enum(['grams', 'cups'], { required_error: 'Unit is required' }),
+    unit: z.enum(['grams', 'cups']),
     time: z.string().optional(),
   }),
   exercise: z.object({
-    exerciseType: z.enum(['walk', 'play', 'training'], {
-      required_error: 'Exercise type is required',
-    }),
+    exerciseType: z.enum(['walk', 'play', 'training']),
     duration: z.number().positive('Duration must be positive'),
   }),
   grooming: z.object({
-    groomingType: z.enum(['bath', 'brush', 'nails', 'ears', 'teeth'], {
-      required_error: 'Grooming type is required',
-    }),
+    groomingType: z.enum(['bath', 'brush', 'nails', 'ears', 'teeth']),
     frequency: z.string().optional(),
   }),
   weight: z.object({
@@ -53,13 +49,16 @@ const taskDataSchemas = {
 };
 
 const createTaskSchema = z.object({
-  taskType: z.enum(['feeding', 'exercise', 'grooming', 'weight', 'cleaning', 'event'], {
-    required_error: 'Task type is required',
-  }),
+  type: z.enum(['feeding', 'exercise', 'grooming', 'weight', 'cleaning', 'event']),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
   animalId: z.string().optional(),
   dueDate: z.string().min(1, 'Due date is required'),
+  dueTime: z.string().optional(),
   notes: z.string().optional(),
-  taskData: z.any(),
+  taskData: z.any().optional(),
+  isRecurring: z.boolean().optional(),
+  recurringPattern: z.string().optional(),
 });
 
 // ============================================================================
@@ -88,7 +87,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by task type
     if (taskType && taskType !== 'all') {
-      whereConditions.push(eq(tasks.taskType, taskType as any));
+      whereConditions.push(eq(tasks.type, taskType as any));
     }
 
     // Filter by priority
@@ -99,18 +98,18 @@ export async function GET(request: NextRequest) {
     // Filter by status
     if (status) {
       if (status === 'completed') {
-        whereConditions.push(eq(tasks.isCompleted, true));
+        whereConditions.push(eq(tasks.status, 'completed'));
       } else if (status === 'pending') {
         whereConditions.push(
           and(
-            eq(tasks.isCompleted, false),
+            eq(tasks.status, 'pending'),
             gte(tasks.dueDate, new Date().toISOString().split('T')[0])
           )
         );
       } else if (status === 'overdue') {
         whereConditions.push(
           and(
-            eq(tasks.isCompleted, false),
+            eq(tasks.status, 'pending'),
             lte(tasks.dueDate, new Date().toISOString().split('T')[0])
           )
         );
@@ -121,7 +120,7 @@ export async function GET(request: NextRequest) {
 
         whereConditions.push(
           and(
-            eq(tasks.isCompleted, false),
+            eq(tasks.status, 'pending'),
             gte(tasks.dueDate, today.toISOString().split('T')[0]),
             lte(tasks.dueDate, threeDaysLater.toISOString().split('T')[0])
           )
@@ -184,7 +183,7 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -193,13 +192,13 @@ export async function POST(request: NextRequest) {
 
     const validatedData = validation.data;
 
-    // Validate taskData based on taskType
-    const taskDataSchema = taskDataSchemas[validatedData.taskType];
-    if (taskDataSchema) {
+    // Validate taskData based on type
+    const taskDataSchema = taskDataSchemas[validatedData.type];
+    if (taskDataSchema && validatedData.taskData) {
       const taskDataValidation = taskDataSchema.safeParse(validatedData.taskData);
       if (!taskDataValidation.success) {
         return validationErrorResponse(
-          taskDataValidation.error.errors.map((err) => ({
+          taskDataValidation.error.issues.map((err) => ({
             field: `taskData.${err.path.join('.')}`,
             message: err.message,
           }))
@@ -214,7 +213,7 @@ export async function POST(request: NextRequest) {
 
     let priority: 'low' | 'medium' | 'high' = 'medium';
 
-    if (['feeding', 'weight', 'event'].includes(validatedData.taskType)) {
+    if (['feeding', 'weight', 'event'].includes(validatedData.type)) {
       priority = 'high';
     } else if (daysDiff < 0) {
       priority = 'high'; // Overdue

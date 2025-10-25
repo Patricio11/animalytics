@@ -6,15 +6,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface CreateTaskData {
   type: 'feeding' | 'exercise' | 'grooming' | 'weight' | 'cleaning' | 'event' | 'puppy_feeding' | 'misc';
-  title?: string;
+  title: string;
+  description?: string;
   notes?: string;
   dueDate: string;
   dueTime?: string;
   animalId?: string;
-  priority: 'low' | 'medium' | 'high';
-  recurring?: boolean;
+  priority?: 'low' | 'medium' | 'high';
+  taskData?: Record<string, any>;
+  isRecurring?: boolean;
   recurringPattern?: string;
-  metadata?: Record<string, string | number | boolean | null>;
 }
 
 interface UpdateTaskData extends Partial<CreateTaskData> {
