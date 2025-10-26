@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby, Loader2, AlertCircle as AlertCircleIcon } from "lucide-react";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useCompleteTask } from "@/lib/api/queries/tasks";
 import { useAnimals } from "@/lib/api/queries/animals";
@@ -27,6 +28,8 @@ export default function TasksPage() {
   const [activeTab, setActiveTab] = useState("pending");
   const [viewingTask, setViewingTask] = useState<any | undefined>();
   const [showTaskView, setShowTaskView] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Fetch tasks and animals from API
   const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useTasks();
@@ -125,14 +128,20 @@ export default function TasksPage() {
     }
   };
 
-  const handleDelete = async (taskId: string | { id: string }) => {
+  const handleDelete = (taskId: string | { id: string }) => {
     const id = typeof taskId === 'string' ? taskId : taskId.id;
-    if (confirm('Are you sure you want to delete this task?')) {
-      try {
-        await deleteTaskMutation.mutateAsync(id);
-      } catch (error) {
-        console.error('Failed to delete task:', error);
-      }
+    setTaskToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!taskToDelete) return;
+    try {
+      await deleteTaskMutation.mutateAsync(taskToDelete);
+      setShowDeleteModal(false);
+      setTaskToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
     }
   };
 
@@ -490,6 +499,17 @@ export default function TasksPage() {
           setShowTaskView(false);
           handleEdit(task);
         }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onConfirm={confirmDelete}
+        title="Delete Task"
+        itemName={taskToDelete ? tasksData?.find((t: any) => t.id === taskToDelete)?.title : undefined}
+        description="Are you sure you want to delete this task? This action cannot be undone."
+        isLoading={deleteTaskMutation.isPending}
       />
     </div>
   );
