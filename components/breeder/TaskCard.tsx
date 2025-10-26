@@ -84,20 +84,28 @@ export function TaskCard({
                 </Badge>
               </div>
             </div>
-            {animalName && animalName !== 'N/A' && (
-              <div className="flex items-center gap-2 mt-3">
-                <Avatar className="h-8 w-8 border border-primary/30">
-                  <AvatarImage 
-                    src={animal?.profileImageUrl || animal?.photos?.[0]?.fileUrl} 
-                    alt={animalName} 
-                  />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                    {animalName.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm text-muted-foreground font-medium">{animalName}</span>
-              </div>
-            )}
+            {animalName && animalName !== 'N/A' && (() => {
+              // Get profile photo from animal_photos table (category='profile') or fallback
+              const profilePhoto = animal?.photos?.find((p: any) => p.category === 'profile');
+              const imageUrl = profilePhoto?.fileUrl || 
+                               animal?.photos?.[0]?.fileUrl || 
+                               animal?.profileImageUrl;
+              
+              return (
+                <div className="flex items-center gap-2 mt-3">
+                  <Avatar className="h-8 w-8 border border-primary/30">
+                    <AvatarImage 
+                      src={imageUrl} 
+                      alt={animalName} 
+                    />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                      {animalName.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground font-medium">{animalName}</span>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </CardHeader>

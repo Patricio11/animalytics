@@ -473,7 +473,7 @@ export default function CalculatorPage() {
                   </Button>
 
                   <p className="text-xs text-center text-muted-foreground">
-                    Complete all 9 steps to calculate your breeding conception rating
+                    Complete all 8 steps to calculate your breeding conception rating
                   </p>
                 </div>
               </CardContent>

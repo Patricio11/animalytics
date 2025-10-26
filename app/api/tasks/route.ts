@@ -149,6 +149,7 @@ export async function GET(request: NextRequest) {
         animal: {
           with: {
             breed: true,
+            photos: true,
           },
         },
       },

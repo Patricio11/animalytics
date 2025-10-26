@@ -214,20 +214,28 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete, onView }: T
                   </Badge>
                 </div>
 
-                {('animalName' in task) && task.animalName && task.animalName !== 'N/A' && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <Avatar className="h-7 w-7 border border-primary/30">
-                      <AvatarImage 
-                        src={task.animal?.profileImageUrl || task.animal?.photos?.[0]?.fileUrl} 
-                        alt={task.animalName} 
-                      />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                        {task.animalName.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-semibold text-foreground">{task.animalName}</span>
-                  </div>
-                )}
+                {('animalName' in task) && task.animalName && task.animalName !== 'N/A' && (() => {
+                  // Get profile photo from animal_photos table (category='profile') or fallback
+                  const profilePhoto = task.animal?.photos?.find((p: any) => p.category === 'profile');
+                  const imageUrl = profilePhoto?.fileUrl || 
+                                   task.animal?.photos?.[0]?.fileUrl || 
+                                   task.animal?.profileImageUrl;
+                  
+                  return (
+                    <div className="flex items-center gap-2 mb-2">
+                      <Avatar className="h-7 w-7 border border-primary/30">
+                        <AvatarImage 
+                          src={imageUrl} 
+                          alt={task.animalName} 
+                        />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          {task.animalName.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-semibold text-foreground">{task.animalName}</span>
+                    </div>
+                  );
+                })()}
 
                 {getTaskDetails()}
 
