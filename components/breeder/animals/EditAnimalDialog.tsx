@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUpdateAnimal } from "@/lib/api/queries/animals";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,7 @@ function useBreeds() {
 
 export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: EditAnimalDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [breedSearchOpen, setBreedSearchOpen] = useState(false);
   const [breedSearch, setBreedSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -190,6 +191,10 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
               fileName: 'profile-photo.jpg',
             }),
           });
+
+          // Invalidate queries to refresh the animal data with new photo
+          queryClient.invalidateQueries({ queryKey: ['animals', animalId] });
+          queryClient.invalidateQueries({ queryKey: ['animals'] });
         } catch (photoError) {
           console.error('Failed to update profile photo:', photoError);
           // Don't fail the whole operation if photo update fails

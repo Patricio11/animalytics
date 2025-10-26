@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCreateAnimal, useAnimals } from "@/lib/api/queries/animals";
 import { useBreedPreferences } from "@/lib/api/queries/breed-preferences";
 import { useBreeds } from "@/lib/api/queries/breeds";
@@ -67,6 +67,7 @@ interface AnimalFormData {
 
 export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [breedSearchOpen, setBreedSearchOpen] = useState(false);
   const [breedSearch, setBreedSearch] = useState("");
@@ -236,7 +237,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       // If profile photo was uploaded, save it to animal_photos table
       if (formData.profilePhotoUrl && createdAnimal?.id) {
         try {
-          await fetch(`/api/animals/${createdAnimal.id}/photos`, {
+          const photoResponse = await fetch(`/api/animals/${createdAnimal.id}/photos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -245,6 +246,20 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
               fileName: 'profile-photo.jpg',
             }),
           });
+
+          if (!photoResponse.ok) {
+            const errorData = await photoResponse.json();
+            console.error('Failed to save profile photo:', errorData);
+            toast({
+              title: "Photo Upload Warning",
+              description: errorData.error || "Profile photo could not be saved, but animal was created successfully.",
+              variant: "destructive",
+            });
+          } else {
+            // Invalidate queries to refresh animal data with new photo
+            queryClient.invalidateQueries({ queryKey: ['animals', createdAnimal.id] });
+            queryClient.invalidateQueries({ queryKey: ['animals'] });
+          }
         } catch (photoError) {
           console.error('Failed to save profile photo:', photoError);
           // Don't fail the whole operation if photo save fails
