@@ -24,6 +24,21 @@ import {
   SEMEN_TYPE_FACTORS,
   SEMEN_QUALITY_FACTORS,
   SEMEN_ASSESSMENT_FACTORS,
+  RUNS_WITH_OTHERS_FACTORS,
+  RAN_WITH_OTHERS_DURING_PREGNANCY_FACTORS,
+  PREVIOUS_PREGNANCIES_FACTORS,
+  NUMBER_OF_SIBLINGS_FACTORS,
+  MATING_FAILURE_FACTORS,
+  TIMES_DID_NOT_PRODUCE_FACTORS,
+  LITTERS_SIRED_FACTORS,
+  FATHERS_LITTERS_SIRED_FACTORS,
+  RECENT_LITTER_DATE_FACTORS,
+  PUPS_IN_RECENT_SIRE_FACTORS,
+  TIME_BETWEEN_COLLECTION_FACTORS,
+  BATCH_USED_PREVIOUSLY_FACTORS,
+  DID_PRODUCE_PUPS_FACTORS,
+  PUPS_PRODUCED_FACTORS,
+  SEMEN_ASSESSED_FACTORS,
   getAgeFactor,
   getBodyConditionFactor,
   getBreedRating,
@@ -31,6 +46,7 @@ import {
   getDogSuccessRateFactor,
   getBreederExperienceFactor,
   calculateLabQuality,
+  getAgeAtCollectionFactor,
 } from './conception-factors';
 
 /**
@@ -156,6 +172,19 @@ function calculateBitchInformationFactor(inputs: ConceptionInputs): FactorCalcul
     factorCount += 0.5;
   }
 
+  // NEW FIELDS - Step 2
+  // Runs with others (stress/injury risk)
+  if (info.runsWithOthers) {
+    totalScore += RUNS_WITH_OTHERS_FACTORS[info.runsWithOthers];
+    factorCount += 1;
+  }
+
+  // Ran with others during previous pregnancies
+  if (info.ranWithOthersDuringPreviousPregnancies) {
+    totalScore += RAN_WITH_OTHERS_DURING_PREGNANCY_FACTORS[info.ranWithOthersDuringPreviousPregnancies];
+    factorCount += 1;
+  }
+
   const score = factorCount > 0 ? totalScore / factorCount : 0;
   const contribution = score * weight;
 
@@ -173,29 +202,58 @@ function calculateBitchHistoryFactor(inputs: ConceptionInputs): FactorCalculatio
   }
 
   const history = inputs.bitchHistory;
-  let score = 0;
+  let totalScore = 0;
+  let factorCount = 0;
 
+  // Base breeding experience
   if (history.hasBeenBred === 'no') {
     // First time breeding - slight penalty
-    score = BREEDING_HISTORY_FACTORS.firstTime;
+    totalScore += BREEDING_HISTORY_FACTORS.firstTime;
+    factorCount += 1;
   } else {
     // Has been bred before
-    score = BREEDING_HISTORY_FACTORS.experienced;
+    totalScore += BREEDING_HISTORY_FACTORS.experienced;
+    factorCount += 1;
 
     // Apply complications penalty if applicable
     if (history.hasComplications === 'yes') {
-      score *= BREEDING_HISTORY_FACTORS.hasComplications;
+      totalScore *= BREEDING_HISTORY_FACTORS.hasComplications;
     }
 
     // Apply time since last litter factor
     if (history.monthsSinceLastLitter !== undefined) {
       const timeFactor = getTimeSinceLastLitterFactor(history.monthsSinceLastLitter);
-      score *= timeFactor;
+      totalScore *= timeFactor;
     }
   }
 
+  // NEW FIELDS - Step 3
+  // Previous pregnancies
+  if (history.previousPregnancies) {
+    totalScore += PREVIOUS_PREGNANCIES_FACTORS[history.previousPregnancies];
+    factorCount += 1;
+  }
+
+  // Number of siblings (genetic fertility indicator)
+  if (history.numberOfSiblings) {
+    totalScore += NUMBER_OF_SIBLINGS_FACTORS[history.numberOfSiblings];
+    factorCount += 1;
+  }
+
+  // Mating failures
+  if (history.hadMatingThatDidNotProduce) {
+    totalScore += MATING_FAILURE_FACTORS[history.hadMatingThatDidNotProduce];
+    factorCount += 1;
+
+    // If had failures, apply additional penalty based on count
+    if (history.hadMatingThatDidNotProduce === 'yes' && history.timesDidNotProduce) {
+      totalScore *= TIMES_DID_NOT_PRODUCE_FACTORS[history.timesDidNotProduce];
+    }
+  }
+
+  const score = factorCount > 0 ? totalScore / factorCount : 0;
   const contribution = score * weight;
-  return { score, weight, contribution, filled: true };
+  return { score, weight, contribution, filled: factorCount > 0 };
 }
 
 /**
@@ -251,31 +309,61 @@ function calculateDogHistoryFactor(inputs: ConceptionInputs): FactorCalculation 
   }
 
   const history = inputs.dogHistory;
-  let score = 0;
+  let totalScore = 0;
+  let factorCount = 0;
 
+  // Base breeding experience
   if (history.hasBeenUsed === 'no') {
     // First time stud - slight penalty
-    score = DOG_HISTORY_FACTORS.firstTime;
+    totalScore += DOG_HISTORY_FACTORS.firstTime;
+    factorCount += 1;
   } else {
     // Has been used before
-    score = DOG_HISTORY_FACTORS.proven;
+    totalScore += DOG_HISTORY_FACTORS.proven;
+    factorCount += 1;
 
     // Apply success rate factor
     const successRateFactor = getDogSuccessRateFactor(history.successRate);
-    score *= successRateFactor;
+    totalScore *= successRateFactor;
 
     // Age at first use consideration (optional refinement)
     if (history.ageAtFirstUse !== undefined) {
       if (history.ageAtFirstUse < 1.5) {
-        score *= 0.95; // Too young penalty
+        totalScore *= 0.95; // Too young penalty
       } else if (history.ageAtFirstUse > 8) {
-        score *= 0.95; // Too old penalty
+        totalScore *= 0.95; // Too old penalty
       }
     }
   }
 
+  // NEW FIELDS - Step 5
+  // Number of litters sired
+  if (history.littersSired) {
+    totalScore += LITTERS_SIRED_FACTORS[history.littersSired];
+    factorCount += 1;
+  }
+
+  // Father's litters sired (genetic fertility indicator)
+  if (history.fathersLittersSired) {
+    totalScore += FATHERS_LITTERS_SIRED_FACTORS[history.fathersLittersSired];
+    factorCount += 1;
+  }
+
+  // Recent litter date (fertility/sperm count indicator)
+  if (history.recentLitterDate) {
+    totalScore += RECENT_LITTER_DATE_FACTORS[history.recentLitterDate];
+    factorCount += 1;
+  }
+
+  // Pups in most recent sire (fertility indicator)
+  if (history.pupsInMostRecentSire) {
+    totalScore += PUPS_IN_RECENT_SIRE_FACTORS[history.pupsInMostRecentSire];
+    factorCount += 1;
+  }
+
+  const score = factorCount > 0 ? totalScore / factorCount : 0;
   const contribution = score * weight;
-  return { score, weight, contribution, filled: true };
+  return { score, weight, contribution, filled: factorCount > 0 };
 }
 
 /**
@@ -383,6 +471,45 @@ function calculateSemenQualityFactor(inputs: ConceptionInputs): FactorCalculatio
   if (inputs.semenAssessment?.type) {
     const assessmentFactor = SEMEN_ASSESSMENT_FACTORS[inputs.semenAssessment.type];
     score += assessmentFactor;
+    factorCount += 1;
+  }
+
+  // NEW FIELDS - Step 7: Semen Information
+  // Time between collection and insemination (chilled only)
+  if (inputs.semenInformation?.timeBetweenCollectionAndInsemination) {
+    score += TIME_BETWEEN_COLLECTION_FACTORS[inputs.semenInformation.timeBetweenCollectionAndInsemination];
+    factorCount += 1;
+  }
+
+  // Age of dog at collection (quality indicator)
+  if (inputs.semenInformation?.ageOfDogAtCollection !== undefined) {
+    const ageFactor = getAgeAtCollectionFactor(inputs.semenInformation.ageOfDogAtCollection);
+    score += ageFactor * 1.5; // 1.5x weight - important
+    factorCount += 1.5;
+  }
+
+  // Batch used previously (proven batch)
+  if (inputs.semenInformation?.batchUsedPreviously) {
+    score += BATCH_USED_PREVIOUSLY_FACTORS[inputs.semenInformation.batchUsedPreviously];
+    factorCount += 1;
+
+    // If batch was used, check if it produced pups
+    if (inputs.semenInformation.batchUsedPreviously === 'yes' && inputs.semenInformation.didProducePups) {
+      score += DID_PRODUCE_PUPS_FACTORS[inputs.semenInformation.didProducePups];
+      factorCount += 1;
+
+      // If it produced pups, check how many
+      if (inputs.semenInformation.didProducePups === 'yes' && inputs.semenInformation.pupsProduced) {
+        score += PUPS_PRODUCED_FACTORS[inputs.semenInformation.pupsProduced];
+        factorCount += 1;
+      }
+    }
+  }
+
+  // NEW FIELDS - Step 8: Semen Assessment
+  // Semen assessed (confidence factor)
+  if (inputs.semenAssessment?.semenAssessed) {
+    score += SEMEN_ASSESSED_FACTORS[inputs.semenAssessment.semenAssessed];
     factorCount += 1;
   }
 

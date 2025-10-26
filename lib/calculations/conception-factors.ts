@@ -154,6 +154,112 @@ export const SEMEN_ASSESSMENT_FACTORS = {
   none: 0.7,       // No assessment (risky)
 } as const;
 
+// NEW FIELDS - Step 2: Bitch Information
+export const RUNS_WITH_OTHERS_FACTORS = {
+  yes: 0.85,       // Runs with others - stress/injury risk
+  no: 1.0,         // Isolated - safer
+  dont_know: 0.9,  // Unknown - slight penalty
+} as const;
+
+export const RAN_WITH_OTHERS_DURING_PREGNANCY_FACTORS = {
+  yes: 0.8,        // Previous pregnancy with others - higher risk
+  no: 1.0,         // Isolated during pregnancy - safer
+  dont_know: 0.9,  // Unknown
+} as const;
+
+// NEW FIELDS - Step 3: Bitch History
+export const PREVIOUS_PREGNANCIES_FACTORS = {
+  yes: 1.0,        // Has been pregnant before
+  no: 0.9,         // Never pregnant - slight uncertainty
+  dont_know: 0.95, // Unknown
+} as const;
+
+export const NUMBER_OF_SIBLINGS_FACTORS = {
+  '0': 0.85,       // Only pup - may indicate fertility issues in lineage
+  '1-3': 0.9,      // Small litter lineage
+  '4-5': 1.0,      // Good litter size lineage
+  '6+': 1.0,       // Large litter lineage - good genetics
+} as const;
+
+export const MATING_FAILURE_FACTORS = {
+  yes: 0.7,        // Has had failed matings - fertility concern
+  no: 1.0,         // No failures
+  dont_know: 0.9,  // Unknown
+} as const;
+
+export const TIMES_DID_NOT_PRODUCE_FACTORS = {
+  '1': 0.85,       // One failure - minor concern
+  '2': 0.7,        // Two failures - moderate concern
+  '3+': 0.5,       // Multiple failures - significant concern
+} as const;
+
+// NEW FIELDS - Step 5: Dog History
+export const LITTERS_SIRED_FACTORS = {
+  '0': 0.85,       // Unproven stud
+  '1-2': 0.95,     // Limited experience
+  '3-5': 1.0,      // Proven stud
+  '5+': 1.0,       // Highly proven
+} as const;
+
+export const FATHERS_LITTERS_SIRED_FACTORS = {
+  '1-3': 0.9,      // Father had limited success
+  '4-10': 1.0,     // Father was proven
+  '11+': 1.0,      // Father was highly successful - good genetics
+} as const;
+
+export const RECENT_LITTER_DATE_FACTORS = {
+  less_than_1_month: 1.0,    // Recently active - good fertility
+  '1-6_months': 1.0,         // Recently active
+  '6-18_months': 0.95,       // Moderately recent
+  more_than_18_months: 0.7,  // Long gap - may indicate low sperm count
+} as const;
+
+export const PUPS_IN_RECENT_SIRE_FACTORS = {
+  '0': 0.5,        // No pups - fertility concern
+  '1-3': 0.8,      // Small litter - some concern
+  '4-6': 1.0,      // Good litter size
+  '7+': 1.0,       // Large litter - excellent fertility
+} as const;
+
+// NEW FIELDS - Step 7: Semen Information
+export const TIME_BETWEEN_COLLECTION_FACTORS = {
+  less_than_24hrs: 1.0,      // Optimal for chilled
+  '24-48hrs': 0.95,          // Good for chilled
+  more_than_48hrs: 0.75,     // Degraded quality
+} as const;
+
+export const AGE_AT_COLLECTION_FACTORS = {
+  under_12_months: 0.5,      // Too young - poor quality
+  '1-3_years': 1.0,          // Prime age - excellent
+  '3-5_years': 0.95,         // Good age
+  '5+_years': 0.85,          // Older - declining quality
+} as const;
+
+export const BATCH_USED_PREVIOUSLY_FACTORS = {
+  yes: 1.0,        // Proven batch
+  no: 0.95,        // Unproven - slight uncertainty
+  dont_know: 0.95, // Unknown
+} as const;
+
+export const DID_PRODUCE_PUPS_FACTORS = {
+  yes: 1.0,        // Batch proven successful
+  no: 0.6,         // Batch failed before - concern
+  dont_know: 0.9,  // Unknown
+} as const;
+
+export const PUPS_PRODUCED_FACTORS = {
+  '1-3': 0.85,     // Small litter from batch
+  '4-6': 1.0,      // Good litter from batch
+  '7+': 1.0,       // Large litter - excellent batch
+} as const;
+
+// NEW FIELDS - Step 8: Semen Assessment
+export const SEMEN_ASSESSED_FACTORS = {
+  yes: 1.0,        // Assessed - confidence in quality
+  no: 0.7,         // Not assessed - risky
+  dont_know: 0.8,  // Unknown
+} as const;
+
 // Laboratory analysis thresholds for automatic quality determination
 export const LAB_ANALYSIS_THRESHOLDS = {
   motility: {
@@ -256,4 +362,13 @@ export function calculateLabQuality(
   if (avgScore >= 1.5) return 'good';
   if (avgScore >= 0.8) return 'fair';
   return 'poor';
+}
+
+// NEW HELPER FUNCTIONS for new fields
+
+export function getAgeAtCollectionFactor(age: number): number {
+  if (age < 1) return AGE_AT_COLLECTION_FACTORS.under_12_months;
+  if (age < 3) return AGE_AT_COLLECTION_FACTORS['1-3_years'];
+  if (age < 5) return AGE_AT_COLLECTION_FACTORS['3-5_years'];
+  return AGE_AT_COLLECTION_FACTORS['5+_years'];
 }
