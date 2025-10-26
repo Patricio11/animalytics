@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Pencil, Trash2, Check, Clock, AlertCircle, Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -213,9 +214,18 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete, onView }: T
                   </Badge>
                 </div>
 
-                {('animalName' in task) && task.animalName && (
-                  <div className="text-sm font-semibold text-foreground mb-1">
-                    {task.animalName}
+                {('animalName' in task) && task.animalName && task.animalName !== 'N/A' && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <Avatar className="h-7 w-7 border border-primary/30">
+                      <AvatarImage 
+                        src={task.animal?.profileImageUrl || task.animal?.photos?.[0]?.fileUrl} 
+                        alt={task.animalName} 
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                        {task.animalName.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-semibold text-foreground">{task.animalName}</span>
                   </div>
                 )}
 

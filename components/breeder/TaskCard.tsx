@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Clock, AlertTriangle, CheckCircle, Calendar, Eye, Pencil } from "lucide-react";
 import { format, isAfter, isBefore, addDays } from "date-fns";
 
@@ -12,6 +13,7 @@ interface TaskCardProps {
   priority: 'low' | 'medium' | 'high';
   category: 'breeding' | 'health' | 'feeding' | 'exercise' | 'grooming' | 'general';
   animalName?: string;
+  animal?: any; // Animal object with photo
   completed: boolean;
   onToggleComplete?: () => void;
   onEdit?: () => void;
@@ -41,6 +43,7 @@ export function TaskCard({
   priority,
   category,
   animalName,
+  animal,
   completed,
   onToggleComplete,
   onEdit,
@@ -81,8 +84,19 @@ export function TaskCard({
                 </Badge>
               </div>
             </div>
-            {animalName && (
-              <p className="text-sm text-muted-foreground mt-2 font-medium">{animalName}</p>
+            {animalName && animalName !== 'N/A' && (
+              <div className="flex items-center gap-2 mt-3">
+                <Avatar className="h-8 w-8 border border-primary/30">
+                  <AvatarImage 
+                    src={animal?.profileImageUrl || animal?.photos?.[0]?.fileUrl} 
+                    alt={animalName} 
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                    {animalName.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-muted-foreground font-medium">{animalName}</span>
+              </div>
             )}
           </div>
         </div>
