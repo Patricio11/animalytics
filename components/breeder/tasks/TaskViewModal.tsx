@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Check,
   Clock,
@@ -21,8 +22,9 @@ import {
   Calendar as CalendarIcon,
   Edit,
   X,
+  Cake,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { TaskType, TaskStatus, TaskPriority } from "@/lib/types/task";
 
@@ -100,28 +102,31 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
   };
 
   const renderTaskDetails = () => {
+    // Helper to get value from either direct property or taskData
+    const getValue = (key: string) => task[key] || task.taskData?.[key];
+    
     switch (task.type) {
       case 'feeding':
       case 'puppy_feeding':
         return (
           <div className="space-y-4">
-            <DetailRow label="Food Type" value={task.foodType || 'Not specified'} />
-            <DetailRow label="Amount" value={task.amount ? `${task.amount} ${task.unit || ''}` : 'Not specified'} />
-            <DetailRow label="Time" value={task.time || 'Not specified'} />
+            <DetailRow label="Food Type" value={getValue('foodType') || 'Not specified'} />
+            <DetailRow label="Amount" value={getValue('amount') ? `${getValue('amount')} ${getValue('unit') || ''}` : 'Not specified'} />
+            <DetailRow label="Time" value={getValue('time') || task.dueTime || 'Not specified'} />
           </div>
         );
       case 'exercise':
         return (
           <div className="space-y-4">
-            <DetailRow label="Exercise Type" value={task.exerciseType || 'Not specified'} className="capitalize" />
-            <DetailRow label="Duration" value={task.duration ? `${task.duration} minutes` : 'Not specified'} />
+            <DetailRow label="Exercise Type" value={getValue('exerciseType') || 'Not specified'} className="capitalize" />
+            <DetailRow label="Duration" value={getValue('duration') ? `${getValue('duration')} minutes` : 'Not specified'} />
           </div>
         );
       case 'grooming':
         return (
           <div className="space-y-4">
-            <DetailRow label="Grooming Type" value={task.groomingType || 'Not specified'} className="capitalize" />
-            <DetailRow label="Frequency" value={task.frequency || 'Not specified'} className="capitalize" />
+            <DetailRow label="Grooming Type" value={getValue('groomingType') || 'Not specified'} className="capitalize" />
+            <DetailRow label="Frequency" value={getValue('frequency') || task.recurringPattern || 'Not specified'} className="capitalize" />
           </div>
         );
       case 'weight':
@@ -129,7 +134,7 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
           <div className="space-y-4">
             <DetailRow 
               label="Weight" 
-              value={task.weight ? `${task.weight} ${task.weightUnit || 'kg'}` : 'To be recorded'} 
+              value={getValue('weight') ? `${getValue('weight')} ${getValue('weightUnit') || 'kg'}` : 'To be recorded'} 
             />
           </div>
         );
@@ -138,15 +143,15 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
           <div className="space-y-4">
             <DetailRow 
               label="Area" 
-              value={task.area ? task.area.toString().replace(/-/g, ' ') : 'Not specified'} 
+              value={getValue('area') ? getValue('area').toString().replace(/-/g, ' ') : 'Not specified'} 
               className="capitalize" 
             />
             <DetailRow 
               label="Cleaning Type" 
-              value={task.cleaningType ? task.cleaningType.toString().replace(/-/g, ' ') : 'Not specified'} 
+              value={getValue('cleaningType') ? getValue('cleaningType').toString().replace(/-/g, ' ') : 'Not specified'} 
               className="capitalize" 
             />
-            <DetailRow label="Frequency" value={task.frequency || 'Not specified'} className="capitalize" />
+            <DetailRow label="Frequency" value={getValue('frequency') || task.recurringPattern || 'Not specified'} className="capitalize" />
           </div>
         );
       case 'event':
@@ -156,11 +161,11 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
             <DetailRow label="Title" value={task.title || 'Event'} />
             <DetailRow 
               label="Event Type" 
-              value={task.eventType ? task.eventType.toString().replace(/-/g, ' ') : 'Not specified'} 
+              value={getValue('eventType') ? getValue('eventType').toString().replace(/-/g, ' ') : 'Not specified'} 
               className="capitalize" 
             />
-            <DetailRow label="Time" value={task.time || 'Not specified'} />
-            {task.recurring && (
+            <DetailRow label="Time" value={getValue('time') || task.dueTime || 'Not specified'} />
+            {(task.recurring || task.recurringPattern) && (
               <DetailRow 
                 label="Recurring" 
                 value={<Badge variant="outline" className="text-xs">Yes</Badge>} 
@@ -208,26 +213,74 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
         <Separator className="my-4" />
 
         <div className="space-y-6">
-          {/* Animal Name */}
-          {task.animalName && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Animal</h3>
-              <p className="text-lg font-semibold text-foreground">{task.animalName}</p>
-            </div>
-          )}
-
           {/* Date */}
-          <DetailRow 
-            label="Date" 
-            value={format(new Date(task.date || task.dueDate), 'EEEE, MMMM dd, yyyy')} 
-          />
+          <div className="bg-muted/30 p-4 rounded-lg">
+            <DetailRow 
+              label="Date" 
+              value={format(new Date(task.date || task.dueDate), 'EEEE, MMMM dd, yyyy')} 
+            />
+          </div>
 
-          <Separator />
+          {/* Animal and Details in same row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Animal Card */}
+            {task.animalName && task.animalName !== 'N/A' && (
+              <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary"></div>
+                  Animal
+                </h3>
+                <div className="flex items-center gap-4">
+                  {/* Profile Photo */}
+                  <Avatar className="h-16 w-16 border-2 border-primary/30">
+                    <AvatarImage 
+                      src={task.animal?.profileImageUrl || task.animal?.photos?.[0]?.fileUrl} 
+                      alt={task.animalName} 
+                    />
+                    <AvatarFallback className="bg-primary/20 text-primary font-semibold text-lg">
+                      {task.animalName.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  {/* Name and Age */}
+                  <div className="flex-1">
+                    <p className="text-lg font-semibold text-foreground mb-1">{task.animalName}</p>
+                    {task.animal?.dateOfBirth && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Cake className="w-3.5 h-3.5" />
+                        <span>
+                          {(() => {
+                            const birthDate = new Date(task.animal.dateOfBirth);
+                            const years = differenceInYears(new Date(), birthDate);
+                            const months = differenceInMonths(new Date(), birthDate) % 12;
+                            
+                            if (years === 0) {
+                              return `${months} month${months !== 1 ? 's' : ''} old`;
+                            } else if (months === 0) {
+                              return `${years} year${years !== 1 ? 's' : ''} old`;
+                            } else {
+                              return `${years}y ${months}m old`;
+                            }
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
-          {/* Task-specific details */}
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">Details</h3>
-            {renderTaskDetails()}
+            {/* Task-specific details */}
+            <div className={cn(
+              "bg-muted/30 border border-muted p-4 rounded-lg",
+              task.animalName && task.animalName !== 'N/A' ? "" : "md:col-span-2"
+            )}>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-chart-4"></div>
+                Details
+              </h3>
+              {renderTaskDetails()}
+            </div>
           </div>
 
           {/* Notes */}
@@ -235,8 +288,11 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
             <>
               <Separator />
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Notes</h3>
-                <p className="text-sm text-foreground leading-relaxed bg-muted/30 p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-chart-2"></div>
+                  Notes
+                </h3>
+                <p className="text-sm text-foreground leading-relaxed bg-muted/30 p-4 rounded-lg border border-muted">
                   {task.notes}
                 </p>
               </div>
@@ -248,8 +304,11 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
             <>
               <Separator />
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Description</h3>
-                <p className="text-sm text-foreground leading-relaxed bg-muted/30 p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-chart-2"></div>
+                  Description
+                </h3>
+                <p className="text-sm text-foreground leading-relaxed bg-muted/30 p-4 rounded-lg border border-muted">
                   {task.description}
                 </p>
               </div>

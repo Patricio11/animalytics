@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Calendar, Trophy, DollarSign, Plus, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useDashboardStats } from "@/lib/api/queries/dashboard";
+import { useCreateTask, useUpdateTask } from "@/lib/api/queries/tasks";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APIAnimal, APITask } from "@/lib/api/types";
 
@@ -26,7 +27,11 @@ export default function Dashboard() {
   const [showTaskEdit, setShowTaskEdit] = useState(false);
 
   // Fetch dashboard stats from API
-  const { data: stats, isLoading, isError } = useDashboardStats();
+  const { data: stats, isLoading, isError, refetch } = useDashboardStats();
+  
+  // Task mutations
+  const createTaskMutation = useCreateTask();
+  const updateTaskMutation = useUpdateTask();
 
   // Transform stats for display
   const dashboardStats = stats ? [
@@ -327,7 +332,20 @@ export default function Dashboard() {
       <AddAnimalDialog open={showAddAnimal} onOpenChange={setShowAddAnimal} />
       
       {/* Create Task Dialog */}
-      <TaskDialog open={showCreateTask} onOpenChange={setShowCreateTask} />
+      <TaskDialog 
+        open={showCreateTask} 
+        onOpenChange={setShowCreateTask}
+        onSave={async (taskData) => {
+          try {
+            await createTaskMutation.mutateAsync(taskData as any);
+            setShowCreateTask(false);
+            refetch(); // Refresh dashboard data
+          } catch (error) {
+            console.error('Failed to create task:', error);
+          }
+        }}
+        isLoading={createTaskMutation.isPending}
+      />
       
       {/* Edit Task Dialog */}
       <TaskDialog 
@@ -335,6 +353,19 @@ export default function Dashboard() {
         onOpenChange={setShowTaskEdit}
         existingTask={selectedTask}
         mode="edit"
+        onSave={async (taskData) => {
+          try {
+            await updateTaskMutation.mutateAsync({
+              id: selectedTask.id,
+              data: taskData as any,
+            });
+            setShowTaskEdit(false);
+            refetch(); // Refresh dashboard data
+          } catch (error) {
+            console.error('Failed to update task:', error);
+          }
+        }}
+        isLoading={updateTaskMutation.isPending}
       />
       
       {/* View Task Modal */}

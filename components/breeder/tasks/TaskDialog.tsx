@@ -103,52 +103,46 @@ export function TaskDialog({
 
   useEffect(() => {
     if (existingTask && mode === 'edit') {
-      setTaskType(existingTask.type);
-      setDate(existingTask.date);
-      setNotes(existingTask.notes || '');
+      // Set basic fields - handle both date and dueDate fields
+      const taskData = existingTask as any;
+      setTaskType(taskData.type);
+      setDate(taskData.date || taskData.dueDate || format(new Date(), 'yyyy-MM-dd'));
+      setNotes(taskData.notes || '');
 
-      if ('animalId' in existingTask) {
-        setAnimalId(existingTask.animalId || '');
-        setAnimalName(existingTask.animalName || '');
+      // Set animal info if available
+      if (taskData.animalId) {
+        setAnimalId(taskData.animalId);
+        setAnimalName(taskData.animalName || taskData.animal?.name || '');
       }
 
-      switch (existingTask.type) {
-        case 'feeding':
-          setFoodType(existingTask.foodType);
-          setAmount(existingTask.amount.toString());
-          setUnit(existingTask.unit);
-          setTime(existingTask.time);
-          break;
-        case 'exercise':
-          setExerciseType(existingTask.exerciseType);
-          setDuration(existingTask.duration.toString());
-          break;
-        case 'grooming':
-          setGroomingType(existingTask.groomingType);
-          setFrequency(existingTask.frequency);
-          break;
-        case 'weight':
-          setWeight(existingTask.weight?.toString() || '');
-          setWeightUnit(existingTask.weightUnit || 'kg');
-          break;
-        case 'cleaning':
-          setArea(existingTask.area);
-          setCleaningType(existingTask.cleaningType);
-          setFrequency(existingTask.frequency);
-          break;
-        case 'event':
-          setEventType(existingTask.eventType);
-          setTitle(existingTask.title);
-          setEventTime(existingTask.time || '');
-          setRecurring(existingTask.recurring || false);
-          if (existingTask.animalId) {
-            setAnimalId(existingTask.animalId || '');
-            setAnimalName(existingTask.animalName || '');
-          }
-          break;
+      // Set task-specific fields based on type
+      const taskType = taskData.type;
+      if (taskType === 'feeding' || taskType === 'puppy_feeding') {
+        setFoodType(taskData.foodType || '');
+        setAmount(taskData.amount?.toString() || '');
+        setUnit(taskData.unit || 'grams');
+        setTime(taskData.time || '08:00');
+      } else if (taskType === 'exercise') {
+        setExerciseType(taskData.exerciseType || 'walk');
+        setDuration(taskData.duration?.toString() || '');
+      } else if (taskType === 'grooming') {
+        setGroomingType(taskData.groomingType || 'bath');
+        setFrequency(taskData.frequency || 'once');
+      } else if (taskType === 'weight') {
+        setWeight(taskData.weight?.toString() || '');
+        setWeightUnit(taskData.weightUnit || 'kg');
+      } else if (taskType === 'cleaning') {
+        setArea(taskData.area || 'kennel');
+        setCleaningType(taskData.cleaningType || 'daily');
+        setFrequency(taskData.frequency || 'once');
+      } else if (taskType === 'event' || taskType === 'misc') {
+        setEventType(taskData.eventType || 'vet-visit');
+        setTitle(taskData.title || '');
+        setEventTime(taskData.time || '');
+        setRecurring(taskData.recurring || false);
       }
     }
-  }, [existingTask, mode]);
+  }, [existingTask, mode, open]);
 
   useEffect(() => {
     if (!open) {
@@ -228,7 +222,7 @@ export function TaskDialog({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateForm()) return;
 
     let task: Omit<Task, 'id' | 'completed'>;
@@ -312,9 +306,12 @@ export function TaskDialog({
     }
 
     if (onSave) {
-      onSave(task);
+      // Call onSave and let parent handle closing after async operation
+      await onSave(task);
+    } else {
+      // If no onSave handler, close immediately
+      onOpenChange(false);
     }
-    onOpenChange(false);
   };
 
   // Safely get task config with fallback

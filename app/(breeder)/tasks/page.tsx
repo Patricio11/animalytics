@@ -201,12 +201,14 @@ export default function TasksPage() {
 
   // Transform task for display
   const transformTask = (task: any) => ({
+    ...task, // Keep all original task data
     id: task.id,
     title: task.title || `${task.type || 'Task'}`,
     description: task.notes || "",
     dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
     priority: (task.priority || 'medium') as "high" | "medium" | "low",
     category: task.type || 'misc',
+    animalId: task.animalId, // Include animalId for edit
     animalName: task.animal?.name || "N/A",
     completed: !!task.completedAt,
     type: task.type || 'misc',
