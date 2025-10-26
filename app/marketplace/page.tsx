@@ -86,10 +86,8 @@ export default function Marketplace() {
   const breeds = breedsData?.breeds || [];
   const allListings = listingsData?.listings || [];
   
-  // Handle delete listing
+  // Handle delete listing (confirmation is handled by the ListingCard modal)
   const handleDeleteListing = async (listingId: string) => {
-    if (!confirm('Are you sure you want to delete this listing?')) return;
-    
     try {
       const response = await fetch(`/api/marketplace/listings/${listingId}`, {
         method: 'DELETE',
@@ -97,7 +95,7 @@ export default function Marketplace() {
       
       if (!response.ok) throw new Error('Failed to delete listing');
       
-      // Refresh listings
+      // Refresh listings after successful delete
       refetchListings();
     } catch (error) {
       console.error('Error deleting listing:', error);

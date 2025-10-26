@@ -105,10 +105,8 @@ export default function MyListingsPage() {
     isOwner: true,
   }));
 
-  // Handle delete
+  // Handle delete (confirmation is handled by the ListingCard modal)
   const handleDeleteListing = async (listingId: string) => {
-    if (!confirm('Are you sure you want to delete this listing?')) return;
-    
     try {
       const response = await fetch(`/api/marketplace/listings/${listingId}`, {
         method: 'DELETE',
@@ -116,6 +114,7 @@ export default function MyListingsPage() {
       
       if (!response.ok) throw new Error('Failed to delete listing');
       
+      // Refetch listings after successful delete
       refetch();
     } catch (error) {
       console.error('Error deleting listing:', error);
