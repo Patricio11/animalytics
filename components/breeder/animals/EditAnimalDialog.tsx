@@ -41,7 +41,6 @@ interface EditAnimalDialogProps {
 }
 
 interface AnimalFormData {
-  profilePhotoUrl: string | null;
   name: string;
   type: 'dog' | 'bitch';
   breed: string;
@@ -91,7 +90,6 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
   }, [breeds, breedSearch]);
 
   const [formData, setFormData] = useState<AnimalFormData>({
-    profilePhotoUrl: animalData.imageUrl || null,
     name: animalData.name,
     type: animalData.sex === 'male' ? 'dog' : 'bitch',
     breed: animalData.breed,
@@ -110,7 +108,6 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
   useEffect(() => {
     if (open) {
       setFormData({
-        profilePhotoUrl: animalData.imageUrl || null,
         name: animalData.name,
         type: animalData.sex === 'male' ? 'dog' : 'bitch',
         breed: animalData.breed,
@@ -167,40 +164,6 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
         data: updateData
       });
 
-      // If profile photo was changed, update it in animal_photos table
-      if (formData.profilePhotoUrl && formData.profilePhotoUrl !== animalData.imageUrl) {
-        try {
-          // First, delete existing profile photo if any
-          const existingPhotos = await fetch(`/api/animals/${animalId}/photos?category=profile`);
-          const photosData = await existingPhotos.json();
-          
-          if (photosData.photos && photosData.photos.length > 0) {
-            // Delete old profile photo
-            await fetch(`/api/animals/${animalId}/photos/${photosData.photos[0].id}`, {
-              method: 'DELETE',
-            });
-          }
-
-          // Add new profile photo
-          await fetch(`/api/animals/${animalId}/photos`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              category: 'profile',
-              fileUrl: formData.profilePhotoUrl,
-              fileName: 'profile-photo.jpg',
-            }),
-          });
-
-          // Invalidate queries to refresh the animal data with new photo
-          queryClient.invalidateQueries({ queryKey: ['animals', animalId] });
-          queryClient.invalidateQueries({ queryKey: ['animals'] });
-        } catch (photoError) {
-          console.error('Failed to update profile photo:', photoError);
-          // Don't fail the whole operation if photo update fails
-        }
-      }
-
       toast({
         title: "Animal Updated Successfully!",
         description: `${formData.name} has been updated.`,
@@ -237,36 +200,19 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Profile Photo and Animal Name */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Profile Photo Upload */}
-            <ImageUpload
-              storagePath={STORAGE_PATHS.ANIMAL_PHOTOS}
-              onUploadSuccess={(result) => {
-                setFormData(prev => ({ ...prev, profilePhotoUrl: result.url! }));
-              }}
-              currentImageUrl={formData.profilePhotoUrl || undefined}
-              label="Profile Photo"
-              helperText="PNG, JPG up to 5MB"
-              showPreview={true}
-              aspectRatio="square"
-              maxSizeInMB={5}
+          {/* Animal Name */}
+          <div className="space-y-3">
+            <Label htmlFor="edit-name">Animal Name *</Label>
+            <Input
+              id="edit-name"
+              value={formData.name}
+              onChange={(e) => updateFormData("name", e.target.value)}
+              placeholder="Enter animal name"
+              className="bg-background border-primary/20 focus:border-primary text-lg"
             />
-
-            {/* Animal Name */}
-            <div className="space-y-3 flex flex-col justify-center">
-              <Label htmlFor="edit-name">Animal Name *</Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) => updateFormData("name", e.target.value)}
-                placeholder="Enter animal name"
-                className="bg-background border-primary/20 focus:border-primary text-lg"
-              />
-              <p className="text-xs text-muted-foreground">
-                Choose a unique name for your animal
-              </p>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Choose a unique name for your animal
+            </p>
           </div>
 
           {/* Sex */}

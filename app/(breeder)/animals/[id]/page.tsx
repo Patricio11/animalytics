@@ -13,6 +13,7 @@ import { RemindersTab } from "@/components/breeder/animals/RemindersTab";
 import { PedigreeTab } from "@/components/breeder/animals/PedigreeTab";
 import { HealthTab } from "@/components/breeder/animals/HealthTab";
 import { EditAnimalDialog } from "@/components/breeder/animals/EditAnimalDialog";
+import { ProfilePhotoEditor } from "@/components/breeder/animals/ProfilePhotoEditor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showPhotoEditor, setShowPhotoEditor] = useState(false);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -258,23 +260,39 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
             {/* Image Gallery */}
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-0">
-                <div 
-                  className="relative aspect-video overflow-hidden rounded-t-lg cursor-pointer group"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    console.log('Main image clicked, allPhotos:', allPhotos);
-                    setLightboxIndex(0);
-                    setLightboxOpen(true);
-                  }}
-                >
-                  <img
-                    src={primaryPhoto}
-                    alt={animal.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                    <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative aspect-video rounded-t-lg overflow-visible">
+                  {/* Clickable area for lightbox */}
+                  <div 
+                    className="absolute inset-0 cursor-pointer group overflow-hidden rounded-t-lg"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('Main image clicked, allPhotos:', allPhotos);
+                      setLightboxIndex(0);
+                      setLightboxOpen(true);
+                    }}
+                  >
+                    <img
+                      src={primaryPhoto}
+                      alt={animal.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                      <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
                   </div>
+                  
+                  {/* Edit Profile Photo Button - Always visible, on top */}
+                  <Button
+                    size="sm"
+                    className="absolute top-3 right-3 z-10 bg-white/95 hover:bg-white text-foreground shadow-xl backdrop-blur-sm border border-primary/30 hover:border-primary hover:shadow-2xl transition-all duration-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPhotoEditor(true);
+                    }}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Photo
+                  </Button>
                 </div>
                 {additionalPhotos.length > 0 && (
                   <div className="p-4 grid grid-cols-4 gap-2">
@@ -572,6 +590,15 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
           location: '',
           imageUrl: animal.profileImageUrl || '',
         }}
+      />
+
+      {/* Profile Photo Editor */}
+      <ProfilePhotoEditor
+        open={showPhotoEditor}
+        onOpenChange={setShowPhotoEditor}
+        animalId={animal.id}
+        animalName={animal.name}
+        currentPhotoUrl={primaryPhoto}
       />
     </div>
   );
