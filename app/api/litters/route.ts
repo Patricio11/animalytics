@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
             breed: true,
           },
         },
+        puppies: true, // ✅ Include puppies using the relation
       },
       orderBy: [desc(litters.actualWhelpingDate), desc(litters.createdAt)],
     });
