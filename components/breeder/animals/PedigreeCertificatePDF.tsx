@@ -104,10 +104,10 @@ export const PedigreeCertificatePDF = React.forwardRef<HTMLDivElement, PedigreeC
                 <div className="text-xs font-bold text-amber-700 mb-2 uppercase tracking-wide">
                   Generation 1 - Parents
                 </div>
-                <PedigreeCardPDF animal={node.dam} label="DAM (Mother)" />
+                <PedigreeCardPDF animal={node.sire} label="SIRE (Father)" />
               </div>
               <div>
-                <PedigreeCardPDF animal={node.sire} label="SIRE (Father)" />
+                <PedigreeCardPDF animal={node.dam} label="DAM (Mother)" />
               </div>
             </div>
 
@@ -116,10 +116,10 @@ export const PedigreeCertificatePDF = React.forwardRef<HTMLDivElement, PedigreeC
               <div className="text-xs font-bold text-amber-700 mb-2 uppercase tracking-wide">
                 Generation 2 - Grandparents
               </div>
-              <PedigreeCardPDF animal={node.dam?.dam} label="GRANDDAM" compact />
-              <PedigreeCardPDF animal={node.dam?.sire} label="GRANDSIRE" compact />
-              <PedigreeCardPDF animal={node.sire?.dam} label="GRANDDAM" compact />
               <PedigreeCardPDF animal={node.sire?.sire} label="GRANDSIRE" compact />
+              <PedigreeCardPDF animal={node.sire?.dam} label="GRANDDAM" compact />
+              <PedigreeCardPDF animal={node.dam?.sire} label="GRANDSIRE" compact />
+              <PedigreeCardPDF animal={node.dam?.dam} label="GRANDDAM" compact />
             </div>
 
             {/* Generation 3 - Great Grandparents */}
@@ -127,14 +127,14 @@ export const PedigreeCertificatePDF = React.forwardRef<HTMLDivElement, PedigreeC
               <div className="text-xs font-bold text-amber-700 mb-2 uppercase tracking-wide">
                 Generation 3 - Great Grandparents
               </div>
-              <PedigreeCardPDF animal={node.dam?.dam?.dam} compact />
-              <PedigreeCardPDF animal={node.dam?.dam?.sire} compact />
-              <PedigreeCardPDF animal={node.dam?.sire?.dam} compact />
-              <PedigreeCardPDF animal={node.dam?.sire?.sire} compact />
-              <PedigreeCardPDF animal={node.sire?.dam?.dam} compact />
-              <PedigreeCardPDF animal={node.sire?.dam?.sire} compact />
-              <PedigreeCardPDF animal={node.sire?.sire?.dam} compact />
               <PedigreeCardPDF animal={node.sire?.sire?.sire} compact />
+              <PedigreeCardPDF animal={node.sire?.sire?.dam} compact />
+              <PedigreeCardPDF animal={node.sire?.dam?.sire} compact />
+              <PedigreeCardPDF animal={node.sire?.dam?.dam} compact />
+              <PedigreeCardPDF animal={node.dam?.sire?.sire} compact />
+              <PedigreeCardPDF animal={node.dam?.sire?.dam} compact />
+              <PedigreeCardPDF animal={node.dam?.dam?.sire} compact />
+              <PedigreeCardPDF animal={node.dam?.dam?.dam} compact />
             </div>
           </div>
         </div>

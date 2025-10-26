@@ -156,12 +156,12 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
           {/* Generation 1 - Parents */}
           <div className="col-span-1 flex flex-col justify-center gap-8">
             <div className="relative">
-              <PedigreeCard animal={node.dam} generation={1} position="dam" label="DAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <PedigreeCard animal={node.sire} generation={1} position="sire" label="SIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               {/* Connecting line to subject */}
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.sire} generation={1} position="sire" label="SIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <PedigreeCard animal={node.dam} generation={1} position="dam" label="DAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               {/* Connecting line to subject */}
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
@@ -169,62 +169,62 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
 
           {/* Generation 2 - Grandparents */}
           <div className="col-span-1 flex flex-col justify-center gap-4">
-            {/* Dam's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.dam} generation={2} position="dam.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.sire} generation={2} position="dam.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
             {/* Sire's parents */}
+            <div className="relative">
+              <PedigreeCard animal={node.sire?.sire} generation={2} position="sire.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            </div>
             <div className="relative">
               <PedigreeCard animal={node.sire?.dam} generation={2} position="sire.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
+            {/* Dam's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.sire?.sire} generation={2} position="sire.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <PedigreeCard animal={node.dam?.sire} generation={2} position="dam.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            </div>
+            <div className="relative">
+              <PedigreeCard animal={node.dam?.dam} generation={2} position="dam.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
           </div>
 
           {/* Generation 3 - Great Grandparents */}
           <div className="col-span-1 flex flex-col justify-center gap-2">
-            {/* Dam's Dam's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            {/* Dam's Sire's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            {/* Sire's Dam's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            <div className="relative">
-              <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
             {/* Sire's Sire's parents */}
+            <div className="relative">
+              <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            </div>
             <div className="relative">
               <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="sire.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
+            {/* Sire's Dam's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            </div>
+            <div className="relative">
+              <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            </div>
+            {/* Dam's Sire's parents */}
+            <div className="relative">
+              <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            </div>
+            <div className="relative">
+              <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            </div>
+            {/* Dam's Dam's parents */}
+            <div className="relative">
+              <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
+              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            </div>
+            <div className="relative">
+              <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
           </div>

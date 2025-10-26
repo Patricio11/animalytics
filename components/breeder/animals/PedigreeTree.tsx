@@ -39,8 +39,8 @@ export function PedigreeTree({ node, generations = 4 }: PedigreeTreeProps) {
 
         prevRow.forEach((node) => {
           if (node) {
-            currentRow.push(node.dam ?? null);
             currentRow.push(node.sire ?? null);
+            currentRow.push(node.dam ?? null);
           } else {
             currentRow.push(null);
             currentRow.push(null);
