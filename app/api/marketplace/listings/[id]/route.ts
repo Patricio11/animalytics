@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { db } from '@/lib/db';
 import { listings, animals } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 // ============================================================================
 // GET /api/marketplace/listings/[id] - Get single listing
@@ -38,6 +38,15 @@ export async function GET(
         { status: 404 }
       );
     }
+    
+    // Increment view count (async, don't wait)
+    db.update(listings)
+      .set({ 
+        viewCount: sql`${listings.viewCount} + 1`,
+      })
+      .where(eq(listings.id, id))
+      .execute()
+      .catch(console.error);
     
     return NextResponse.json({
       success: true,

@@ -142,14 +142,13 @@ export async function GET(
     }
 
     // Increment view count (async, don't wait)
-    // Note: Uncomment when viewCount field is added to schema
-    // db.update(animals)
-    //   .set({ 
-    //     viewCount: sql`${animals.viewCount} + 1`,
-    //   })
-    //   .where(eq(animals.id, id))
-    //   .execute()
-    //   .catch(console.error);
+    db.update(animals)
+      .set({ 
+        viewCount: sql`${animals.viewCount} + 1`,
+      })
+      .where(eq(animals.id, id))
+      .execute()
+      .catch(console.error);
 
     return NextResponse.json({
       success: true,

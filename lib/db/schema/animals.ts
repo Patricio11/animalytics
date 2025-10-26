@@ -115,6 +115,7 @@ export const animals = pgTable('animals', {
 
   // Metadata
   notes: text('notes'),
+  viewCount: integer('view_count').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
