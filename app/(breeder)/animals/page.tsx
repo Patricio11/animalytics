@@ -179,8 +179,8 @@ export default function Animals() {
           </Alert>
         )}
 
-        {/* Animals Grid - Only show when not loading and not error */}
-        {!isLoading && !isError && displayAnimals.length > 0 && (
+        {/* Animals Grid - Only show when not loading, not error, and has animals */}
+        {!isLoading && !isError && animals && displayAnimals.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {displayAnimals.map((animal: any) => (
               <AnimalCard key={animal.id} {...animal} onEdit={() => handleEditAnimal(animal)} />
@@ -188,8 +188,8 @@ export default function Animals() {
           </div>
         )}
 
-        {/* Empty State - Only show when not loading, not error, and no animals */}
-        {!isLoading && !isError && displayAnimals.length === 0 && (
+        {/* Empty State - Only show when not loading, not error, data loaded, and no animals */}
+        {!isLoading && !isError && animals && displayAnimals.length === 0 && (
           <div className="bg-surface shadow-card rounded-lg p-12 text-center">
             <p className="text-muted-foreground">
               {searchQuery || breedFilter || genderFilter !== "all" || statusFilter !== "all"
