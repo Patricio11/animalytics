@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar, AlertCircle, Activity } from "lucide-react";
-import { Season } from "@/lib/mock-data/animal-profile-details";
+import type { Season } from "@/lib/types/animal";
 import { format, differenceInDays } from "date-fns";
 
 interface SeasonDialogProps {

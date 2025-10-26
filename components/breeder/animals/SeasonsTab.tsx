@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Calendar, Activity, TrendingUp, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
-import { Season } from "@/lib/mock-data/animal-profile-details";
+import type { Season } from "@/lib/types/animal";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SeasonDialog } from "./SeasonDialog";

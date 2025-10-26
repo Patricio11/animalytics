@@ -3,7 +3,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Clinic, mockClinics } from "@/lib/mock-data/marketplace-listings";
+import type { Clinic } from "@/lib/types/marketplace";
+import { mockClinics } from "@/lib/mock-data/marketplace-listings";
 import { cn } from "@/lib/utils";
 import { MapPin, Phone, CheckCircle } from "lucide-react";
 

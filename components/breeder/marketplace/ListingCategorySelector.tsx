@@ -2,7 +2,8 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ListingCategory, getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
+import type { ListingCategory } from "@/lib/types/marketplace";
+import { getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
 import { cn } from "@/lib/utils";
 
 interface ListingCategorySelectorProps {

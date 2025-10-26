@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Microscope, TrendingUp, Loader2 } from "lucide-react";
-import { SemenAssessment } from "@/lib/mock-data/animal-profile-details";
+import type { SemenAssessment } from "@/lib/types/animal";
 import { SemenAssessmentDialog } from "./SemenAssessmentDialog";
 import { SemenAssessmentCard } from "./SemenAssessmentCard";
 import { format } from "date-fns";

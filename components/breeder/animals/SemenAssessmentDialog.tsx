@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Microscope, AlertCircle } from "lucide-react";
-import { SemenAssessment } from "@/lib/mock-data/animal-profile-details";
+import type { SemenAssessment } from "@/lib/types/animal";
 import { format } from "date-fns";
 
 interface SemenAssessmentDialogProps {

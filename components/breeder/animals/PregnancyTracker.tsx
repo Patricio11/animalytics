@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Baby, Calendar, Heart, AlertCircle, Stethoscope } from "lucide-react";
-import { Litter } from "@/lib/mock-data/animal-profile-details";
+import type { Litter } from "@/lib/types/animal";
 import { format, differenceInDays, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 

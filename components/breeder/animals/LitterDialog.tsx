@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Baby, AlertCircle, Calendar } from "lucide-react";
-import { Litter } from "@/lib/mock-data/animal-profile-details";
+import type { Litter } from "@/lib/types/animal";
 import { format, addDays, differenceInDays } from "date-fns";
 
 interface LitterDialogProps {

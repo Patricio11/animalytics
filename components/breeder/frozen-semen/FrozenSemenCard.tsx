@@ -3,7 +3,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FrozenSemenBatch, getStatusLabel, getStatusColor } from "@/lib/mock-data/frozen-semen";
+import type { FrozenSemenBatch } from "@/lib/types/frozen-semen";
+import { getStatusLabel, getStatusColor } from "@/lib/mock-data/frozen-semen";
 import { Calendar, Building2, Package, Beaker, Eye, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Activity, ChevronDown, ChevronUp } from "lucide-react";
-import { Season } from "@/lib/mock-data/animal-profile-details";
+import type { Season } from "@/lib/types/animal";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SeasonProgesteroneChart } from "./SeasonProgesteroneChart";

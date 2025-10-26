@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Baby, Calendar, AlertCircle, Heart, FileText } from "lucide-react";
-import { Litter } from "@/lib/mock-data/animal-profile-details";
+import type { Litter } from "@/lib/types/animal";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 

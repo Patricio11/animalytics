@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Baby, Calendar, AlertCircle, CheckCircle2, Heart, Loader2 } from "lucide-react";
-import { Litter } from "@/lib/mock-data/animal-profile-details";
+import type { Litter } from "@/lib/types/animal";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { LitterDialog } from "./LitterDialog";

@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { mockAnimals } from "@/data/mockData";
+import type { Clinic } from "@/lib/types/marketplace";
+import type { FrozenSemenBatch } from "@/lib/types/frozen-semen";
 import { mockClinics } from "@/lib/mock-data/marketplace-listings";
-import { FrozenSemenBatch } from "@/lib/mock-data/frozen-semen";
 import { AlertCircle, Save } from "lucide-react";
 import { format } from "date-fns";
 
