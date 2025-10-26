@@ -175,6 +175,13 @@ export async function GET(request: NextRequest) {
               photos: true,
             },
           },
+          user: {
+            columns: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
         },
         orderBy: [desc(listings.createdAt)],
       });
@@ -208,6 +215,13 @@ export async function GET(request: NextRequest) {
               photos: true,
             },
           },
+          user: {
+            columns: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
         },
         orderBy: [desc(listings.createdAt)],
       });
@@ -233,6 +247,13 @@ export async function GET(request: NextRequest) {
             with: {
               breed: true,
               photos: true,
+            },
+          },
+          user: {
+            columns: {
+              id: true,
+              name: true,
+              avatar: true,
             },
           },
         },
