@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Clock, AlertTriangle, CheckCircle, Calendar } from "lucide-react";
+import { Clock, AlertTriangle, CheckCircle, Calendar, Eye, Pencil } from "lucide-react";
 import { format, isAfter, isBefore, addDays } from "date-fns";
 
 interface TaskCardProps {
@@ -16,6 +15,7 @@ interface TaskCardProps {
   completed: boolean;
   onToggleComplete?: () => void;
   onEdit?: () => void;
+  onView?: () => void;
 }
 
 const priorityColors = {
@@ -43,19 +43,18 @@ export function TaskCard({
   animalName,
   completed,
   onToggleComplete,
-  onEdit
+  onEdit,
+  onView
 }: TaskCardProps) {
 
   const isOverdue = !completed && isBefore(dueDate, new Date());
   const isDueSoon = !completed && isAfter(dueDate, new Date()) && isBefore(dueDate, addDays(new Date(), 3));
 
-  const handleToggleComplete = (checked: boolean) => {
-    console.log(`Task ${checked ? 'completed' : 'uncompleted'}: ${title}`);
-    onToggleComplete?.();
+  const handleView = () => {
+    onView?.();
   };
 
   const handleEdit = () => {
-    console.log(`Edit task: ${title}`);
     onEdit?.();
   };
 
@@ -68,12 +67,6 @@ export function TaskCard({
     >
       <CardHeader className="pb-4">
         <div className="flex items-start gap-4">
-          <Checkbox
-            checked={completed}
-            onCheckedChange={handleToggleComplete}
-            data-testid={`checkbox-task-${id}`}
-            className="mt-1 shadow-sm"
-          />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <h3 className={`font-semibold text-lg text-foreground transition-colors duration-300 group-hover:text-primary ${completed ? 'line-through' : ''}`} data-testid={`text-task-title-${id}`}>
@@ -124,15 +117,28 @@ export function TaskCard({
             )}
           </div>
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleEdit}
-            data-testid={`button-edit-task-${id}`}
-            className="shadow-sm hover:bg-primary/10 hover:border-primary transition-all duration-300"
-          >
-            Edit
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleView}
+              data-testid={`button-view-task-${id}`}
+              className="hover:bg-primary/10 hover:text-primary transition-all duration-300"
+              title="View details"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleEdit}
+              data-testid={`button-edit-task-${id}`}
+              className="hover:bg-primary/10 hover:text-primary transition-all duration-300"
+              title="Edit task"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

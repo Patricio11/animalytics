@@ -317,7 +317,10 @@ export function TaskDialog({
     onOpenChange(false);
   };
 
-  const TaskIcon = taskTypeConfig[taskType as TaskTypeConfigKey].icon;
+  // Safely get task config with fallback
+  const safeTaskType = (taskType || 'feeding') as TaskTypeConfigKey;
+  const config = taskTypeConfig[safeTaskType] || taskTypeConfig.feeding;
+  const TaskIcon = config.icon;
   const needsAnimal = taskType !== 'cleaning' && taskType !== 'event';
 
   return (
@@ -325,7 +328,7 @@ export function TaskDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <TaskIcon className={`w-5 h-5 ${taskTypeConfig[taskType as TaskTypeConfigKey].color}`} />
+            <TaskIcon className={`w-5 h-5 ${config.color}`} />
             {mode === 'edit' ? 'Edit Task' : 'New Task'}
           </DialogTitle>
           <DialogDescription>

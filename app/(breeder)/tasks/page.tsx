@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { TaskCard } from "@/components/breeder/tasks/TaskCard";
 import { TaskDialog } from "@/components/breeder/tasks/TaskDialog";
+import { TaskViewModal } from "@/components/breeder/tasks/TaskViewModal";
 import { PuppyFeedingGenerator } from "@/components/breeder/tasks/PuppyFeedingGenerator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +25,8 @@ export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showPuppyGenerator, setShowPuppyGenerator] = useState(false);
   const [activeTab, setActiveTab] = useState("pending");
+  const [viewingTask, setViewingTask] = useState<any | undefined>();
+  const [showTaskView, setShowTaskView] = useState(false);
 
   // Fetch tasks and animals from API
   const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useTasks();
@@ -46,6 +49,11 @@ export default function TasksPage() {
     setEditingTask(task);
     setDialogMode('edit');
     setDialogOpen(true);
+  };
+
+  const handleView = (task: any) => {
+    setViewingTask(task);
+    setShowTaskView(true);
   };
 
   const handleSave = async (newTask: any) => {
@@ -386,6 +394,7 @@ export default function TasksPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
+                onView={handleView}
               />
             ))}
             {categorizedTasks.pending.length === 0 && (
@@ -405,6 +414,7 @@ export default function TasksPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
+                onView={handleView}
               />
             ))}
             {categorizedTasks.overdue.length === 0 && (
@@ -424,6 +434,7 @@ export default function TasksPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
+                onView={handleView}
               />
             ))}
             {categorizedTasks.dueSoon.length === 0 && (
@@ -443,6 +454,7 @@ export default function TasksPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
+                onView={handleView}
               />
             ))}
             {categorizedTasks.completed.length === 0 && (
@@ -465,6 +477,17 @@ export default function TasksPage() {
         mode={dialogMode}
         availableAnimals={availableAnimals}
         isLoading={createTaskMutation.isPending || updateTaskMutation.isPending}
+      />
+
+      {/* View Task Modal */}
+      <TaskViewModal
+        open={showTaskView}
+        onOpenChange={setShowTaskView}
+        task={viewingTask}
+        onEdit={(task) => {
+          setShowTaskView(false);
+          handleEdit(task);
+        }}
       />
     </div>
   );

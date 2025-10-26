@@ -8,6 +8,7 @@ import { ActivityCard } from "@/components/breeder/ActivityCard";
 import { TaskCard } from "@/components/breeder/TaskCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { TaskDialog } from "@/components/breeder/tasks/TaskDialog";
+import { TaskViewModal } from "@/components/breeder/tasks/TaskViewModal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,9 @@ import { APIAnimal, APITask } from "@/lib/api/types";
 export default function Dashboard() {
   const [showAddAnimal, setShowAddAnimal] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [showTaskView, setShowTaskView] = useState(false);
+  const [showTaskEdit, setShowTaskEdit] = useState(false);
 
   // Fetch dashboard stats from API
   const { data: stats, isLoading, isError } = useDashboardStats();
@@ -71,16 +75,21 @@ export default function Dashboard() {
     };
   }) || [];
 
-  // Transform upcoming tasks
+  // Transform upcoming tasks - keep full task data for edit functionality
   const upcomingTasks = stats?.upcomingTasks.map((task: APITask) => ({
+    ...task, // Keep all original task data
     id: task.id,
     title: task.title || `${task.type} task`,
     description: task.notes || "",
     dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
+    date: task.dueDate || new Date().toISOString(),
     priority: task.priority as "high" | "medium" | "low",
     category: task.type as "health" | "breeding" | "feeding",
     animalName: task.animal?.name || "N/A",
+    animalId: task.animalId,
     completed: !!task.completedAt,
+    notes: task.notes || "",
+    type: task.type, // Ensure type is included
   })) || [];
 
   return (
@@ -282,7 +291,18 @@ export default function Dashboard() {
                 {upcomingTasks.length > 0 ? (
                   <div className="space-y-4">
                     {upcomingTasks.map((task: any) => (
-                      <TaskCard key={task.id} {...task} />
+                      <TaskCard 
+                        key={task.id} 
+                        {...task}
+                        onView={() => {
+                          setSelectedTask(task);
+                          setShowTaskView(true);
+                        }}
+                        onEdit={() => {
+                          setSelectedTask(task);
+                          setShowTaskEdit(true);
+                        }}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -308,6 +328,26 @@ export default function Dashboard() {
       
       {/* Create Task Dialog */}
       <TaskDialog open={showCreateTask} onOpenChange={setShowCreateTask} />
+      
+      {/* Edit Task Dialog */}
+      <TaskDialog 
+        open={showTaskEdit} 
+        onOpenChange={setShowTaskEdit}
+        existingTask={selectedTask}
+        mode="edit"
+      />
+      
+      {/* View Task Modal */}
+      <TaskViewModal
+        open={showTaskView}
+        onOpenChange={setShowTaskView}
+        task={selectedTask}
+        onEdit={(task) => {
+          setShowTaskView(false);
+          setSelectedTask(task);
+          setShowTaskEdit(true);
+        }}
+      />
     </div>
     </div>
   );

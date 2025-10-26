@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Check, Clock, AlertCircle, Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon } from "lucide-react";
+import { Pencil, Trash2, Check, Clock, AlertCircle, Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { TaskType, TaskStatus, TaskPriority } from "@/lib/types/task";
@@ -13,6 +13,7 @@ interface TaskCardProps {
   onEdit: (task: any) => void;
   onDelete: (taskId: string) => void;
   onToggleComplete: (taskId: string) => void;
+  onView?: (task: any) => void;
 }
 
 type TaskTypeConfigKey = Extract<TaskType, 'feeding' | 'exercise' | 'grooming' | 'weight' | 'cleaning' | 'event'>;
@@ -26,7 +27,7 @@ const taskTypeConfig: Record<TaskTypeConfigKey, { icon: any; label: string; colo
   event: { icon: CalendarIcon, label: 'Event', color: 'text-destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive/20' },
 };
 
-export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onToggleComplete, onView }: TaskCardProps) {
   // Get task status
   const status: TaskStatus = task.completed ? 'completed' : 
                              (task.status === 'overdue' ? 'overdue' : 'pending');
@@ -245,19 +246,32 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
                 >
                   <Check className="w-4 h-4" />
                 </Button>
+                {onView && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hover:bg-primary/10 hover:text-primary"
+                    onClick={() => onView(task)}
+                    title="View details"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hover:bg-primary/10"
+                  className="hover:bg-primary/10 hover:text-primary"
                   onClick={() => onEdit(task)}
+                  title="Edit task"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Pencil className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => onDelete(task.id)}
+                  title="Delete task"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
