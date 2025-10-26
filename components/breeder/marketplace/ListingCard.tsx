@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Edit, Trash2, Share2 } from "lucide-react";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Trash2, Share2 } from "lucide-react";
 import type { MarketplaceListing } from "@/lib/types/marketplace";
 import { getCategoryLabel } from "@/lib/utils/marketplace";
 import { cn } from "@/lib/utils";
@@ -16,11 +18,29 @@ interface ListingCardProps {
   onInterested?: (listingId: string) => void;
   isPublicView?: boolean;
   isOwner?: boolean;
-  onEdit?: (listingId: string) => void;
   onDelete?: (listingId: string) => void;
 }
 
-export function ListingCard({ listing, onInterested, isPublicView, isOwner, onEdit, onDelete }: ListingCardProps) {
+export function ListingCard({ listing, onInterested, isPublicView, isOwner, onDelete }: ListingCardProps) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete?.(listing.id);
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Failed to delete listing:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const categoryConfig = {
     'dog-for-sale': { color: 'bg-chart-1 text-white', icon: '🐕' },
     'pups-for-sale': { color: 'bg-chart-3 text-white', icon: '🐶' },
@@ -206,17 +226,20 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onEd
             {isOwner ? (
               <>
                 <Button
-                  variant="outline"
-                  className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card"
-                  onClick={() => onEdit?.(listing.id)}
+                  asChild
+                  className="flex-1 bg-gradient-brand hover:opacity-90 shadow-card"
                 >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
+                  <Link href={detailUrl}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Listing
+                  </Link>
                 </Button>
                 <Button
                   variant="outline"
+                  size="icon"
                   className="hover:bg-destructive/10 hover:border-destructive hover:text-destructive shadow-card"
-                  onClick={() => onDelete?.(listing.id)}
+                  onClick={handleDeleteClick}
+                  title="Delete listing"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -256,6 +279,17 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onEd
           </div>
         </div>
       </CardContent>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Listing"
+        itemName={listing.title}
+        description="Are you sure you want to delete this listing? This action cannot be undone and all associated data will be permanently removed."
+        isLoading={isDeleting}
+      />
     </Card>
   );
 }
