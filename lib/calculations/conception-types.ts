@@ -8,6 +8,13 @@ export interface BitchInformationInputs {
   weight?: number;
   bodyConditionScore?: number; // 1-9 scale
   healthStatus?: 'excellent' | 'good' | 'fair' | 'poor';
+  // New Step 2 fields
+  livingCondition?: 'kennels' | 'pack' | 'on_her_own';
+  positionInPack?: 'dominant' | 'doesnt_care' | 'bottom' | 'dont_know';
+  ageAtMating?: number;
+  runsWithOthers?: 'yes' | 'no' | 'dont_know';
+  runsWithHowMany?: number;
+  ranWithOthersDuringPreviousPregnancies?: 'yes' | 'no' | 'dont_know';
 }
 
 export interface BitchHistoryInputs {

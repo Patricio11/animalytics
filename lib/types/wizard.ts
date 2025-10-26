@@ -1,4 +1,27 @@
 export interface WizardData extends Record<string, unknown> {
+  // Step 1: Animal Selection
+  bitchId?: string;
+  dogId?: string;
+  frozenSemenId?: string;
+  useFrozenSemen?: boolean;
+  selectedBitch?: {
+    id: string;
+    name: string;
+    dateOfBirth?: string | Date | null;
+    weight?: string | number | null;
+    healthStatus?: 'excellent' | 'good' | 'fair' | 'poor' | null;
+    breed?: {
+      name: string;
+    };
+  };
+  selectedDog?: {
+    id: string;
+    name: string;
+    breed?: {
+      name: string;
+    };
+  };
+  
   // Step 1: Breed Selection
   bitchBreed?: string;
   dogBreed?: string;
@@ -9,6 +32,13 @@ export interface WizardData extends Record<string, unknown> {
   bitchWeight?: number;
   bodyConditionScore?: number;
   generalHealth?: 'excellent' | 'good' | 'fair' | 'poor';
+  // New Step 2 fields
+  livingCondition?: 'kennels' | 'pack' | 'on_her_own' | '';
+  positionInPack?: 'dominant' | 'doesnt_care' | 'bottom' | 'dont_know' | '';
+  ageAtMating?: number;
+  runsWithOthers?: 'yes' | 'no' | 'dont_know' | '';
+  runsWithHowMany?: number;
+  ranWithOthersDuringPreviousPregnancies?: 'yes' | 'no' | 'dont_know' | '';
 
   // Step 3: Bitch History
   hasBeenBred?: string;

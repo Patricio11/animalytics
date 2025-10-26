@@ -72,6 +72,13 @@ export function ConceptionRatingWizard({
         weight: wizardData.bitchWeight,
         bodyConditionScore: wizardData.bodyConditionScore,
         healthStatus: wizardData.generalHealth as 'excellent' | 'good' | 'fair' | 'poor' | undefined,
+        // New Step 2 fields
+        livingCondition: wizardData.livingCondition as 'kennels' | 'pack' | 'on_her_own' | undefined,
+        positionInPack: wizardData.positionInPack as 'dominant' | 'doesnt_care' | 'bottom' | 'dont_know' | undefined,
+        ageAtMating: wizardData.ageAtMating,
+        runsWithOthers: wizardData.runsWithOthers as 'yes' | 'no' | 'dont_know' | undefined,
+        runsWithHowMany: wizardData.runsWithHowMany,
+        ranWithOthersDuringPreviousPregnancies: wizardData.ranWithOthersDuringPreviousPregnancies as 'yes' | 'no' | 'dont_know' | undefined,
       },
       bitchHistory: {
         hasBeenBred: toYesNo(wizardData.hasBeenBred),

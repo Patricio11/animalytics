@@ -48,10 +48,18 @@ export const matings = pgTable('matings', {
 
     // Step 2: Bitch Information
     bitchInformation?: {
+      // Original fields
       age?: number; // Years
       weight?: number; // kg
       bodyConditionScore?: number; // 1-9 scale (5 = ideal)
       healthStatus?: 'excellent' | 'good' | 'fair' | 'poor';
+      // New fields from Step 2
+      livingCondition?: 'kennels' | 'pack' | 'on_her_own';
+      positionInPack?: 'dominant' | 'doesnt_care' | 'bottom' | 'dont_know';
+      ageAtMating?: number; // Age in years at time of mating
+      runsWithOthers?: 'yes' | 'no' | 'dont_know';
+      runsWithHowMany?: number; // Number of other dogs
+      ranWithOthersDuringPreviousPregnancies?: 'yes' | 'no' | 'dont_know';
     };
 
     // Step 3: Bitch History
@@ -248,10 +256,18 @@ export interface BreedSelectionData {
 }
 
 export interface BitchInformationData {
+  // Original fields
   age?: number;
   weight?: number;
   bodyConditionScore?: number;
   healthStatus?: 'excellent' | 'good' | 'fair' | 'poor';
+  // New fields from Step 2
+  livingCondition?: 'kennels' | 'pack' | 'on_her_own';
+  positionInPack?: 'dominant' | 'doesnt_care' | 'bottom' | 'dont_know';
+  ageAtMating?: number; // Age in years at time of mating
+  runsWithOthers?: 'yes' | 'no' | 'dont_know';
+  runsWithHowMany?: number; // Number of other dogs
+  ranWithOthersDuringPreviousPregnancies?: 'yes' | 'no' | 'dont_know';
 }
 
 export interface BitchHistoryData {

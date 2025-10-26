@@ -32,7 +32,7 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
   };
 
   const bitchAge = selectedBitch?.dateOfBirth ? calculateAge(selectedBitch.dateOfBirth) : 3;
-  const bitchWeight = selectedBitch?.weight ? parseFloat(selectedBitch.weight) : 25;
+  const bitchWeight = selectedBitch?.weight ? (typeof selectedBitch.weight === 'number' ? selectedBitch.weight : parseFloat(selectedBitch.weight)) : 25;
   const bitchHealth = selectedBitch?.healthStatus || 'excellent';
 
   // Use real data or existing wizard data
@@ -40,13 +40,28 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
   const [weight, setWeight] = useState(data?.bitchWeight || bitchWeight);
   const [bodyConditionScore, setBodyConditionScore] = useState(data?.bodyConditionScore || 5);
   const [healthStatus, setHealthStatus] = useState(data?.generalHealth || bitchHealth);
+  
+  // New Step 2 fields
+  const [livingCondition, setLivingCondition] = useState<'kennels' | 'pack' | 'on_her_own' | ''>(data?.livingCondition || '');
+  const [positionInPack, setPositionInPack] = useState<'dominant' | 'doesnt_care' | 'bottom' | 'dont_know' | ''>(data?.positionInPack || '');
+  const [ageAtMating, setAgeAtMating] = useState(data?.ageAtMating || bitchAge);
+  const [runsWithOthers, setRunsWithOthers] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.runsWithOthers || '');
+  const [runsWithHowMany, setRunsWithHowMany] = useState(data?.runsWithHowMany || 0);
+  const [ranWithOthersDuringPreviousPregnancies, setRanWithOthersDuringPreviousPregnancies] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.ranWithOthersDuringPreviousPregnancies || '');
 
   const handleContinue = () => {
     onUpdate({
       bitchAge: age,
       bitchWeight: weight,
       bodyConditionScore,
-      generalHealth: healthStatus
+      generalHealth: healthStatus,
+      // New fields
+      livingCondition,
+      positionInPack,
+      ageAtMating,
+      runsWithOthers,
+      runsWithHowMany,
+      ranWithOthersDuringPreviousPregnancies,
     });
     onNext();
   };
@@ -132,6 +147,111 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="ml-2 text-xs">
               Body Condition Score of 5 (ideal) provides the best conception rates. Scores below 4 or above 6 may reduce fertility.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+
+      {/* Living Conditions */}
+      <Card className="shadow-card border-primary/10">
+        <CardHeader>
+          <CardTitle className="text-base">Living Conditions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="living-condition">Living Condition</Label>
+              <Select value={livingCondition} onValueChange={(val) => setLivingCondition(val as 'kennels' | 'pack' | 'on_her_own')}>
+                <SelectTrigger id="living-condition" className="bg-background border-primary/20">
+                  <SelectValue placeholder="How does the bitch live?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="kennels">Kennels</SelectItem>
+                  <SelectItem value="pack">Pack</SelectItem>
+                  <SelectItem value="on_her_own">On her own</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="position-in-pack">Position in Pack</Label>
+              <Select value={positionInPack} onValueChange={(val) => setPositionInPack(val as 'dominant' | 'doesnt_care' | 'bottom' | 'dont_know')}>
+                <SelectTrigger id="position-in-pack" className="bg-background border-primary/20">
+                  <SelectValue placeholder="What is her position?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dominant">Dominant</SelectItem>
+                  <SelectItem value="doesnt_care">Doesn't care</SelectItem>
+                  <SelectItem value="bottom">Bottom</SelectItem>
+                  <SelectItem value="dont_know">Don't know</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="age-at-mating">Age at the time of Mating (years)</Label>
+            <Input
+              id="age-at-mating"
+              type="number"
+              min="0"
+              max="20"
+              step="0.1"
+              value={ageAtMating}
+              onChange={(e) => setAgeAtMating(parseFloat(e.target.value))}
+              className="bg-background border-primary/20"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="runs-with-others">Runs with others?</Label>
+              <Select value={runsWithOthers} onValueChange={(val) => setRunsWithOthers(val as 'yes' | 'no' | 'dont_know')}>
+                <SelectTrigger id="runs-with-others" className="bg-background border-primary/20">
+                  <SelectValue placeholder="Select option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                  <SelectItem value="dont_know">Don't know</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {runsWithOthers === 'yes' && (
+              <div className="space-y-2">
+                <Label htmlFor="runs-with-how-many">With how many?</Label>
+                <Input
+                  id="runs-with-how-many"
+                  type="number"
+                  min="0"
+                  max="50"
+                  value={runsWithHowMany}
+                  onChange={(e) => setRunsWithHowMany(parseInt(e.target.value))}
+                  className="bg-background border-primary/20"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="ran-during-previous">Did she run with them during previous pregnancies?</Label>
+            <Select value={ranWithOthersDuringPreviousPregnancies} onValueChange={(val) => setRanWithOthersDuringPreviousPregnancies(val as 'yes' | 'no' | 'dont_know')}>
+              <SelectTrigger id="ran-during-previous" className="bg-background border-primary/20">
+                <SelectValue placeholder="Select option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yes">Yes</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+                <SelectItem value="dont_know">Don't know</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Alert className="border-primary/20 bg-primary/5">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="ml-2 text-xs">
+              Living conditions and social dynamics can impact stress levels and conception rates.
             </AlertDescription>
           </Alert>
         </CardContent>
