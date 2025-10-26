@@ -132,17 +132,21 @@ export const matings = pgTable('matings', {
 
     // Step 8: Semen Assessment
     semenAssessment?: {
-      assessmentType?: 'full' | 'visual' | 'none';
+      // New fields from Step 8
+      inseminatorName?: string;
+      semenAssessed?: 'yes' | 'no' | 'dont_know';
+      // Original fields
+      assessmentType?: 'full' | 'visual' | 'none'; // 'visual' = general, 'full' = full assessment
       // For full laboratory analysis
       volume?: number; // ml
       concentration?: number; // million/ml
       motility?: number; // percentage
       morphology?: number; // percentage normal
-      // For visual assessment
-      visualQuality?: 'excellent' | 'good' | 'fair' | 'poor';
+      // For visual/general assessment
+      visualQuality?: 'excellent' | 'good' | 'poor'; // Updated to match HTML
       visualNotes?: string;
       // Overall quality (auto-calculated for full, manual for visual)
-      overallQuality?: 'excellent' | 'good' | 'fair' | 'poor';
+      overallQuality?: 'excellent' | 'good' | 'poor';
     };
 
     // Step 9: Conception Rating (calculated results - stored for history)
@@ -354,14 +358,18 @@ export interface SemenInformationData {
 }
 
 export interface SemenAssessmentData {
+  // New fields from Step 8
+  inseminatorName?: string;
+  semenAssessed?: 'yes' | 'no' | 'dont_know';
+  // Original fields
   assessmentType?: 'full' | 'visual' | 'none';
   volume?: number;
   concentration?: number;
   motility?: number;
   morphology?: number;
-  visualQuality?: 'excellent' | 'good' | 'fair' | 'poor';
+  visualQuality?: 'excellent' | 'good' | 'poor';
   visualNotes?: string;
-  overallQuality?: 'excellent' | 'good' | 'fair' | 'poor';
+  overallQuality?: 'excellent' | 'good' | 'poor';
 }
 
 export interface ConceptionRatingResultsData {

@@ -92,7 +92,10 @@ export interface WizardData extends Record<string, unknown> {
   pupsProduced?: '1-3' | '4-6' | '7+' | '';
 
   // Step 8: Semen Assessment
-  quality?: 'excellent' | 'good' | 'fair' | 'poor';
+  inseminatorName?: string;
+  semenAssessed?: 'yes' | 'no' | 'dont_know' | '';
+  assessmentType?: 'general' | 'full' | ''; // general = visual, full = full
+  quality?: 'excellent' | 'good' | 'poor' | '';
   volume?: string | number;
   concentration?: string | number;
   motility?: string | number;

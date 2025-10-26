@@ -125,13 +125,15 @@ export function ConceptionRatingWizard({
         pupsProduced: wizardData.pupsProduced as '1-3' | '4-6' | '7+' | undefined,
       },
       semenQuality: {
-        quality: wizardData.quality as 'excellent' | 'good' | 'fair' | 'poor' | undefined,
+        quality: wizardData.quality as 'excellent' | 'good' | 'poor' | undefined,
         motility: toNumber(wizardData.motility),
         concentration: toNumber(wizardData.concentration),
         morphology: toNumber(wizardData.morphology),
       },
       semenAssessment: {
-        type: 'full' as 'full' | 'visual' | 'none',
+        inseminatorName: wizardData.inseminatorName,
+        semenAssessed: wizardData.semenAssessed as 'yes' | 'no' | 'dont_know' | undefined,
+        type: wizardData.assessmentType === 'general' ? 'visual' as const : wizardData.assessmentType === 'full' ? 'full' as const : 'none' as const,
       },
     };
 

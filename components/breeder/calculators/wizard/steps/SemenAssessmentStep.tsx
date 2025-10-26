@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Microscope, AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,8 +21,13 @@ interface SemenAssessmentStepProps {
 }
 
 export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: SemenAssessmentStepProps) {
-  const [assessmentType, setAssessmentType] = useState(data?.type || 'visual');
-  const [quality, setQuality] = useState(data?.quality || 'good');
+  // New Step 8 fields
+  const [inseminatorName, setInseminatorName] = useState(data?.inseminatorName || '');
+  const [semenAssessed, setSemenAssessed] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.semenAssessed || '');
+  const [assessmentType, setAssessmentType] = useState<'general' | 'full' | ''>(data?.assessmentType || '');
+  
+  // Original fields
+  const [quality, setQuality] = useState<'excellent' | 'good' | 'poor' | ''>(data?.quality || '');
   const [volume, setVolume] = useState(data?.volume || '');
   const [concentration, setConcentration] = useState(data?.concentration || '');
   const [motility, setMotility] = useState(data?.motility || '');
@@ -30,12 +36,15 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
 
   const handleContinue = () => {
     onUpdate({
-      quality,
+      inseminatorName,
+      semenAssessed,
+      assessmentType,
+      quality: assessmentType === 'general' ? quality : '',
       volume: assessmentType === 'full' ? volume : '',
       concentration: assessmentType === 'full' ? concentration : '',
       motility: assessmentType === 'full' ? motility : '',
       morphology: assessmentType === 'full' ? morphology : '',
-      visualNotes: assessmentType === 'visual' ? visualNotes : ''
+      visualNotes: assessmentType === 'general' ? visualNotes : ''
     });
     onNext();
   };
@@ -52,42 +61,62 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
 
   return (
     <div className="space-y-6">
-      {/* Assessment Type */}
+      {/* Inseminator Information */}
       <Card className="shadow-card border-primary/10">
         <CardHeader>
-          <CardTitle className="text-base">Assessment Method</CardTitle>
+          <CardTitle className="text-base">Inseminator Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <Label>What type of semen assessment was performed?</Label>
-            <RadioGroup value={assessmentType} onValueChange={setAssessmentType}>
-              <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
-                <RadioGroupItem value="full" id="assessment-full" />
-                <Label htmlFor="assessment-full" className="flex-1 cursor-pointer">
-                  <div className="font-medium">Full Laboratory Analysis</div>
-                  <div className="text-xs text-muted-foreground">Complete analysis with volume, concentration, motility, and morphology</div>
-                </Label>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="inseminator-name">Name of the Inseminator</Label>
+            <Input
+              id="inseminator-name"
+              type="text"
+              value={inseminatorName}
+              onChange={(e) => setInseminatorName(e.target.value)}
+              placeholder="Enter inseminator name"
+              className="bg-background border-primary/20"
+            />
+          </div>
 
-              <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
-                <RadioGroupItem value="visual" id="assessment-visual" />
-                <Label htmlFor="assessment-visual" className="flex-1 cursor-pointer">
-                  <div className="font-medium">Visual Assessment</div>
-                  <div className="text-xs text-muted-foreground">Basic visual evaluation without laboratory equipment</div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
-                <RadioGroupItem value="none" id="assessment-none" />
-                <Label htmlFor="assessment-none" className="flex-1 cursor-pointer">
-                  <div className="font-medium">No Assessment</div>
-                  <div className="text-xs text-muted-foreground">No assessment performed (not recommended)</div>
-                </Label>
-              </div>
-            </RadioGroup>
+          <div className="space-y-2">
+            <Label htmlFor="semen-assessed">Has the semen been assessed?</Label>
+            <Select value={semenAssessed} onValueChange={(val) => setSemenAssessed(val as 'yes' | 'no' | 'dont_know')}>
+              <SelectTrigger id="semen-assessed" className="bg-background border-primary/20">
+                <SelectValue placeholder="Has the semen been assessed?" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yes">Yes</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+                <SelectItem value="dont_know">Don&apos;t know</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
+
+      {/* Assessment Type - Only show if semen was assessed */}
+      {semenAssessed === 'yes' && (
+        <Card className="shadow-card border-primary/10">
+          <CardHeader>
+            <CardTitle className="text-base">Assessment Method</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="assessment-type">Type of semen assessment</Label>
+              <Select value={assessmentType} onValueChange={(val) => setAssessmentType(val as 'general' | 'full')}>
+                <SelectTrigger id="assessment-type" className="bg-background border-primary/20">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="full">Full assessment</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Full Laboratory Assessment */}
       {assessmentType === 'full' && (
@@ -181,32 +210,30 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
         </Card>
       )}
 
-      {/* Visual Assessment */}
-      {assessmentType === 'visual' && (
+      {/* General Assessment */}
+      {assessmentType === 'general' && (
         <Card className="shadow-card border-primary/10">
           <CardHeader>
-            <CardTitle className="text-base">Visual Evaluation</CardTitle>
+            <CardTitle className="text-base">General Semen Quality</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="visual-notes">Visual Assessment Notes</Label>
-              <Textarea
-                id="visual-notes"
-                value={visualNotes}
-                onChange={(e) => setVisualNotes(e.target.value)}
-                placeholder="Describe the appearance, color, consistency, and any notable characteristics..."
-                rows={4}
-                className="bg-background border-primary/20"
-              />
-              <p className="text-xs text-muted-foreground">
-                Note: Color (milky white = good), consistency (not watery), movement visible
-              </p>
+              <Label htmlFor="semen-quality">Semen quality</Label>
+              <Select value={quality} onValueChange={(val) => setQuality(val as 'excellent' | 'good' | 'poor')}>                <SelectTrigger id="semen-quality" className="bg-background border-primary/20">
+                  <SelectValue placeholder="Select Semen Quality" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="poor">Poor</SelectItem>
+                  <SelectItem value="good">Good</SelectItem>
+                  <SelectItem value="excellent">Excellent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Alert className="border-chart-2/50 bg-chart-2/10">
               <Info className="h-4 w-4 text-chart-2" />
               <AlertDescription className="ml-2 text-sm">
-                <strong>Visual Assessment Limitation:</strong> While visual assessment provides some indication, laboratory analysis is recommended for accurate fertility evaluation.
+                <strong>General Assessment:</strong> This is a basic quality assessment. Laboratory analysis is recommended for accurate fertility evaluation.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -214,79 +241,14 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
       )}
 
       {/* No Assessment Warning */}
-      {assessmentType === 'none' && (
+      {semenAssessed === 'no' && (
         <Alert className="border-destructive/50 bg-destructive/10">
           <AlertCircle className="h-4 w-4 text-destructive" />
           <AlertDescription className="ml-2 text-sm">
-            <strong>No Assessment:</strong> Proceeding without semen assessment significantly increases risk of breeding failure. A basic visual assessment is highly recommended.
+            <strong>No Assessment:</strong> Proceeding without semen assessment significantly increases risk of breeding failure. A basic assessment is highly recommended.
           </AlertDescription>
         </Alert>
       )}
-
-      {/* Overall Quality Rating */}
-      <Card className="shadow-card border-primary/10">
-        <CardHeader>
-          <CardTitle className="text-base">Overall Semen Quality</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <Label>Based on your assessment, how would you rate the overall semen quality?</Label>
-            <RadioGroup value={quality} onValueChange={(val) => setQuality(val as 'excellent' | 'good' | 'fair' | 'poor')}>
-              <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
-                <RadioGroupItem value="excellent" id="quality-excellent" />
-                <Label htmlFor="quality-excellent" className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Excellent</div>
-                      <div className="text-xs text-muted-foreground">All parameters well above normal ranges</div>
-                    </div>
-                    <Badge className={getQualityColor('excellent')}>Excellent</Badge>
-                  </div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
-                <RadioGroupItem value="good" id="quality-good" />
-                <Label htmlFor="quality-good" className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Good</div>
-                      <div className="text-xs text-muted-foreground">All parameters within normal ranges</div>
-                    </div>
-                    <Badge className={getQualityColor('good')}>Good</Badge>
-                  </div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
-                <RadioGroupItem value="fair" id="quality-fair" />
-                <Label htmlFor="quality-fair" className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Fair</div>
-                      <div className="text-xs text-muted-foreground">Some parameters below optimal</div>
-                    </div>
-                    <Badge className={getQualityColor('fair')}>Fair</Badge>
-                  </div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
-                <RadioGroupItem value="poor" id="quality-poor" />
-                <Label htmlFor="quality-poor" className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Poor</div>
-                      <div className="text-xs text-muted-foreground">Multiple parameters below normal</div>
-                    </div>
-                    <Badge className={getQualityColor('poor')}>Poor</Badge>
-                  </div>
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Navigation */}
       <div className="flex justify-between">

@@ -73,7 +73,7 @@ export interface SemenInformationInputs {
 }
 
 export interface SemenQualityInputs {
-  quality?: 'excellent' | 'good' | 'fair' | 'poor';
+  quality?: 'excellent' | 'good' | 'poor'; // Updated to match HTML
   volume?: number;
   concentration?: number;
   motility?: number;
@@ -82,6 +82,10 @@ export interface SemenQualityInputs {
 }
 
 export interface SemenAssessmentInputs {
+  // New fields from Step 8
+  inseminatorName?: string;
+  semenAssessed?: 'yes' | 'no' | 'dont_know';
+  // Original fields
   type?: 'full' | 'visual' | 'none';
 }
 
