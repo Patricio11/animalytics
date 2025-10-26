@@ -13,7 +13,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditListingDialog } from "@/components/breeder/marketplace/EditListingDialog";
 import {
-  ArrowLeft, Heart, Share2, Flag, Eye, MapPin, Phone, Mail, Calendar,
+  ArrowLeft, Heart, Share2, Eye, MapPin, Phone, Mail, Calendar,
   Star, Award, Shield, Building2, Edit, Trash2, LogIn
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -476,7 +476,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                   )}
                 </div>
 
-                {isAuthenticated ? (
+                {isAuthenticated && !isOwner ? (
                   <>
                     <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
                       <Mail className="w-4 h-4 mr-2" />
@@ -494,18 +494,27 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                       >
                         <Share2 className="w-4 h-4" />
                       </Button>
-                      <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
-                        <Flag className="w-4 h-4" />
-                      </Button>
                     </div>
                   </>
-                ) : (
+                ) : !isAuthenticated ? (
                   <Link href="/auth/signin">
                     <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
                       <LogIn className="w-4 h-4 mr-2" />
                       Sign In to Contact
                     </Button>
                   </Link>
+                ) : (
+                  <>
+                    {/* Owner - Only show share button */}
+                    <Button 
+                      variant="outline" 
+                      className="w-full hover:bg-primary/10 hover:border-primary shadow-card"
+                      onClick={handleShare}
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share Listing
+                    </Button>
+                  </>
                 )}
               </CardContent>
             </Card>
