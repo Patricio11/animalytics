@@ -57,21 +57,28 @@ export default function Animals() {
 
         return matchesSearch && matchesBreed && matchesGender && matchesStatus;
       })
-      .map((animal: APIAnimal) => ({
-        id: animal.id,
-        name: animal.name,
-        breed: animal.breed?.name || "Unknown",
-        gender: animal.sex as "male" | "female",
-        dateOfBirth: animal.dateOfBirth ? new Date(animal.dateOfBirth) : new Date(),
-        imageUrl:
-          animal.profileImageUrl ||
-          "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face",
-        status: animal.isBreedingActive
-          ? ("breeding" as const)
-          : animal.isActive
-          ? ("available" as const)
-          : ("retired" as const),
-      }));
+      .map((animal: APIAnimal) => {
+        // Get profile photo from animal_photos table (category='profile') or fallback
+        const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
+        const imageUrl = profilePhoto?.fileUrl || 
+                         animal.photos?.[0]?.fileUrl || 
+                         animal.profileImageUrl ||
+                         "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face";
+        
+        return {
+          id: animal.id,
+          name: animal.name,
+          breed: animal.breed?.name || "Unknown",
+          gender: animal.sex as "male" | "female",
+          dateOfBirth: animal.dateOfBirth ? new Date(animal.dateOfBirth) : new Date(),
+          imageUrl,
+          status: animal.isBreedingActive
+            ? ("breeding" as const)
+            : animal.isActive
+            ? ("available" as const)
+            : ("retired" as const),
+        };
+      });
   }, [animals, searchQuery, breedFilter, genderFilter, statusFilter]);
 
   // Handle edit animal

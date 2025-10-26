@@ -21,7 +21,7 @@ const createAnimalSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
   registeredName: z.string().optional(),
   breedId: z.string().min(1, 'Breed is required'),
-  sex: z.enum(['male', 'female'], { required_error: 'Sex is required' }),
+  sex: z.enum(['male', 'female']),
   dateOfBirth: z.string().optional(),
   microchipNumber: z.string().optional(),
   registrationNumber: z.string().optional(),
@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       with: {
         breed: true,
+        photos: true,
       },
       orderBy: [desc(animals.createdAt)],
     });
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -131,12 +132,36 @@ export async function POST(request: NextRequest) {
 
     const validatedData = validation.data;
 
-    // Create animal
+    // Create animal - map only fields that exist in the database schema
     const newAnimal = await db
       .insert(animals)
       .values({
-        ...validatedData,
         userId: session.user.id,
+        name: validatedData.name,
+        registeredName: validatedData.registeredName,
+        breedId: validatedData.breedId,
+        sex: validatedData.sex,
+        dateOfBirth: validatedData.dateOfBirth,
+        microchipNumber: validatedData.microchipNumber,
+        registrationNumber: validatedData.registrationNumber,
+        weight: validatedData.weight?.toString(),
+        height: validatedData.height?.toString(),
+        color: validatedData.color,
+        markings: validatedData.markings,
+        profileImageUrl: validatedData.profileImageUrl,
+        bio: validatedData.bio,
+        temperament: validatedData.temperament,
+        healthStatus: validatedData.healthStatus,
+        isBreedingActive: validatedData.isBreedingActive,
+        isChampion: validatedData.isChampion,
+        titles: validatedData.titles,
+        notes: validatedData.notes,
+        sireId: validatedData.sireId,
+        damId: validatedData.damId,
+        sireName: validatedData.sireName,
+        sireRegisteredName: validatedData.sireRegisteredName,
+        damName: validatedData.damName,
+        damRegisteredName: validatedData.damRegisteredName,
       })
       .returning();
 
