@@ -7,16 +7,42 @@ Centralized type definitions for the Animalytics application.
 ```
 lib/types/
 ├── index.ts              # Root barrel export
-├── task/                 # Task-related types
-│   ├── index.ts         # Task barrel export
-│   ├── types.ts         # Core task types & utilities
-│   ├── feeding.ts       # Feeding task types
-│   ├── exercise.ts      # Exercise task types
-│   ├── grooming.ts      # Grooming task types
-│   ├── weight.ts        # Weight task types
-│   ├── cleaning.ts      # Cleaning task types
-│   └── event.ts         # Event task types
-└── wizard.ts            # Wizard-related types
+├── README.md            # This file
+│
+├── task/                # Task-related types
+│   ├── index.ts        # Task barrel export
+│   ├── types.ts        # Core task types & utilities
+│   ├── feeding.ts      # Feeding task types
+│   ├── exercise.ts     # Exercise task types
+│   ├── grooming.ts     # Grooming task types
+│   ├── weight.ts       # Weight task types
+│   ├── cleaning.ts     # Cleaning task types
+│   └── event.ts        # Event task types
+│
+├── animal/             # Animal-related types
+│   ├── index.ts       # Animal barrel export
+│   ├── types.ts       # Core animal types
+│   ├── photo.ts       # Photo types
+│   ├── feeding.ts     # Feeding plan types
+│   ├── semen.ts       # Semen assessment types
+│   ├── season.ts      # Season/heat cycle types
+│   ├── litter.ts      # Litter types
+│   ├── reminder.ts    # Reminder types
+│   └── profile.ts     # Profile details types
+│
+├── frozen-semen/      # Frozen semen types
+│   ├── index.ts      # Frozen semen barrel export
+│   └── types.ts      # Frozen semen batch types
+│
+├── marketplace/       # Marketplace types
+│   ├── index.ts      # Marketplace barrel export
+│   └── types.ts      # Listing & clinic types
+│
+├── conception/        # Conception rating types
+│   ├── index.ts      # Conception barrel export
+│   └── types.ts      # Conception rating types
+│
+└── wizard.ts         # Wizard-related types
 ```
 
 ## 🎯 Usage
@@ -58,6 +84,45 @@ import { TaskStatus, getTaskStatus } from '@/lib/types/task/types';
 - `getTaskStatus(task)` - Get task status based on completion and date
 - `getTaskPriority(task)` - Get task priority based on type and date
 - `getEventPriority(task, daysDiff)` - Get event-specific priority
+
+### Animal Module (`@/lib/types/animal`)
+
+**Core Types:**
+- `Sex` - 'male' | 'female'
+- `AnimalStatus` - 'active' | 'retired' | 'deceased' | 'sold'
+- `BaseAnimal` - Base interface for animals
+
+**Specific Types:**
+- `PhotoCategory` - Photo categories with photos array
+- `FeedingSchedule` & `FeedingPlan` - Feeding management
+- `SemenAssessment` & `SemenQuality` - Semen quality tracking
+- `Season` & `ProgesteroneReading` - Heat cycle tracking
+- `Litter` & `Puppy` - Litter management
+- `ReminderSettings` - Reminder configuration
+- `AnimalProfileDetails` - Complete profile structure
+
+### Frozen Semen Module (`@/lib/types/frozen-semen`)
+
+**Types:**
+- `FrozenSemenStatus` - 'available' | 'reserved' | 'used' | 'expired'
+- `FrozenSemenBatch` - Complete batch information
+- `FrozenSemenDocument` - Document tracking
+- `FrozenSemenUsageHistory` - Usage tracking
+
+### Marketplace Module (`@/lib/types/marketplace`)
+
+**Types:**
+- `ListingCategory` - Type of listing
+- `ListingStatus` - Listing status
+- `MarketplaceListing` - Complete listing structure
+- `Clinic` - Clinic information
+- `ListingContact` - Contact details
+
+### Conception Module (`@/lib/types/conception`)
+
+**Types:**
+- `ConceptionRatingData` - Input data for calculations
+- `ConceptionFactors` - Factor definitions
 
 ## 🏗️ Architecture Principles
 

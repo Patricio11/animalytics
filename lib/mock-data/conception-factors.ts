@@ -1,21 +1,11 @@
-// Mock data for conception rating calculations
+/**
+ * Mock data for conception rating calculations
+ * 
+ * NOTE: Type definitions have been moved to @/lib/types/conception
+ * Import types from there instead of this file
+ */
 
-// Type for conception rating input data
-export interface ConceptionRatingData {
-  bitchBreed?: string;
-  dogBreed?: string;
-  bitchAge?: number;
-  dogAge?: number;
-  bodyCondition?: number;
-  healthStatus?: string;
-  previousLitters?: number;
-  timeSinceLastLitter?: number;
-  dogSuccessRate?: number;
-  breederExperience?: number;
-  semenType?: string;
-  semenQuality?: string;
-  [key: string]: string | number | undefined;
-}
+import type { ConceptionRatingData } from '@/lib/types/conception';
 
 export const mockConceptionFactors = {
   // Breed success ratings (1-3: 1=difficult, 2=moderate, 3=easy)

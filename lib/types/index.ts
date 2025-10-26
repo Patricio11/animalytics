@@ -3,13 +3,20 @@
  * Central export point for all application types
  * 
  * Usage:
- * import { Task, FeedingTask } from '@/lib/types'
+ * import { Task, BaseAnimal, MarketplaceListing } from '@/lib/types'
  */
 
 // Task types
 export * from './task';
 
-// Future type modules can be added here:
-// export * from './animal';
-// export * from './mating';
-// export * from './litter';
+// Animal types
+export * from './animal';
+
+// Frozen semen types
+export * from './frozen-semen';
+
+// Marketplace types
+export * from './marketplace';
+
+// Conception types
+export * from './conception';

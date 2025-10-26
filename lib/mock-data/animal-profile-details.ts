@@ -1,100 +1,20 @@
 /**
  * Mock data for extended animal profile details
  * Including photos, feeding plans, semen assessments, seasons, and litter details
+ * 
+ * NOTE: Type definitions have been moved to @/lib/types/animal
+ * Import types from there instead of this file
  */
 
-export interface PhotoCategory {
-  category: string;
-  photos: {
-    id: string;
-    url: string;
-    caption?: string;
-    uploadedAt: string;
-  }[];
-}
-
-export interface FeedingSchedule {
-  id: string;
-  time: string;
-  foodType: string;
-  amount: string;
-  notes?: string;
-}
-
-export interface SemenAssessment {
-  id: string;
-  date: string;
-  volume: number; // mL
-  concentration: number; // million/mL
-  motility: number; // percentage
-  morphology: number; // percentage
-  quality: 'excellent' | 'good' | 'fair' | 'poor';
-  notes?: string;
-  technician?: string;
-}
-
-export interface Season {
-  id: string;
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-  progesteroneReadings?: {
-    date: string;
-    value: number;
-    unit: 'ng/mL' | 'nmol/L';
-  }[];
-}
-
-export interface Litter {
-  id: string;
-  matingDate: string;
-  sireId: string;
-  sireName: string;
-  whelpingDate?: string;
-  expectedWhelpingDate: string;
-  puppyCount?: number;
-  survivingPuppies?: number;
-  complications: boolean;
-  complicationNotes?: string;
-  notes?: string;
-  status: 'expected' | 'whelped' | 'archived';
-  puppies?: {
-    id: string;
-    name?: string;
-    sex: 'male' | 'female';
-    weight: number;
-    color: string;
-    status: 'healthy' | 'sold' | 'retained';
-  }[];
-}
-
-export interface ReminderSettings {
-  enabled: boolean;
-  vaccinations: boolean;
-  vetCheckups: boolean;
-  heatCycles: boolean; // bitches only
-  seasonTracking: boolean; // bitches only
-  feedingSchedule: boolean;
-  customReminders: {
-    id: string;
-    title: string;
-    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-    nextDate: string;
-  }[];
-}
-
-export interface AnimalProfileDetails {
-  animalId: string;
-  photoCategories: PhotoCategory[];
-  feedingPlan: {
-    schedule: FeedingSchedule[];
-    specialDietaryNotes?: string;
-  };
-  semenAssessments: SemenAssessment[];
-  seasons?: Season[]; // bitches only
-  litters?: Litter[]; // bitches only
-  reminders: ReminderSettings;
-}
+import type {
+  PhotoCategory,
+  FeedingSchedule,
+  SemenAssessment,
+  Season,
+  Litter,
+  ReminderSettings,
+  AnimalProfileDetails,
+} from '@/lib/types/animal';
 
 // Mock data for Luna (animal1 - bitch)
 export const mockAnimalProfileDetails: Record<string, AnimalProfileDetails> = {

@@ -1,49 +1,13 @@
 /**
  * Frozen semen inventory mock data
  * Separate entity type for managing frozen semen inventory
+ * 
+ * NOTE: Type definitions have been moved to @/lib/types/frozen-semen
+ * Import types from there instead of this file
  */
 
-import { SemenAssessment, PhotoCategory } from "./animal-profile-details";
-
-export type FrozenSemenStatus = 'available' | 'reserved' | 'used' | 'expired';
-
-export interface FrozenSemenBatch {
-  id: string;
-  batchIdentifier: string;
-  sourceAnimalId: string;
-  sourceAnimalName: string;
-  breed: string;
-  registrationNumber?: string;
-  collectionDate: string;
-  clinicId: string;
-  clinicName: string;
-  numberOfStraws: number;
-  strawsRemaining: number;
-  storageNotes?: string;
-  status: FrozenSemenStatus;
-  createdAt: string;
-  updatedAt: string;
-  // Additional details
-  semenAssessment?: SemenAssessment;
-  photos?: PhotoCategory[];
-  documents?: {
-    id: string;
-    name: string;
-    type: string;
-    url: string;
-    uploadedAt: string;
-  }[];
-  // Tracking
-  usageHistory?: {
-    id: string;
-    date: string;
-    strawsUsed: number;
-    bitchId: string;
-    bitchName: string;
-    matingId?: string;
-    notes?: string;
-  }[];
-}
+import type { FrozenSemenBatch, FrozenSemenStatus } from '@/lib/types/frozen-semen';
+import type { SemenAssessment, PhotoCategory } from '@/lib/types/animal';
 
 // Mock frozen semen batches
 export const mockFrozenSemenBatches: FrozenSemenBatch[] = [

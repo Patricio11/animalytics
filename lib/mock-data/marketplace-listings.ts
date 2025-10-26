@@ -1,65 +1,18 @@
 /**
  * Marketplace listings mock data
  * Complete listing system for breeding marketplace
+ * 
+ * NOTE: Type definitions have been moved to @/lib/types/marketplace
+ * Import types from there instead of this file
  */
 
-export type ListingCategory =
-  | 'dog-for-sale'
-  | 'pups-for-sale'
-  | 'reproductive-services'
-  | 'frozen-semen'
-  | 'stud-dog';
-
-export type ListingStatus = 'active' | 'pending' | 'sold' | 'expired';
-
-export interface ListingContact {
-  name: string;
-  phone: string;
-  email: string;
-  location: string;
-  availabilityNotes?: string;
-}
-
-export interface Clinic {
-  id: string;
-  name: string;
-  location: string;
-  phone: string;
-  services: string[];
-}
-
-export interface MarketplaceListing {
-  id: string;
-  category: ListingCategory;
-  animalId?: string;
-  animalName?: string;
-  frozenSemenId?: string;
-  breederId: string;
-  breederName: string;
-  breederAvatar?: string;
-  breederReputation: number;
-  title: string;
-  description: string;
-  price?: number;
-  currency: string;
-  images: string[];
-  contact: ListingContact;
-  clinicId?: string; // For reproductive services and frozen semen
-  status: ListingStatus;
-  createdAt: string;
-  updatedAt: string;
-  views: number;
-  interested: number;
-  featured?: boolean;
-  // Animal details (copied from animal for quick access)
-  breed?: string;
-  sex?: 'male' | 'female';
-  age?: string;
-  color?: string;
-  registrationNumber?: string;
-  healthCertified?: boolean;
-  championLines?: boolean;
-}
+import type {
+  MarketplaceListing,
+  Clinic,
+  ListingCategory,
+  ListingStatus,
+  ListingContact,
+} from '@/lib/types/marketplace';
 
 // Mock clinics
 export const mockClinics: Clinic[] = [
