@@ -68,6 +68,11 @@ export interface WizardData extends Record<string, unknown> {
   previousLittersCount?: number;
   successRate?: string | number;
   ageAtFirstUse?: string | number;
+  // New Step 5 fields
+  littersSired?: '0' | '1-2' | '3-5' | '5+' | '';
+  fathersLittersSired?: '1-3' | '4-10' | '11+' | '';
+  recentLitterDate?: 'less_than_1_month' | '1-6_months' | '6-18_months' | 'more_than_18_months' | '';
+  pupsInMostRecentSire?: '0' | '1-3' | '4-6' | '7+' | '';
 
   // Step 6: Breeder History
   yearsExperience?: string | number;

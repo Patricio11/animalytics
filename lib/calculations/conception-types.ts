@@ -40,10 +40,16 @@ export interface LitterHistoryInputs {
 }
 
 export interface DogHistoryInputs {
+  // Original fields
   hasBeenUsed?: 'yes' | 'no';
   previousLitters?: number;
   successRate?: number; // Percentage
   ageAtFirstUse?: number;
+  // New fields from Step 5
+  littersSired?: '0' | '1-2' | '3-5' | '5+';
+  fathersLittersSired?: '1-3' | '4-10' | '11+';
+  recentLitterDate?: 'less_than_1_month' | '1-6_months' | '6-18_months' | 'more_than_18_months';
+  pupsInMostRecentSire?: '0' | '1-3' | '4-6' | '7+';
 }
 
 export interface BreederHistoryInputs {

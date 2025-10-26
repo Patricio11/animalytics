@@ -102,6 +102,11 @@ export function ConceptionRatingWizard({
         hasBeenUsed: toYesNo(wizardData.hasBeenUsed),
         previousLitters: wizardData.previousLittersCount,
         successRate: toNumber(wizardData.successRate),
+        // New Step 5 fields
+        littersSired: wizardData.littersSired as '0' | '1-2' | '3-5' | '5+' | undefined,
+        fathersLittersSired: wizardData.fathersLittersSired as '1-3' | '4-10' | '11+' | undefined,
+        recentLitterDate: wizardData.recentLitterDate as 'less_than_1_month' | '1-6_months' | '6-18_months' | 'more_than_18_months' | undefined,
+        pupsInMostRecentSire: wizardData.pupsInMostRecentSire as '0' | '1-3' | '4-6' | '7+' | undefined,
       },
       breederHistory: {
         yearsExperience: toNumber(wizardData.yearsExperience),
