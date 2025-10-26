@@ -46,7 +46,8 @@ export function Header() {
 
       <div className="flex items-center gap-3">
         {/* Notifications Bell */}
-        <DropdownMenu>
+        {/* TODO: Functional Notifications */}
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative hover-elevate">
               <Bell className="h-5 w-5" />
@@ -67,14 +68,13 @@ export function Header() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-[400px] overflow-y-auto">
-              {/* TODO: Replace with real notifications */}
               <div className="p-4 text-center text-sm text-muted-foreground">
                 <Bell className="mx-auto h-8 w-8 mb-2 opacity-50" />
                 <p>No new notifications</p>
               </div>
             </div>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
 
         {/* User Profile Menu */}
         <DropdownMenu>
