@@ -11,7 +11,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PawPrint, Check, CalendarIcon, ChevronsUpDown, Upload, X, ImageIcon, Loader2, Save } from "lucide-react";
 import { format } from "date-fns";
@@ -73,7 +72,6 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
   const { toast } = useToast();
   const [breedSearchOpen, setBreedSearchOpen] = useState(false);
   const [breedSearch, setBreedSearch] = useState("");
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Fetch breeds from API
@@ -361,33 +359,31 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
 
           {/* Date of Birth */}
           <div className="space-y-2">
-            <Label>Date of Birth *</Label>
-            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal bg-background border-primary/20 hover:bg-surface-secondary",
-                    !formData.dateOfBirth && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dateOfBirth ? format(formData.dateOfBirth, "PPP") : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={formData.dateOfBirth}
-                  onSelect={(date) => {
-                    updateFormData("dateOfBirth", date);
-                    setDatePickerOpen(false);
-                  }}
-                  disabled={(date) => date > new Date()}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <Label htmlFor="edit-dateOfBirth">Date of Birth *</Label>
+            <div className="relative">
+              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+              <Input
+                id="edit-dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth ? format(formData.dateOfBirth, "yyyy-MM-dd") : ""}
+                onChange={(e) => {
+                  const dateValue = e.target.value;
+                  if (dateValue) {
+                    updateFormData("dateOfBirth", new Date(dateValue));
+                  } else {
+                    updateFormData("dateOfBirth", undefined);
+                  }
+                }}
+                max={format(new Date(), "yyyy-MM-dd")}
+                min="1990-01-01"
+                className="pl-10 bg-background border-primary/20 focus:border-primary [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:hover:bg-primary/10 [&::-webkit-calendar-picker-indicator]:rounded [&::-webkit-calendar-picker-indicator]:p-1"
+              />
+            </div>
+            {formData.dateOfBirth && (
+              <p className="text-xs text-muted-foreground">
+                Selected: {format(formData.dateOfBirth, "MMMM d, yyyy")}
+              </p>
+            )}
           </div>
 
           {/* Additional Fields */}
