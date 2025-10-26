@@ -2,10 +2,15 @@
  * Mock data for conception rating calculations
  * 
  * NOTE: Type definitions have been moved to @/lib/types/conception
- * Import types from there instead of this file
+ * NOTE: Calculation functions have been moved to @/lib/calculations/conception-rating
+ * This file contains only mock factor data for development/testing
  */
 
 import type { ConceptionRatingData } from '@/lib/types/conception';
+
+// ============================================================================
+// MOCK CONCEPTION FACTORS (for development/testing only)
+// ============================================================================
 
 export const mockConceptionFactors = {
   // Breed success ratings (1-3: 1=difficult, 2=moderate, 3=easy)

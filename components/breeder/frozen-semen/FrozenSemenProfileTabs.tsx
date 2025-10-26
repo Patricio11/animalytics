@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { FrozenSemenBatch } from "@/lib/types/frozen-semen";
-import { getStatusLabel, getStatusColor } from "@/lib/mock-data/frozen-semen";
+import { getStatusLabel, getStatusColor } from "@/lib/utils/frozen-semen";
 import { mockAnimals } from "@/data/mockData";
 import { getClinicById } from "@/lib/mock-data/marketplace-listings";
 import {

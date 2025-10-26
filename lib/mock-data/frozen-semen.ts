@@ -208,7 +208,13 @@ export const mockFrozenSemenBatches: FrozenSemenBatch[] = [
   },
 ];
 
-// Helper functions
+// ============================================================================
+// MOCK DATA QUERY HELPERS (for development only)
+// ============================================================================
+// NOTE: These are temporary helpers for mock data access during development.
+// In production, these should be replaced with actual API/database queries.
+// Utility functions (getStatusLabel, getStatusColor) have been moved to @/lib/utils/frozen-semen
+
 export function getFrozenSemenById(id: string): FrozenSemenBatch | undefined {
   return mockFrozenSemenBatches.find(batch => batch.id === id);
 }
@@ -233,24 +239,4 @@ export function getAvailableFrozenSemen(): FrozenSemenBatch[] {
 
 export function getTotalStrawsRemaining(): number {
   return mockFrozenSemenBatches.reduce((total, batch) => total + batch.strawsRemaining, 0);
-}
-
-export function getStatusLabel(status: FrozenSemenStatus): string {
-  const labels: Record<FrozenSemenStatus, string> = {
-    available: 'Available',
-    reserved: 'Reserved',
-    used: 'Used',
-    expired: 'Expired',
-  };
-  return labels[status];
-}
-
-export function getStatusColor(status: FrozenSemenStatus): string {
-  const colors: Record<FrozenSemenStatus, string> = {
-    available: 'bg-chart-3 text-white',
-    reserved: 'bg-chart-4 text-white',
-    used: 'bg-muted text-muted-foreground',
-    expired: 'bg-destructive text-white',
-  };
-  return colors[status];
 }

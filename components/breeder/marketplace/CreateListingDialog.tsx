@@ -20,7 +20,7 @@ import { AnimalCombobox } from "@/components/ui/animal-combobox";
 import { ListingCategorySelector } from "./ListingCategorySelector";
 import { ClinicSelector } from "./ClinicSelector";
 import type { ListingCategory } from "@/lib/types/marketplace";
-import { categoryRequiresClinic, getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
+import { categoryRequiresClinic, getCategoryLabel } from "@/lib/utils/marketplace";
 import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";

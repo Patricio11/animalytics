@@ -264,7 +264,12 @@ export const mockMarketplaceListings: MarketplaceListing[] = [
   },
 ];
 
-// Helper function to get listings by category
+// ============================================================================
+// MOCK DATA QUERY HELPERS (for development only)
+// ============================================================================
+// NOTE: These are temporary helpers for mock data access during development.
+// In production, these should be replaced with actual API/database queries.
+
 export function getListingsByCategory(category: ListingCategory | 'all'): MarketplaceListing[] {
   if (category === 'all') {
     return mockMarketplaceListings;
@@ -272,24 +277,6 @@ export function getListingsByCategory(category: ListingCategory | 'all'): Market
   return mockMarketplaceListings.filter(listing => listing.category === category);
 }
 
-// Helper function to get clinic by ID
 export function getClinicById(clinicId: string): Clinic | undefined {
   return mockClinics.find(clinic => clinic.id === clinicId);
-}
-
-// Helper function to get category label
-export function getCategoryLabel(category: ListingCategory): string {
-  const labels: Record<ListingCategory, string> = {
-    'dog-for-sale': 'Dog for Sale',
-    'pups-for-sale': 'Puppies for Sale',
-    'reproductive-services': 'Reproductive Services',
-    'frozen-semen': 'Frozen Semen',
-    'stud-dog': 'Stud Dog',
-  };
-  return labels[category];
-}
-
-// Helper function to check if category requires clinic
-export function categoryRequiresClinic(category: ListingCategory): boolean {
-  return category === 'reproductive-services' || category === 'frozen-semen';
 }

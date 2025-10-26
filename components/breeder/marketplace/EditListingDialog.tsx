@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ClinicSelector } from "./ClinicSelector";
-import { categoryRequiresClinic, getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
+import { categoryRequiresClinic, getCategoryLabel } from "@/lib/utils/marketplace";
 import { CheckCircle, AlertCircle, Edit, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Edit, Trash2, Share2 } from "lucide-react";
 import type { MarketplaceListing } from "@/lib/types/marketplace";
-import { getCategoryLabel } from "@/lib/mock-data/marketplace-listings";
+import { getCategoryLabel } from "@/lib/utils/marketplace";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import Link from "next/link";
