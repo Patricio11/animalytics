@@ -222,24 +222,24 @@ function PedigreeCardPDF({ animal, label, compact = false, featured = false }: P
       )}
 
       <div className={cn("space-y-1", featured && "space-y-2")}>
-        {/* Name */}
+        {/* Registered Name (Primary - Bold) */}
         <div className={cn(
-          "font-bold text-gray-900",
+          "font-bold text-gray-900 leading-tight",
           featured ? "text-2xl" : compact ? "text-sm" : "text-base"
         )}>
-          {animal.name}
+          {animal.registeredName || animal.name}
           {animal.isManualEntry && (
             <span className="ml-2 text-xs font-normal text-amber-600">(External)</span>
           )}
         </div>
 
-        {/* Registered Name */}
-        {animal.registeredName && !compact && (
+        {/* Call Name (Secondary - if different) */}
+        {animal.registeredName && animal.registeredName !== animal.name && !compact && (
           <div className={cn(
-            "text-gray-600 italic",
-            featured ? "text-base" : "text-xs"
+            "text-gray-600",
+            featured ? "text-sm" : "text-xs"
           )}>
-            {animal.registeredName}
+            Call name: {animal.name}
           </div>
         )}
 
@@ -276,20 +276,21 @@ function PedigreeCardPDF({ animal, label, compact = false, featured = false }: P
           </div>
         )}
 
-        {/* Registration & DOB */}
-        {!compact && (animal.registrationNumber || animal.dateOfBirth) && (
-          <div className={cn("text-xs text-gray-600 space-y-0.5", featured && "text-sm mt-2")}>
-            {animal.registrationNumber && (
-              <div>
-                <span className="font-medium">Reg #:</span> {animal.registrationNumber}
-              </div>
-            )}
-            {animal.dateOfBirth && (
-              <div>
-                <span className="font-medium">DOB:</span>{" "}
-                {format(new Date(animal.dateOfBirth), "MMM dd, yyyy")}
-              </div>
-            )}
+        {/* Registration Number (Prominent) */}
+        {animal.registrationNumber && !compact && (
+          <div className={cn(
+            "font-mono font-bold text-amber-700",
+            featured ? "text-base" : "text-xs"
+          )}>
+            {animal.registrationNumber}
+          </div>
+        )}
+
+        {/* Date of Birth */}
+        {!compact && animal.dateOfBirth && (
+          <div className={cn("text-xs text-gray-600", featured && "text-sm")}>
+            <span className="font-medium">DOB:</span>{" "}
+            {format(new Date(animal.dateOfBirth), "MMM dd, yyyy")}
           </div>
         )}
 

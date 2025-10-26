@@ -139,15 +139,22 @@ function AnimalNode({ animal, generation }: AnimalNodeProps) {
           </Badge>
         )}
         
-        {/* Name */}
-        <div className="font-semibold text-sm leading-tight line-clamp-1">
-          {animal.name}
+        {/* Registered Name (Primary - Bold) */}
+        <div className="font-bold text-sm leading-tight line-clamp-2">
+          {animal.registeredName || animal.name}
         </div>
         
-        {/* Registered Name */}
-        {animal.registeredName && (
-          <p className="text-xs text-muted-foreground italic line-clamp-1" title={animal.registeredName}>
-            {animal.registeredName}
+        {/* Call Name (Secondary - if different) */}
+        {animal.registeredName && animal.registeredName !== animal.name && (
+          <p className="text-xs text-muted-foreground">
+            Call name: {animal.name}
+          </p>
+        )}
+
+        {/* Registration Number (Prominent) */}
+        {animal.registrationNumber && (
+          <p className="text-xs text-primary font-mono font-semibold">
+            {animal.registrationNumber}
           </p>
         )}
 
@@ -165,13 +172,6 @@ function AnimalNode({ animal, generation }: AnimalNodeProps) {
         {animal.breed && (
           <p className="text-xs text-muted-foreground line-clamp-1">
             {animal.breed}
-          </p>
-        )}
-
-        {/* Registration Number */}
-        {animal.registrationNumber && (
-          <p className="text-xs text-muted-foreground font-mono">
-            {animal.registrationNumber}
           </p>
         )}
 

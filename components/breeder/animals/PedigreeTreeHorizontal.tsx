@@ -356,28 +356,28 @@ function PedigreeCard({ animal, generation, position, label, compact = false, on
           </Badge>
         )}
         
-        {/* Name */}
+        {/* Registered Name (Primary - Bold) */}
         <div className={cn(
-          "font-bold leading-tight line-clamp-1",
-          compact ? "text-xs" : "text-sm"
+          "font-bold leading-tight",
+          compact ? "text-xs line-clamp-1" : "text-sm line-clamp-2"
         )}>
-          {animal.name}
+          {animal.registeredName || animal.name}
         </div>
         
-        {/* Registered Name */}
-        {animal.registeredName && !compact && (
-          <p className="text-[10px] text-muted-foreground italic line-clamp-2 leading-tight" title={animal.registeredName}>
-            {animal.registeredName}
+        {/* Call Name (Secondary - if different from registered name) */}
+        {animal.registeredName && animal.registeredName !== animal.name && !compact && (
+          <p className="text-[10px] text-muted-foreground leading-tight">
+            Call name: {animal.name}
           </p>
         )}
 
         {/* Registration Number */}
         {animal.registrationNumber && (
           <p className={cn(
-            "text-muted-foreground font-mono",
+            "text-primary font-mono font-semibold",
             compact ? "text-[9px]" : "text-[10px]"
           )}>
-            Reg: {animal.registrationNumber}
+            {animal.registrationNumber}
           </p>
         )}
 
