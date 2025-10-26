@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AnimalCombobox } from "@/components/ui/animal-combobox";
 import { useAnimals } from "@/lib/api/queries/animals";
 import { Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon, Loader2 } from "lucide-react";
-import { Task, TaskType } from "@/lib/mock-data/tasks";
+import { Task, TaskType } from "@/lib/types/task";
 import { format } from "date-fns";
 
 interface TaskDialogProps {
@@ -30,13 +30,17 @@ interface TaskDialogProps {
   isLoading?: boolean;
 }
 
-const taskTypeConfig = {
+type TaskTypeConfigKey = 'feeding' | 'exercise' | 'grooming' | 'weight' | 'cleaning' | 'event' | 'puppy_feeding' | 'misc';
+
+const taskTypeConfig: Record<TaskTypeConfigKey, { icon: any; label: string; color: string }> = {
   feeding: { icon: Utensils, label: 'Feeding', color: 'text-chart-3' },
   exercise: { icon: Dumbbell, label: 'Exercise', color: 'text-chart-4' },
   grooming: { icon: Scissors, label: 'Grooming', color: 'text-chart-2' },
   weight: { icon: Scale, label: 'Weight Check', color: 'text-chart-1' },
   cleaning: { icon: Sparkles, label: 'Cleaning', color: 'text-primary' },
   event: { icon: CalendarIcon, label: 'Event', color: 'text-destructive' },
+  puppy_feeding: { icon: Utensils, label: 'Puppy Feeding', color: 'text-chart-3' },
+  misc: { icon: CalendarIcon, label: 'Miscellaneous', color: 'text-muted-foreground' },
 };
 
 export function TaskDialog({
@@ -83,6 +87,7 @@ export function TaskDialog({
 
   // Weight fields
   const [weight, setWeight] = useState('');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
 
   // Cleaning fields
   const [area, setArea] = useState<'kennel' | 'whelping-box' | 'yard' | 'shelter' | 'all'>('kennel');
@@ -124,6 +129,7 @@ export function TaskDialog({
           break;
         case 'weight':
           setWeight(existingTask.weight?.toString() || '');
+          setWeightUnit(existingTask.weightUnit || 'kg');
           break;
         case 'cleaning':
           setArea(existingTask.area);
@@ -167,6 +173,7 @@ export function TaskDialog({
     setGroomingType('bath');
     setFrequency('once');
     setWeight('');
+    setWeightUnit('kg');
     setArea('kennel');
     setCleaningType('daily');
     setEventType('vet-visit');
@@ -228,6 +235,7 @@ export function TaskDialog({
 
     switch (taskType) {
       case 'feeding':
+      case 'puppy_feeding': // Handle puppy_feeding same as feeding
         task = {
           type: 'feeding',
           animalId,
@@ -268,6 +276,7 @@ export function TaskDialog({
           animalId,
           animalName,
           weight: weight ? parseFloat(weight) : undefined,
+          weightUnit: weightUnit,
           date,
           notes: notes || undefined,
         } as Omit<Task, 'id' | 'completed'>;
@@ -283,6 +292,7 @@ export function TaskDialog({
         } as Omit<Task, 'id' | 'completed'>;
         break;
       case 'event':
+      case 'misc': // Handle misc same as event
         task = {
           type: 'event',
           animalId: animalId || undefined,
@@ -295,6 +305,10 @@ export function TaskDialog({
           recurring: recurring || undefined,
         } as Omit<Task, 'id' | 'completed'>;
         break;
+      default:
+        // Fallback for any unhandled task types
+        console.error('Unhandled task type:', taskType);
+        return;
     }
 
     if (onSave) {
@@ -303,7 +317,7 @@ export function TaskDialog({
     onOpenChange(false);
   };
 
-  const TaskIcon = taskTypeConfig[taskType].icon;
+  const TaskIcon = taskTypeConfig[taskType as TaskTypeConfigKey].icon;
   const needsAnimal = taskType !== 'cleaning' && taskType !== 'event';
 
   return (
@@ -311,7 +325,7 @@ export function TaskDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <TaskIcon className={`w-5 h-5 ${taskTypeConfig[taskType].color}`} />
+            <TaskIcon className={`w-5 h-5 ${taskTypeConfig[taskType as TaskTypeConfigKey].color}`} />
             {mode === 'edit' ? 'Edit Task' : 'New Task'}
           </DialogTitle>
           <DialogDescription>
@@ -517,21 +531,34 @@ export function TaskDialog({
             )}
 
             {taskType === 'weight' && (
-              <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  placeholder="Leave empty to record later"
-                  className="bg-background border-primary/20"
-                />
-                {errors.weight && <p className="text-sm text-destructive">{errors.weight}</p>}
-                <p className="text-xs text-muted-foreground">Weight will be recorded when task is completed</p>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="weight">Weight</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="weight"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={weight}
+                      onChange={(e) => setWeight(e.target.value)}
+                      placeholder="Leave empty to record later"
+                      className="bg-background border-primary/20 flex-1"
+                    />
+                    <Select value={weightUnit} onValueChange={(value: 'kg' | 'lbs') => setWeightUnit(value)}>
+                      <SelectTrigger className="w-24 bg-background border-primary/20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="kg">kg</SelectItem>
+                        <SelectItem value="lbs">lbs</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {errors.weight && <p className="text-sm text-destructive">{errors.weight}</p>}
+                  <p className="text-xs text-muted-foreground">Weight will be recorded when task is completed</p>
+                </div>
+              </>
             )}
 
             {taskType === 'cleaning' && (

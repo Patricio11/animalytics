@@ -14,7 +14,6 @@ import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby, Loa
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useCompleteTask } from "@/lib/api/queries/tasks";
 import { useAnimals } from "@/lib/api/queries/animals";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { Task } from "@/lib/mock-data/tasks";
 
 export default function TasksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -195,17 +194,32 @@ export default function TasksPage() {
   // Transform task for display
   const transformTask = (task: any) => ({
     id: task.id,
-    title: task.title || `${task.type} task`,
+    title: task.title || `${task.type || 'Task'}`,
     description: task.notes || "",
     dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
-    priority: task.priority as "high" | "medium" | "low",
-    category: task.type,
+    priority: (task.priority || 'medium') as "high" | "medium" | "low",
+    category: task.type || 'misc',
     animalName: task.animal?.name || "N/A",
     completed: !!task.completedAt,
-    type: task.type,
+    type: task.type || 'misc',
     taskData: task.taskData || {},
     date: task.dueDate,
     notes: task.notes,
+    // Flatten common task data properties
+    foodType: task.taskData?.foodType,
+    amount: task.taskData?.amount,
+    unit: task.taskData?.unit,
+    time: task.taskData?.time || task.dueTime,
+    exerciseType: task.taskData?.exerciseType,
+    duration: task.taskData?.duration,
+    groomingType: task.taskData?.groomingType,
+    frequency: task.recurringPattern,
+    weight: task.taskData?.weight,
+    weightUnit: task.taskData?.unit,
+    area: task.taskData?.area,
+    cleaningType: task.taskData?.cleaningType,
+    eventType: task.taskData?.eventType,
+    recurring: !!task.recurringPattern,
   });
 
   const taskStats = [
@@ -368,7 +382,7 @@ export default function TasksPage() {
             {categorizedTasks.pending.map((task: any) => (
               <TaskCard
                 key={task.id}
-                task={transformTask(task) as unknown as Task}
+                task={transformTask(task) as any}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
@@ -387,7 +401,7 @@ export default function TasksPage() {
             {categorizedTasks.overdue.map((task: any) => (
               <TaskCard
                 key={task.id}
-                task={transformTask(task) as unknown as Task}
+                task={transformTask(task) as any}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
@@ -406,7 +420,7 @@ export default function TasksPage() {
             {categorizedTasks.dueSoon.map((task: any) => (
               <TaskCard
                 key={task.id}
-                task={transformTask(task) as unknown as Task}
+                task={transformTask(task) as any}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}
@@ -425,7 +439,7 @@ export default function TasksPage() {
             {categorizedTasks.completed.map((task: any) => (
               <TaskCard
                 key={task.id}
-                task={transformTask(task) as unknown as Task}
+                task={transformTask(task) as any}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleComplete={handleToggleComplete}

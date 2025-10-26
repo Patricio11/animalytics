@@ -1,19 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportFilterBar, ReportFilters } from "@/components/breeder/reports/ReportFilterBar";
 import { ReportTable, ReportColumn, formatTableDate, renderStatusBadge } from "@/components/breeder/reports/ReportTable";
 import { ReportExportButton } from "@/components/breeder/reports/ReportExportButton";
 import { MatingHistoryComparison } from "@/components/breeder/reports/MatingHistoryComparison";
-import { mockTasks } from "@/lib/mock-data/tasks";
-import { mockAnimals } from "@/data/mockData";
-import { mockAnimalProfileDetails } from "@/lib/mock-data/animal-profile-details";
-import { FileBarChart, Utensils, Dumbbell, Scissors, Sparkles, Baby, Heart, Calendar as CalendarIcon } from "lucide-react";
+import { FileBarChart, Utensils, Dumbbell, Scissors, Sparkles, Baby, Heart, Calendar as CalendarIcon, AlertCircle } from "lucide-react";
 import { format, isWithinInterval, parseISO } from "date-fns";
-import { cn } from "@/lib/utils";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState("events");
@@ -22,132 +21,190 @@ export default function ReportsPage() {
     endDate: format(new Date(), 'yyyy-MM-dd'),
   });
 
-  // Available animals for filtering
-  const availableAnimals = mockAnimals.map(a => ({ id: a.id, name: a.name }));
-
-  // Filter tasks by date range
-  const filterByDateRange = <T,>(items: T[], dateField: string = 'date'): T[] => {
-    return items.filter(item => {
-      const itemDate = parseISO((item as Record<string, unknown>)[dateField] as string);
-      return isWithinInterval(itemDate, {
-        start: parseISO(filters.startDate),
-        end: parseISO(filters.endDate),
+  // Fetch tasks data
+  const { data: tasksData, isLoading: tasksLoading, error: tasksError } = useQuery({
+    queryKey: ['tasks', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        fromDate: filters.startDate,
+        toDate: filters.endDate,
       });
-    });
-  };
+      if (filters.animalId) params.append('animalId', filters.animalId);
+      if (filters.taskType) params.append('taskType', filters.taskType);
+      if (filters.eventType) params.append('eventType', filters.eventType);
+      
+      const response = await fetch(`/api/tasks?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch tasks');
+      const json = await response.json();
+      return json.data || [];
+    },
+  });
 
-  // Events Report Data
+  // Fetch animals for filtering
+  const { data: animalsData } = useQuery({
+    queryKey: ['animals'],
+    queryFn: async () => {
+      const response = await fetch('/api/animals');
+      if (!response.ok) throw new Error('Failed to fetch animals');
+      const json = await response.json();
+      return json.data || [];
+    },
+  });
+
+  // Fetch litters data
+  const { data: littersData, isLoading: littersLoading } = useQuery({
+    queryKey: ['litters', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        fromDate: filters.startDate,
+        toDate: filters.endDate,
+      });
+      if (filters.animalId) params.append('bitchId', filters.animalId);
+      
+      const response = await fetch(`/api/litters?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch litters');
+      const json = await response.json();
+      return json.data || [];
+    },
+  });
+
+  // Fetch matings data
+  const { data: matingsData, isLoading: matingsLoading } = useQuery({
+    queryKey: ['matings', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        fromDate: filters.startDate,
+        toDate: filters.endDate,
+      });
+      if (filters.animalId) params.append('bitchId', filters.animalId);
+      
+      const response = await fetch(`/api/matings?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch matings');
+      const json = await response.json();
+      return json.data || [];
+    },
+  });
+
+  const availableAnimals = animalsData?.map((a: any) => ({ id: a.id, name: a.name })) || [];
+
+  // Process tasks data by type
   const eventsData = useMemo(() => {
-    const filteredByType = mockTasks.filter(task => task.type === 'event');
-    const filteredByDate = filterByDateRange(filteredByType);
+    if (!tasksData) return [];
+    return tasksData
+      .filter((task: any) => task.type === 'event')
+      .map((task: any) => ({
+        id: task.id,
+        date: task.dueDate,
+        time: task.dueTime || task.taskData?.time,
+        animalName: task.animal?.name || 'N/A',
+        eventType: task.taskData?.eventType || 'other',
+        title: task.title,
+        status: task.status,
+        completed: task.status === 'completed',
+      }));
+  }, [tasksData]);
 
-    let events = filteredByDate;
-    if (filters.animalId) {
-      events = events.filter(task => 'animalId' in task && task.animalId === filters.animalId);
-    }
-
-    if (filters.eventType) {
-      events = events.filter(task => task.type === 'event' && task.eventType === filters.eventType);
-    }
-
-    return events as unknown as Record<string, unknown>[];
-  }, [filters, filterByDateRange]);
-
-  // Feeding Report Data
   const feedingData = useMemo(() => {
-    let feeding = mockTasks.filter(task => task.type === 'feeding');
-    feeding = filterByDateRange(feeding);
+    if (!tasksData) return [];
+    return tasksData
+      .filter((task: any) => task.type === 'feeding')
+      .map((task: any) => ({
+        id: task.id,
+        date: task.dueDate,
+        time: task.dueTime,
+        animalName: task.animal?.name || 'N/A',
+        foodType: task.taskData?.foodType || 'N/A',
+        amount: task.taskData?.amount || 0,
+        unit: task.taskData?.unit || 'g',
+        status: task.status,
+        completed: task.status === 'completed',
+      }));
+  }, [tasksData]);
 
-    if (filters.animalId) {
-      feeding = feeding.filter(task => 'animalId' in task && task.animalId === filters.animalId);
-    }
-
-    return feeding as unknown as Record<string, unknown>[];
-  }, [filters, filterByDateRange]);
-
-  // Exercise Report Data
   const exerciseData = useMemo(() => {
-    let exercise = mockTasks.filter(task => task.type === 'exercise');
-    exercise = filterByDateRange(exercise);
+    if (!tasksData) return [];
+    return tasksData
+      .filter((task: any) => task.type === 'exercise')
+      .map((task: any) => ({
+        id: task.id,
+        date: task.dueDate,
+        animalName: task.animal?.name || 'N/A',
+        exerciseType: task.taskData?.exerciseType || 'walk',
+        duration: task.taskData?.duration || 0,
+        status: task.status,
+        completed: task.status === 'completed',
+      }));
+  }, [tasksData]);
 
-    if (filters.animalId) {
-      exercise = exercise.filter(task => 'animalId' in task && task.animalId === filters.animalId);
-    }
-
-    return exercise as unknown as Record<string, unknown>[];
-  }, [filters, filterByDateRange]);
-
-  // Grooming Report Data
   const groomingData = useMemo(() => {
-    let grooming = mockTasks.filter(task => task.type === 'grooming');
-    grooming = filterByDateRange(grooming);
+    if (!tasksData) return [];
+    return tasksData
+      .filter((task: any) => task.type === 'grooming')
+      .map((task: any) => ({
+        id: task.id,
+        date: task.dueDate,
+        animalName: task.animal?.name || 'N/A',
+        groomingType: task.taskData?.groomingType || 'bath',
+        frequency: task.recurringPattern || 'once',
+        status: task.status,
+        completed: task.status === 'completed',
+      }));
+  }, [tasksData]);
 
-    if (filters.animalId) {
-      grooming = grooming.filter(task => 'animalId' in task && task.animalId === filters.animalId);
-    }
-
-    return grooming as unknown as Record<string, unknown>[];
-  }, [filters, filterByDateRange]);
-
-  // Cleaning Report Data
   const cleaningData = useMemo(() => {
-    let cleaning = mockTasks.filter(task => task.type === 'cleaning');
-    cleaning = filterByDateRange(cleaning);
+    if (!tasksData) return [];
+    return tasksData
+      .filter((task: any) => task.type === 'cleaning')
+      .map((task: any) => ({
+        id: task.id,
+        date: task.dueDate,
+        area: task.taskData?.area || 'general',
+        cleaningType: task.taskData?.cleaningType || 'general',
+        frequency: task.recurringPattern || 'once',
+        status: task.status,
+        completed: task.status === 'completed',
+      }));
+  }, [tasksData]);
 
-    return cleaning as unknown as Record<string, unknown>[];
-  }, [filters, filterByDateRange]);
-
-  // Puppies Report Data
   const puppiesData = useMemo(() => {
-    const allLitters = Object.values(mockAnimalProfileDetails)
-      .flatMap(details => details.litters || []);
+    if (!littersData) return [];
+    return littersData
+      .filter((litter: any) => litter.actualWhelpingDate) // Only filter out litters without whelping date
+      .map((litter: any) => ({
+        id: litter.id,
+        whelpingDate: litter.actualWhelpingDate,
+        sireName: litter.sire?.name || 'Unknown',
+        damName: litter.bitch?.name || 'Unknown',
+        damId: litter.bitchId,
+        puppies: litter.puppies || [],
+        status: litter.status || 'active',
+      }));
+  }, [littersData]);
 
-    return allLitters.filter(litter => {
-      if (!litter.whelpingDate) return false;
-
-      const whelpingDate = parseISO(litter.whelpingDate);
-      return isWithinInterval(whelpingDate, {
-        start: parseISO(filters.startDate),
-        end: parseISO(filters.endDate),
-      });
-    }) as unknown as Record<string, unknown>[];
-  }, [filters]);
-
-  // Mating History Data
   const matingHistoryData = useMemo(() => {
-    const allMatings = Object.entries(mockAnimalProfileDetails)
-      .flatMap(([animalId, details]) => {
-        return (details.litters || []).map(litter => ({
-          id: litter.id,
-          matingDate: litter.matingDate,
-          damId: animalId,
-          damName: mockAnimals.find(a => a.id === animalId)?.name || 'Unknown',
-          sireId: litter.sireId,
-          sireName: litter.sireName,
-          progesteroneReadings: details.seasons?.[0]?.progesteroneReadings,
-          whelpingDate: litter.whelpingDate,
-          litterSize: litter.puppies?.length,
-          success: !!litter.whelpingDate,
-        }));
-      });
+    if (!matingsData) return [];
+    return matingsData.map((mating: any) => ({
+      id: mating.id,
+      matingDate: mating.matingDate,
+      damId: mating.bitchId,
+      damName: mating.bitch?.name || 'Unknown',
+      sireId: mating.dogId,
+      sireName: mating.dog?.name || 'Unknown',
+      progesteroneReadings: mating.progesteroneReadings || [],
+      whelpingDate: mating.whelpingDate,
+      litterSize: mating.litterSize,
+      success: mating.status === 'resulted_in_litter',
+    }));
+  }, [matingsData]);
 
-    return allMatings.filter(mating => {
-      const matingDate = parseISO(mating.matingDate);
-      return isWithinInterval(matingDate, {
-        start: parseISO(filters.startDate),
-        end: parseISO(filters.endDate),
-      });
-    });
-  }, [filters]);
-
-  // Column definitions for each report type
+  // Column definitions
   const eventsColumns: ReportColumn[] = [
     { key: 'date', label: 'Date', render: (val) => formatTableDate(val as string | Date) },
     { key: 'animalName', label: 'Animal' },
-    { key: 'eventType', label: 'Event Type', render: (val) => <span className="capitalize">{(val as string).replace('-', ' ')}</span> },
+    { key: 'eventType', label: 'Event Type', render: (val) => <span className="capitalize">{(val as string).replace('_', ' ')}</span> },
     { key: 'title', label: 'Title' },
     { key: 'time', label: 'Time' },
-    { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
+    { key: 'status', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val as string) },
   ];
 
   const feedingColumns: ReportColumn[] = [
@@ -155,8 +212,8 @@ export default function ReportsPage() {
     { key: 'time', label: 'Time' },
     { key: 'animalName', label: 'Animal' },
     { key: 'foodType', label: 'Food Type' },
-    { key: 'amount', label: 'Amount', render: (val, row) => `${val} ${(row as Record<string, unknown>).unit}` },
-    { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
+    { key: 'amount', label: 'Amount', render: (val, row) => `${val} ${(row as any).unit}` },
+    { key: 'status', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val as string) },
   ];
 
   const exerciseColumns: ReportColumn[] = [
@@ -164,7 +221,7 @@ export default function ReportsPage() {
     { key: 'animalName', label: 'Animal' },
     { key: 'exerciseType', label: 'Type', render: (val) => <span className="capitalize">{val as string}</span> },
     { key: 'duration', label: 'Duration (min)', align: 'center' },
-    { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
+    { key: 'status', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val as string) },
   ];
 
   const groomingColumns: ReportColumn[] = [
@@ -172,24 +229,24 @@ export default function ReportsPage() {
     { key: 'animalName', label: 'Animal' },
     { key: 'groomingType', label: 'Type', render: (val) => <span className="capitalize">{val as string}</span> },
     { key: 'frequency', label: 'Frequency', render: (val) => <span className="capitalize">{val as string}</span> },
-    { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
+    { key: 'status', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val as string) },
   ];
 
   const cleaningColumns: ReportColumn[] = [
     { key: 'date', label: 'Date', render: (val) => formatTableDate(val as string | Date) },
-    { key: 'area', label: 'Area', render: (val) => <span className="capitalize">{(val as string).replace('-', ' ')}</span> },
-    { key: 'cleaningType', label: 'Type', render: (val) => <span className="capitalize">{(val as string).replace('-', ' ')}</span> },
+    { key: 'area', label: 'Area', render: (val) => <span className="capitalize">{(val as string).replace('_', ' ')}</span> },
+    { key: 'cleaningType', label: 'Type', render: (val) => <span className="capitalize">{(val as string).replace('_', ' ')}</span> },
     { key: 'frequency', label: 'Frequency', render: (val) => <span className="capitalize">{val as string}</span> },
-    { key: 'completed', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val ? 'completed' : 'pending') },
+    { key: 'status', label: 'Status', align: 'center', render: (val) => renderStatusBadge(val as string) },
   ];
 
   const puppiesColumns: ReportColumn[] = [
     { key: 'whelpingDate', label: 'Whelping Date', render: (val) => val ? formatTableDate(val as string | Date) : 'N/A' },
     { key: 'sireName', label: 'Sire' },
-    { key: 'damName', label: 'Dam', render: (val, row) => mockAnimals.find(a => a.id === (row as Record<string, unknown>).damId)?.name || 'Unknown' },
-    { key: 'puppies', label: 'Litter Size', align: 'center', render: (val) => (val as Array<unknown>)?.length || 0 },
+    { key: 'damName', label: 'Dam' },
+    { key: 'puppies', label: 'Litter Size', align: 'center', render: (val) => (val as Array<any>)?.length || 0 },
     { key: 'status', label: 'Status', align: 'center', render: (val, row) => {
-      const puppies = (row as Record<string, unknown>).puppies as Array<{ status: string }> | undefined;
+      const puppies = (row as any).puppies as Array<{ status: string }> | undefined;
       const retained = puppies?.filter((p) => p.status === 'retained').length || 0;
       const sold = puppies?.filter((p) => p.status === 'sold').length || 0;
       return (
@@ -204,33 +261,33 @@ export default function ReportsPage() {
   // Calculate summaries
   const feedingSummary = [
     { label: 'Total Feedings', value: feedingData.length },
-    { label: 'Completed', value: feedingData.filter(f => (f as Record<string, unknown>).completed).length, color: 'text-chart-3' },
-    { label: 'Pending', value: feedingData.filter(f => !(f as Record<string, unknown>).completed).length, color: 'text-chart-4' },
+    { label: 'Completed', value: feedingData.filter((f: any) => f.completed).length, color: 'text-chart-3' },
+    { label: 'Pending', value: feedingData.filter((f: any) => !f.completed).length, color: 'text-chart-4' },
   ];
 
   const exerciseSummary = [
     { label: 'Total Sessions', value: exerciseData.length },
-    { label: 'Total Minutes', value: exerciseData.reduce((sum, e) => sum + (Number((e as Record<string, unknown>).duration) || 0), 0) },
-    { label: 'Completed', value: exerciseData.filter(e => (e as Record<string, unknown>).completed).length, color: 'text-chart-3' },
+    { label: 'Total Minutes', value: exerciseData.reduce((sum: number, e: any) => sum + (e.duration || 0), 0) },
+    { label: 'Completed', value: exerciseData.filter((e: any) => e.completed).length, color: 'text-chart-3' },
   ];
 
   const groomingSummary = [
     { label: 'Total Sessions', value: groomingData.length },
-    { label: 'Completed', value: groomingData.filter(g => (g as Record<string, unknown>).completed).length, color: 'text-chart-3' },
-    { label: 'Pending', value: groomingData.filter(g => !(g as Record<string, unknown>).completed).length, color: 'text-chart-4' },
+    { label: 'Completed', value: groomingData.filter((g: any) => g.completed).length, color: 'text-chart-3' },
+    { label: 'Pending', value: groomingData.filter((g: any) => !g.completed).length, color: 'text-chart-4' },
   ];
 
   const cleaningSummary = [
     { label: 'Total Tasks', value: cleaningData.length },
-    { label: 'Completed', value: cleaningData.filter(c => (c as Record<string, unknown>).completed).length, color: 'text-chart-3' },
-    { label: 'Pending', value: cleaningData.filter(c => !(c as Record<string, unknown>).completed).length, color: 'text-chart-4' },
+    { label: 'Completed', value: cleaningData.filter((c: any) => c.completed).length, color: 'text-chart-3' },
+    { label: 'Pending', value: cleaningData.filter((c: any) => !c.completed).length, color: 'text-chart-4' },
   ];
 
   const puppiesSummary = [
     { label: 'Total Litters', value: puppiesData.length },
-    { label: 'Total Puppies', value: puppiesData.reduce((sum, l) => sum + (((l as Record<string, unknown>).puppies as Array<unknown>)?.length || 0), 0) },
-    { label: 'Retained', value: puppiesData.reduce((sum, l) => sum + (((l as Record<string, unknown>).puppies as Array<{ status: string }>)?.filter(p => p.status === 'retained').length || 0), 0), color: 'text-chart-4' },
-    { label: 'Sold', value: puppiesData.reduce((sum, l) => sum + (((l as Record<string, unknown>).puppies as Array<{ status: string }>)?.filter(p => p.status === 'sold').length || 0), 0), color: 'text-chart-3' },
+    { label: 'Total Puppies', value: puppiesData.reduce((sum: number, l: any) => sum + (l.puppies?.length || 0), 0) },
+    { label: 'Retained', value: puppiesData.reduce((sum: number, l: any) => sum + (l.puppies?.filter((p: any) => p.status === 'retained').length || 0), 0), color: 'text-chart-4' },
+    { label: 'Sold', value: puppiesData.reduce((sum: number, l: any) => sum + (l.puppies?.filter((p: any) => p.status === 'sold').length || 0), 0), color: 'text-chart-3' },
   ];
 
   const tabConfig = [
@@ -242,6 +299,35 @@ export default function ReportsPage() {
     { value: 'puppies', label: 'Puppies', icon: Baby, count: puppiesData.length },
     { value: 'mating', label: 'Mating History', icon: Heart, count: matingHistoryData.length },
   ];
+
+  // Loading state
+  if (tasksLoading || littersLoading || matingsLoading) {
+    return (
+      <div className="min-h-screen bg-surface-secondary">
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (tasksError) {
+    return (
+      <div className="min-h-screen bg-surface-secondary">
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load reports data. Please try again later.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -294,7 +380,7 @@ export default function ReportsPage() {
           <TabsContent value="events" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={eventsData as Record<string, unknown>[]}
+                data={eventsData as any[]}
                 reportName="events-report"
                 columns={eventsColumns}
               />
@@ -302,7 +388,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Events Report"
               columns={eventsColumns}
-              data={eventsData as Record<string, unknown>[]}
+              data={eventsData as any[]}
               emptyMessage="No events found for the selected period"
             />
           </TabsContent>
@@ -311,7 +397,7 @@ export default function ReportsPage() {
           <TabsContent value="feeding" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={feedingData as Record<string, unknown>[]}
+                data={feedingData as any[]}
                 reportName="feeding-report"
                 columns={feedingColumns}
               />
@@ -319,7 +405,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Feeding Report"
               columns={feedingColumns}
-              data={feedingData as Record<string, unknown>[]}
+              data={feedingData as any[]}
               summary={feedingSummary}
               emptyMessage="No feeding records found for the selected period"
             />
@@ -329,7 +415,7 @@ export default function ReportsPage() {
           <TabsContent value="exercise" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={exerciseData as Record<string, unknown>[]}
+                data={exerciseData as any[]}
                 reportName="exercise-report"
                 columns={exerciseColumns}
               />
@@ -337,7 +423,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Exercise Report"
               columns={exerciseColumns}
-              data={exerciseData as Record<string, unknown>[]}
+              data={exerciseData as any[]}
               summary={exerciseSummary}
               emptyMessage="No exercise records found for the selected period"
             />
@@ -347,7 +433,7 @@ export default function ReportsPage() {
           <TabsContent value="grooming" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={groomingData as Record<string, unknown>[]}
+                data={groomingData as any[]}
                 reportName="grooming-report"
                 columns={groomingColumns}
               />
@@ -355,7 +441,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Grooming Report"
               columns={groomingColumns}
-              data={groomingData as Record<string, unknown>[]}
+              data={groomingData as any[]}
               summary={groomingSummary}
               emptyMessage="No grooming records found for the selected period"
             />
@@ -365,7 +451,7 @@ export default function ReportsPage() {
           <TabsContent value="cleaning" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={cleaningData as Record<string, unknown>[]}
+                data={cleaningData as any[]}
                 reportName="cleaning-report"
                 columns={cleaningColumns}
               />
@@ -373,7 +459,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Cleaning Report"
               columns={cleaningColumns}
-              data={cleaningData as Record<string, unknown>[]}
+              data={cleaningData as any[]}
               summary={cleaningSummary}
               emptyMessage="No cleaning records found for the selected period"
             />
@@ -383,7 +469,7 @@ export default function ReportsPage() {
           <TabsContent value="puppies" className="space-y-4">
             <div className="flex justify-end">
               <ReportExportButton
-                data={puppiesData as Record<string, unknown>[]}
+                data={puppiesData as any[]}
                 reportName="puppies-report"
                 columns={puppiesColumns}
               />
@@ -391,7 +477,7 @@ export default function ReportsPage() {
             <ReportTable
               title="Puppies Report"
               columns={puppiesColumns}
-              data={puppiesData as Record<string, unknown>[]}
+              data={puppiesData as any[]}
               summary={puppiesSummary}
               emptyMessage="No litters found for the selected period"
             />
@@ -401,8 +487,8 @@ export default function ReportsPage() {
           <TabsContent value="mating" className="space-y-4">
             <MatingHistoryComparison
               matings={matingHistoryData}
-              availableDams={availableAnimals.filter(a => mockAnimals.find(ma => ma.id === a.id)?.type === 'bitch')}
-              availableSires={availableAnimals.filter(a => mockAnimals.find(ma => ma.id === a.id)?.type === 'dog')}
+              availableDams={availableAnimals.filter((a: any) => animalsData?.find((ma: any) => ma.id === a.id && ma.sex === 'female'))}
+              availableSires={availableAnimals.filter((a: any) => animalsData?.find((ma: any) => ma.id === a.id && ma.sex === 'male'))}
             />
           </TabsContent>
         </Tabs>

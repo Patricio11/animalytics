@@ -1,158 +1,17 @@
 /**
  * Task management mock data
- * Comprehensive task system for animal care management
+ * Pure mock data for development and testing
+ * 
+ * NOTE: Type definitions have been moved to @/lib/types/task
+ * Import types from there instead of this file
  */
 
-export type TaskType =
-  | 'feeding'
-  | 'exercise'
-  | 'grooming'
-  | 'weight'
-  | 'cleaning'
-  | 'event';
+import type { Task } from '@/lib/types/task';
 
-export type TaskStatus = 'pending' | 'completed' | 'overdue';
-export type TaskPriority = 'low' | 'medium' | 'high';
-export type TaskFrequency = 'once' | 'daily' | 'weekly' | 'monthly';
+// ============================================================================
+// MOCK DATA
+// ============================================================================
 
-// Feeding Task
-export interface FeedingTask {
-  id: string;
-  type: 'feeding';
-  animalId: string;
-  animalName: string;
-  foodType: string;
-  amount: number;
-  unit: 'grams' | 'cups';
-  time: string; // HH:mm format
-  completed: boolean;
-  date: string;
-  notes?: string;
-}
-
-// Exercise Task
-export interface ExerciseTask {
-  id: string;
-  type: 'exercise';
-  animalId: string;
-  animalName: string;
-  exerciseType: 'walk' | 'play' | 'training' | 'other';
-  duration: number; // minutes
-  completed: boolean;
-  date: string;
-  notes?: string;
-}
-
-// Grooming Task
-export interface GroomingTask {
-  id: string;
-  type: 'grooming';
-  animalId: string;
-  animalName: string;
-  groomingType: 'bath' | 'brush' | 'nails' | 'ears' | 'teeth' | 'full';
-  frequency: TaskFrequency;
-  completed: boolean;
-  date: string;
-  notes?: string;
-}
-
-// Weight Task
-export interface WeightTask {
-  id: string;
-  type: 'weight';
-  animalId: string;
-  animalName: string;
-  weight?: number; // kg
-  completed: boolean;
-  date: string;
-  notes?: string;
-}
-
-// Cleaning Task
-export interface CleaningTask {
-  id: string;
-  type: 'cleaning';
-  area: 'kennel' | 'whelping-box' | 'yard' | 'shelter' | 'all';
-  cleaningType: 'daily' | 'deep-clean' | 'disinfect';
-  frequency: TaskFrequency;
-  completed: boolean;
-  date: string;
-  notes?: string;
-}
-
-// Event Task
-export interface EventTask {
-  id: string;
-  type: 'event';
-  animalId?: string;
-  animalName?: string;
-  eventType:
-    | 'vet-visit'
-    | 'worming'
-    | 'heartworm'
-    | 'flea-tick'
-    | 'vaccination'
-    | 'health-check'
-    | 'rugging'
-    | 'pest-management'
-    | 'other';
-  title: string;
-  time?: string; // HH:mm format
-  completed: boolean;
-  date: string;
-  notes?: string;
-  recurring?: boolean;
-}
-
-export type Task =
-  | FeedingTask
-  | ExerciseTask
-  | GroomingTask
-  | WeightTask
-  | CleaningTask
-  | EventTask;
-
-// Helper function to get task status
-export function getTaskStatus(task: Task): TaskStatus {
-  if (task.completed) return 'completed';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const taskDate = new Date(task.date);
-  taskDate.setHours(0, 0, 0, 0);
-  if (taskDate < today) return 'overdue';
-  return 'pending';
-}
-
-// Helper function to get task priority based on type and date
-export function getTaskPriority(task: Task): TaskPriority {
-  const today = new Date();
-  const taskDate = new Date(task.date);
-  const daysDiff = Math.ceil((taskDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-  // Overdue tasks are high priority
-  if (daysDiff < 0) return 'high';
-
-  // Event tasks based on event type
-  if (task.type === 'event') {
-    if (['vet-visit', 'vaccination', 'health-check'].includes(task.eventType)) {
-      return daysDiff <= 1 ? 'high' : 'medium';
-    }
-  }
-
-  // Feeding tasks are high priority on the day
-  if (task.type === 'feeding') {
-    return daysDiff === 0 ? 'high' : 'medium';
-  }
-
-  // Weight and grooming are medium priority
-  if (task.type === 'weight' || task.type === 'grooming') {
-    return 'medium';
-  }
-
-  return 'low';
-}
-
-// Mock data
 export const mockTasks: Task[] = [
   // Feeding tasks
   {

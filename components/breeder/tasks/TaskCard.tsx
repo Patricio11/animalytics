@@ -4,18 +4,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Check, Clock, AlertCircle, Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon } from "lucide-react";
-import { Task, getTaskStatus, getTaskPriority } from "@/lib/mock-data/tasks";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import type { TaskType, TaskStatus, TaskPriority } from "@/lib/types/task";
 
 interface TaskCardProps {
-  task: Task;
-  onEdit: (task: Task) => void;
+  task: any; // Using any for now since transformed task has additional properties
+  onEdit: (task: any) => void;
   onDelete: (taskId: string) => void;
   onToggleComplete: (taskId: string) => void;
 }
 
-const taskTypeConfig = {
+type TaskTypeConfigKey = Extract<TaskType, 'feeding' | 'exercise' | 'grooming' | 'weight' | 'cleaning' | 'event'>;
+
+const taskTypeConfig: Record<TaskTypeConfigKey, { icon: any; label: string; color: string; bgColor: string; borderColor: string }> = {
   feeding: { icon: Utensils, label: 'Feeding', color: 'text-chart-3', bgColor: 'bg-chart-3/10', borderColor: 'border-chart-3/20' },
   exercise: { icon: Dumbbell, label: 'Exercise', color: 'text-chart-4', bgColor: 'bg-chart-4/10', borderColor: 'border-chart-4/20' },
   grooming: { icon: Scissors, label: 'Grooming', color: 'text-chart-2', bgColor: 'bg-chart-2/10', borderColor: 'border-chart-2/20' },
@@ -25,9 +27,18 @@ const taskTypeConfig = {
 };
 
 export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardProps) {
-  const status = getTaskStatus(task);
-  const priority = getTaskPriority(task);
-  const config = taskTypeConfig[task.type];
+  // Get task status
+  const status: TaskStatus = task.completed ? 'completed' : 
+                             (task.status === 'overdue' ? 'overdue' : 'pending');
+  
+  // Get task priority
+  const priority: TaskPriority = task.priority || 'medium';
+  
+  // Get config with fallback for puppy_feeding and misc types
+  const taskTypeKey = (task.type === 'puppy_feeding' ? 'feeding' : 
+                       task.type === 'misc' ? 'event' : 
+                       task.type) as TaskTypeConfigKey;
+  const config = taskTypeConfig[taskTypeKey] || taskTypeConfig.event;
   const TaskIcon = config.icon;
 
   const getStatusConfig = () => {
@@ -72,16 +83,16 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
         return (
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground">
-              {task.taskData?.foodType || task.foodType || 'Feeding'}
+              {task.foodType || 'Feeding'}
             </div>
             <div className="flex items-center gap-4 text-sm">
-              {(task.taskData?.amount || task.amount) && (
+              {(task.amount) && (
                 <span className="font-medium text-foreground">
-                  {task.taskData?.amount || task.amount} {task.taskData?.unit || task.unit}
+                  {task.amount} {task.unit}
                 </span>
               )}
-              {(task.taskData?.time || task.time) && (
-                <span className="text-muted-foreground">at {task.taskData?.time || task.time}</span>
+              {(task.time) && (
+                <span className="text-muted-foreground">at {task.time}</span>
               )}
             </div>
           </div>
@@ -90,11 +101,11 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
         return (
           <div className="space-y-1">
             <div className="text-sm capitalize text-muted-foreground">
-              {task.taskData?.exerciseType || task.exerciseType || 'Exercise'}
+              {task.exerciseType || 'Exercise'}
             </div>
-            {(task.taskData?.duration || task.duration) && (
+            {(task.duration) && (
               <div className="text-sm">
-                <span className="font-medium text-foreground">{task.taskData?.duration || task.duration} minutes</span>
+                <span className="font-medium text-foreground">{task.duration} minutes</span>
               </div>
             )}
           </div>
@@ -103,12 +114,12 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
         return (
           <div className="space-y-1">
             <div className="text-sm capitalize text-muted-foreground">
-              {(task.taskData?.groomingType || task.groomingType || 'grooming').replace('-', ' ')}
+              {task.groomingType || 'grooming'}
             </div>
-            {(task.taskData?.frequency || task.frequency) && (
+            {(task.frequency) && (
               <div className="text-sm">
                 <Badge variant="outline" className="text-xs capitalize">
-                  {task.taskData?.frequency || task.frequency}
+                  {task.frequency}
                 </Badge>
               </div>
             )}
@@ -117,10 +128,10 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
       case 'weight':
         return (
           <div className="space-y-1">
-            {(task.taskData?.weight || task.weight) ? (
+            {(task.weight) ? (
               <div className="text-sm">
                 <span className="font-medium text-foreground">
-                  {task.taskData?.weight || task.weight} {task.taskData?.weightUnit || 'kg'}
+                  {task.weight} {task.weightUnit || 'kg'}
                 </span>
               </div>
             ) : (
@@ -134,12 +145,12 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
         return (
           <div className="space-y-1">
             <div className="text-sm capitalize text-muted-foreground">
-              {(task.taskData?.area || task.area || 'area').replace('-', ' ')} - {(task.taskData?.cleaningType || task.cleaningType || 'cleaning').replace('-', ' ')}
+              {(task.area || 'area')?.toString().replace(/-/g, ' ')} - {(task.cleaningType || 'cleaning')?.toString().replace(/-/g, ' ')}
             </div>
-            {(task.taskData?.frequency || task.frequency) && (
+            {(task.frequency) && (
               <div className="text-sm">
                 <Badge variant="outline" className="text-xs capitalize">
-                  {task.taskData?.frequency || task.frequency}
+                  {task.frequency}
                 </Badge>
               </div>
             )}
@@ -152,11 +163,11 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete }: TaskCardP
               {task.title || 'Event'}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {(task.taskData?.eventType || task.eventType) && (
-                <span className="capitalize">{(task.taskData?.eventType || task.eventType).replace('-', ' ')}</span>
+              {(task.eventType) && (
+                <span className="capitalize">{(task.eventType)?.toString().replace(/-/g, ' ')}</span>
               )}
-              {(task.taskData?.time || task.time) && <span>• {task.taskData?.time || task.time}</span>}
-              {(task.isRecurring || task.recurring) && (
+              {(task.time) && <span>• {task.time}</span>}
+              {(task.recurring) && (
                 <Badge variant="outline" className="text-xs">
                   Recurring
                 </Badge>

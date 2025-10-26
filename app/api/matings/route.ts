@@ -9,7 +9,7 @@ import {
   validationErrorResponse,
   serverErrorResponse,
 } from '@/lib/api/response';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, gte, lte } from 'drizzle-orm';
 import { z } from 'zod';
 
 // ============================================================================
@@ -46,11 +46,31 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const bitchId = searchParams.get('bitchId');
     const status = searchParams.get('status');
+    const fromDate = searchParams.get('fromDate');
+    const toDate = searchParams.get('toDate');
 
     // Build where clause
-    let whereClause: any = eq(matings.userId, session.user.id);
+    let whereConditions: any[] = [eq(matings.userId, session.user.id)];
 
-    // TODO: Add filtering by bitchId and status when needed
+    // Filter by bitch
+    if (bitchId) {
+      whereConditions.push(eq(matings.bitchId, bitchId));
+    }
+
+    // Filter by status
+    if (status) {
+      whereConditions.push(eq(matings.status, status as any));
+    }
+
+    // Filter by date range (mating date)
+    if (fromDate) {
+      whereConditions.push(gte(matings.matingDate, fromDate));
+    }
+    if (toDate) {
+      whereConditions.push(lte(matings.matingDate, toDate));
+    }
+
+    const whereClause = whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0];
 
     const userMatings = await db.query.matings.findMany({
       where: whereClause,

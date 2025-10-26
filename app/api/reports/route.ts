@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { reportGenerations, exportHistory } from '@/lib/db/schema/reports';
 import { tasks } from '@/lib/db/schema/tasks';
-import { litters } from '@/lib/db/schema/animals';
+import { animals, litters, puppies } from '@/lib/db/schema/animals';
 import { matings } from '@/lib/db/schema/matings';
 import { auth } from '@/lib/auth/config';
 import {
@@ -46,7 +46,7 @@ const generateReportSchema = z.object({
 
 const exportReportSchema = z.object({
   reportId: z.string().min(1, 'Report ID is required'),
-  format: z.enum(['csv', 'pdf'], { required_error: 'Export format is required' }),
+  format: z.enum(['csv', 'pdf']),
 });
 
 // ============================================================================
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         const feedingTasks = await db.query.tasks.findMany({
           where: and(
             ...dateConditions,
-            eq(tasks.taskType, 'feeding'),
+            eq(tasks.type, 'feeding'),
             filters?.animalId ? eq(tasks.animalId, filters.animalId) : undefined
           ),
           with: {
@@ -104,11 +104,11 @@ export async function POST(request: NextRequest) {
               with: { breed: true },
             },
           },
-          orderBy: [desc(tasks.dueDate)],
+          orderBy: desc(tasks.dueDate),
         });
 
-        const completed = feedingTasks.filter((t) => t.isCompleted).length;
-        const pending = feedingTasks.filter((t) => !t.isCompleted).length;
+        const completed = feedingTasks.filter((t) => t.status === 'completed').length;
+        const pending = feedingTasks.filter((t) => t.status === 'pending').length;
 
         reportData = {
           tasks: feedingTasks,
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         const exerciseTasks = await db.query.tasks.findMany({
           where: and(
             ...dateConditions,
-            eq(tasks.taskType, 'exercise'),
+            eq(tasks.type, 'exercise'),
             filters?.animalId ? eq(tasks.animalId, filters.animalId) : undefined
           ),
           with: {
@@ -134,10 +134,10 @@ export async function POST(request: NextRequest) {
               with: { breed: true },
             },
           },
-          orderBy: [desc(tasks.dueDate)],
+          orderBy: desc(tasks.dueDate),
         });
 
-        const completed = exerciseTasks.filter((t) => t.isCompleted).length;
+        const completed = exerciseTasks.filter((t) => t.status === 'completed').length;
         const totalMinutes = exerciseTasks.reduce((sum, t) => {
           const duration = (t.taskData as any)?.duration || 0;
           return sum + duration;
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
         const groomingTasks = await db.query.tasks.findMany({
           where: and(
             ...dateConditions,
-            eq(tasks.taskType, 'grooming'),
+            eq(tasks.type, 'grooming'),
             filters?.animalId ? eq(tasks.animalId, filters.animalId) : undefined
           ),
           with: {
@@ -167,11 +167,11 @@ export async function POST(request: NextRequest) {
               with: { breed: true },
             },
           },
-          orderBy: [desc(tasks.dueDate)],
+          orderBy: desc(tasks.dueDate),
         });
 
-        const completed = groomingTasks.filter((t) => t.isCompleted).length;
-        const pending = groomingTasks.filter((t) => !t.isCompleted).length;
+        const completed = groomingTasks.filter((t) => t.status === 'completed').length;
+        const pending = groomingTasks.filter((t) => t.status === 'pending').length;
 
         reportData = {
           tasks: groomingTasks,
@@ -189,13 +189,13 @@ export async function POST(request: NextRequest) {
         const cleaningTasks = await db.query.tasks.findMany({
           where: and(
             ...dateConditions,
-            eq(tasks.taskType, 'cleaning')
+            eq(tasks.type, 'cleaning')
           ),
-          orderBy: [desc(tasks.dueDate)],
+          orderBy: desc(tasks.dueDate),
         });
 
-        const completed = cleaningTasks.filter((t) => t.isCompleted).length;
-        const pending = cleaningTasks.filter((t) => !t.isCompleted).length;
+        const completed = cleaningTasks.filter((t) => t.status === 'completed').length;
+        const pending = cleaningTasks.filter((t) => t.status === 'pending').length;
 
         reportData = {
           tasks: cleaningTasks,
@@ -210,12 +210,17 @@ export async function POST(request: NextRequest) {
       }
 
       case 'puppies': {
+        // First get user's animals to filter litters
+        const userAnimals = await db.query.animals.findMany({
+          where: eq(animals.userId, session.user.id),
+        });
+        const animalIds = userAnimals.map(a => a.id);
+
         const litterRecords = await db.query.litters.findMany({
           where: and(
-            eq(litters.userId, session.user.id),
-            gte(litters.whelpingDate, dateRange.from),
-            lte(litters.whelpingDate, dateRange.to)
-          ),
+            gte(litters.actualWhelpingDate, dateRange.from),
+            lte(litters.actualWhelpingDate, dateRange.to)
+          ) as any,
           with: {
             bitch: {
               with: { breed: true },
@@ -223,19 +228,23 @@ export async function POST(request: NextRequest) {
             sire: {
               with: { breed: true },
             },
+            puppies: true, // ✅ Use the relation to fetch puppies
           },
-          orderBy: [desc(litters.whelpingDate)],
-        });
+          orderBy: desc(litters.actualWhelpingDate),
+        }).then(litters => 
+          // Filter to only include litters where bitch belongs to user
+          litters.filter(l => animalIds.includes(l.bitchId))
+        );
 
         const totalPuppies = litterRecords.reduce((sum, l) => sum + (l.puppyCount || 0), 0);
-        const retainedPuppies = litterRecords.reduce((sum, l) => {
-          const puppies = (l.puppies as any[]) || [];
-          return sum + puppies.filter((p) => p.status === 'retained').length;
-        }, 0);
-        const soldPuppies = litterRecords.reduce((sum, l) => {
-          const puppies = (l.puppies as any[]) || [];
-          return sum + puppies.filter((p) => p.status === 'sold').length;
-        }, 0);
+        
+        // Count puppies by status using the relation
+        const retainedPuppies = litterRecords.reduce((sum, l) => 
+          sum + (l.puppies?.filter(p => p.status === 'retained').length || 0), 0
+        );
+        const soldPuppies = litterRecords.reduce((sum, l) => 
+          sum + (l.puppies?.filter(p => p.status === 'sold').length || 0), 0
+        );
 
         reportData = {
           litters: litterRecords,
@@ -254,18 +263,15 @@ export async function POST(request: NextRequest) {
         const eventTasks = await db.query.tasks.findMany({
           where: and(
             ...dateConditions,
-            eq(tasks.taskType, 'event'),
-            filters?.animalId ? eq(tasks.animalId, filters.animalId) : undefined,
-            filters?.eventType
-              ? eq((tasks.taskData as any).eventType, filters.eventType)
-              : undefined
+            eq(tasks.type, 'event'),
+            filters?.animalId ? eq(tasks.animalId, filters.animalId) : undefined
           ),
           with: {
             animal: {
               with: { breed: true },
             },
           },
-          orderBy: [desc(tasks.dueDate)],
+          orderBy: desc(tasks.dueDate),
         });
 
         reportData = {
@@ -296,7 +302,7 @@ export async function POST(request: NextRequest) {
             },
             frozenSemen: true,
           },
-          orderBy: [desc(matings.matingDate)],
+          orderBy: desc(matings.matingDate),
         });
 
         reportData = {
@@ -329,10 +335,9 @@ export async function POST(request: NextRequest) {
       .values({
         userId: session.user.id,
         reportType,
-        dateRange: {
-          from: dateRange.from,
-          to: dateRange.to,
-        },
+        reportName: `${reportType.replace('_', ' ')} Report - ${dateRange.from} to ${dateRange.to}`,
+        startDate: dateRange.from,
+        endDate: dateRange.to,
         filters: filters || {},
         reportData,
         recordCount,
@@ -372,7 +377,7 @@ export async function GET(request: NextRequest) {
 
     const reports = await db.query.reportGenerations.findMany({
       where: whereClause,
-      orderBy: [desc(reportGenerations.createdAt)],
+      orderBy: desc(reportGenerations.generatedAt),
     });
 
     return successResponse(reports, undefined, {
