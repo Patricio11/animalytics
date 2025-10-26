@@ -46,6 +46,12 @@ export interface WizardData extends Record<string, unknown> {
   lastLitterDate?: string | number;
   complications?: boolean;
   complicationDetails?: string;
+  // New Step 3 fields
+  previousPregnancies?: 'yes' | 'no' | 'dont_know' | '';
+  numberOfSiblings?: '0' | '1-3' | '4-5' | '6+' | '';
+  numberOfBreedings?: number;
+  hadMatingThatDidNotProduce?: 'yes' | 'no' | 'dont_know' | '';
+  timesDidNotProduce?: '1' | '2' | '3+' | '';
 
   // Step 4: Litter History
   litters?: Array<{

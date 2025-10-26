@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WizardData } from "@/lib/types/wizard";
 
@@ -24,6 +25,13 @@ export function BitchHistoryStep({ data, onUpdate, onNext, onPrevious }: BitchHi
   const [monthsSinceLastLitter, setMonthsSinceLastLitter] = useState(data?.lastLitterDate || '');
   const [hasComplications, setHasComplications] = useState(data?.complications ? 'yes' : 'no');
   const [complications, setComplications] = useState(data?.complicationDetails || '');
+  
+  // New Step 3 fields
+  const [previousPregnancies, setPreviousPregnancies] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.previousPregnancies || '');
+  const [numberOfSiblings, setNumberOfSiblings] = useState<'0' | '1-3' | '4-5' | '6+' | ''>(data?.numberOfSiblings || '');
+  const [numberOfBreedings, setNumberOfBreedings] = useState(data?.numberOfBreedings || 0);
+  const [hadMatingThatDidNotProduce, setHadMatingThatDidNotProduce] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.hadMatingThatDidNotProduce || '');
+  const [timesDidNotProduce, setTimesDidNotProduce] = useState<'1' | '2' | '3+' | ''>(data?.timesDidNotProduce || '');
 
   const handleContinue = () => {
     onUpdate({
@@ -31,7 +39,13 @@ export function BitchHistoryStep({ data, onUpdate, onNext, onPrevious }: BitchHi
       previousLitters: hasBeenBred === 'yes' ? previousLitters : 0,
       lastLitterDate: hasBeenBred === 'yes' ? monthsSinceLastLitter : '',
       complications: hasBeenBred === 'yes' && hasComplications === 'yes',
-      complicationDetails: hasBeenBred === 'yes' && hasComplications === 'yes' ? complications : ''
+      complicationDetails: hasBeenBred === 'yes' && hasComplications === 'yes' ? complications : '',
+      // New fields
+      previousPregnancies,
+      numberOfSiblings,
+      numberOfBreedings,
+      hadMatingThatDidNotProduce,
+      timesDidNotProduce,
     });
     onNext();
   };
@@ -172,6 +186,98 @@ export function BitchHistoryStep({ data, onUpdate, onNext, onPrevious }: BitchHi
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Additional History Information */}
+      <Card className="shadow-card border-primary/10">
+        <CardHeader>
+          <CardTitle className="text-base">Additional History</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="previous-pregnancies">Previous Pregnancies?</Label>
+              <Select value={previousPregnancies} onValueChange={(val) => setPreviousPregnancies(val as 'yes' | 'no' | 'dont_know')}>
+                <SelectTrigger id="previous-pregnancies" className="bg-background border-primary/20">
+                  <SelectValue placeholder="Had any previous pregnancies?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                  <SelectItem value="dont_know">Don't know</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="number-of-siblings">Number of Siblings</Label>
+              <Select value={numberOfSiblings} onValueChange={(val) => setNumberOfSiblings(val as '0' | '1-3' | '4-5' | '6+')}>
+                <SelectTrigger id="number-of-siblings" className="bg-background border-primary/20">
+                  <SelectValue placeholder="Siblings" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0</SelectItem>
+                  <SelectItem value="1-3">1-3</SelectItem>
+                  <SelectItem value="4-5">4-5</SelectItem>
+                  <SelectItem value="6+">6+</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="number-of-breedings">Number of Breedings</Label>
+            <Input
+              id="number-of-breedings"
+              type="number"
+              min="0"
+              max="50"
+              value={numberOfBreedings}
+              onChange={(e) => setNumberOfBreedings(parseInt(e.target.value) || 0)}
+              placeholder="Total number of breedings"
+              className="bg-background border-primary/20"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="mating-not-produce">Any mating that did not produce?</Label>
+              <Select value={hadMatingThatDidNotProduce} onValueChange={(val) => setHadMatingThatDidNotProduce(val as 'yes' | 'no' | 'dont_know')}>
+                <SelectTrigger id="mating-not-produce" className="bg-background border-primary/20">
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                  <SelectItem value="dont_know">Don't know</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {hadMatingThatDidNotProduce === 'yes' && (
+              <div className="space-y-2">
+                <Label htmlFor="times-not-produced">How many times did it not produce?</Label>
+                <Select value={timesDidNotProduce} onValueChange={(val) => setTimesDidNotProduce(val as '1' | '2' | '3+')}>
+                  <SelectTrigger id="times-not-produced" className="bg-background border-primary/20">
+                    <SelectValue placeholder="Times not produced" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1</SelectItem>
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="3+">3+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <Alert className="border-primary/20 bg-primary/5">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="ml-2 text-xs">
+              This information helps assess genetic factors and breeding success patterns.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
 
       {/* Navigation */}
       <div className="flex justify-between">

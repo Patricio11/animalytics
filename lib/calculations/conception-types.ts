@@ -18,11 +18,18 @@ export interface BitchInformationInputs {
 }
 
 export interface BitchHistoryInputs {
+  // Original fields
   hasBeenBred?: 'yes' | 'no';
   previousLitters?: number;
   monthsSinceLastLitter?: number;
   hasComplications?: 'yes' | 'no';
   complications?: string;
+  // New fields from Step 3
+  previousPregnancies?: 'yes' | 'no' | 'dont_know';
+  numberOfSiblings?: '0' | '1-3' | '4-5' | '6+';
+  numberOfBreedings?: number;
+  hadMatingThatDidNotProduce?: 'yes' | 'no' | 'dont_know';
+  timesDidNotProduce?: '1' | '2' | '3+';
 }
 
 export interface LitterHistoryInputs {

@@ -85,6 +85,12 @@ export function ConceptionRatingWizard({
         previousLitters: wizardData.previousLitters,
         monthsSinceLastLitter: toNumber(wizardData.lastLitterDate),
         hasComplications: wizardData.complications ? 'yes' : 'no',
+        // New Step 3 fields
+        previousPregnancies: wizardData.previousPregnancies as 'yes' | 'no' | 'dont_know' | undefined,
+        numberOfSiblings: wizardData.numberOfSiblings as '0' | '1-3' | '4-5' | '6+' | undefined,
+        numberOfBreedings: wizardData.numberOfBreedings,
+        hadMatingThatDidNotProduce: wizardData.hadMatingThatDidNotProduce as 'yes' | 'no' | 'dont_know' | undefined,
+        timesDidNotProduce: wizardData.timesDidNotProduce as '1' | '2' | '3+' | undefined,
       },
       litterHistory: {
         totalLitters,
