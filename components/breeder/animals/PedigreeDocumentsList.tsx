@@ -220,11 +220,11 @@ export function PedigreeDocumentsList({ animalId }: PedigreeDocumentsListProps) 
             <AlertDescription>Failed to load documents</AlertDescription>
           </Alert>
         ) : data?.documents && data.documents.length > 0 ? (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.documents.map((doc: any) => (
               <div
                 key={doc.id}
-                className="flex items-start gap-3 p-3 border border-primary/10 rounded-lg hover:bg-primary/5 transition-colors"
+                className="flex flex-col gap-3 p-4 border border-primary/10 rounded-lg hover:bg-primary/5 transition-colors hover:shadow-md"
               >
                 {/* File Icon */}
                 <div className="flex-shrink-0">
@@ -257,21 +257,22 @@ export function PedigreeDocumentsList({ animalId }: PedigreeDocumentsListProps) 
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2 mt-auto pt-2 border-t border-primary/10">
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => window.open(doc.fileUrl, "_blank")}
-                    className="hover:bg-primary/10"
+                    className="flex-1 hover:bg-primary/10"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-4 h-4 mr-2" />
+                    View
                   </Button>
 
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => handleDelete(doc.id)}
-                    className="hover:bg-destructive/10 hover:text-destructive"
+                    className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PedigreeTree } from "@/components/breeder/animals/PedigreeTree";
 import { PedigreeTreeHorizontal } from "@/components/breeder/animals/PedigreeTreeHorizontal";
 import { EditParentsDialog } from "@/components/breeder/animals/EditParentsDialog";
@@ -38,6 +39,7 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [generations, setGenerations] = useState(4);
   const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('horizontal');
+  const [activeSubTab, setActiveSubTab] = useState('certificate');
 
   // Fetch pedigree data
   const { data, isLoading, error } = useQuery({
@@ -278,10 +280,23 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
         </Card>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pedigree Tree */}
-        <div className="lg:col-span-2">
+      {/* Sub-Tabs for Certificate and Documents */}
+      <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="certificate">
+            <FileText className="w-4 h-4 mr-2" />
+            Pedigree Certificate
+          </TabsTrigger>
+          <TabsTrigger value="documents">
+            <Camera className="w-4 h-4 mr-2" />
+            Documents
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Certificate Tab */}
+        <TabsContent value="certificate" className="space-y-6">
+          {/* Pedigree Tree - Full Width */}
+          <div>
           <Card className="shadow-elevated bg-surface border-0">
             <CardHeader>
               <CardTitle className="text-base">
@@ -353,12 +368,13 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
             </CardContent>
           </Card>
         </div>
+        </TabsContent>
 
-        {/* Documents Sidebar */}
-        <div className="space-y-6">
+        {/* Documents Tab */}
+        <TabsContent value="documents" className="space-y-6">
           <PedigreeDocumentsList animalId={animalId} />
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Parents Dialog */}
       <EditParentsDialog
