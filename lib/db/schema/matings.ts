@@ -116,11 +116,18 @@ export const matings = pgTable('matings', {
 
     // Step 7: Semen Information
     semenInformation?: {
+      // Original fields
       type?: 'fresh' | 'chilled' | 'frozen';
       collectionDate?: string;
       daysSinceCollection?: number;
       storageTime?: number; // Months (for frozen)
       shippingDuration?: number; // Hours (for chilled)
+      // New fields from Step 7
+      timeBetweenCollectionAndInsemination?: 'less_than_24hrs' | '24-48hrs' | 'more_than_48hrs'; // Chilled only
+      ageOfDogAtCollection?: number; // Years
+      batchUsedPreviously?: 'yes' | 'no' | 'dont_know';
+      didProducePups?: 'yes' | 'no' | 'dont_know';
+      pupsProduced?: '1-3' | '4-6' | '7+';
     };
 
     // Step 8: Semen Assessment
@@ -332,11 +339,18 @@ export interface BreederHistoryData {
 }
 
 export interface SemenInformationData {
+  // Original fields
   type?: 'fresh' | 'chilled' | 'frozen';
   collectionDate?: string;
   daysSinceCollection?: number;
   storageTime?: number;
   shippingDuration?: number;
+  // New fields from Step 7
+  timeBetweenCollectionAndInsemination?: 'less_than_24hrs' | '24-48hrs' | 'more_than_48hrs'; // Chilled only
+  ageOfDogAtCollection?: number; // Years
+  batchUsedPreviously?: 'yes' | 'no' | 'dont_know';
+  didProducePups?: 'yes' | 'no' | 'dont_know';
+  pupsProduced?: '1-3' | '4-6' | '7+';
 }
 
 export interface SemenAssessmentData {

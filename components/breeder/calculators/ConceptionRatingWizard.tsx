@@ -117,6 +117,12 @@ export function ConceptionRatingWizard({
         type: wizardData.type as 'fresh' | 'chilled' | 'frozen' | undefined,
         shippingDuration: toNumber(wizardData.shippingDuration),
         storageTime: toNumber(wizardData.storageTime),
+        // New Step 7 fields
+        timeBetweenCollectionAndInsemination: wizardData.timeBetweenCollectionAndInsemination as 'less_than_24hrs' | '24-48hrs' | 'more_than_48hrs' | undefined,
+        ageOfDogAtCollection: wizardData.ageOfDogAtCollection,
+        batchUsedPreviously: wizardData.batchUsedPreviously as 'yes' | 'no' | 'dont_know' | undefined,
+        didProducePups: wizardData.didProducePups as 'yes' | 'no' | 'dont_know' | undefined,
+        pupsProduced: wizardData.pupsProduced as '1-3' | '4-6' | '7+' | undefined,
       },
       semenQuality: {
         quality: wizardData.quality as 'excellent' | 'good' | 'fair' | 'poor' | undefined,

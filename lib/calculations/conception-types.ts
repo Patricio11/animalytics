@@ -59,10 +59,17 @@ export interface BreederHistoryInputs {
 }
 
 export interface SemenInformationInputs {
+  // Original fields
   type?: 'fresh' | 'chilled' | 'frozen';
   collectionDate?: string;
   storageTime?: number; // For frozen
   shippingDuration?: number; // For chilled
+  // New fields from Step 7
+  timeBetweenCollectionAndInsemination?: 'less_than_24hrs' | '24-48hrs' | 'more_than_48hrs'; // Chilled only
+  ageOfDogAtCollection?: number; // Years
+  batchUsedPreviously?: 'yes' | 'no' | 'dont_know';
+  didProducePups?: 'yes' | 'no' | 'dont_know';
+  pupsProduced?: '1-3' | '4-6' | '7+';
 }
 
 export interface SemenQualityInputs {

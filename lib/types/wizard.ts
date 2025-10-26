@@ -84,6 +84,12 @@ export interface WizardData extends Record<string, unknown> {
   collectionDate?: string;
   storageTime?: string | number;
   shippingDuration?: string | number;
+  // New Step 7 fields
+  timeBetweenCollectionAndInsemination?: 'less_than_24hrs' | '24-48hrs' | 'more_than_48hrs' | '';
+  ageOfDogAtCollection?: number;
+  batchUsedPreviously?: 'yes' | 'no' | 'dont_know' | '';
+  didProducePups?: 'yes' | 'no' | 'dont_know' | '';
+  pupsProduced?: '1-3' | '4-6' | '7+' | '';
 
   // Step 8: Semen Assessment
   quality?: 'excellent' | 'good' | 'fair' | 'poor';
