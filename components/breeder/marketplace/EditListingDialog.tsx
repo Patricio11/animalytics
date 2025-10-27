@@ -20,6 +20,8 @@ import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { CheckCircle, AlertCircle, Edit, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MultipleImageUpload } from "@/components/upload";
+import { STORAGE_PATHS } from "@/lib/supabase";
 
 interface EditListingDialogProps {
   open: boolean;
@@ -32,6 +34,7 @@ export function EditListingDialog({ open, onOpenChange, listingId, onSuccess }: 
   const { settings } = useRegionalSettings();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -103,6 +106,37 @@ export function EditListingDialog({ open, onOpenChange, listingId, onSuccess }: 
     setIsSubmitting(true);
 
     try {
+      // Upload pending images first if any
+      let uploadedImageUrls = [...(formData.additionalImages || [])];
+      if (pendingImageFiles.length > 0) {
+        try {
+          const { uploadMultipleFiles, FILE_VALIDATION } = await import('@/lib/supabase/upload');
+          const results = await uploadMultipleFiles(
+            pendingImageFiles,
+            STORAGE_PATHS.MARKETPLACE_IMAGES,
+            { ...FILE_VALIDATION.IMAGE, maxSizeInMB: 5 }
+          );
+          
+          const successfulUploads = results.filter(r => r.success && r.url).map(r => r.url!);
+          uploadedImageUrls = [...uploadedImageUrls, ...successfulUploads];
+          
+          if (results.some(r => !r.success)) {
+            toast({
+              title: "Image Upload Warning",
+              description: `${results.filter(r => !r.success).length} image(s) failed to upload, but will continue updating listing.`,
+              variant: "destructive",
+            });
+          }
+        } catch (uploadError) {
+          console.error('Failed to upload images:', uploadError);
+          toast({
+            title: "Image Upload Warning",
+            description: "Some images could not be uploaded, but will continue updating listing.",
+            variant: "destructive",
+          });
+        }
+      }
+
       const response = await fetch(`/api/marketplace/listings/${listingId}`, {
         method: 'PATCH',
         headers: {
@@ -112,6 +146,7 @@ export function EditListingDialog({ open, onOpenChange, listingId, onSuccess }: 
           ...formData,
           price: formData.price ? formData.price : null, // API will convert to cents
           contactLocation: formData.contactLocation,
+          additionalImages: uploadedImageUrls, // Include all uploaded images
         }),
       });
 
@@ -296,24 +331,24 @@ export function EditListingDialog({ open, onOpenChange, listingId, onSuccess }: 
               {/* Additional Images */}
               <div className="space-y-3">
                 <Label>Additional Images (Optional)</Label>
-                <p className="text-xs text-muted-foreground">
-                  Add image URLs one per line. The animal's profile image will remain as the main image.
+                <p className="text-xs text-muted-foreground mb-3">
+                  The animal's profile image will be used as the main listing image. Add additional images to showcase your facility, certificates, or other relevant photos.
                 </p>
-                <Textarea
-                  placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                  rows={4}
-                  value={formData.additionalImages.join('\n')}
-                  onChange={(e) => {
-                    const urls = e.target.value.split('\n').filter(url => url.trim());
-                    updateFormData('additionalImages', urls);
+                <MultipleImageUpload
+                  storagePath={STORAGE_PATHS.MARKETPLACE_IMAGES}
+                  onUploadSuccess={(results) => {
+                    const urls = results.map(r => r.url!);
+                    updateFormData('additionalImages', [...(formData.additionalImages || []), ...urls]);
                   }}
-                  className="bg-background border-primary/20 focus:border-primary font-mono text-sm"
+                  onPendingFilesChange={(files) => {
+                    setPendingImageFiles(files);
+                  }}
+                  currentImages={formData.additionalImages || []}
+                  maxFiles={10}
+                  maxSizeInMB={5}
+                  label=""
+                  helperText="Upload images to showcase your listing"
                 />
-                {formData.additionalImages.length > 0 && (
-                  <div className="text-sm text-muted-foreground">
-                    {formData.additionalImages.length} image(s)
-                  </div>
-                )}
               </div>
 
               {!validateForm() && (
