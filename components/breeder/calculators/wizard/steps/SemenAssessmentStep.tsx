@@ -18,9 +18,11 @@ interface SemenAssessmentStepProps {
   onUpdate: (data: Partial<WizardData>) => void;
   onNext: () => void;
   onPrevious: () => void;
+  onComplete?: () => void;
+  isLastStep?: boolean;
 }
 
-export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: SemenAssessmentStepProps) {
+export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious, onComplete, isLastStep = false }: SemenAssessmentStepProps) {
   // New Step 8 fields
   const [inseminatorName, setInseminatorName] = useState(data?.inseminatorName || '');
   const [semenAssessed, setSemenAssessed] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.semenAssessed || '');
@@ -46,7 +48,12 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
       morphology: assessmentType === 'full' ? morphology : '',
       visualNotes: assessmentType === 'general' ? visualNotes : ''
     });
-    onNext();
+    
+    if (isLastStep && onComplete) {
+      onComplete();
+    } else {
+      onNext();
+    }
   };
 
   const getQualityColor = (qual: string) => {
@@ -256,7 +263,7 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious }: Seme
           Previous
         </Button>
         <Button onClick={handleContinue} className="bg-gradient-brand hover:opacity-90 shadow-card">
-          Continue
+          {isLastStep ? 'Calculate Rating' : 'Continue'}
         </Button>
       </div>
     </div>

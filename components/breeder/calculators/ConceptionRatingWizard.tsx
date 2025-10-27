@@ -148,8 +148,8 @@ export function ConceptionRatingWizard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bitchId: wizardData.bitchId,
-          dogId: wizardData.dogId,
-          frozenSemenId: wizardData.frozenSemenId,
+          dogId: wizardData.useFrozenSemen ? null : wizardData.dogId,
+          frozenSemenId: wizardData.useFrozenSemen ? wizardData.frozenSemenId : null,
           matingDate: new Date().toISOString().split('T')[0],
           breedingMethod: wizardData.useFrozenSemen ? 'frozen' : 'natural_ai',
           calculationData: wizardData,
@@ -219,7 +219,7 @@ export function ConceptionRatingWizard({
             showNavigation={false}
             storageKey="conception-wizard-progress"
           >
-            {({ currentStep, data, updateData, nextStep, prevStep, setStepValid }) => (
+            {({ currentStep, data, updateData, nextStep, prevStep, setStepValid, complete }) => (
               <>
                 <WizardStep isActive={currentStep === 0}>
                   <AnimalSelectionStep
@@ -228,7 +228,7 @@ export function ConceptionRatingWizard({
                       updateData(updates);
                       // Mark step as valid when animals are selected
                       const hasAnimals = (updates.bitchId && (updates.dogId || updates.useFrozenSemen)) || 
-                                        (data.bitchId && (data.dogId || data.useFrozenSemen));
+                                        ((data as any).bitchId && ((data as any).dogId || (data as any).useFrozenSemen));
                       setStepValid(0, !!hasAnimals);
                     }}
                     onNext={nextStep}
@@ -295,6 +295,8 @@ export function ConceptionRatingWizard({
                     onUpdate={updateData}
                     onNext={nextStep}
                     onPrevious={prevStep}
+                    onComplete={complete}
+                    isLastStep={true}
                   />
                 </WizardStep>
               </>
