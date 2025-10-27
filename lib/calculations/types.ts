@@ -1,7 +1,7 @@
 export type Laboratory = 'VIDAS' | 'IDEXX';
 export type Unit = 'nanograms' | 'nanomoles';
 export type BreedingMethod = 'natural_ai' | 'tci' | 'surgical_ai' | 'frozen';
-export type DayNumber = 0 | 1 | 2 | 3 | 4 | 5;
+export type DayNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
 export interface ProgesteroneReading {
   day: DayNumber;

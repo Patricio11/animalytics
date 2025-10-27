@@ -57,7 +57,7 @@ export function ProgesteroneInputForm() {
       const savedDays: DailyReading[] = [];
       
       progesteroneStore.readings.forEach(reading => {
-        if (reading.day >= 0 && reading.day <= 5) {
+        if (reading.day >= 1 && reading.day <= 15) {
           savedDays.push({
             day: reading.day as DayNumber,
             value: reading.value.toString(),
@@ -69,34 +69,34 @@ export function ProgesteroneInputForm() {
       // Sort by day
       savedDays.sort((a, b) => a.day - b.day);
       
-      // If no Day 0, add it
-      if (savedDays.length === 0 || savedDays[0].day !== 0) {
-        savedDays.unshift({ day: 0, value: '', date: undefined });
+      // If no Day 1, add it
+      if (savedDays.length === 0 || savedDays[0].day !== 1) {
+        savedDays.unshift({ day: 1, value: '', date: undefined });
       }
 
       return savedDays;
     }
 
-    // Start with just Day 0
+    // Start with just Day 1 (start of heat cycle)
     return [
-      { day: 0, value: '', date: undefined },
+      { day: 1, value: '', date: undefined },
     ];
   };
 
-  // Daily readings state (dynamic: start with Day 0, add as needed)
+  // Daily readings state (dynamic: start with Day 1, add as needed)
   const [readings, setReadings] = useState<DailyReading[]>(initializeReadings);
   
   // Add a new day
   const addDay = () => {
-    const nextDay = readings.length as DayNumber;
-    if (nextDay <= 5) {
-      setReadings([...readings, { day: nextDay, value: '', date: undefined }]);
+    const nextDay = (readings[readings.length - 1]?.day || 0) + 1;
+    if (nextDay <= 15) {
+      setReadings([...readings, { day: nextDay as DayNumber, value: '', date: undefined }]);
     }
   };
   
   // Remove a day (only if it's the last day and empty)
   const removeDay = (day: DayNumber) => {
-    if (day === readings.length - 1 && day > 0) {
+    if (day === readings[readings.length - 1]?.day && day > 1) {
       const reading = readings.find(r => r.day === day);
       if (!reading?.value || reading.value.trim() === '') {
         setReadings(readings.filter(r => r.day !== day));
@@ -104,7 +104,7 @@ export function ProgesteroneInputForm() {
     }
   };
   
-  const canAddDay = readings.length < 6;
+  const canAddDay = readings.length < 15 && (readings[readings.length - 1]?.day || 0) < 15;
   const canRemoveLastDay = readings.length > 1 && (!readings[readings.length - 1].value || readings[readings.length - 1].value.trim() === '');
 
   // Calculation results state
@@ -309,7 +309,7 @@ export function ProgesteroneInputForm() {
 
   const handleReset = () => {
     setReadings([
-      { day: 0, value: '', date: undefined },
+      { day: 1, value: '', date: undefined },
     ]);
     setValidationErrors({});
     setCalculationResult(null);
@@ -395,7 +395,7 @@ export function ProgesteroneInputForm() {
                     Daily Progesterone Readings
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Start with Day 0 and add more days as needed. At least 2 readings are recommended.
+                    Start with Day 1 (first day of heat) and add Day 5 reading. System will remind you based on results.
                   </p>
                 </div>
                 {canAddDay && (

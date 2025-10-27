@@ -82,7 +82,7 @@ export function DailyReadingInput({
             hasValue && isValid && "bg-gradient-brand text-white shadow-sm"
           )}
         >
-          Day {day}
+          Day {day}{day === 1 && " (Start of Heat)"}
         </Badge>
 
         {/* Status Indicator */}
