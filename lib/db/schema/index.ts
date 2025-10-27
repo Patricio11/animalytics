@@ -7,6 +7,7 @@ export * from './animals';
 export * from './pedigree';
 export * from './matings';
 export * from './progesterone-tests';
+export * from './heat-cycles';
 export * from './tasks';
 export * from './reports';
 export * from './marketplace';
