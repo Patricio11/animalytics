@@ -61,13 +61,13 @@ export default function Dashboard() {
     }
   ] : [];
 
-  // Transform recent animals
-  const recentAnimals = stats?.recentAnimals.map((animal: APIAnimal) => {
+  // Transform recent animals - limit to 6
+  const recentAnimals = stats?.recentAnimals.slice(0, 6).map((animal: APIAnimal) => {
     // Get profile photo from animal_photos table (category='profile') or fallback
     const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
     const imageUrl = profilePhoto?.fileUrl || 
                      animal.photos?.[0]?.fileUrl || 
-                     "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face";
+                     undefined; // No placeholder image
     
     return {
       id: animal.id,
