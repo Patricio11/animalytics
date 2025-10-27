@@ -549,34 +549,6 @@ export default function Settings() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="language">Language</Label>
-                  <Select defaultValue="en">
-                    <SelectTrigger className="bg-background border-primary/20 focus:border-primary" data-testid="select-language">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Spanish</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                      <SelectItem value="de">German</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Select defaultValue="australia/melbourne">
-                    <SelectTrigger className="bg-background border-primary/20 focus:border-primary" data-testid="select-timezone">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="australia/melbourne">Australia/Melbourne</SelectItem>
-                      <SelectItem value="australia/sydney">Australia/Sydney</SelectItem>
-                      <SelectItem value="australia/brisbane">Australia/Brisbane</SelectItem>
-                      <SelectItem value="australia/perth">Australia/Perth</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               <div className="flex gap-2 pt-4 border-t border-primary/10">
