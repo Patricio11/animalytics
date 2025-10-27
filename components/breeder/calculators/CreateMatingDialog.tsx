@@ -457,32 +457,23 @@ export function CreateMatingDialog({
 
           {/* Mating Date */}
           <div className="space-y-2">
-            <Label className="text-base font-semibold flex items-center gap-2">
+            <Label htmlFor="mating-date" className="text-base font-semibold flex items-center gap-2">
               <CalendarIcon className="w-4 h-4" />
               Mating Date <span className="text-destructive">*</span>
             </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !matingDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {matingDate ? format(matingDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={matingDate}
-                  onSelect={(date) => date && setMatingDate(date)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <Input
+              id="mating-date"
+              type="date"
+              value={format(matingDate, 'yyyy-MM-dd')}
+              onChange={(e) => {
+                const date = new Date(e.target.value);
+                if (!isNaN(date.getTime())) {
+                  setMatingDate(date);
+                }
+              }}
+              className="h-11"
+              max={format(new Date(), 'yyyy-MM-dd')}
+            />
             {errors.matingDate && (
               <p className="text-sm text-destructive">{errors.matingDate}</p>
             )}
