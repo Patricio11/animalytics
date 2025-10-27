@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ClinicSelector } from "./ClinicSelector";
 import { categoryRequiresClinic, getCategoryLabel } from "@/lib/utils/marketplace";
+import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { CheckCircle, AlertCircle, Edit, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +29,7 @@ interface EditListingDialogProps {
 }
 
 export function EditListingDialog({ open, onOpenChange, listingId, onSuccess }: EditListingDialogProps) {
+  const { settings } = useRegionalSettings();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -202,7 +204,7 @@ export function EditListingDialog({ open, onOpenChange, listingId, onSuccess }: 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price (AUD)</Label>
+                  <Label htmlFor="price">Price ({settings.currency})</Label>
                   <Input
                     id="price"
                     type="number"

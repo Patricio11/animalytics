@@ -17,6 +17,7 @@ import {
   Star, Award, Shield, Building2, Edit, Trash2, LogIn
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CURRENCIES } from "@/lib/utils/currency";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -322,7 +323,8 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
 
                   {listing.price && (
                     <div className="text-4xl font-bold text-primary">
-                      ${(listing.price / 100).toLocaleString()} {listing.currency}
+                      {CURRENCIES[listing.currency as keyof typeof CURRENCIES]?.symbol || listing.currency}
+                      {(listing.price / 100).toLocaleString()} {listing.currency}
                     </div>
                   )}
                 </div>

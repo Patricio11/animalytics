@@ -13,6 +13,7 @@ import { ListingCategorySelector } from "./ListingCategorySelector";
 import { ClinicSelector } from "./ClinicSelector";
 import type { ListingCategory } from "@/lib/types/marketplace";
 import { categoryRequiresClinic, getCategoryLabel } from "@/lib/utils/marketplace";
+import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { mockAnimals } from "@/data/mockData";
 import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ interface ListingFormData {
   title: string;
   description: string;
   price?: number;
+  currency?: string; // Owner's currency
   clinicId?: string;
 }
 
@@ -46,6 +48,7 @@ const steps = [
 
 export function CreateListingWizard() {
   const router = useRouter();
+  const { settings, isLoading } = useRegionalSettings();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<ListingFormData>({
     category: 'stud-dog',
@@ -98,8 +101,14 @@ export function CreateListingWizard() {
 
   const handleSubmit = () => {
     if (validateStep(3)) {
+      // Add user's currency to the listing
+      const listingData = {
+        ...formData,
+        currency: settings.currency, // Save owner's currency
+      };
+      
       // Here you would normally save the listing
-      console.log('Listing created:', formData);
+      console.log('Listing created:', listingData);
       // Navigate back to marketplace
       router.push('/marketplace');
     }
@@ -352,7 +361,9 @@ export function CreateListingWizard() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="price">Price (AUD)</Label>
+              <Label htmlFor="price">
+                Price ({isLoading ? '...' : settings.currency})
+              </Label>
               <Input
                 id="price"
                 type="number"
@@ -394,7 +405,11 @@ export function CreateListingWizard() {
                 <div className="mt-2 space-y-1 text-sm">
                   <div>Category: <Badge variant="outline">{getCategoryLabel(formData.category)}</Badge></div>
                   <div>Title: {formData.title || 'Not set'}</div>
-                  {formData.price && <div>Price: ${formData.price.toLocaleString()} AUD</div>}
+                  {formData.price && (
+                    <div>
+                      Price: {formData.price.toLocaleString()} {settings.currency}
+                    </div>
+                  )}
                 </div>
               </AlertDescription>
             </Alert>

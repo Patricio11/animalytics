@@ -21,6 +21,7 @@ import { ListingCategorySelector } from "./ListingCategorySelector";
 import { ClinicSelector } from "./ClinicSelector";
 import type { ListingCategory } from "@/lib/types/marketplace";
 import { categoryRequiresClinic, getCategoryLabel } from "@/lib/utils/marketplace";
+import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +66,7 @@ interface CreateListingDialogProps {
 
 export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateListingDialogProps) {
   const { toast } = useToast();
+  const { settings } = useRegionalSettings();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ListingFormData>({
@@ -209,6 +211,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
       const submissionData = {
         ...formData,
         category: categoryMap[formData.category] || formData.category,
+        currency: settings.currency, // Add owner's currency
       };
 
       console.log('Converted submission data:', submissionData);
@@ -568,7 +571,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price">Price (AUD)</Label>
+                <Label htmlFor="price">Price ({settings.currency})</Label>
                 <Input
                   id="price"
                   type="number"
@@ -610,7 +613,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                   <div className="mt-2 space-y-1 text-sm">
                     <div>Category: <Badge variant="outline">{getCategoryLabel(formData.category)}</Badge></div>
                     <div>Title: {formData.title || 'Not set'}</div>
-                    {formData.price && <div>Price: ${formData.price.toLocaleString()} AUD</div>}
+                    {formData.price && <div>Price: {formData.price.toLocaleString()} {settings.currency}</div>}
                   </div>
                 </AlertDescription>
               </Alert>
@@ -655,7 +658,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                     <div>Animal: {selectedAnimal?.name || 'Selected'}</div>
                     <div>Category: <Badge variant="outline">{getCategoryLabel(formData.category)}</Badge></div>
                     <div>Title: {formData.title}</div>
-                    {formData.price && <div>Price: ${formData.price.toLocaleString()} AUD</div>}
+                    {formData.price && <div>Price: {formData.price.toLocaleString()} {settings.currency}</div>}
                     <div>Additional Images: {formData.additionalImages?.length || 0}</div>
                   </div>
                 </AlertDescription>

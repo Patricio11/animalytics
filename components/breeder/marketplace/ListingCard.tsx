@@ -9,6 +9,7 @@ import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Trash2, Share2 } from "lucide-react";
 import type { MarketplaceListing } from "@/lib/types/marketplace";
 import { getCategoryLabel } from "@/lib/utils/marketplace";
+import { CURRENCIES } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -135,7 +136,8 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onDe
             </Link>
             {listing.price && (
               <div className="text-2xl font-bold text-primary">
-                ${listing.price.toLocaleString()} {listing.currency}
+                {CURRENCIES[listing.currency as keyof typeof CURRENCIES]?.symbol || listing.currency}
+                {listing.price.toLocaleString()} {listing.currency}
               </div>
             )}
           </div>

@@ -60,8 +60,8 @@ export const mockMarketplaceListings: MarketplaceListing[] = [
     breederReputation: 4.8,
     title: 'Champion Golden Retriever Stud - Max',
     description: 'Max is a champion Golden Retriever with excellent temperament and proven track record. Multiple best in show awards. Health tested for hips, elbows, eyes, and heart. OFA Excellent rating. Available for natural or AI breeding.',
-    price: 1500,
-    currency: 'AUD',
+    price: 15000,
+    currency: 'ZAR',
     images: [
       'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=600&fit=crop',
@@ -169,8 +169,8 @@ export const mockMarketplaceListings: MarketplaceListing[] = [
     breederReputation: 4.7,
     title: 'Golden Retriever Puppies - 8 Weeks Old',
     description: 'Beautiful litter of 6 Golden Retriever puppies ready for their forever homes. Parents are health tested and have excellent temperaments. Puppies come with first vaccinations, microchip, and puppy pack.',
-    price: 2800,
-    currency: 'AUD',
+    price: 25000,
+    currency: 'ZAR',
     images: [
       'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&h=600&fit=crop',
