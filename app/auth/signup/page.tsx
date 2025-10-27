@@ -81,12 +81,39 @@ export default function SignUp() {
     }
 
     try {
-      await authClient.signUp.email({
+      const signupResult = await authClient.signUp.email({
         email: formData.email,
         password: formData.password,
         name: `${formData.firstName} ${formData.lastName}`,
         callbackURL: "/dashboard",
       });
+
+      console.log('Signup result:', signupResult);
+
+      // Wait a moment for session to be established
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Initialize regional settings based on location
+      try {
+        const regionalResponse = await fetch('/api/settings/regional/initialize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // Important: include session cookies
+        });
+
+        console.log('Regional response status:', regionalResponse.status);
+
+        if (regionalResponse.ok) {
+          const regionalData = await regionalResponse.json();
+          console.log('✅ Regional settings initialized:', regionalData);
+        } else {
+          const errorData = await regionalResponse.json();
+          console.error('Regional settings error:', errorData);
+        }
+      } catch (regionalError) {
+        console.error('Failed to initialize regional settings:', regionalError);
+        // Don't block signup if regional settings fail
+      }
 
       // Save breed preferences if user is a breeder and selected breeds
       if (formData.role === "breeder" && selectedBreedIds.length > 0) {
@@ -104,7 +131,7 @@ export default function SignUp() {
 
       toast({
         title: "Success",
-        description: "Account created successfully",
+        description: "Account created successfully. Regional settings have been configured based on your location.",
       });
 
       // Redirect to dashboard
