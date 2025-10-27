@@ -69,6 +69,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
   const { settings } = useRegionalSettings();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState<ListingFormData>({
     category: 'stud-dog',
     contactName: '',
@@ -199,6 +200,37 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
     try {
       console.log('Submitting listing with data:', formData);
 
+      // Upload pending images first if any
+      let uploadedImageUrls = [...(formData.additionalImages || [])];
+      if (pendingImageFiles.length > 0) {
+        try {
+          const { uploadMultipleFiles, FILE_VALIDATION } = await import('@/lib/supabase/upload');
+          const results = await uploadMultipleFiles(
+            pendingImageFiles,
+            STORAGE_PATHS.MARKETPLACE_IMAGES,
+            { ...FILE_VALIDATION.IMAGE, maxSizeInMB: 5 }
+          );
+          
+          const successfulUploads = results.filter(r => r.success && r.url).map(r => r.url!);
+          uploadedImageUrls = [...uploadedImageUrls, ...successfulUploads];
+          
+          if (results.some(r => !r.success)) {
+            toast({
+              title: "Image Upload Warning",
+              description: `${results.filter(r => !r.success).length} image(s) failed to upload, but will continue creating listing.`,
+              variant: "destructive",
+            });
+          }
+        } catch (uploadError) {
+          console.error('Failed to upload images:', uploadError);
+          toast({
+            title: "Image Upload Warning",
+            description: "Some images could not be uploaded, but will continue creating listing.",
+            variant: "destructive",
+          });
+        }
+      }
+
       // Convert category from hyphen format to underscore format for database
       const categoryMap: Record<string, string> = {
         'dog-for-sale': 'dog_for_sale',
@@ -212,6 +244,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
         ...formData,
         category: categoryMap[formData.category] || formData.category,
         currency: settings.currency, // Add owner's currency
+        additionalImages: uploadedImageUrls, // Include all uploaded images
       };
 
       console.log('Converted submission data:', submissionData);
@@ -262,6 +295,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
 
   const resetForm = () => {
     setCurrentStep(1);
+    setPendingImageFiles([]); // Clear pending files
     setFormData({
       category: 'stud-dog',
       contactName: '',
@@ -643,6 +677,9 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                   const urls = results.map(r => r.url!);
                   updateFormData('additionalImages', [...(formData.additionalImages || []), ...urls]);
                 }}
+                onPendingFilesChange={(files) => {
+                  setPendingImageFiles(files);
+                }}
                 currentImages={formData.additionalImages || []}
                 maxFiles={10}
                 maxSizeInMB={5}
@@ -659,7 +696,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                     <div>Category: <Badge variant="outline">{getCategoryLabel(formData.category)}</Badge></div>
                     <div>Title: {formData.title}</div>
                     {formData.price && <div>Price: {formData.price.toLocaleString()} {settings.currency}</div>}
-                    <div>Additional Images: {formData.additionalImages?.length || 0}</div>
+                    {/* <div>Additional Images: {formData.additionalImages?.length || 0}</div> */}
                   </div>
                 </AlertDescription>
               </Alert>

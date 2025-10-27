@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { uploadMultipleFiles, FILE_VALIDATION, type UploadResult } from "@/lib/supabase/upload";
+import { FILE_VALIDATION, type UploadResult } from "@/lib/supabase/upload";
 import { type StoragePath } from "@/lib/supabase/client";
-import { Upload, X, Image as ImageIcon, Loader2, AlertCircle, Plus } from "lucide-react";
+import { X, AlertCircle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -15,6 +14,7 @@ interface MultipleImageUploadProps {
   storagePath: StoragePath;
   onUploadSuccess: (results: UploadResult[]) => void;
   onUploadError?: (error: string) => void;
+  onPendingFilesChange?: (files: File[]) => void; // Expose pending files
   currentImages?: string[];
   maxFiles?: number;
   maxSizeInMB?: number;
@@ -34,6 +34,7 @@ export function MultipleImageUpload({
   storagePath,
   onUploadSuccess,
   onUploadError,
+  onPendingFilesChange,
   currentImages = [],
   maxFiles = 10,
   maxSizeInMB = 5,
@@ -41,8 +42,6 @@ export function MultipleImageUpload({
   label = "Upload Images",
   helperText = "PNG, JPG, WEBP up to 5MB each",
 }: MultipleImageUploadProps) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [previews, setPreviews] = useState<ImagePreview[]>(
     currentImages.map((url, index) => ({
       id: `existing-${index}`,
@@ -52,6 +51,13 @@ export function MultipleImageUpload({
   );
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Notify parent of pending files changes (in useEffect to avoid setState during render)
+  useEffect(() => {
+    const pendingFiles = previews.filter(p => !p.uploaded && p.file).map(p => p.file!);
+    onPendingFilesChange?.(pendingFiles);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previews]); // Only depend on previews, not the callback
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -86,65 +92,6 @@ export function MultipleImageUpload({
       reader.readAsDataURL(file);
     });
   }, [previews.length, maxFiles]);
-
-  const handleUpload = async () => {
-    const filesToUpload = previews
-      .filter(p => !p.uploaded && p.file)
-      .map(p => p.file!);
-
-    if (filesToUpload.length === 0) return;
-
-    setIsUploading(true);
-    setError(null);
-    setUploadProgress(0);
-
-    try {
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 300);
-
-      const results = await uploadMultipleFiles(
-        filesToUpload,
-        storagePath,
-        { ...FILE_VALIDATION.IMAGE, maxSizeInMB }
-      );
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      // Check for errors
-      const errors = results.filter(r => !r.success);
-      if (errors.length > 0) {
-        const errorMsg = `Failed to upload ${errors.length} image(s)`;
-        setError(errorMsg);
-        onUploadError?.(errorMsg);
-      }
-
-      // Update previews to mark as uploaded
-      const successUrls = results.filter(r => r.success).map(r => r.url!);
-      setPreviews(prev =>
-        prev.map(p => {
-          if (!p.uploaded && p.file) {
-            const resultIndex = filesToUpload.indexOf(p.file);
-            if (resultIndex !== -1 && results[resultIndex].success) {
-              return { ...p, url: results[resultIndex].url!, uploaded: true };
-            }
-          }
-          return p;
-        })
-      );
-
-      onUploadSuccess(results.filter(r => r.success));
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Upload failed';
-      setError(errorMsg);
-      onUploadError?.(errorMsg);
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  };
 
   const handleRemove = (id: string) => {
     setPreviews(prev => prev.filter(p => p.id !== id));
@@ -187,17 +134,15 @@ export function MultipleImageUpload({
                   <span className="text-white text-xs font-medium">Pending</span>
                 </div>
               )}
-              {!isUploading && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleRemove(preview.id)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => handleRemove(preview.id)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </Card>
         ))}
@@ -228,28 +173,11 @@ export function MultipleImageUpload({
         multiple
       />
 
-      {/* Upload Button */}
-      {pendingUploads > 0 && !isUploading && (
-        <Button
-          type="button"
-          onClick={handleUpload}
-          className="w-full"
-          disabled={isUploading}
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Upload {pendingUploads} Image{pendingUploads > 1 ? 's' : ''}
-        </Button>
-      )}
-
-      {/* Progress Bar */}
-      {isUploading && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Uploading {pendingUploads} image(s)...</span>
-            <span className="font-medium">{uploadProgress}%</span>
-          </div>
-          <Progress value={uploadProgress} className="h-2" />
-        </div>
+      {/* Status Message */}
+      {pendingUploads > 0 && (
+        <p className="text-sm text-muted-foreground">
+          {pendingUploads} image{pendingUploads > 1 ? 's' : ''} ready to upload when you submit
+        </p>
       )}
 
       {/* Error Alert */}
