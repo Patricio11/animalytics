@@ -28,7 +28,7 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
     const birthDate = new Date(dateOfBirth);
     const today = new Date();
     const ageInYears = (today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    return Math.round(ageInYears * 10) / 10; // Round to 1 decimal
+    return Math.round(ageInYears); // Round to whole years
   };
 
   const bitchAge = selectedBitch?.dateOfBirth ? calculateAge(selectedBitch.dateOfBirth) : 3;
@@ -81,9 +81,9 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
               type="number"
               min="0"
               max="20"
-              step="0.1"
+              step="1"
               value={age}
-              onChange={(e) => setAge(parseFloat(e.target.value))}
+              onChange={(e) => setAge(parseInt(e.target.value) || 0)}
               className="bg-background border-primary/20"
             />
           </div>
@@ -196,9 +196,9 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
               type="number"
               min="0"
               max="20"
-              step="0.1"
+              step="1"
               value={ageAtMating}
-              onChange={(e) => setAgeAtMating(parseFloat(e.target.value))}
+              onChange={(e) => setAgeAtMating(parseInt(e.target.value) || 0)}
               className="bg-background border-primary/20"
             />
           </div>

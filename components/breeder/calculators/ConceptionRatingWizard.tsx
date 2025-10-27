@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WizardContainer } from "@/components/breeder/calculators/wizard/WizardContainer";
 import { WizardStep } from "@/components/breeder/calculators/wizard/WizardStep";
@@ -188,6 +189,18 @@ export function ConceptionRatingWizard({
     onOpenChange(false);
   };
 
+  // Clear wizard progress when dialog opens to always start from step 1
+  useEffect(() => {
+    if (open) {
+      // Clear localStorage to reset wizard
+      try {
+        localStorage.removeItem('conception-wizard-progress');
+      } catch (error) {
+        console.error('Failed to clear wizard progress:', error);
+      }
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
@@ -204,13 +217,20 @@ export function ConceptionRatingWizard({
             onCancel={handleCancel}
             saveLabel="Calculate Rating"
             showNavigation={false}
+            storageKey="conception-wizard-progress"
           >
-            {({ currentStep, data, updateData, nextStep, prevStep }) => (
+            {({ currentStep, data, updateData, nextStep, prevStep, setStepValid }) => (
               <>
                 <WizardStep isActive={currentStep === 0}>
                   <AnimalSelectionStep
                     data={data}
-                    onUpdate={updateData}
+                    onUpdate={(updates) => {
+                      updateData(updates);
+                      // Mark step as valid when animals are selected
+                      const hasAnimals = (updates.bitchId && (updates.dogId || updates.useFrozenSemen)) || 
+                                        (data.bitchId && (data.dogId || data.useFrozenSemen));
+                      setStepValid(0, !!hasAnimals);
+                    }}
                     onNext={nextStep}
                   />
                 </WizardStep>
