@@ -274,7 +274,7 @@ export function ConceptionRatingCard({ rating, createdAt, bitch, dog, frozenSeme
             <p className="text-sm font-semibold text-muted-foreground">Contributing Factors</p>
             {sections.map((section) => {
               const data = rating.breakdown[section.key as keyof typeof rating.breakdown];
-              if (!data.filled) return null;
+              if (!data || !data.filled) return null;
 
               const percentage = (data.score * 100).toFixed(1);
               const contribution = data.percentage.toFixed(1);
