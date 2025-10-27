@@ -419,6 +419,66 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Animal Info Card */}
+            {listing.animal && (
+              <Card className="shadow-card bg-surface border-0 overflow-hidden hover:shadow-lg transition-shadow">
+                <Link 
+                  href={`/animals/${listing.animal.id}`}
+                  className="block group"
+                >
+                  <CardContent className="p-0">
+                    <div className="flex gap-4 p-4">
+                      {/* Animal Image */}
+                      <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                        {listing.animal.profilePhotoUrl ? (
+                          <img
+                            src={listing.animal.profilePhotoUrl}
+                            alt={listing.animal.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <Award className="w-8 h-8" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Animal Info */}
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div>
+                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                            {listing.animal.name}
+                          </h3>
+                          {listing.animal.registeredName && (
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {listing.animal.registeredName}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {listing.breed && (
+                            <Badge variant="outline" className="text-xs">
+                              {listing.breed}
+                            </Badge>
+                          )}
+                          {listing.sex && (
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {listing.sex}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-primary font-medium group-hover:underline">
+                          View Profile →
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+            )}
+
             {/* Contact Card */}
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-6 space-y-4">
