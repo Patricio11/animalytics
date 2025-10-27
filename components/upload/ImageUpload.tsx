@@ -61,6 +61,16 @@ interface ImageUploadProps {
    * Helper text
    */
   helperText?: string;
+  
+  /**
+   * Callback when a file is selected (before upload)
+   */
+  onFileSelect?: (file: File | null) => void;
+  
+  /**
+   * Hide the manual upload button (useful when auto-uploading on form submit)
+   */
+  hideUploadButton?: boolean;
 }
 
 export function ImageUpload({
@@ -74,6 +84,8 @@ export function ImageUpload({
   aspectRatio = "square",
   label = "Upload Image",
   helperText = "PNG, JPG, WEBP up to 5MB",
+  onFileSelect,
+  hideUploadButton = false,
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -94,6 +106,7 @@ export function ImageUpload({
 
     setError(null);
     setSelectedFile(file);
+    onFileSelect?.(file); // Notify parent component
 
     // Create preview
     const reader = new FileReader();
@@ -101,7 +114,7 @@ export function ImageUpload({
       setPreviewUrl(reader.result as string);
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [onFileSelect]);
 
   const handleUpload = async () => {
     if (!selectedFile) return;
@@ -148,6 +161,7 @@ export function ImageUpload({
     setPreviewUrl(null);
     setSelectedFile(null);
     setError(null);
+    onFileSelect?.(null); // Notify parent component
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -223,7 +237,7 @@ export function ImageUpload({
       />
 
       {/* Upload Button */}
-      {selectedFile && !isUploading && previewUrl && (
+      {!hideUploadButton && selectedFile && !isUploading && previewUrl && (
         <Button
           type="button"
           onClick={handleUpload}

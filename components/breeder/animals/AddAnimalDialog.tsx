@@ -73,6 +73,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const [breedSearch, setBreedSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAllBreeds, setShowAllBreeds] = useState(false);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   
   // Form data state - must be declared before useMemo hooks that depend on it
   const [formData, setFormData] = useState<AnimalFormData>({
@@ -195,6 +196,36 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     try {
       setIsSubmitting(true);
 
+      // If there's a pending image file, upload it first
+      let uploadedImageUrl = formData.profilePhotoUrl;
+      if (pendingImageFile) {
+        try {
+          const { uploadFile, FILE_VALIDATION } = await import('@/lib/supabase/upload');
+          const result = await uploadFile(
+            pendingImageFile,
+            STORAGE_PATHS.ANIMAL_PHOTOS,
+            { ...FILE_VALIDATION.IMAGE, maxSizeInMB: 5 }
+          );
+          
+          if (result.success && result.url) {
+            uploadedImageUrl = result.url;
+          } else {
+            toast({
+              title: "Image Upload Warning",
+              description: "Could not upload profile image, but will continue creating animal.",
+              variant: "destructive",
+            });
+          }
+        } catch (uploadError) {
+          console.error('Failed to upload image:', uploadError);
+          toast({
+            title: "Image Upload Warning",
+            description: "Could not upload profile image, but will continue creating animal.",
+            variant: "destructive",
+          });
+        }
+      }
+
       // Find the breed ID from the breed name
       const selectedBreed = breeds.find((b: any) => b.name === formData.breed);
       
@@ -235,14 +266,14 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       const createdAnimal = await createAnimalMutation.mutateAsync(animalData);
 
       // If profile photo was uploaded, save it to animal_photos table
-      if (formData.profilePhotoUrl && createdAnimal?.id) {
+      if (uploadedImageUrl && createdAnimal?.id) {
         try {
           const photoResponse = await fetch(`/api/animals/${createdAnimal.id}/photos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               category: 'profile',
-              fileUrl: formData.profilePhotoUrl,
+              fileUrl: uploadedImageUrl,
               fileName: 'profile-photo.jpg',
             }),
           });
@@ -255,15 +286,17 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
               description: errorData.error || "Profile photo could not be saved, but animal was created successfully.",
               variant: "destructive",
             });
-          } else {
-            // Invalidate queries to refresh animal data with new photo
-            queryClient.invalidateQueries({ queryKey: ['animals', createdAnimal.id] });
-            queryClient.invalidateQueries({ queryKey: ['animals'] });
           }
         } catch (photoError) {
           console.error('Failed to save profile photo:', photoError);
           // Don't fail the whole operation if photo save fails
         }
+      }
+
+      // Invalidate queries to refresh animal data (always do this after creation)
+      await queryClient.invalidateQueries({ queryKey: ['animals'] });
+      if (createdAnimal?.id) {
+        await queryClient.invalidateQueries({ queryKey: ['animals', createdAnimal.id] });
       }
 
       toast({
@@ -392,13 +425,18 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   storagePath={STORAGE_PATHS.ANIMAL_PHOTOS}
                   onUploadSuccess={(result) => {
                     setFormData(prev => ({ ...prev, profilePhotoUrl: result.url! }));
+                    setPendingImageFile(null); // Clear pending file after successful upload
+                  }}
+                  onFileSelect={(file) => {
+                    setPendingImageFile(file); // Track selected file
                   }}
                   currentImageUrl={formData.profilePhotoUrl || undefined}
                   label="Profile Photo (Optional)"
-                  helperText="PNG, JPG up to 5MB"
+                  helperText="PNG, JPG up to 5MB."
                   showPreview={true}
                   aspectRatio="square"
                   maxSizeInMB={5}
+                  hideUploadButton={true}
                 />
               </div>
 
