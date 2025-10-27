@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Microscope, AlertCircle, Info } from "lucide-react";
+import { Microscope, AlertCircle, Info, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { WizardData } from "@/lib/types/wizard";
@@ -20,9 +20,10 @@ interface SemenAssessmentStepProps {
   onPrevious: () => void;
   onComplete?: () => void;
   isLastStep?: boolean;
+  isCalculating?: boolean;
 }
 
-export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious, onComplete, isLastStep = false }: SemenAssessmentStepProps) {
+export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious, onComplete, isLastStep = false, isCalculating = false }: SemenAssessmentStepProps) {
   // New Step 8 fields
   const [inseminatorName, setInseminatorName] = useState(data?.inseminatorName || '');
   const [semenAssessed, setSemenAssessed] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.semenAssessed || '');
@@ -259,11 +260,22 @@ export function SemenAssessmentStep({ data, onUpdate, onNext, onPrevious, onComp
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onPrevious}>
+        <Button variant="outline" onClick={onPrevious} disabled={isCalculating}>
           Previous
         </Button>
-        <Button onClick={handleContinue} className="bg-gradient-brand hover:opacity-90 shadow-card">
-          {isLastStep ? 'Calculate Rating' : 'Continue'}
+        <Button 
+          onClick={handleContinue} 
+          disabled={isCalculating}
+          className="bg-gradient-brand hover:opacity-90 shadow-card"
+        >
+          {isCalculating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Calculating...
+            </>
+          ) : (
+            isLastStep ? 'Calculate Rating' : 'Continue'
+          )}
         </Button>
       </div>
     </div>

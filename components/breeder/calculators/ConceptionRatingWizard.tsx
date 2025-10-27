@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WizardContainer } from "@/components/breeder/calculators/wizard/WizardContainer";
 import { WizardStep } from "@/components/breeder/calculators/wizard/WizardStep";
@@ -42,8 +42,10 @@ export function ConceptionRatingWizard({
 }: ConceptionRatingWizardProps) {
   const { toast } = useToast();
   const zustandStore = useConceptionWizardStore();
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const handleComplete = async (wizardData: WizardData) => {
+    setIsCalculating(true);
     // Helper to convert string/number to number
     const toNumber = (val: string | number | undefined): number | undefined => {
       if (val === undefined || val === null) return undefined;
@@ -182,6 +184,8 @@ export function ConceptionRatingWizard({
         description: "Failed to save rating. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsCalculating(false);
     }
   };
 
@@ -297,6 +301,7 @@ export function ConceptionRatingWizard({
                     onPrevious={prevStep}
                     onComplete={complete}
                     isLastStep={true}
+                    isCalculating={isCalculating}
                   />
                 </WizardStep>
               </>
