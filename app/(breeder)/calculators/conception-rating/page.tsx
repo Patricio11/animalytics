@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { ConceptionRatingCard } from "@/components/breeder/calculators/ConceptionRatingCard";
 import { ConceptionRatingEmptyState } from "@/components/breeder/calculators/ConceptionRatingEmptyState";
 import { ConceptionRatingWizard } from "@/components/breeder/calculators/ConceptionRatingWizard";
@@ -39,6 +40,9 @@ export default function ConceptionRatingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ratings, setRatings] = useState<StoredRating[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [ratingToDelete, setRatingToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch ratings from database
   useEffect(() => {
@@ -120,12 +124,37 @@ export default function ConceptionRatingPage() {
   };
 
   const handleDeleteRating = (id: string) => {
-    if (confirm("Are you sure you want to delete this rating?")) {
-      setRatings((prev) => prev.filter((r) => r.id !== id));
+    setRatingToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!ratingToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/conception-ratings/${ratingToDelete}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete rating');
+
+      setRatings((prev) => prev.filter((r) => r.id !== ratingToDelete));
       toast({
         title: "Rating deleted",
         description: "The conception rating has been removed",
       });
+      setDeleteModalOpen(false);
+      setRatingToDelete(null);
+    } catch (error) {
+      console.error('Error deleting rating:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete rating. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -259,6 +288,16 @@ export default function ConceptionRatingPage() {
         open={showWizard}
         onOpenChange={setShowWizard}
         onComplete={handleWizardComplete}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        onConfirm={confirmDelete}
+        title="Delete Conception Rating"
+        description="Are you sure you want to delete this conception rating? This action cannot be undone."
+        isLoading={isDeleting}
       />
     </div>
   );
