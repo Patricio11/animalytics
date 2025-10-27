@@ -3,12 +3,8 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, CheckCircle2, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DayNumber, Unit } from "@/lib/calculations";
 
@@ -108,31 +104,19 @@ export function DailyReadingInput({
           <Label htmlFor={`date-${day}`} className="text-xs font-medium text-muted-foreground">
             Test Date
           </Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id={`date-${day}`}
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal transition-colors",
-                  !date && "text-muted-foreground",
-                  "bg-background hover:bg-accent",
-                  getInputBorderClass()
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, "MMM dd, yyyy") : "Select date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={onDateChange}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Input
+            id={`date-${day}`}
+            type="date"
+            value={date ? date.toISOString().split('T')[0] : ''}
+            onChange={(e) => {
+              const newDate = e.target.value ? new Date(e.target.value) : undefined;
+              onDateChange(newDate);
+            }}
+            className={cn(
+              "bg-background transition-all duration-300",
+              getInputBorderClass()
+            )}
+          />
         </div>
 
         {/* Value Input */}
