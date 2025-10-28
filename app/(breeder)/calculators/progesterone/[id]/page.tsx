@@ -7,6 +7,7 @@ import {
   ProgesteroneTestForm,
   ProgesteroneChart,
   BreedingWindowAlert,
+  CycleDetailSkeleton,
 } from '@/components/breeder/calculators';
 import { useHeatCycle } from '@/lib/hooks/useHeatCycles';
 import { Button } from '@/components/ui/button';
@@ -34,8 +35,9 @@ interface PageProps {
 export default function CycleDetailPage({ params }: PageProps) {
   const router = useRouter();
   const { id } = use(params);
-  const { data: cycle, isLoading, error } = useHeatCycle(id);
+  const { data: cycle, isLoading, error, refetch } = useHeatCycle(id);
   const [showAddReadingForm, setShowAddReadingForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Helper function to get display day
   const getDisplayDay = (cycle: any) => {
@@ -114,14 +116,7 @@ export default function CycleDetailPage({ params }: PageProps) {
     return (
       <div className="min-h-screen bg-surface-secondary">
         <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
-          <Card className="shadow-card bg-surface border-0">
-            <CardContent className="p-12">
-              <div className="flex flex-col items-center justify-center gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Loading cycle details...</p>
-              </div>
-            </CardContent>
-          </Card>
+          <CycleDetailSkeleton />
         </div>
       </div>
     );
@@ -325,7 +320,9 @@ export default function CycleDetailPage({ params }: PageProps) {
                       <ProgesteroneTestForm 
                         cycleDay={getDisplayDay(cycle)}
                         bitchName={cycle.bitch?.name || 'Unknown'}
+                        isSubmitting={isSubmitting}
                         onSubmit={async (data) => {
+                          setIsSubmitting(true);
                           try {
                             // Call the API to add reading
                             const response = await fetch('/api/progesterone-readings', {
@@ -341,11 +338,16 @@ export default function CycleDetailPage({ params }: PageProps) {
                             });
                             
                             if (response.ok) {
+                              // Refetch the cycle data to show new reading
+                              await refetch();
                               setShowAddReadingForm(false);
-                              // React Query will auto-refresh
+                            } else {
+                              console.error('Failed to add reading');
                             }
                           } catch (error) {
                             console.error('Error adding reading:', error);
+                          } finally {
+                            setIsSubmitting(false);
                           }
                         }}
                         onCancel={() => setShowAddReadingForm(false)}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { 
   HeatCycleStartCard, 
   ActiveCycleCard,
+  ProgesteroneListSkeleton,
 } from '@/components/breeder/calculators';
 import { useHeatCycles, useCreateHeatCycle, useCancelHeatCycle, useDeleteHeatCycle } from '@/lib/hooks/useHeatCycles';
 import { useAnimals } from '@/lib/api/queries/animals';
@@ -116,14 +117,7 @@ export default function ProgesteronePage() {
 
         {/* Loading State */}
         {isLoading ? (
-          <Card className="shadow-card bg-surface border-0">
-            <CardContent className="p-12">
-              <div className="flex flex-col items-center justify-center gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Loading heat cycles...</p>
-              </div>
-            </CardContent>
-          </Card>
+          <ProgesteroneListSkeleton />
         ) : (
           <>
             {/* Quick Stats */}
