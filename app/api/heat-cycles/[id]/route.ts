@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { heatCycles, heatCycleProgesteroneReadings, heatCycleReminders, breedingRecords } from '@/lib/db/schema';
+import { heatCycles, heatCycleProgesteroneReadings, heatCycleReminders, breedingRecords, animals } from '@/lib/db/schema';
 import { auth } from '@/lib/auth/config';
 import {
   successResponse,
@@ -8,7 +8,98 @@ import {
   unauthorizedResponse,
   serverErrorResponse,
 } from '@/lib/api/response';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
+
+/**
+ * GET /api/heat-cycles/[id]
+ * Fetch a single heat cycle with all details
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Check authentication
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session?.user?.id) {
+      return unauthorizedResponse();
+    }
+
+    const { id } = await params;
+
+    // Fetch the heat cycle with bitch details
+    const [cycle] = await db
+      .select({
+        id: heatCycles.id,
+        breederId: heatCycles.breederId,
+        bitchId: heatCycles.bitchId,
+        startDate: heatCycles.startDate,
+        endDate: heatCycles.endDate,
+        currentDay: heatCycles.currentDay,
+        status: heatCycles.status,
+        breedingMethod: heatCycles.breedingMethod,
+        estimatedOvulationDay: heatCycles.estimatedOvulationDay,
+        estimatedOvulationDate: heatCycles.estimatedOvulationDate,
+        estimatedWhelpingDate: heatCycles.estimatedWhelpingDate,
+        notes: heatCycles.notes,
+        createdAt: heatCycles.createdAt,
+        updatedAt: heatCycles.updatedAt,
+        bitch: {
+          id: animals.id,
+          name: animals.name,
+          registeredName: animals.registeredName,
+          breedId: animals.breedId,
+          sex: animals.sex,
+          dateOfBirth: animals.dateOfBirth,
+        },
+      })
+      .from(heatCycles)
+      .leftJoin(animals, eq(heatCycles.bitchId, animals.id))
+      .where(
+        and(
+          eq(heatCycles.id, id),
+          eq(heatCycles.breederId, session.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!cycle) {
+      return errorResponse('Heat cycle not found', 404);
+    }
+
+    // Fetch all progesterone readings for this cycle
+    const readings = await db
+      .select()
+      .from(heatCycleProgesteroneReadings)
+      .where(eq(heatCycleProgesteroneReadings.heatCycleId, id))
+      .orderBy(desc(heatCycleProgesteroneReadings.day));
+
+    // Fetch breeding records
+    const breedings = await db
+      .select()
+      .from(breedingRecords)
+      .where(eq(breedingRecords.heatCycleId, id))
+      .orderBy(desc(breedingRecords.breedingDate));
+
+    // Fetch reminders
+    const reminders = await db
+      .select()
+      .from(heatCycleReminders)
+      .where(eq(heatCycleReminders.heatCycleId, id))
+      .orderBy(desc(heatCycleReminders.dueDate));
+
+    return successResponse({
+      ...cycle,
+      readings,
+      breedings,
+      reminders,
+    });
+
+  } catch (error) {
+    console.error('Error in GET /api/heat-cycles/[id]:', error);
+    return serverErrorResponse('Failed to fetch heat cycle');
+  }
+}
 
 /**
  * PATCH /api/heat-cycles/[id]
