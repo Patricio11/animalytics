@@ -52,15 +52,16 @@ export function AddReadingModal({
     ? differenceInDays(new Date(testDate), new Date(startDate)) + 1
     : cycleDay;
 
-  // Determine phase based on level
-  const getPhaseInfo = (level: number) => {
+  // Determine phase based on level and provide next action
+  const getPhaseInfo = (level: number, day: number) => {
     if (level < 1.5) {
       return {
         phase: 'Anestrus',
         color: 'text-gray-600',
         bg: 'bg-gray-100 dark:bg-gray-900/20',
         icon: '⚪',
-        description: 'Out of heat',
+        description: 'Out of heat - Not yet started',
+        nextAction: 'Retest in 2-3 days',
       };
     } else if (level < 4) {
       return {
@@ -68,39 +69,44 @@ export function AddReadingModal({
         color: 'text-blue-600',
         bg: 'bg-blue-100 dark:bg-blue-900/20',
         icon: '🔵',
-        description: 'Test again in 3 days',
+        description: 'Baseline established',
+        nextAction: 'Next test in 3 days',
       };
     } else if (level < 10) {
       return {
-        phase: 'LH Surge',
+        phase: 'LH Surge Approaching',
         color: 'text-purple-600',
         bg: 'bg-purple-100 dark:bg-purple-900/20',
         icon: '🟣',
-        description: 'Test every 2 days',
+        description: 'Progesterone rising',
+        nextAction: 'Test every 2 days',
       };
     } else if (level < 15) {
       return {
-        phase: 'Rising',
+        phase: 'Rising Fast',
         color: 'text-orange-600',
         bg: 'bg-orange-100 dark:bg-orange-900/20',
         icon: '🟠',
-        description: 'Test daily',
+        description: 'Approaching ovulation',
+        nextAction: 'Test daily - Ovulation imminent',
       };
     } else if (level < 25) {
       return {
-        phase: 'Breeding Window',
+        phase: 'Breeding Window - Natural/Fresh AI',
         color: 'text-green-600',
         bg: 'bg-green-100 dark:bg-green-900/20',
         icon: '🟢',
-        description: 'Optimal for natural/fresh AI',
+        description: 'Optimal range for natural breeding or fresh AI',
+        nextAction: 'Test daily - Consider breeding now',
       };
     } else if (level < 35) {
       return {
-        phase: 'Peak',
+        phase: 'Peak - Frozen AI',
         color: 'text-red-600',
         bg: 'bg-red-100 dark:bg-red-900/20',
         icon: '🔴',
-        description: 'Optimal for frozen AI',
+        description: 'Optimal range for frozen semen AI',
+        nextAction: 'Test daily - Breed within 24-48 hours',
       };
     } else {
       return {
@@ -108,13 +114,14 @@ export function AddReadingModal({
         color: 'text-pink-600',
         bg: 'bg-pink-100 dark:bg-pink-900/20',
         icon: '🌸',
-        description: 'Past breeding window',
+        description: 'Past optimal breeding window',
+        nextAction: 'Continue monitoring if breeding occurred',
       };
     }
   };
 
   const level = parseFloat(progesteroneLevel);
-  const phaseInfo = !isNaN(level) ? getPhaseInfo(level) : null;
+  const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay) : null;
 
   const handleSubmit = async () => {
     if (testDate && progesteroneLevel) {
@@ -203,15 +210,18 @@ export function AddReadingModal({
             <Alert className={`border-2 ${phaseInfo.bg}`}>
               <TrendingUp className={`h-4 w-4 ${phaseInfo.color}`} />
               <AlertDescription>
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">{phaseInfo.icon}</span>
                   <strong className={phaseInfo.color}>{phaseInfo.phase}</strong>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-2">
                   {phaseInfo.description}
                 </p>
-                <div className="mt-2 text-sm">
-                  <strong>Level:</strong> {progesteroneLevel} ng/mL on Day {calculatedDay}
+                <div className="text-sm bg-white dark:bg-gray-800 p-2 rounded border">
+                  <strong>Reading:</strong> {progesteroneLevel} ng/mL on Day {calculatedDay}
+                </div>
+                <div className="mt-2 text-sm font-semibold text-foreground">
+                  📅 Next Action: {phaseInfo.nextAction}
                 </div>
               </AlertDescription>
             </Alert>
