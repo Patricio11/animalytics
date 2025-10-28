@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck } from "lucide-react";
+import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck, GitBranch } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -24,6 +24,11 @@ const menuItems = [
     title: "My Animals",
     url: "/animals",
     icon: PawPrint,
+  },
+  {
+    title: "Pedigree",
+    url: "/pedigree",
+    icon: GitBranch,
   },
   {
     title: "Mating Calculator",
