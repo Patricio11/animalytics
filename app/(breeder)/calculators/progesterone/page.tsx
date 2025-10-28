@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  HeatCycleStartCard, 
-  ActiveCycleCard,
+  StartCycleModal,
   ProgesteroneListSkeleton,
 } from '@/components/breeder/calculators';
 import { useHeatCycles, useCreateHeatCycle, useCancelHeatCycle, useDeleteHeatCycle } from '@/lib/hooks/useHeatCycles';
@@ -45,6 +44,7 @@ export default function ProgesteronePage() {
   const [activeTab, setActiveTab] = useState('active');
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [startCycleModalOpen, setStartCycleModalOpen] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<any>(null);
   
   const { data: heatCyclesData, isLoading } = useHeatCycles();
@@ -106,6 +106,13 @@ export default function ProgesteronePage() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button
+              onClick={() => setStartCycleModalOpen(true)}
+              className="bg-gradient-brand"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Start New Cycle
+            </Button>
             <Button
               variant="outline"
               onClick={() => router.push('/calculators')}
@@ -188,19 +195,6 @@ export default function ProgesteronePage() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Start New Cycle Card */}
-            <HeatCycleStartCard 
-              animals={femaleAnimals}
-              onStartCycle={(data) => {
-                createCycle.mutate(data as any, {
-                  onSuccess: (response) => {
-                    router.push(`/calculators/progesterone/${response.heatCycle.id}`);
-                  }
-                });
-              }}
-              isLoading={createCycle.isPending}
-            />
 
             {/* Cycles Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -473,6 +467,22 @@ export default function ProgesteronePage() {
         description={`Are you sure you want to permanently delete the heat cycle for "${selectedCycle?.bitch?.name}"? This will delete all progesterone readings, breeding records, and reminders associated with this cycle. This action cannot be undone.`}
         itemName={selectedCycle?.bitch?.name}
         isLoading={deleteCycle.isPending}
+      />
+
+      {/* Start Cycle Modal */}
+      <StartCycleModal
+        open={startCycleModalOpen}
+        onOpenChange={setStartCycleModalOpen}
+        animals={femaleAnimals}
+        onStartCycle={(data) => {
+          createCycle.mutate(data as any, {
+            onSuccess: (response) => {
+              setStartCycleModalOpen(false);
+              router.push(`/calculators/progesterone/${response.heatCycle.id}`);
+            }
+          });
+        }}
+        isLoading={createCycle.isPending}
       />
     </div>
   );
