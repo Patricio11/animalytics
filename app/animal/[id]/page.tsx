@@ -215,7 +215,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
   // Get primary photo from animal_photos table (category: 'profile') or use first photo
   const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
-  const primaryPhoto = profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=600&fit=crop&crop=face";
+  const primaryPhoto = profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || null;
   
   // Get additional photos (excluding profile photo)
   const additionalPhotos = animal.photos
@@ -229,7 +229,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
         profilePhoto?.fileUrl,
         ...animal.photos.filter((p: any) => p.category !== 'profile').map((p: any) => p.fileUrl)
       ].filter((url: string | undefined) => url) // Filter out empty/undefined URLs
-    : [primaryPhoto]; // Fallback to primaryPhoto if no photos in array
+    : []; // Empty array if no photos
 
   // Determine available tabs based on animal type
   const tabs = [
@@ -266,22 +266,34 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-0">
                 <div 
-                  className="relative aspect-video overflow-hidden rounded-t-lg cursor-pointer group"
+                  className={cn(
+                    "relative aspect-video overflow-hidden rounded-t-lg",
+                    primaryPhoto ? "cursor-pointer group" : ""
+                  )}
                   onClick={(e) => {
+                    if (!primaryPhoto) return;
                     e.preventDefault();
                     console.log('Main image clicked, allPhotos:', allPhotos);
                     setLightboxIndex(0);
                     setLightboxOpen(true);
                   }}
                 >
-                  <img
-                    src={primaryPhoto}
-                    alt={animal.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                    <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
+                  {primaryPhoto ? (
+                    <>
+                      <img
+                        src={primaryPhoto}
+                        alt={animal.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                        <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+                      <Eye className="w-16 h-16 text-muted-foreground/30" />
+                    </div>
+                  )}
                 </div>
                 {additionalPhotos.length > 0 && (
                   <div className="p-4 grid grid-cols-4 gap-2">
