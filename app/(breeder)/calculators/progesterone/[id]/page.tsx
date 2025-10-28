@@ -24,7 +24,7 @@ import {
   Settings,
   Trash2,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, differenceInDays, addDays } from 'date-fns';
 import { exportProgesteronePDF } from '@/lib/utils/pdf-export';
 
 interface PageProps {
@@ -35,6 +35,31 @@ export default function CycleDetailPage({ params }: PageProps) {
   const router = useRouter();
   const { id } = use(params);
   const { data: cycle, isLoading, error } = useHeatCycle(id);
+
+  // Helper function to get display day
+  const getDisplayDay = (cycle: any) => {
+    if (!cycle) return 1;
+    // If there are readings, use the latest reading's day
+    if (cycle.readings && cycle.readings.length > 0) {
+      const sortedReadings = [...cycle.readings].sort((a: any, b: any) => b.day - a.day);
+      return sortedReadings[0].day;
+    }
+    // Otherwise, show Day 5 (first test due)
+    return 5;
+  };
+
+  // Check if test is overdue
+  const isOverdue = (cycle: any) => {
+    if (!cycle || cycle.readings?.length > 0) return false;
+    const daysSinceStart = differenceInDays(new Date(), new Date(cycle.startDate)) + 1;
+    return daysSinceStart >= 5;
+  };
+
+  // Get the date when Day 5 test was due
+  const getDay5DueDate = (cycle: any) => {
+    if (!cycle) return null;
+    return addDays(new Date(cycle.startDate), 4); // Day 5 = start + 4 days
+  };
 
   const handleExportPDF = async () => {
     if (!cycle) return;
@@ -148,7 +173,17 @@ export default function CycleDetailPage({ params }: PageProps) {
                 </Badge>
               </h1>
               <p className="text-muted-foreground mt-1">
-                Started {format(new Date(cycle.startDate), 'MMMM dd, yyyy')} • Day {cycle.currentDay}
+                Started {format(new Date(cycle.startDate), 'MMMM dd, yyyy')} • 
+                {cycle.readings?.length > 0 ? (
+                  <span> Latest: Day {getDisplayDay(cycle)}</span>
+                ) : (
+                  <span> Next Test: Day {getDisplayDay(cycle)}</span>
+                )}
+                {isOverdue(cycle) && (
+                  <span className="text-amber-600 font-semibold ml-2">
+                    (Due {format(getDay5DueDate(cycle)!, 'MMM dd')} - Overdue)
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -202,8 +237,13 @@ export default function CycleDetailPage({ params }: PageProps) {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Current Day</p>
-                <p className="text-2xl font-bold text-foreground">Day {cycle.currentDay}</p>
+                <p className="text-sm text-muted-foreground">
+                  {cycle.readings?.length > 0 ? 'Latest Test' : 'Next Test Due'}
+                </p>
+                <p className="text-2xl font-bold text-foreground">Day {getDisplayDay(cycle)}</p>
+                {isOverdue(cycle) && (
+                  <p className="text-xs text-amber-600 mt-1">Overdue since {format(getDay5DueDate(cycle)!, 'MMM dd')}</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Readings</p>
@@ -392,7 +432,12 @@ export default function CycleDetailPage({ params }: PageProps) {
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
                     <span className="text-muted-foreground">Current Day</span>
-                    <span className="font-medium">Day {cycle.currentDay}</span>
+                    <span className="font-medium">
+                      Day {getDisplayDay(cycle)}
+                      {isOverdue(cycle) && (
+                        <span className="text-amber-600 text-sm ml-2">(Overdue)</span>
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
                     <span className="text-muted-foreground">Breeding Method</span>

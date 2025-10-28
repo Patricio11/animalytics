@@ -52,6 +52,17 @@ export default function ProgesteronePage() {
   const cancelCycle = useCancelHeatCycle();
   const deleteCycle = useDeleteHeatCycle();
 
+  // Helper function to calculate expected day based on readings or date
+  const getDisplayDay = (cycle: any) => {
+    // If there are readings, use the latest reading's day
+    if (cycle.readings && cycle.readings.length > 0) {
+      const sortedReadings = [...cycle.readings].sort((a, b) => b.day - a.day);
+      return sortedReadings[0].day;
+    }
+    // Otherwise, calculate expected day for next test (Day 5 if no readings)
+    return 5; // First test is always Day 5
+  };
+
   // Separate cycles by status
   const activeCycles = heatCyclesData?.filter((c: any) => c.status === 'active') || [];
   const completedCycles = heatCyclesData?.filter((c: any) => c.status === 'completed') || [];
@@ -295,8 +306,13 @@ export default function ProgesteronePage() {
                         <CardContent>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                              <p className="text-sm text-muted-foreground">Current Day</p>
-                              <p className="text-2xl font-bold text-foreground">Day {cycle.currentDay}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {cycle.readings?.length > 0 ? 'Latest Test' : 'Next Test Due'}
+                              </p>
+                              <p className="text-2xl font-bold text-foreground">Day {getDisplayDay(cycle)}</p>
+                              {cycle.readings?.length === 0 && differenceInDays(new Date(), new Date(cycle.startDate)) >= 5 && (
+                                <p className="text-xs text-amber-600 mt-1">Overdue</p>
+                              )}
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Readings</p>
