@@ -56,18 +56,27 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
       </CardHeader>
 
       <CardContent className="p-6 space-y-6">
-        {/* Bitch Selection */}
-        <div className="space-y-3">
-          <Label className="text-sm font-semibold">Select Bitch *</Label>
-          <Select value={selectedBitch} onValueChange={setSelectedBitch}>
-            <SelectTrigger className={cn(
-              "bg-background border-primary/20 hover:border-primary transition-colors",
-              selectedBitch && "border-chart-3"
-            )}>
-              <SelectValue placeholder="Choose a female dog..." />
-            </SelectTrigger>
-            <SelectContent>
-              {animals.filter(a => a.sex === 'female').map(animal => (
+        {animals.length === 0 ? (
+          <Alert className="border-amber-500/50 bg-amber-500/10">
+            <Info className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="ml-2">
+              All your female dogs currently have active heat cycles. You can start a new cycle once an existing cycle is completed or cancelled.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
+            {/* Bitch Selection */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Select Bitch *</Label>
+              <Select value={selectedBitch} onValueChange={setSelectedBitch}>
+                <SelectTrigger className={cn(
+                  "bg-background border-primary/20 hover:border-primary transition-colors",
+                  selectedBitch && "border-chart-3"
+                )}>
+                  <SelectValue placeholder="Choose a female dog..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {animals.filter(a => a.sex === 'female').map(animal => (
                 <SelectItem key={animal.id} value={animal.id}>
                   <div className="flex items-center gap-3 py-1">
                     <Avatar className="w-8 h-8 border-2 border-primary/20">
@@ -184,24 +193,26 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
           </AlertDescription>
         </Alert>
 
-        {/* Submit Button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={!isValid || isLoading}
-          className="w-full bg-gradient-brand hover:opacity-90 shadow-card h-12 text-base"
-        >
-          {isLoading ? (
-            <>
-              <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-              Starting Cycle...
-            </>
-          ) : (
-            <>
-              <Heart className="w-5 h-5 mr-2" />
-              Start Heat Cycle Tracking
-            </>
-          )}
-        </Button>
+            {/* Submit Button */}
+            <Button
+              onClick={handleSubmit}
+              disabled={!isValid || isLoading}
+              className="w-full bg-gradient-brand hover:opacity-90 shadow-card h-12 text-base"
+            >
+              {isLoading ? (
+                <>
+                  <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                  Starting Cycle...
+                </>
+              ) : (
+                <>
+                  <Heart className="w-5 h-5 mr-2" />
+                  Start Heat Cycle Tracking
+                </>
+              )}
+            </Button>
+          </>
+        )}
       </CardContent>
     </Card>
   );

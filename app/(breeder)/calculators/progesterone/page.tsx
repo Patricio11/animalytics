@@ -33,9 +33,18 @@ export default function ProgesteronePage() {
   const { data: animalsData } = useAnimals();
   const createCycle = useCreateHeatCycle();
 
+  // Separate cycles by status
+  const activeCycles = heatCyclesData?.filter((c: any) => c.status === 'active') || [];
+  const completedCycles = heatCyclesData?.filter((c: any) => c.status === 'completed') || [];
+  const cancelledCycles = heatCyclesData?.filter((c: any) => c.status === 'cancelled') || [];
+
+  // Get IDs of bitches with active cycles
+  const activeBitchIds = new Set(activeCycles.map((c: any) => c.bitchId));
+
   // Filter and map female animals for heat cycle tracking
+  // Exclude bitches that already have an active cycle
   const femaleAnimals = animalsData
-    ?.filter((a: any) => a.sex === 'female')
+    ?.filter((a: any) => a.sex === 'female' && !activeBitchIds.has(a.id))
     .map((a: any) => ({
       id: a.id,
       name: a.name,
@@ -44,11 +53,6 @@ export default function ProgesteronePage() {
       registeredName: a.registeredName,
       sex: a.sex,
     })) || [];
-
-  // Separate cycles by status
-  const activeCycles = heatCyclesData?.filter((c: any) => c.status === 'active') || [];
-  const completedCycles = heatCyclesData?.filter((c: any) => c.status === 'completed') || [];
-  const cancelledCycles = heatCyclesData?.filter((c: any) => c.status === 'cancelled') || [];
 
   const handleViewCycle = (cycleId: string) => {
     router.push(`/calculators/progesterone/${cycleId}`);
