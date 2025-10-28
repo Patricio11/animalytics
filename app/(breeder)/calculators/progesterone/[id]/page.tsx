@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ActiveCycleCard,
@@ -35,6 +35,7 @@ export default function CycleDetailPage({ params }: PageProps) {
   const router = useRouter();
   const { id } = use(params);
   const { data: cycle, isLoading, error } = useHeatCycle(id);
+  const [showAddReadingForm, setShowAddReadingForm] = useState(false);
 
   // Helper function to get display day
   const getDisplayDay = (cycle: any) => {
@@ -286,21 +287,73 @@ export default function CycleDetailPage({ params }: PageProps) {
 
           {/* Readings Tab */}
           <TabsContent value="readings" className="space-y-6">
-            {/* Add Reading Form - Link to add reading */}
+            {/* Add Reading Form */}
             {cycle.status === 'active' && (
-              <Card className="shadow-card bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
-                <CardContent className="p-6">
-                  <div className="text-center">
-                    <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
-                      Ready to add a new progesterone reading?
-                    </p>
-                    <Button className="bg-gradient-brand">
-                      <Activity className="w-4 h-4 mr-2" />
-                      Add New Reading
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <>
+                {!showAddReadingForm ? (
+                  <Card className="shadow-card bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+                          Ready to add a new progesterone reading?
+                        </p>
+                        <Button 
+                          className="bg-gradient-brand"
+                          onClick={() => setShowAddReadingForm(true)}
+                        >
+                          <Activity className="w-4 h-4 mr-2" />
+                          Add New Reading
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="shadow-card bg-surface border-0">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle>Add Progesterone Reading</CardTitle>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setShowAddReadingForm(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ProgesteroneTestForm 
+                        cycleDay={getDisplayDay(cycle)}
+                        bitchName={cycle.bitch?.name || 'Unknown'}
+                        onSubmit={async (data) => {
+                          try {
+                            // Call the API to add reading
+                            const response = await fetch('/api/progesterone-readings', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                heatCycleId: cycle.id,
+                                testDate: format(data.testDate, 'yyyy-MM-dd'),
+                                progesteroneLevel: data.level,
+                                unit: 'nanograms',
+                                laboratory: 'VIDAS',
+                              }),
+                            });
+                            
+                            if (response.ok) {
+                              setShowAddReadingForm(false);
+                              // React Query will auto-refresh
+                            }
+                          } catch (error) {
+                            console.error('Error adding reading:', error);
+                          }
+                        }}
+                        onCancel={() => setShowAddReadingForm(false)}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
 
             {/* Readings List */}
