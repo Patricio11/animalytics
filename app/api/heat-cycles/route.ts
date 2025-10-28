@@ -11,7 +11,7 @@ import {
   serverErrorResponse,
 } from '@/lib/api/response';
 import { eq, and, desc, count } from 'drizzle-orm';
-import { addDays } from 'date-fns';
+import { addDays, differenceInDays } from 'date-fns';
 import { z } from 'zod';
 import type { 
   CreateHeatCycleRequest,
@@ -169,6 +169,9 @@ export async function POST(request: NextRequest) {
       return errorResponse('This bitch already has an active heat cycle', 409);
     }
 
+    // Calculate current day based on start date
+    const currentDay = differenceInDays(new Date(), new Date(startDate)) + 1;
+
     // Create heat cycle
     const [heatCycle] = await db
       .insert(heatCycles)
@@ -176,7 +179,7 @@ export async function POST(request: NextRequest) {
         breederId: session.user.id,
         bitchId,
         startDate,
-        currentDay: 1,
+        currentDay: Math.max(1, currentDay), // At least Day 1
         status: 'active',
         breedingMethod,
       })

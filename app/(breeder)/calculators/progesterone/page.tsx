@@ -23,7 +23,18 @@ import {
   ArrowRight,
   BarChart3,
   FileText,
+  MoreVertical,
+  Edit,
+  XCircle,
+  Trash2,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { format, differenceInDays } from 'date-fns';
 
 export default function ProgesteronePage() {
@@ -212,12 +223,14 @@ export default function ProgesteronePage() {
                     {activeCycles.map((cycle: any) => (
                       <Card 
                         key={cycle.id} 
-                        className="shadow-card bg-surface border-0 hover:shadow-lg transition-shadow cursor-pointer"
-                        onClick={() => handleViewCycle(cycle.id)}
+                        className="shadow-card bg-surface border-0 hover:shadow-lg transition-shadow"
                       >
                         <CardHeader>
                           <div className="flex items-start justify-between">
-                            <div className="flex-1">
+                            <div 
+                              className="flex-1 cursor-pointer"
+                              onClick={() => handleViewCycle(cycle.id)}
+                            >
                               <CardTitle className="text-xl flex items-center gap-2">
                                 {cycle.bitch?.name || 'Unknown Bitch'}
                                 <Badge className="bg-green-500 text-white">Active</Badge>
@@ -226,9 +239,51 @@ export default function ProgesteronePage() {
                                 Started {format(new Date(cycle.startDate), 'MMMM dd, yyyy')} • Day {cycle.currentDay}
                               </CardDescription>
                             </div>
-                            <Button variant="ghost" size="sm">
-                              <ArrowRight className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleViewCycle(cycle.id)}
+                              >
+                                <ArrowRight className="w-4 h-4" />
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => router.push(`/calculators/progesterone/${cycle.id}`)}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-amber-600"
+                                    onClick={() => {
+                                      // TODO: Implement cancel cycle
+                                      alert('Cancel cycle functionality coming soon');
+                                    }}
+                                  >
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Cancel Cycle
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="text-destructive"
+                                    onClick={() => {
+                                      // TODO: Implement delete cycle
+                                      if (confirm('Are you sure you want to delete this cycle? This action cannot be undone.')) {
+                                        alert('Delete cycle functionality coming soon');
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Cycle
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent>

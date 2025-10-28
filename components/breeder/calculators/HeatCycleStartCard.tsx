@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar, Heart, Info, Sparkles } from "lucide-react";
+import { Calendar, Heart, Info, Sparkles, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, addDays } from "date-fns";
+import { format, addDays, differenceInDays } from "date-fns";
 
 interface HeatCycleStartCardProps {
   animals: any[];
@@ -26,6 +26,8 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
 
   const selectedAnimal = animals.find(a => a.id === selectedBitch);
   const firstTestDate = startDate ? addDays(new Date(startDate), 4) : null;
+  const currentDay = startDate ? differenceInDays(new Date(), new Date(startDate)) + 1 : 0;
+  const isOverdue = currentDay >= 5;
 
   const handleSubmit = () => {
     if (selectedBitch && startDate) {
@@ -126,7 +128,7 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
             Day 1 - Heat Start Date *
           </Label>
           <p className="text-xs text-muted-foreground">
-            When did you first notice bleeding/discharge?
+            When did you first notice bleeding/discharge? (You can select past dates if you forgot to record)
           </p>
           <Input
             id="start-date"
@@ -134,21 +136,41 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             max={new Date().toISOString().split('T')[0]}
+            min={new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // Allow up to 30 days back
             className={cn(
               "bg-background border-primary/20 hover:border-primary transition-colors",
               startDate && "border-chart-3"
             )}
           />
           {startDate && firstTestDate && (
-            <Alert className="border-primary/50 bg-gradient-subtle">
-              <Calendar className="h-4 w-4 text-primary" />
-              <AlertDescription className="ml-2">
-                <strong>First progesterone test due:</strong>
-                <div className="mt-1 text-sm">
-                  {format(firstTestDate, "EEEE, MMMM d, yyyy")} (Day 5)
-                </div>
-              </AlertDescription>
-            </Alert>
+            <>
+              <Alert className={cn(
+                "border-primary/50 bg-gradient-subtle",
+                isOverdue && "border-amber-500/50 bg-amber-500/10"
+              )}>
+                {isOverdue ? (
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                ) : (
+                  <Calendar className="h-4 w-4 text-primary" />
+                )}
+                <AlertDescription className="ml-2">
+                  <strong>Current Status:</strong>
+                  <div className="mt-1 text-sm">
+                    Today is <strong>Day {currentDay}</strong> of the heat cycle
+                  </div>
+                  {isOverdue ? (
+                    <div className="mt-2 text-sm font-semibold text-amber-600">
+                      ⚠️ First progesterone test was due on {format(firstTestDate, "MMM d")} (Day 5). 
+                      You can add it immediately after starting the cycle.
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-sm">
+                      First test due: {format(firstTestDate, "EEEE, MMMM d, yyyy")} (Day 5)
+                    </div>
+                  )}
+                </AlertDescription>
+              </Alert>
+            </>
           )}
         </div>
 
