@@ -578,10 +578,13 @@ export default function CycleDetailPage({ params }: PageProps) {
                 queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
                 setShowAddReadingForm(false);
               } else {
-                console.error('Failed to add reading');
+                const errorData = await response.json();
+                console.error('Failed to add reading:', response.status, errorData);
+                alert(`Failed to add reading: ${errorData.message || 'Unknown error'}`);
               }
             } catch (error) {
               console.error('Error adding reading:', error);
+              alert(`Error adding reading: ${error instanceof Error ? error.message : 'Unknown error'}`);
             } finally {
               setIsSubmitting(false);
             }
