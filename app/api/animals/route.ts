@@ -64,9 +64,10 @@ export async function GET(request: NextRequest) {
     const sex = searchParams.get('sex');
     const isActive = searchParams.get('isActive');
     const isBreedingActive = searchParams.get('isBreedingActive');
+    const global = searchParams.get('global') === 'true';
 
-    // Build where clause
-    let whereClause = eq(animals.userId, session.user.id);
+    // Build where clause - filter by user unless global search is requested
+    let whereClause = global ? undefined : eq(animals.userId, session.user.id);
 
     if (sex === 'male' || sex === 'female') {
       whereClause = and(whereClause, eq(animals.sex, sex)) as any;

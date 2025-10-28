@@ -49,12 +49,14 @@ async function fetchAnimals(filters?: {
   sex?: 'male' | 'female';
   isActive?: boolean;
   isBreedingActive?: boolean;
+  global?: boolean;
 }) {
   const params = new URLSearchParams();
   if (filters?.sex) params.append('sex', filters.sex);
   if (filters?.isActive !== undefined) params.append('isActive', String(filters.isActive));
   if (filters?.isBreedingActive !== undefined)
     params.append('isBreedingActive', String(filters.isBreedingActive));
+  if (filters?.global) params.append('global', 'true');
 
   const response = await fetch(`/api/animals?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch animals');
@@ -122,6 +124,7 @@ export function useAnimals(filters?: {
   sex?: 'male' | 'female';
   isActive?: boolean;
   isBreedingActive?: boolean;
+  global?: boolean;
 }) {
   const { isAuthenticated } = useAuth();
 

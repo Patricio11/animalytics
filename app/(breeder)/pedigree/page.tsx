@@ -6,27 +6,18 @@ import { useAnimals } from "@/lib/api/queries/animals";
 import { authClient } from "@/lib/auth/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PedigreeTree } from "@/components/breeder/animals/PedigreeTree";
 import { PedigreeTreeHorizontal } from "@/components/breeder/animals/PedigreeTreeHorizontal";
 import { ImportPedigreeDialog } from "@/components/breeder/animals/ImportPedigreeDialog";
+import { AnimalCombobox } from "@/components/ui/animal-combobox";
 import { 
   Download, 
   Upload, 
-  Edit, 
-  Search, 
   AlertCircle, 
   GitBranch,
   Eye,
@@ -37,12 +28,12 @@ import { cn } from "@/lib/utils";
 
 export default function PedigreePage() {
   const { data: session } = authClient.useSession();
-  const { data: animals, isLoading: animalsLoading } = useAnimals();
-  const queryClient = useQueryClient();
-
   const [selectedAnimalId, setSelectedAnimalId] = useState<string>("");
   const [globalSearch, setGlobalSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Fetch animals based on global search toggle
+  const { data: animals, isLoading: animalsLoading } = useAnimals({ global: globalSearch });
+  const queryClient = useQueryClient();
   const [treeOrientation, setTreeOrientation] = useState<"vertical" | "horizontal">("horizontal");
   const [showImportDialog, setShowImportDialog] = useState(false);
 
@@ -58,22 +49,17 @@ export default function PedigreePage() {
     enabled: !!selectedAnimalId,
   });
 
-  // Filter animals based on search and global toggle
-  const filteredAnimals = useMemo(() => {
+  // Format animals for combobox (API already filters based on global parameter)
+  const comboboxAnimals = useMemo(() => {
     if (!animals) return [];
-    
-    let filtered = globalSearch ? animals : animals.filter((a: any) => a.userId === session?.user?.id);
-    
-    if (searchQuery) {
-      filtered = filtered.filter((animal: any) => 
-        animal.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        animal.registeredName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        animal.breed?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    return filtered;
-  }, [animals, globalSearch, searchQuery, session?.user?.id]);
+    return animals.map((animal: any) => ({
+      id: animal.id,
+      name: animal.registeredName || animal.name,
+      breed: animal.breed?.name,
+      profileImageUrl: animal.profileImageUrl,
+      sex: animal.sex,
+    }));
+  }, [animals]);
 
   // Get selected animal
   const selectedAnimal = useMemo(() => {
@@ -150,61 +136,27 @@ export default function PedigreePage() {
               />
             </div>
 
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, registered name, or breed..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {/* Animal Selector */}
+            {/* Animal Combobox */}
             {animalsLoading ? (
               <Skeleton className="h-10 w-full" />
-            ) : filteredAnimals.length === 0 ? (
+            ) : !animals || animals.length === 0 ? (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {searchQuery 
-                    ? "No animals found matching your search." 
-                    : globalSearch 
+                  {globalSearch 
                     ? "No animals available in the system." 
                     : "You don't have any animals yet."}
                 </AlertDescription>
               </Alert>
             ) : (
-              <Select value={selectedAnimalId} onValueChange={setSelectedAnimalId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose an animal..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredAnimals.map((animal: any) => (
-                    <SelectItem key={animal.id} value={animal.id}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {animal.registeredName || animal.name}
-                        </span>
-                        {animal.registeredName && animal.name && (
-                          <span className="text-xs text-muted-foreground">
-                            ({animal.name})
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          • {animal.breed?.name}
-                        </span>
-                        {animal.userId !== session?.user?.id && (
-                          <span className="text-xs text-muted-foreground italic">
-                            (Public)
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AnimalCombobox
+                animals={comboboxAnimals}
+                value={selectedAnimalId}
+                onValueChange={setSelectedAnimalId}
+                placeholder="Search and select an animal..."
+                emptyText="No animals found."
+                allowClear
+              />
             )}
 
             {/* Selected Animal Info */}
