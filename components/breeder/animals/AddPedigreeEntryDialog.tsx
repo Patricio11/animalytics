@@ -37,6 +37,7 @@ interface AddPedigreeEntryDialogProps {
   generation: number;
   positionLabel: string; // 'Dam', 'Sire', 'Granddam', etc.
   requiredSex?: "male" | "female"; // Based on position
+  animalBreed?: string | null; // Breed from the animal (auto-populated)
   onSuccess?: () => void;
 }
 
@@ -48,6 +49,7 @@ export function AddPedigreeEntryDialog({
   generation,
   positionLabel,
   requiredSex,
+  animalBreed,
   onSuccess,
 }: AddPedigreeEntryDialogProps) {
   const { toast } = useToast();
@@ -62,7 +64,6 @@ export function AddPedigreeEntryDialog({
     registeredName: "",
     registrationNumber: "",
     microchipNumber: "",
-    breed: "",
     sex: requiredSex || ("" as "male" | "female" | ""),
     dateOfBirth: "",
     color: "",
@@ -146,7 +147,7 @@ export function AddPedigreeEntryDialog({
           registeredName: manualFormData.registeredName || null,
           registrationNumber: manualFormData.registrationNumber || null,
           microchipNumber: manualFormData.microchipNumber || null,
-          breed: manualFormData.breed || null,
+          breed: animalBreed || null,
           sex: manualFormData.sex || null,
           dateOfBirth: manualFormData.dateOfBirth || null,
           color: manualFormData.color || null,
@@ -184,7 +185,6 @@ export function AddPedigreeEntryDialog({
       registeredName: "",
       registrationNumber: "",
       microchipNumber: "",
-      breed: "",
       sex: requiredSex || "",
       dateOfBirth: "",
       color: "",
@@ -333,34 +333,37 @@ export function AddPedigreeEntryDialog({
 
           {/* Manual Entry Form */}
           <TabsContent value="manual" className="space-y-4 mt-4">
-            {/* Name - Required */}
-            <div className="space-y-2">
-              <Label htmlFor="name">
-                Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="name"
-                value={manualFormData.name}
-                onChange={(e) => updateManualFormData("name", e.target.value)}
-                placeholder="Enter name"
-                className="border-primary/20 focus:border-primary"
-                required
-              />
+            {/* Name and Registered Name - Same Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Name - Required */}
+              <div className="space-y-2">
+                <Label htmlFor="name">
+                  Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  value={manualFormData.name}
+                  onChange={(e) => updateManualFormData("name", e.target.value)}
+                  placeholder="Enter name"
+                  className="border-primary/20 focus:border-primary"
+                  required
+                />
+              </div>
+
+              {/* Registered Name */}
+              <div className="space-y-2">
+                <Label htmlFor="registeredName">Registered Name</Label>
+                <Input
+                  id="registeredName"
+                  value={manualFormData.registeredName}
+                  onChange={(e) => updateManualFormData("registeredName", e.target.value)}
+                  placeholder="Full registered name (optional)"
+                  className="border-primary/20 focus:border-primary"
+                />
+              </div>
             </div>
 
-            {/* Registered Name */}
-            <div className="space-y-2">
-              <Label htmlFor="registeredName">Registered Name</Label>
-              <Input
-                id="registeredName"
-                value={manualFormData.registeredName}
-                onChange={(e) => updateManualFormData("registeredName", e.target.value)}
-                placeholder="Full registered name (optional)"
-                className="border-primary/20 focus:border-primary"
-              />
-            </div>
-
-            {/* Two Column Layout */}
+            {/* Sex and Date of Birth - Same Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Sex */}
               <div className="space-y-2">
@@ -393,31 +396,16 @@ export function AddPedigreeEntryDialog({
               </div>
             </div>
 
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Breed */}
-              <div className="space-y-2">
-                <Label htmlFor="breed">Breed</Label>
-                <Input
-                  id="breed"
-                  value={manualFormData.breed}
-                  onChange={(e) => updateManualFormData("breed", e.target.value)}
-                  placeholder="Enter breed"
-                  className="border-primary/20 focus:border-primary"
-                />
-              </div>
-
-              {/* Color */}
-              <div className="space-y-2">
-                <Label htmlFor="color">Color</Label>
-                <Input
-                  id="color"
-                  value={manualFormData.color}
-                  onChange={(e) => updateManualFormData("color", e.target.value)}
-                  placeholder="Enter color"
-                  className="border-primary/20 focus:border-primary"
-                />
-              </div>
+            {/* Color - Full Row */}
+            <div className="space-y-2">
+              <Label htmlFor="color">Color</Label>
+              <Input
+                id="color"
+                value={manualFormData.color}
+                onChange={(e) => updateManualFormData("color", e.target.value)}
+                placeholder="Enter color"
+                className="border-primary/20 focus:border-primary"
+              />
             </div>
 
             {/* Two Column Layout */}

@@ -259,6 +259,7 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
           generation={manualEntryConfig.generation}
           positionLabel={manualEntryConfig.label}
           requiredSex={manualEntryConfig.requiredSex}
+          animalBreed={node.breed}
           onSuccess={handleManualEntrySuccess}
         />
       )}
