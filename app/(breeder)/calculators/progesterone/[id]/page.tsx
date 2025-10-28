@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { 
   ActiveCycleCard,
-  ProgesteroneTestForm,
   ProgesteroneChart,
   BreedingWindowAlert,
   CycleDetailSkeleton,
+  AddReadingModal,
 } from '@/components/breeder/calculators';
 import { useHeatCycle } from '@/lib/hooks/useHeatCycles';
 import { Button } from '@/components/ui/button';
@@ -284,82 +284,24 @@ export default function CycleDetailPage({ params }: PageProps) {
 
           {/* Readings Tab */}
           <TabsContent value="readings" className="space-y-6">
-            {/* Add Reading Form */}
+            {/* Add Reading Button */}
             {cycle.status === 'active' && (
-              <>
-                {!showAddReadingForm ? (
-                  <Card className="shadow-card bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
-                    <CardContent className="p-6">
-                      <div className="text-center">
-                        <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
-                          Ready to add a new progesterone reading?
-                        </p>
-                        <Button 
-                          className="bg-gradient-brand"
-                          onClick={() => setShowAddReadingForm(true)}
-                        >
-                          <Activity className="w-4 h-4 mr-2" />
-                          Add New Reading
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="shadow-card bg-surface border-0">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle>Add Progesterone Reading</CardTitle>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setShowAddReadingForm(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <ProgesteroneTestForm 
-                        cycleDay={getDisplayDay(cycle)}
-                        bitchName={cycle.bitch?.name || 'Unknown'}
-                        isSubmitting={isSubmitting}
-                        onSubmit={async (data) => {
-                          setIsSubmitting(true);
-                          try {
-                            // Call the API to add reading
-                            const response = await fetch('/api/progesterone-readings', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                heatCycleId: cycle.id,
-                                testDate: format(data.testDate, 'yyyy-MM-dd'),
-                                progesteroneLevel: data.level,
-                                unit: 'nanograms',
-                                laboratory: 'VIDAS',
-                              }),
-                            });
-                            
-                            if (response.ok) {
-                              // Refetch the cycle data to show new reading
-                              await refetch();
-                              // Also invalidate the heat cycles list query
-                              queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
-                              setShowAddReadingForm(false);
-                            } else {
-                              console.error('Failed to add reading');
-                            }
-                          } catch (error) {
-                            console.error('Error adding reading:', error);
-                          } finally {
-                            setIsSubmitting(false);
-                          }
-                        }}
-                        onCancel={() => setShowAddReadingForm(false)}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-              </>
+              <Card className="shadow-card bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+                      Ready to add a new progesterone reading?
+                    </p>
+                    <Button 
+                      className="bg-gradient-brand"
+                      onClick={() => setShowAddReadingForm(true)}
+                    >
+                      <Activity className="w-4 h-4 mr-2" />
+                      Add New Reading
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Readings List */}
@@ -604,6 +546,47 @@ export default function CycleDetailPage({ params }: PageProps) {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Add Reading Modal */}
+        <AddReadingModal
+          open={showAddReadingForm}
+          onOpenChange={setShowAddReadingForm}
+          cycleDay={getDisplayDay(cycle)}
+          bitchName={cycle.bitch?.name || 'Unknown'}
+          startDate={typeof cycle.startDate === 'string' ? cycle.startDate : cycle.startDate.toISOString().split('T')[0]}
+          isSubmitting={isSubmitting}
+          onSubmit={async (data) => {
+            setIsSubmitting(true);
+            try {
+              // Call the API to add reading
+              const response = await fetch('/api/progesterone-readings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  heatCycleId: cycle.id,
+                  testDate: format(data.testDate, 'yyyy-MM-dd'),
+                  progesteroneLevel: data.level,
+                  unit: 'nanograms',
+                  laboratory: data.laboratory || 'VIDAS',
+                }),
+              });
+              
+              if (response.ok) {
+                // Refetch the cycle data to show new reading
+                await refetch();
+                // Also invalidate the heat cycles list query
+                queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+                setShowAddReadingForm(false);
+              } else {
+                console.error('Failed to add reading');
+              }
+            } catch (error) {
+              console.error('Error adding reading:', error);
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
+        />
       </div>
     </div>
   );
