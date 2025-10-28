@@ -2,6 +2,7 @@
 
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   ActiveCycleCard,
   ProgesteroneTestForm,
@@ -34,6 +35,7 @@ interface PageProps {
 
 export default function CycleDetailPage({ params }: PageProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { id } = use(params);
   const { data: cycle, isLoading, error, refetch } = useHeatCycle(id);
   const [showAddReadingForm, setShowAddReadingForm] = useState(false);
@@ -340,6 +342,8 @@ export default function CycleDetailPage({ params }: PageProps) {
                             if (response.ok) {
                               // Refetch the cycle data to show new reading
                               await refetch();
+                              // Also invalidate the heat cycles list query
+                              queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
                               setShowAddReadingForm(false);
                             } else {
                               console.error('Failed to add reading');

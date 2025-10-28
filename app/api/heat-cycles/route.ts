@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { heatCycles, heatCycleReminders, animals } from '@/lib/db/schema';
+import { heatCycles, heatCycleReminders, animals, heatCycleProgesteroneReadings } from '@/lib/db/schema';
 import { auth } from '@/lib/auth/config';
 import {
   successResponse,
@@ -89,6 +89,22 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
+    // Fetch readings for each cycle
+    const cyclesWithReadings = await Promise.all(
+      cycles.map(async (cycle) => {
+        const readings = await db
+          .select()
+          .from(heatCycleProgesteroneReadings)
+          .where(eq(heatCycleProgesteroneReadings.heatCycleId, cycle.id))
+          .orderBy(desc(heatCycleProgesteroneReadings.day));
+
+        return {
+          ...cycle,
+          readings,
+        };
+      })
+    );
+
     // Get total count
     const [{ count: totalCount }] = await db
       .select({ count: count() })
@@ -96,7 +112,7 @@ export async function GET(request: NextRequest) {
       .where(and(...conditions));
 
     return successResponse({
-      cycles,
+      cycles: cyclesWithReadings,
       total: totalCount,
       page: Math.floor(offset / limit) + 1,
       pageSize: limit,
