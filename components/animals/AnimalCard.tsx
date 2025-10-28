@@ -10,6 +10,7 @@ import Image from "next/image";
 interface AnimalCardProps {
   id: string;
   name: string;
+  registeredName?: string;
   breed?: string;
   sex: string;
   dateOfBirth?: string;
@@ -25,6 +26,7 @@ interface AnimalCardProps {
 export function AnimalCard({
   id,
   name,
+  registeredName,
   breed,
   sex,
   dateOfBirth,
@@ -99,8 +101,13 @@ export function AnimalCard({
           {/* Name and Titles */}
           <div>
             <h3 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors">
-              {name}
+              {registeredName || name}
             </h3>
+            {registeredName && name && (
+              <p className="text-xs text-muted-foreground italic mb-2">
+                Call name: {name}
+              </p>
+            )}
             {titles && titles.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {titles.map((title, index) => (

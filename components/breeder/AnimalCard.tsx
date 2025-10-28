@@ -8,6 +8,7 @@ import Link from "next/link";
 interface AnimalCardProps {
   id: string;
   name: string;
+  registeredName?: string;
   breed: string;
   gender: 'male' | 'female';
   dateOfBirth: Date;
@@ -21,6 +22,7 @@ interface AnimalCardProps {
 export function AnimalCard({
   id,
   name,
+  registeredName,
   breed,
   gender,
   dateOfBirth,
@@ -111,8 +113,13 @@ export function AnimalCard({
         <div className="space-y-4">
           <div className="space-y-1">
             <h3 className="font-semibold text-xl text-foreground group-hover:text-primary transition-colors duration-300" data-testid={`text-animal-name-${id}`}>
-              {name}
+              {registeredName || name}
             </h3>
+            {registeredName && name && (
+              <p className="text-xs text-muted-foreground italic">
+                Call name: {name}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground font-medium">{breed}</p>
           </div>
 

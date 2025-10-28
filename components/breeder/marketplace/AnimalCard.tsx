@@ -13,6 +13,7 @@ interface AnimalCardProps {
   animal: {
     id: string;
     name: string;
+    registeredName?: string;
     breedName?: string;
     sex?: string;
     dateOfBirth?: string;
@@ -141,9 +142,14 @@ export function AnimalCard({ animal, featured = false, onInterested, isPublicVie
           <div className="space-y-2">
             <Link href={detailUrl}>
               <h3 className="text-lg font-bold text-foreground hover:text-primary transition-colors line-clamp-1">
-                {animal.name}
+                {animal.registeredName || animal.name}
               </h3>
             </Link>
+            {animal.registeredName && animal.name && (
+              <p className="text-sm text-muted-foreground italic">
+                Call name: {animal.name}
+              </p>
+            )}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="font-medium">{animal.breedName || 'Unknown Breed'}</span>
               {animal.sex && (

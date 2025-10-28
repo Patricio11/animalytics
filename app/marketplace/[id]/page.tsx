@@ -352,10 +352,19 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                           <div className="font-medium text-foreground">{age}</div>
                         </div>
                       )}
-                      {listing.animal?.name && (
-                        <div>
-                          <div className="text-sm text-muted-foreground">Animal Name</div>
-                          <div className="font-medium text-foreground">{listing.animal.name}</div>
+                      {(listing.animal?.registeredName || listing.animal?.name) && (
+                        <div className="col-span-2">
+                          <div className="text-sm text-muted-foreground">
+                            {listing.animal?.registeredName ? 'Registered Name' : 'Animal Name'}
+                          </div>
+                          <div className="font-bold text-lg text-foreground">
+                            {listing.animal.registeredName || listing.animal.name}
+                          </div>
+                          {listing.animal?.registeredName && listing.animal?.name && (
+                            <div className="text-sm text-muted-foreground italic mt-1">
+                              Call name: {listing.animal.name}
+                            </div>
+                          )}
                         </div>
                       )}
                       {listing.color && (
