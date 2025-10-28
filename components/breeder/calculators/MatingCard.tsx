@@ -13,7 +13,8 @@ import {
   Eye,
   ArrowRight,
   CheckCircle2,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -23,9 +24,10 @@ interface MatingCardProps {
   mating: MatingRecord;
   bitch: Animal;
   dog: Animal;
+  onDelete?: (matingId: string) => void;
 }
 
-export function MatingCard({ mating, bitch, dog }: MatingCardProps) {
+export function MatingCard({ mating, bitch, dog, onDelete }: MatingCardProps) {
   // Convert string/number ratings to numbers
   const progesteroneRating = typeof mating.progesteroneCycleRating === 'number' 
     ? mating.progesteroneCycleRating 
@@ -109,20 +111,36 @@ export function MatingCard({ mating, bitch, dog }: MatingCardProps) {
             </div>
           </div>
 
-          <Badge
-            variant="outline"
-            className={cn(
-              "capitalize font-medium",
-              statusStyle.bg,
-              statusStyle.border,
-              statusStyle.text
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                "capitalize font-medium",
+                statusStyle.bg,
+                statusStyle.border,
+                statusStyle.text
+              )}
+            >
+              <span className="flex items-center gap-1.5">
+                {statusStyle.icon}
+                {mating.status}
+              </span>
+            </Badge>
+            
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onDelete(mating.id);
+                }}
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             )}
-          >
-            <span className="flex items-center gap-1.5">
-              {statusStyle.icon}
-              {mating.status}
-            </span>
-          </Badge>
+          </div>
         </div>
       </CardHeader>
 

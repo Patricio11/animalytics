@@ -8,24 +8,29 @@ import { Input } from "@/components/ui/input";
 import { MatingCard } from "@/components/breeder/calculators/MatingCard";
 import { MatingEmptyState } from "@/components/breeder/calculators/MatingEmptyState";
 import { CreateMatingDialog } from "@/components/breeder/calculators/CreateMatingDialog";
+import { DeleteMatingDialog } from "@/components/breeder/calculators/DeleteMatingDialog";
 import { MatingCardSkeleton } from "@/components/breeder/calculators/MatingCardSkeleton";
 import { Heart, Plus, Search, Filter, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMatings, useCreateMating } from "@/lib/api/queries/matings";
+import { useMatings, useCreateMating, useDeleteMating } from "@/lib/api/queries/matings";
 import { useAnimals } from "@/lib/api/queries/animals";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APIMating, APIAnimal } from "@/lib/api/types";
+import { format } from "date-fns";
 
 export default function MatingCalculatorPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [matingToDelete, setMatingToDelete] = useState<APIMating | null>(null);
 
   // Fetch data from API
   const { data: matingsData, isLoading: matingsLoading, isError: matingsError } = useMatings();
   const { data: animalsData, isLoading: animalsLoading } = useAnimals();
   const createMatingMutation = useCreateMating();
+  const deleteMatingMutation = useDeleteMating();
 
   // Filter matings based on search
   const filteredMatings = useMemo(() => {
@@ -46,6 +51,33 @@ export default function MatingCalculatorPage() {
 
   const handleCreateMating = () => {
     setShowCreateDialog(true);
+  };
+
+  const handleDeleteClick = (mating: APIMating) => {
+    setMatingToDelete(mating);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!matingToDelete) return;
+
+    try {
+      await deleteMatingMutation.mutateAsync(matingToDelete.id);
+
+      toast({
+        title: "Mating deleted",
+        description: "The mating record has been permanently deleted."
+      });
+
+      setDeleteDialogOpen(false);
+      setMatingToDelete(null);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Delete failed",
+        description: "Could not delete the mating record. Please try again."
+      });
+    }
   };
 
   const handleMatingSubmit = async (data: {
@@ -262,6 +294,7 @@ export default function MatingCalculatorPage() {
                           breed: mating.dog?.breed?.name || 'Frozen Semen',
                           photos: [mating.dog?.profileImageUrl || '']
                         } as any}
+                        onDelete={() => handleDeleteClick(mating)}
                       />
                     ))}
                   </div>
@@ -277,6 +310,19 @@ export default function MatingCalculatorPage() {
           onOpenChange={setShowCreateDialog}
           onSubmit={handleMatingSubmit}
           isLoading={createMatingMutation.isPending}
+        />
+
+        {/* Delete Mating Dialog */}
+        <DeleteMatingDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleDeleteConfirm}
+          matingInfo={matingToDelete ? {
+            bitchName: matingToDelete.bitch?.name || 'Unknown',
+            dogName: matingToDelete.dog?.name || matingToDelete.frozenSemenBatch?.batchIdentifier || 'Unknown',
+            matingDate: format(new Date(matingToDelete.matingDate), 'MMMM dd, yyyy')
+          } : undefined}
+          isDeleting={deleteMatingMutation.isPending}
         />
       </div>
     </div>

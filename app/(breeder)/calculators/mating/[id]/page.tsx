@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,23 +20,28 @@ import {
   Clock,
   AlertCircle,
   Calculator,
-  Activity
+  Activity,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ProgesteroneInputForm } from "@/components/breeder/calculators/ProgesteroneInputForm";
 import { MatingDetailSkeleton } from "@/components/breeder/calculators/MatingDetailSkeleton";
-import { useMating } from "@/lib/api/queries/matings";
+import { DeleteMatingDialog } from "@/components/breeder/calculators/DeleteMatingDialog";
+import { useMating, useDeleteMating } from "@/lib/api/queries/matings";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MatingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const { toast } = useToast();
   const [isCalculating, setIsCalculating] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Fetch mating record from API
   const { data: mating, isLoading, isError, refetch: refetchMating } = useMating(id);
+  const deleteMatingMutation = useDeleteMating();
   
   // Fetch progesterone tests for the bitch
   const { data: progTests } = useQuery({
@@ -132,6 +138,26 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
     }
   };
 
+  // Delete mating handler
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteMatingMutation.mutateAsync(id);
+
+      toast({
+        title: "Mating deleted",
+        description: "The mating record has been permanently deleted."
+      });
+
+      router.push('/calculators/mating');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Delete failed",
+        description: "Could not delete the mating record. Please try again."
+      });
+    }
+  };
+
   // Rating color logic
   const getRatingColor = (rating: number) => {
     if (rating >= 80) return 'text-chart-3';
@@ -194,20 +220,30 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
               {bitch?.name || 'Unknown'} × {dog?.name || 'Unknown'}
             </p>
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              "capitalize font-medium",
-              statusStyle.bg,
-              statusStyle.border,
-              statusStyle.text
-            )}
-          >
-            <span className="flex items-center gap-1.5">
-              {statusStyle.icon}
-              {mating.status}
-            </span>
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                "capitalize font-medium",
+                statusStyle.bg,
+                statusStyle.border,
+                statusStyle.text
+              )}
+            >
+              <span className="flex items-center gap-1.5">
+                {statusStyle.icon}
+                {mating.status}
+              </span>
+            </Badge>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -444,6 +480,19 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
             <ProgesteroneInputForm />
           </div>
         </div>
+
+        {/* Delete Mating Dialog */}
+        <DeleteMatingDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleDeleteConfirm}
+          matingInfo={{
+            bitchName: bitch?.name || 'Unknown',
+            dogName: dog?.name || 'Unknown',
+            matingDate: format(new Date(mating.matingDate), 'MMMM dd, yyyy')
+          }}
+          isDeleting={deleteMatingMutation.isPending}
+        />
       </div>
     </div>
   );
