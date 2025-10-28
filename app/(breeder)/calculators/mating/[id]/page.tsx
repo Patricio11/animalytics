@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,19 +17,38 @@ import {
   FileText,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Calculator,
+  Activity
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ProgesteroneInputForm } from "@/components/breeder/calculators/ProgesteroneInputForm";
 import { MatingDetailSkeleton } from "@/components/breeder/calculators/MatingDetailSkeleton";
 import { useMating } from "@/lib/api/queries/matings";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MatingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { toast } = useToast();
+  const [isCalculating, setIsCalculating] = useState(false);
 
   // Fetch mating record from API
-  const { data: mating, isLoading, isError } = useMating(id);
+  const { data: mating, isLoading, isError, refetch: refetchMating } = useMating(id);
+  
+  // Fetch progesterone tests for the bitch
+  const { data: progTests } = useQuery({
+    queryKey: ['progesterone-tests', mating?.bitchId],
+    queryFn: async () => {
+      if (!mating?.bitchId) return [];
+      const res = await fetch(`/api/progesterone-tests?animalId=${mating.bitchId}`);
+      if (!res.ok) throw new Error('Failed to fetch progesterone tests');
+      const data = await res.json();
+      return data.tests || [];
+    },
+    enabled: !!mating?.bitchId
+  });
 
   // Loading state
   if (isLoading) {
@@ -60,17 +79,58 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
 
   const bitch = mating.bitch;
   const dog = mating.dog;
+  
+  // Get most recent progesterone test
+  const latestProgTest = progTests?.[0];
 
   // Convert string/number ratings to numbers
-  const progesteroneRating = typeof mating.progesteroneCycleRating === 'number' 
-    ? mating.progesteroneCycleRating 
-    : parseFloat(mating.progesteroneCycleRating || '0');
+  const progesteroneRating = typeof mating.progesteroneRating === 'number' 
+    ? mating.progesteroneRating 
+    : parseFloat(mating.progesteroneRating || '0');
   const conceptionRating = typeof mating.conceptionRating === 'number'
     ? mating.conceptionRating
     : parseFloat(mating.conceptionRating || '0');
   const overallRating = typeof mating.overallRating === 'number'
     ? mating.overallRating
     : parseFloat(mating.overallRating || '0');
+  
+  // Calculate ratings using existing endpoint
+  const handleCalculateRatings = async () => {
+    setIsCalculating(true);
+    try {
+      const response = await fetch(`/api/matings/${id}/calculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          progesterone: latestProgTest ? {
+            laboratory: latestProgTest.laboratory,
+            unit: latestProgTest.unit,
+            breedingMethod: latestProgTest.breedingMethod,
+            readings: latestProgTest.readings
+          } : undefined,
+          conception: mating.calculationData
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to calculate ratings');
+      
+      await refetchMating();
+      
+      toast({
+        title: "Ratings calculated",
+        description: "Overall rating has been updated successfully."
+      });
+    } catch (error) {
+      console.error('Error calculating ratings:', error);
+      toast({
+        variant: "destructive",
+        title: "Calculation failed",
+        description: "Could not calculate ratings. Please try again."
+      });
+    } finally {
+      setIsCalculating(false);
+    }
+  };
 
   // Rating color logic
   const getRatingColor = (rating: number) => {
@@ -296,6 +356,68 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
                     </span>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Progesterone Tests Card */}
+            <Card className="shadow-card border-primary/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Activity className="w-4 h-4 text-primary" />
+                  Progesterone Tests ({progTests?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {progTests && progTests.length > 0 ? (
+                  <div className="space-y-3">
+                    {progTests.map((test: any) => (
+                      <div key={test.id} className="p-3 border border-primary/10 rounded-lg hover:bg-accent transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-medium">
+                              {format(new Date(test.testDate), 'MMM dd, yyyy')}
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {test.readings.length} readings • {test.laboratory} • {test.unit}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-chart-3">
+                              {test.rating || 0}%
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Rating
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>No progesterone tests found for {bitch?.name}</p>
+                    <p className="text-sm mt-1">Add tests using the form below</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Calculate Ratings Button */}
+            <Card className="shadow-card border-primary/10 bg-gradient-subtle">
+              <CardContent className="pt-6">
+                <Button
+                  onClick={handleCalculateRatings}
+                  disabled={isCalculating || (!latestProgTest && !mating.calculationData)}
+                  className="w-full bg-gradient-brand hover:opacity-90 shadow-card"
+                  size="lg"
+                >
+                  <Calculator className="w-5 h-5 mr-2" />
+                  {isCalculating ? 'Calculating...' : 'Calculate Overall Rating'}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center mt-3">
+                  Combines progesterone (40%) and conception (60%) ratings
+                </p>
               </CardContent>
             </Card>
 

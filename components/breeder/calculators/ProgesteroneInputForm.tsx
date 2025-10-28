@@ -49,6 +49,10 @@ export function ProgesteroneInputForm() {
 
   // Database mutation
   const createTestMutation = useCreateProgesteroneTest();
+  
+  // Fetch animals (female only for progesterone tests)
+  const { data: animalsData } = useAnimals();
+  const femaleAnimals = animalsData?.filter((a: any) => a.sex === 'female') || [];
 
   // Convert Zustand readings to local state format
   const initializeReadings = (): DailyReading[] => {
@@ -266,14 +270,14 @@ export function ProgesteroneInputForm() {
     });
   };
 
-  const handleSaveReadings = () => {
-    const filledReadings = readings.filter(r => r.value && r.value.trim() !== '');
+  const handleSaveReadings = async () => {
+    const filledReadings = readings.filter(r => r.value && r.value.trim() !== '' && r.date);
 
     if (filledReadings.length === 0) {
       toast({
         variant: "destructive",
         title: "No readings to save",
-        description: "Please enter at least one progesterone reading."
+        description: "Please enter at least one progesterone reading with a date."
       });
       return;
     }
@@ -288,23 +292,76 @@ export function ProgesteroneInputForm() {
       return;
     }
 
-    // Save all readings to Zustand store
-    filledReadings.forEach(reading => {
-      if (reading.date) {
+    // Check if animal is selected
+    if (!selectedAnimal) {
+      toast({
+        variant: "destructive",
+        title: "No animal selected",
+        description: "Please select an animal to save progesterone tests."
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Prepare readings data
+      const readingsData = filledReadings.map(r => ({
+        day: r.day,
+        value: parseFloat(r.value),
+        date: r.date!.toISOString()
+      }));
+
+      // Save to database
+      await createTestMutation.mutateAsync({
+        animalId: selectedAnimal.id,
+        testDate: filledReadings[0].date!.toISOString().split('T')[0],
+        laboratory,
+        unit,
+        breedingMethod,
+        readings: readingsData,
+        rating: calculationResult?.rating.rating ? (calculationResult.rating.rating * 10) : undefined,
+        alternativeRating: calculationResult?.rating.alternativeRating ? (calculationResult.rating.alternativeRating * 10) : undefined,
+        matchedPattern: calculationResult?.rating.matchedPattern || undefined,
+        confidence: calculationResult?.rating.confidence || undefined,
+        trend: calculationResult?.trend.trend || undefined,
+        averageChange: calculationResult?.trend.averageChange || undefined,
+        isOptimal: calculationResult?.trend.isOptimal !== undefined ? String(calculationResult.trend.isOptimal) : undefined,
+        recommendation: calculationResult?.recommendation.recommendation || undefined,
+        recommendationMessage: calculationResult?.recommendation.message || undefined,
+        suggestedAction: calculationResult?.recommendation.suggestedAction || undefined,
+        breedingWindow: calculationResult?.breedingWindow ? {
+          startDay: calculationResult.breedingWindow.startDay,
+          endDay: calculationResult.breedingWindow.endDay,
+          confidence: calculationResult.breedingWindow.confidence
+        } : undefined,
+      });
+
+      // Also save to Zustand store for local state
+      filledReadings.forEach(reading => {
         progesteroneStore.addReading({
           day: reading.day,
           value: parseFloat(reading.value),
-          date: reading.date
+          date: reading.date!
         });
-      }
-    });
+      });
 
-    setLastSaved(new Date());
+      setLastSaved(new Date());
 
-    toast({
-      title: "Readings saved",
-      description: `Successfully saved ${filledReadings.length} progesterone reading(s).`
-    });
+      toast({
+        title: "Test saved successfully",
+        description: `Saved ${filledReadings.length} progesterone reading(s) to database.`
+      });
+    } catch (error) {
+      console.error('Error saving progesterone test:', error);
+      toast({
+        variant: "destructive",
+        title: "Failed to save",
+        description: "Could not save progesterone test. Please try again."
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -375,6 +432,58 @@ export function ProgesteroneInputForm() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Input Form */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Animal Selection */}
+          <Card className="shadow-card border-primary/10">
+            <CardHeader>
+              <CardTitle className="text-base">Select Bitch</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Choose the bitch for progesterone testing
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Select 
+                value={selectedAnimal?.id || ''} 
+                onValueChange={(value) => {
+                  const animal = femaleAnimals.find((a: any) => a.id === value);
+                  setSelectedAnimal(animal || null);
+                }}
+              >
+                <SelectTrigger className="bg-background border-primary/20">
+                  <SelectValue placeholder="Select a bitch..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {femaleAnimals.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No bitch animals available
+                    </div>
+                  ) : (
+                    femaleAnimals.map((animal: any) => (
+                      <SelectItem key={animal.id} value={animal.id}>
+                        <div className="flex items-center gap-3 py-1">
+                          <Avatar className="w-8 h-8 border-2 border-primary/20">
+                            <AvatarImage src={animal.profileImageUrl || undefined} alt={animal.name} />
+                            <AvatarFallback className="bg-gradient-brand text-white text-xs">
+                              {animal.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="font-medium">{animal.name}</div>
+                            <div className="text-xs text-muted-foreground">{animal.breed?.name || 'Unknown breed'}</div>
+                          </div>
+                          {animal.registeredName && (
+                            <Badge variant="outline" className="text-xs">
+                              Registered
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
           {/* Laboratory Selection */}
           <LabSelectorCard
             laboratory={laboratory}
@@ -447,11 +556,11 @@ export function ProgesteroneInputForm() {
           <div className="flex gap-3">
             <Button
               onClick={handleSaveReadings}
-              disabled={!hasAnyReadings || Object.keys(validationErrors).length > 0}
+              disabled={!hasAnyReadings || Object.keys(validationErrors).length > 0 || isSaving || !selectedAnimal}
               className="flex-1 bg-gradient-brand hover:opacity-90 shadow-card"
             >
               <Save className="w-4 h-4 mr-2" />
-              Save Readings
+              {isSaving ? 'Saving...' : 'Save to Database'}
             </Button>
             <Button
               variant="outline"
