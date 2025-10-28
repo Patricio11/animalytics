@@ -7,6 +7,7 @@ export { CycleComparison } from './CycleComparison';
 export { ProgesteroneListSkeleton, CycleDetailSkeleton } from './ProgesteroneSkeleton';
 export { StartCycleModal } from './StartCycleModal';
 export { AddReadingModal } from './AddReadingModal';
+export { EditReadingModal } from './EditReadingModal';
 export { ProgesteroneInputForm } from './ProgesteroneInputForm';
 export { ProgesteroneRatingDisplay } from './ProgesteroneRatingDisplay';
 export { DailyReadingInput } from './DailyReadingInput';

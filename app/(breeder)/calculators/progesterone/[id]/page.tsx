@@ -9,8 +9,9 @@ import {
   BreedingWindowAlert,
   CycleDetailSkeleton,
   AddReadingModal,
+  EditReadingModal,
 } from '@/components/breeder/calculators';
-import { useHeatCycle } from '@/lib/hooks/useHeatCycles';
+import { useHeatCycle, useUpdateProgesteroneReading, useDeleteProgesteroneReading } from '@/lib/hooks/useHeatCycles';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +26,10 @@ import {
   Download,
   Settings,
   Trash2,
+  Edit,
+  MoreVertical,
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { exportProgesteronePDF } from '@/lib/utils/pdf-export';
 
@@ -39,7 +43,12 @@ export default function CycleDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const { data: cycle, isLoading, error, refetch } = useHeatCycle(id);
   const [showAddReadingForm, setShowAddReadingForm] = useState(false);
+  const [showEditReadingForm, setShowEditReadingForm] = useState(false);
+  const [selectedReading, setSelectedReading] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const updateReading = useUpdateProgesteroneReading();
+  const deleteReading = useDeleteProgesteroneReading();
 
   // Helper function to get display day
   const getDisplayDay = (cycle: any) => {
@@ -362,6 +371,39 @@ export default function CycleDetailPage({ params }: PageProps) {
                                   </p>
                                 )}
                               </div>
+                              {cycle.status === 'active' && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setSelectedReading(reading);
+                                        setShowEditReadingForm(true);
+                                      }}
+                                    >
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      Edit Reading
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={async () => {
+                                        if (confirm('Are you sure you want to delete this reading? This will recalculate ovulation estimates.')) {
+                                          await deleteReading.mutateAsync(reading.id);
+                                          await refetch();
+                                          queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+                                        }
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete Reading
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
                             </div>
                           </CardContent>
                         </Card>
@@ -587,6 +629,32 @@ export default function CycleDetailPage({ params }: PageProps) {
               alert(`Error adding reading: ${error instanceof Error ? error.message : 'Unknown error'}`);
             } finally {
               setIsSubmitting(false);
+            }
+          }}
+        />
+
+        {/* Edit Reading Modal */}
+        <EditReadingModal
+          open={showEditReadingForm}
+          onOpenChange={setShowEditReadingForm}
+          reading={selectedReading}
+          startDate={typeof cycle.startDate === 'string' ? cycle.startDate : cycle.startDate.toISOString().split('T')[0]}
+          isSubmitting={updateReading.isPending}
+          onSubmit={async (data) => {
+            if (selectedReading) {
+              await updateReading.mutateAsync({
+                readingId: selectedReading.id,
+                data: {
+                  testDate: data.testDate,
+                  progesteroneLevel: data.progesteroneLevel,
+                  laboratory: data.laboratory,
+                  notes: data.notes,
+                },
+              });
+              await refetch();
+              queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+              setShowEditReadingForm(false);
+              setSelectedReading(null);
             }
           }}
         />

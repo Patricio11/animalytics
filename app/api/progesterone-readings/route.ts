@@ -113,6 +113,25 @@ export async function POST(request: NextRequest) {
       return errorResponse('Test date is too far from the start date (max 30 days)', 400);
     }
 
+    // Check for duplicate reading on the same day
+    const [existingReading] = await db
+      .select()
+      .from(heatCycleProgesteroneReadings)
+      .where(
+        and(
+          eq(heatCycleProgesteroneReadings.heatCycleId, heatCycleId),
+          eq(heatCycleProgesteroneReadings.day, calculatedDay)
+        )
+      )
+      .limit(1);
+
+    if (existingReading) {
+      return errorResponse(
+        `A reading already exists for Day ${calculatedDay}. Please edit or delete the existing reading first.`,
+        409
+      );
+    }
+
     // Detect phase
     const phaseInfo = detectPhase(progesteroneLevel);
 

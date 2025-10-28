@@ -306,3 +306,87 @@ export function useDeleteHeatCycle() {
     },
   });
 }
+
+/**
+ * Update a progesterone reading
+ */
+export function useUpdateProgesteroneReading() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation<
+    any,
+    Error,
+    { readingId: string; data: { testDate?: string; progesteroneLevel?: number; laboratory?: string; notes?: string } }
+  >({
+    mutationFn: async ({ readingId, data }) => {
+      const response = await fetch(`/api/progesterone-readings/${readingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update reading');
+      }
+
+      const result = await response.json();
+      return result.data || result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+
+      toast({
+        title: 'Reading Updated',
+        description: 'Progesterone reading updated successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
+ * Delete a progesterone reading
+ */
+export function useDeleteProgesteroneReading() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation<any, Error, string>({
+    mutationFn: async (readingId) => {
+      const response = await fetch(`/api/progesterone-readings/${readingId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete reading');
+      }
+
+      const result = await response.json();
+      return result.data || result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+
+      toast({
+        title: 'Reading Deleted',
+        description: 'Progesterone reading deleted successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
