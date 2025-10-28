@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Baby } from "lucide-react";
+import { Baby, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WizardData } from "@/lib/types/wizard";
+import { AddLitterDialog } from "./AddLitterDialog";
 
 interface LitterHistoryStepProps {
   data: WizardData;
@@ -18,16 +19,17 @@ interface LitterHistoryStepProps {
 
 interface Litter {
   id: string;
-  date: string;
-  sireId: string;
-  sireName: string;
-  puppyCount: number;
-  complications: boolean;
+  matingDate: string;
+  sireId: string | null;
+  puppyCount: number | null;
+  hasComplications: boolean;
+  notes: string | null;
 }
 
 export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: LitterHistoryStepProps) {
   const [litters, setLitters] = useState<Litter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const selectedBitch = data?.selectedBitch;
   const bitchId = data?.bitchId;
@@ -44,7 +46,7 @@ export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: Litter
         const response = await fetch(`/api/animals/${bitchId}/litters`);
         if (!response.ok) throw new Error('Failed to fetch litters');
         const result = await response.json();
-        setLitters(result.litters || []);
+        setLitters(result.data || []);
       } catch (error) {
         console.error('Error fetching litters:', error);
         setLitters([]);
@@ -63,6 +65,20 @@ export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: Litter
     onNext();
   };
 
+  const handleLitterAdded = async () => {
+    // Refetch litters after adding
+    if (!bitchId) return;
+    
+    try {
+      const response = await fetch(`/api/animals/${bitchId}/litters`);
+      if (!response.ok) throw new Error('Failed to fetch litters');
+      const result = await response.json();
+      setLitters(result.data || []);
+    } catch (error) {
+      console.error('Error fetching litters:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Card */}
@@ -75,19 +91,19 @@ export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: Litter
             </div>
             <div>
               <div className="text-2xl font-bold text-foreground">
-                {litters.reduce((sum, l) => sum + l.puppyCount, 0)}
+                {litters.reduce((sum, l) => sum + (l.puppyCount || 0), 0)}
               </div>
               <div className="text-sm text-muted-foreground">Total Puppies</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-chart-3">
-                {(litters.reduce((sum, l) => sum + l.puppyCount, 0) / litters.length).toFixed(1)}
+                {litters.length > 0 ? (litters.reduce((sum, l) => sum + (l.puppyCount || 0), 0) / litters.length).toFixed(1) : '0'}
               </div>
               <div className="text-sm text-muted-foreground">Avg Per Litter</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-chart-4">
-                {litters.filter(l => !l.complications).length}
+                {litters.filter(l => !l.hasComplications).length}
               </div>
               <div className="text-sm text-muted-foreground">No Complications</div>
             </div>
@@ -98,8 +114,16 @@ export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: Litter
       {/* Litters Table */}
       {litters.length > 0 ? (
         <Card className="shadow-card border-primary/10">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Previous Litters</CardTitle>
+            <Button
+              size="sm"
+              onClick={() => setShowAddDialog(true)}
+              className="bg-gradient-brand hover:opacity-90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Litter
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -112,21 +136,23 @@ export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: Litter
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-foreground">
-                          {format(new Date(litter.date), "MMM dd, yyyy")}
+                          {format(new Date(litter.matingDate), "MMM dd, yyyy")}
                         </span>
                         <Badge variant="outline" className="text-xs">
-                          {litter.puppyCount} puppies
+                          {litter.puppyCount || 0} puppies
                         </Badge>
-                        {!litter.complications && (
+                        {!litter.hasComplications && (
                           <Badge className="bg-chart-3 text-white text-xs">
                             No Complications
                           </Badge>
                         )}
                       </div>
 
-                      <div className="text-sm text-muted-foreground">
-                        Sire: <span className="font-medium text-foreground">{litter.sireName}</span>
-                      </div>
+                      {litter.notes && (
+                        <div className="text-sm text-muted-foreground">
+                          {litter.notes}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -141,6 +167,13 @@ export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: Litter
             <p className="text-muted-foreground mb-4">
               No previous litters recorded
             </p>
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              className="bg-gradient-brand hover:opacity-90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add First Litter
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -160,6 +193,16 @@ export function LitterHistoryStep({ data, onUpdate, onNext, onPrevious }: Litter
           Continue
         </Button>
       </div>
+
+      {/* Add Litter Dialog */}
+      {bitchId && (
+        <AddLitterDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          bitchId={bitchId}
+          onSuccess={handleLitterAdded}
+        />
+      )}
     </div>
   );
 }

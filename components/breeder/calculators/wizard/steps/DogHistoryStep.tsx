@@ -91,7 +91,21 @@ export function DogHistoryStep({ data, onUpdate, onNext, onPrevious }: DogHistor
                     min="0"
                     max="100"
                     value={previousLitters}
-                    onChange={(e) => setPreviousLitters(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      setPreviousLitters(value);
+                      
+                      // Auto-populate the dropdown in Additional Dog History
+                      if (value === 0) {
+                        setLittersSired('0');
+                      } else if (value >= 1 && value <= 2) {
+                        setLittersSired('1-2');
+                      } else if (value >= 3 && value <= 5) {
+                        setLittersSired('3-5');
+                      } else if (value > 5) {
+                        setLittersSired('5+');
+                      }
+                    }}
                     placeholder="Enter number of litters"
                     className="bg-background border-primary/20"
                   />

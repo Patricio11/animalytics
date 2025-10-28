@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { ConceptionRatingCard } from "@/components/breeder/calculators/ConceptionRatingCard";
 import { ConceptionRatingEmptyState } from "@/components/breeder/calculators/ConceptionRatingEmptyState";
@@ -206,12 +207,34 @@ export default function ConceptionRatingPage() {
 
         {/* Loading State */}
         {loading ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-4" />
-              <p className="text-muted-foreground">Loading ratings...</p>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="shadow-card border-primary/10">
+                <CardHeader className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-4 w-48" />
+                    </div>
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-center py-6">
+                    <Skeleton className="h-32 w-32 rounded-full" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Skeleton className="h-16 rounded-lg" />
+                    <Skeleton className="h-16 rounded-lg" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         ) : ratings.length === 0 ? (
           <ConceptionRatingEmptyState onCreateNew={handleCreateNew} />
         ) : (

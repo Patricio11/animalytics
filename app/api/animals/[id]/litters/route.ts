@@ -4,7 +4,6 @@ import { litters, animals } from '@/lib/db/schema/animals';
 import { auth } from '@/lib/auth/config';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
-import { createId } from '@paralleldrive/cuid2';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -159,7 +158,6 @@ export async function POST(
     const [litter] = await db
       .insert(litters)
       .values({
-        id: createId(),
         bitchId: animalId,
         sireId: validatedData.sireId || null,
         frozenSemenId: validatedData.frozenSemenId || null,

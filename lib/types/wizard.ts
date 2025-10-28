@@ -56,11 +56,11 @@ export interface WizardData extends Record<string, unknown> {
   // Step 4: Litter History
   litters?: Array<{
     id: string;
-    date: string;
-    sireId: string;
-    sireName: string;
-    puppyCount: number;
-    complications: boolean;
+    matingDate: string;
+    sireId: string | null;
+    puppyCount: number | null;
+    hasComplications: boolean;
+    notes: string | null;
   }>;
 
   // Step 5: Dog History
