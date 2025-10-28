@@ -10,8 +10,11 @@ import {
   CycleDetailSkeleton,
   AddReadingModal,
   EditReadingModal,
+  AddBreedingRecordModal,
+  BreedingRecordsList,
 } from '@/components/breeder/calculators';
 import { useHeatCycle, useUpdateProgesteroneReading, useDeleteProgesteroneReading } from '@/lib/hooks/useHeatCycles';
+import { useBreedingRecords, useCreateBreedingRecord, useDeleteBreedingRecord } from '@/lib/hooks/useBreedingRecords';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +31,7 @@ import {
   Trash2,
   Edit,
   MoreVertical,
+  Heart,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, differenceInDays, addDays } from 'date-fns';
@@ -42,13 +46,17 @@ export default function CycleDetailPage({ params }: PageProps) {
   const queryClient = useQueryClient();
   const { id } = use(params);
   const { data: cycle, isLoading, error, refetch } = useHeatCycle(id);
+  const { data: breedingRecords } = useBreedingRecords(id);
   const [showAddReadingForm, setShowAddReadingForm] = useState(false);
   const [showEditReadingForm, setShowEditReadingForm] = useState(false);
+  const [showAddBreedingForm, setShowAddBreedingForm] = useState(false);
   const [selectedReading, setSelectedReading] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const updateReading = useUpdateProgesteroneReading();
   const deleteReading = useDeleteProgesteroneReading();
+  const createBreedingRecord = useCreateBreedingRecord();
+  const deleteBreedingRecord = useDeleteBreedingRecord();
 
   // Helper function to get display day
   const getDisplayDay = (cycle: any) => {
@@ -529,37 +537,37 @@ export default function CycleDetailPage({ params }: PageProps) {
             </div>
 
             {/* Breeding Records */}
-            {cycle.breedingRecords && cycle.breedingRecords.length > 0 && (
-              <Card className="shadow-card bg-surface border-0">
-                <CardHeader>
-                  <CardTitle>Breeding Records</CardTitle>
-                  <CardDescription>
-                    {cycle.breedingRecords.length} breeding(s) recorded
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {cycle.breedingRecords.map((breeding: any) => (
-                      <Card key={breeding.id} className="shadow-card bg-surface-secondary border-0">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">{format(new Date(breeding.breedingDate), 'MMM dd, yyyy')}</p>
-                              <p className="text-sm text-muted-foreground capitalize">
-                                {breeding.breedingMethod?.replace('_', ' ')}
-                              </p>
-                            </div>
-                            <Badge variant="outline">
-                              {breeding.studName || 'Unknown Stud'}
-                            </Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+            <Card className="shadow-card bg-surface border-0">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Breeding Records</CardTitle>
+                    <CardDescription>
+                      {breedingRecords?.length || 0} breeding(s) recorded
+                    </CardDescription>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  {cycle.status === 'active' && (
+                    <Button
+                      onClick={() => setShowAddBreedingForm(true)}
+                      className="bg-gradient-to-r from-pink-500 to-rose-500"
+                      size="sm"
+                    >
+                      <Heart className="w-4 h-4 mr-2" />
+                      Add Breeding
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <BreedingRecordsList
+                  records={breedingRecords || []}
+                  canEdit={cycle.status === 'active'}
+                  onDelete={async (recordId) => {
+                    await deleteBreedingRecord.mutateAsync({ recordId, heatCycleId: id });
+                  }}
+                />
+              </CardContent>
+            </Card>
 
             {/* Danger Zone (for active cycles) */}
             {cycle.status === 'active' && (
@@ -656,6 +664,31 @@ export default function CycleDetailPage({ params }: PageProps) {
               setShowEditReadingForm(false);
               setSelectedReading(null);
             }
+          }}
+        />
+
+        {/* Add Breeding Record Modal */}
+        <AddBreedingRecordModal
+          open={showAddBreedingForm}
+          onOpenChange={setShowAddBreedingForm}
+          heatCycleId={id}
+          startDate={typeof cycle.startDate === 'string' ? cycle.startDate : cycle.startDate.toISOString().split('T')[0]}
+          studs={[]} // TODO: Fetch male animals
+          isSubmitting={createBreedingRecord.isPending}
+          onSubmit={async (data) => {
+            await createBreedingRecord.mutateAsync({
+              heatCycleId: id,
+              breedingDate: data.breedingDate,
+              breedingMethod: data.breedingMethod as any,
+              studId: data.studId,
+              studName: data.studName,
+              studRegistration: data.studRegistration,
+              semenQuality: data.semenQuality,
+              motility: data.motility,
+              concentration: data.concentration,
+              notes: data.notes,
+            });
+            setShowAddBreedingForm(false);
           }}
         />
       </div>

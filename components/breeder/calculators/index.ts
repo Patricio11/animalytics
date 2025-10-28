@@ -8,6 +8,8 @@ export { ProgesteroneListSkeleton, CycleDetailSkeleton } from './ProgesteroneSke
 export { StartCycleModal } from './StartCycleModal';
 export { AddReadingModal } from './AddReadingModal';
 export { EditReadingModal } from './EditReadingModal';
+export { AddBreedingRecordModal } from './AddBreedingRecordModal';
+export { BreedingRecordsList } from './BreedingRecordsList';
 export { ProgesteroneInputForm } from './ProgesteroneInputForm';
 export { ProgesteroneRatingDisplay } from './ProgesteroneRatingDisplay';
 export { DailyReadingInput } from './DailyReadingInput';
