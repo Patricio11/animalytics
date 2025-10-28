@@ -1,6 +1,5 @@
 "use client";
 
-import { ProgesteroneInputForm } from "@/components/breeder/calculators/ProgesteroneInputForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,9 +29,9 @@ export default function CalculatorPage() {
     };
   }) || [];
 
-  // TODO: Implement progesterone tests API
-  // For now, show empty state
+  // TODO: Fetch recent progesterone cycles for preview
   const recentProgesteroneTests: any[] = [];
+  const cyclesLoading = false;
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -272,7 +271,11 @@ export default function CalculatorPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {recentProgesteroneTests.length === 0 ? (
+                  {cyclesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  ) : recentProgesteroneTests.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <p className="text-sm mb-2">No progesterone tests yet</p>
                       <p className="text-xs mb-4">Track progesterone levels to determine optimal breeding timing</p>
@@ -286,23 +289,24 @@ export default function CalculatorPage() {
                     </div>
                   ) : (
                     <>
-                      {recentProgesteroneTests.map((test: any) => (
-                        <Card key={test.id} className="shadow-card bg-surface-secondary border-0">
+                      {recentProgesteroneTests.map((cycle: any) => (
+                        <Card key={cycle.id} className="shadow-card bg-surface-secondary border-0">
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div>
-                                <div className="font-medium text-foreground">{test.bitchName}</div>
+                                <div className="font-medium text-foreground">{cycle.bitch?.name || 'Unknown'}</div>
                                 <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                                   <Calendar className="w-3 h-3" />
-                                  {test.date}
+                                  {format(new Date(cycle.startDate), 'MMM dd, yyyy')}
                                   <Badge variant="outline" className="text-xs">
-                                    {test.readings} readings
+                                    Day {cycle.currentDay}
                                   </Badge>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="text-2xl font-bold text-foreground">{test.rating}%</div>
-                                <div className="text-xs text-muted-foreground">rating</div>
+                                <Badge className={cycle.status === 'active' ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'}>
+                                  {cycle.status}
+                                </Badge>
                               </div>
                             </div>
                           </CardContent>
@@ -324,8 +328,76 @@ export default function CalculatorPage() {
           </TabsContent>
 
           {/* Progesterone Calculator Tab */}
-          <TabsContent value="progesterone">
-            <ProgesteroneInputForm />
+          <TabsContent value="progesterone" className="space-y-6">
+            <Card className="shadow-card bg-surface border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-brand shadow-md">
+                    <Activity className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-xl">Progesterone Tracking</div>
+                    <div className="text-sm font-normal text-muted-foreground mt-1">
+                      Track heat cycles and progesterone levels for optimal breeding timing
+                    </div>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">
+                    The Progesterone Tracking system helps you monitor heat cycles, track progesterone levels, detect ovulation, and identify the optimal breeding window with precision.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+                    <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">📊 Smart Testing Schedule</h4>
+                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                        Automatic recommendations based on progesterone levels
+                      </p>
+                    </div>
+                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">🎯 Breeding Window Detection</h4>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        Real-time alerts when optimal breeding time is detected
+                      </p>
+                    </div>
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">📈 Beautiful Charts</h4>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Visualize progesterone levels with interactive charts
+                      </p>
+                    </div>
+                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                      <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">📄 PDF Reports</h4>
+                      <p className="text-sm text-orange-700 dark:text-orange-300">
+                        Export professional reports for your records
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      className="bg-gradient-brand hover:opacity-90 shadow-card"
+                      asChild
+                    >
+                      <Link href="/calculators/progesterone">
+                        <Activity className="w-4 h-4 mr-2" />
+                        Open Progesterone Tracker
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="hover:bg-primary/10 hover:border-primary shadow-card"
+                      asChild
+                    >
+                      <Link href="/calculators/progesterone">
+                        <FileText className="w-4 h-4 mr-2" />
+                        View All Cycles
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Mating Calculator Tab */}

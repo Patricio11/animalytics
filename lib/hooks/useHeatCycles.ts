@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import type {
   HeatCycleWithDetails,
   CreateHeatCycleRequest,
@@ -7,6 +7,24 @@ import type {
   GetActiveCyclesResponse,
   GetCycleHistoryResponse
 } from '@/lib/types/heat-cycle';
+
+/**
+ * Fetch all heat cycles
+ */
+export function useHeatCycles() {
+  return useQuery<HeatCycleWithDetails[]>({
+    queryKey: ['heat-cycles'],
+    queryFn: async () => {
+      const response = await fetch('/api/heat-cycles');
+      if (!response.ok) {
+        throw new Error('Failed to fetch heat cycles');
+      }
+      const data = await response.json();
+      return data.data || data; // Handle both wrapped and unwrapped responses
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
 
 /**
  * Fetch active heat cycles

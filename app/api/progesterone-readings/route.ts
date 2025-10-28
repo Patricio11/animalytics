@@ -24,6 +24,11 @@ import {
   estimateOvulationDay,
   calculateWhelpingDate
 } from '@/lib/utils/progesterone';
+import { 
+  createBreedingWindowNotification,
+  createDailyTestNotification,
+  createOvulationNotification 
+} from '@/lib/services/notification-creator';
 import type {
   CreateProgesteroneReadingRequest,
   CreateProgesteroneReadingResponse
@@ -192,8 +197,47 @@ export async function POST(request: NextRequest) {
           priority: 'urgent',
           channels: ['email', 'sms', 'in_app'],
         });
+
+        // Create in-app notification
+        await createBreedingWindowNotification({
+          userId: session.user.id,
+          bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
+          day,
+          progesteroneLevel,
+          heatCycleId,
+          breedingMethod: heatCycle.breedingMethod,
+        });
       } catch (breedingReminderError) {
         console.error('Error creating breeding reminder:', breedingReminderError);
+      }
+    }
+
+    // Create daily test notification if levels are rising (>10 ng/mL)
+    if (progesteroneLevel >= 10 && nextTest.days === 1) {
+      try {
+        await createDailyTestNotification({
+          userId: session.user.id,
+          bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
+          day,
+          lastLevel: progesteroneLevel,
+          heatCycleId,
+        });
+      } catch (error) {
+        console.error('Error creating daily test notification:', error);
+      }
+    }
+
+    // Create ovulation notification if detected
+    if (phaseInfo.phase === 'Ovulation' && updatedCycle.estimatedOvulationDay === day) {
+      try {
+        await createOvulationNotification({
+          userId: session.user.id,
+          bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
+          day,
+          heatCycleId,
+        });
+      } catch (error) {
+        console.error('Error creating ovulation notification:', error);
       }
     }
 

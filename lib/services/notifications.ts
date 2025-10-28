@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { progesteroneReminders, users, breederProfiles, kycVerifications } from '@/lib/db/schema';
+import { heatCycleReminders, users, breederProfiles, kycVerifications } from '@/lib/db/schema';
 import { eq, and, lte, isNull } from 'drizzle-orm';
 import {
   sendProgesteroneReminderEmail,
@@ -218,21 +218,21 @@ export async function processPendingReminders(): Promise<{
     // Get all unsent reminders that are due today or earlier
     const dueReminders = await db
       .select({
-        id: progesteroneReminders.id,
-        heatCycleId: progesteroneReminders.heatCycleId,
-        breederId: progesteroneReminders.breederId,
-        reminderType: progesteroneReminders.reminderType,
-        dueDate: progesteroneReminders.dueDate,
-        title: progesteroneReminders.title,
-        message: progesteroneReminders.message,
-        channels: progesteroneReminders.channels,
-        priority: progesteroneReminders.priority,
+        id: heatCycleReminders.id,
+        heatCycleId: heatCycleReminders.heatCycleId,
+        breederId: heatCycleReminders.breederId,
+        reminderType: heatCycleReminders.reminderType,
+        dueDate: heatCycleReminders.dueDate,
+        title: heatCycleReminders.title,
+        message: heatCycleReminders.message,
+        channels: heatCycleReminders.channels,
+        priority: heatCycleReminders.priority,
       })
-      .from(progesteroneReminders)
+      .from(heatCycleReminders)
       .where(
         and(
-          lte(progesteroneReminders.dueDate, today),
-          eq(progesteroneReminders.sent, false)
+          lte(heatCycleReminders.dueDate, today),
+          eq(heatCycleReminders.sent, false)
         )
       );
 
@@ -286,12 +286,12 @@ export async function processPendingReminders(): Promise<{
 
         // Mark reminder as sent
         await db
-          .update(progesteroneReminders)
+          .update(heatCycleReminders)
           .set({
             sent: true,
             sentAt: new Date(),
           })
-          .where(eq(progesteroneReminders.id, reminder.id));
+          .where(eq(heatCycleReminders.id, reminder.id));
 
         successful++;
         console.log(`✅ Reminder ${reminder.id} sent successfully`);
@@ -326,12 +326,12 @@ export async function processPendingReminders(): Promise<{
 export async function markReminderAsRead(reminderId: string): Promise<boolean> {
   try {
     await db
-      .update(progesteroneReminders)
+      .update(heatCycleReminders)
       .set({
         sent: true,
         sentAt: new Date(),
       })
-      .where(eq(progesteroneReminders.id, reminderId));
+      .where(eq(heatCycleReminders.id, reminderId));
 
     return true;
   } catch (error) {
@@ -351,14 +351,14 @@ export async function getUnreadReminders(breederId: string): Promise<any[]> {
   try {
     const reminders = await db
       .select()
-      .from(progesteroneReminders)
+      .from(heatCycleReminders)
       .where(
         and(
-          eq(progesteroneReminders.breederId, breederId),
-          eq(progesteroneReminders.sent, false)
+          eq(heatCycleReminders.breederId, breederId),
+          eq(heatCycleReminders.sent, false)
         )
       )
-      .orderBy(progesteroneReminders.dueDate);
+      .orderBy(heatCycleReminders.dueDate);
 
     return reminders;
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, User, Wallet, BadgeCheck, Settings, LogOut, ChevronRight } from "lucide-react";
+import { User, Wallet, BadgeCheck, Settings, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -14,13 +14,12 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { NotificationBell } from "@/components/notifications";
 import { useAuth, useRole } from "@/lib/auth/client";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export function Header() {
-  const [notificationCount] = useState(3); // TODO: Replace with real notification count
   const { user, signOut, isLoading } = useAuth();
   const { role, isBreeder } = useRole();
   const router = useRouter();
@@ -46,35 +45,7 @@ export function Header() {
 
       <div className="flex items-center gap-3">
         {/* Notifications Bell */}
-        {/* TODO: Functional Notifications */}
-        {/* <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative hover-elevate">
-              <Bell className="h-5 w-5" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-brand rounded-full flex items-center justify-center shadow-elevated">
-                  <span className="text-xs text-white font-medium">{notificationCount}</span>
-                </span>
-              )}
-              <span className="sr-only">Notifications</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-80 shadow-elevated" align="end" forceMount>
-            <DropdownMenuLabel className="flex items-center justify-between">
-              <span className="font-semibold">Notifications</span>
-              <Badge variant="secondary" className="ml-auto">
-                {notificationCount}
-              </Badge>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className="max-h-[400px] overflow-y-auto">
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                <Bell className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                <p>No new notifications</p>
-              </div>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu> */}
+        <NotificationBell />
 
         {/* User Profile Menu */}
         <DropdownMenu>
