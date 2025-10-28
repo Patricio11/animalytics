@@ -93,7 +93,9 @@ export function useHeatCycle(cycleId: string) {
       if (!response.ok) {
         throw new Error('Failed to fetch heat cycle');
       }
-      return response.json();
+      const result = await response.json();
+      // API returns { success: true, data: {...} }
+      return result.data || result;
     },
     enabled: !!cycleId,
     staleTime: 1000 * 60 * 2, // 2 minutes
