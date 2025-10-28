@@ -232,6 +232,44 @@ export function useCompleteHeatCycle() {
 }
 
 /**
+ * Cancel a heat cycle
+ */
+export function useCancelHeatCycle() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation<void, Error, string>({
+    mutationFn: async (cycleId) => {
+      const response = await fetch(`/api/heat-cycles/${cycleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to cancel heat cycle');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+
+      toast({
+        title: 'Heat Cycle Cancelled',
+        description: 'Cycle has been marked as cancelled',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
  * Delete a heat cycle
  */
 export function useDeleteHeatCycle() {

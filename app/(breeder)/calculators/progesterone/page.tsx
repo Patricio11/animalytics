@@ -6,7 +6,7 @@ import {
   HeatCycleStartCard, 
   ActiveCycleCard,
 } from '@/components/breeder/calculators';
-import { useHeatCycles, useCreateHeatCycle } from '@/lib/hooks/useHeatCycles';
+import { useHeatCycles, useCreateHeatCycle, useCancelHeatCycle, useDeleteHeatCycle } from '@/lib/hooks/useHeatCycles';
 import { useAnimals } from '@/lib/api/queries/animals';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -35,14 +35,22 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
+import { ConfirmCancelModal } from '@/components/ui/confirm-cancel-modal';
 import { format, differenceInDays } from 'date-fns';
 
 export default function ProgesteronePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('active');
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedCycle, setSelectedCycle] = useState<any>(null);
+  
   const { data: heatCyclesData, isLoading } = useHeatCycles();
   const { data: animalsData } = useAnimals();
   const createCycle = useCreateHeatCycle();
+  const cancelCycle = useCancelHeatCycle();
+  const deleteCycle = useDeleteHeatCycle();
 
   // Separate cycles by status
   const activeCycles = heatCyclesData?.filter((c: any) => c.status === 'active') || [];
@@ -262,8 +270,8 @@ export default function ProgesteronePage() {
                                   <DropdownMenuItem 
                                     className="text-amber-600"
                                     onClick={() => {
-                                      // TODO: Implement cancel cycle
-                                      alert('Cancel cycle functionality coming soon');
+                                      setSelectedCycle(cycle);
+                                      setCancelModalOpen(true);
                                     }}
                                   >
                                     <XCircle className="w-4 h-4 mr-2" />
@@ -272,10 +280,8 @@ export default function ProgesteronePage() {
                                   <DropdownMenuItem 
                                     className="text-destructive"
                                     onClick={() => {
-                                      // TODO: Implement delete cycle
-                                      if (confirm('Are you sure you want to delete this cycle? This action cannot be undone.')) {
-                                        alert('Delete cycle functionality coming soon');
-                                      }
+                                      setSelectedCycle(cycle);
+                                      setDeleteModalOpen(true);
                                     }}
                                   >
                                     <Trash2 className="w-4 h-4 mr-2" />
@@ -426,6 +432,38 @@ export default function ProgesteronePage() {
           </>
         )}
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      <ConfirmCancelModal
+        open={cancelModalOpen}
+        onOpenChange={setCancelModalOpen}
+        onConfirm={async () => {
+          if (selectedCycle) {
+            await cancelCycle.mutateAsync(selectedCycle.id);
+            setCancelModalOpen(false);
+            setSelectedCycle(null);
+          }
+        }}
+        itemName={selectedCycle?.bitch?.name}
+        isLoading={cancelCycle.isPending}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        onConfirm={async () => {
+          if (selectedCycle) {
+            await deleteCycle.mutateAsync(selectedCycle.id);
+            setDeleteModalOpen(false);
+            setSelectedCycle(null);
+          }
+        }}
+        title="Delete Heat Cycle"
+        description={`Are you sure you want to permanently delete the heat cycle for "${selectedCycle?.bitch?.name}"? This will delete all progesterone readings, breeding records, and reminders associated with this cycle. This action cannot be undone.`}
+        itemName={selectedCycle?.bitch?.name}
+        isLoading={deleteCycle.isPending}
+      />
     </div>
   );
 }
