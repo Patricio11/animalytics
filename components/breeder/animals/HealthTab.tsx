@@ -201,13 +201,43 @@ export function HealthTab({ animalId, animalName }: HealthTabProps) {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between mb-4">
-          <TabsList className="grid grid-cols-6 w-full max-w-3xl">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="vaccinations">Vaccinations</TabsTrigger>
-            <TabsTrigger value="medications">Medications</TabsTrigger>
-            <TabsTrigger value="certificates">Certificates</TabsTrigger>
-            <TabsTrigger value="appointments">Appointments</TabsTrigger>
-            <TabsTrigger value="veterinary">Veterinary</TabsTrigger>
+          <TabsList className="grid grid-cols-6 w-full max-w-3xl gap-2 bg-muted/50 p-2">
+            <TabsTrigger 
+              value="overview"
+              className="data-[state=active]:bg-gradient-brand data-[state=active]:text-white"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="vaccinations"
+              className="data-[state=active]:bg-gradient-brand data-[state=active]:text-white"
+            >
+              Vaccinations
+            </TabsTrigger>
+            <TabsTrigger 
+              value="medications"
+              className="data-[state=active]:bg-gradient-brand data-[state=active]:text-white"
+            >
+              Medications
+            </TabsTrigger>
+            <TabsTrigger 
+              value="certificates"
+              className="data-[state=active]:bg-gradient-brand data-[state=active]:text-white"
+            >
+              Certificates
+            </TabsTrigger>
+            <TabsTrigger 
+              value="appointments"
+              className="data-[state=active]:bg-gradient-brand data-[state=active]:text-white"
+            >
+              Appointments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="veterinary"
+              className="data-[state=active]:bg-gradient-brand data-[state=active]:text-white"
+            >
+              Veterinary
+            </TabsTrigger>
           </TabsList>
           
           <Button onClick={() => setShowAddRecord(true)} className="ml-4">
