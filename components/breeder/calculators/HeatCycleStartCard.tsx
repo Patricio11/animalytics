@@ -15,7 +15,7 @@ import { format, addDays } from "date-fns";
 
 interface HeatCycleStartCardProps {
   animals: any[];
-  onStartCycle: (data: { bitchId: string; startDate: Date; breedingMethod: string }) => void;
+  onStartCycle: (data: { bitchId: string; startDate: string; breedingMethod: string }) => void;
   isLoading?: boolean;
 }
 
@@ -31,7 +31,7 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
     if (selectedBitch && startDate) {
       onStartCycle({
         bitchId: selectedBitch,
-        startDate: new Date(startDate),
+        startDate: startDate, // Keep as YYYY-MM-DD string
         breedingMethod
       });
     }

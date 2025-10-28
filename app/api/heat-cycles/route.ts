@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { heatCyclesTable, progesteroneReminders, animals } from '@/lib/db/schema';
+import { heatCycles, heatCycleReminders, animals } from '@/lib/db/schema';
 import { auth } from '@/lib/auth/config';
 import {
   successResponse,
@@ -10,7 +10,7 @@ import {
   validationErrorResponse,
   serverErrorResponse,
 } from '@/lib/api/response';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, count } from 'drizzle-orm';
 import { addDays } from 'date-fns';
 import { z } from 'zod';
 import type { 
@@ -48,32 +48,32 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     // Build query conditions
-    const conditions = [eq(heatCyclesTable.breederId, session.user.id)];
+    const conditions = [eq(heatCycles.breederId, session.user.id)];
     
     if (status) {
-      conditions.push(eq(heatCyclesTable.status, status));
+      conditions.push(eq(heatCycles.status, status));
     }
     if (bitchId) {
-      conditions.push(eq(heatCyclesTable.bitchId, bitchId));
+      conditions.push(eq(heatCycles.bitchId, bitchId));
     }
 
     // Fetch heat cycles with bitch details
     const cycles = await db
       .select({
-        id: heatCyclesTable.id,
-        breederId: heatCyclesTable.breederId,
-        bitchId: heatCyclesTable.bitchId,
-        startDate: heatCyclesTable.startDate,
-        endDate: heatCyclesTable.endDate,
-        currentDay: heatCyclesTable.currentDay,
-        status: heatCyclesTable.status,
-        breedingMethod: heatCyclesTable.breedingMethod,
-        estimatedOvulationDay: heatCyclesTable.estimatedOvulationDay,
-        estimatedOvulationDate: heatCyclesTable.estimatedOvulationDate,
-        estimatedWhelpingDate: heatCyclesTable.estimatedWhelpingDate,
-        notes: heatCyclesTable.notes,
-        createdAt: heatCyclesTable.createdAt,
-        updatedAt: heatCyclesTable.updatedAt,
+        id: heatCycles.id,
+        breederId: heatCycles.breederId,
+        bitchId: heatCycles.bitchId,
+        startDate: heatCycles.startDate,
+        endDate: heatCycles.endDate,
+        currentDay: heatCycles.currentDay,
+        status: heatCycles.status,
+        breedingMethod: heatCycles.breedingMethod,
+        estimatedOvulationDay: heatCycles.estimatedOvulationDay,
+        estimatedOvulationDate: heatCycles.estimatedOvulationDate,
+        estimatedWhelpingDate: heatCycles.estimatedWhelpingDate,
+        notes: heatCycles.notes,
+        createdAt: heatCycles.createdAt,
+        updatedAt: heatCycles.updatedAt,
         bitch: {
           id: animals.id,
           name: animals.name,
@@ -82,22 +82,22 @@ export async function GET(request: NextRequest) {
           registeredName: animals.registeredName,
         },
       })
-      .from(heatCyclesTable)
-      .leftJoin(animals, eq(heatCyclesTable.bitchId, animals.id))
+      .from(heatCycles)
+      .leftJoin(animals, eq(heatCycles.bitchId, animals.id))
       .where(and(...conditions))
-      .orderBy(desc(heatCyclesTable.startDate))
+      .orderBy(desc(heatCycles.startDate))
       .limit(limit)
       .offset(offset);
 
     // Get total count
-    const [{ count }] = await db
-      .select({ count: db.$count(heatCyclesTable.id) })
-      .from(heatCyclesTable)
+    const [{ count: totalCount }] = await db
+      .select({ count: count() })
+      .from(heatCycles)
       .where(and(...conditions));
 
     return successResponse({
       cycles,
-      total: count,
+      total: totalCount,
       page: Math.floor(offset / limit) + 1,
       pageSize: limit,
     });
@@ -155,12 +155,12 @@ export async function POST(request: NextRequest) {
 
     // Check for existing active cycle for this bitch
     const [existingCycle] = await db
-      .select({ id: heatCyclesTable.id })
-      .from(heatCyclesTable)
+      .select({ id: heatCycles.id })
+      .from(heatCycles)
       .where(
         and(
-          eq(heatCyclesTable.bitchId, bitchId),
-          eq(heatCyclesTable.status, 'active')
+          eq(heatCycles.bitchId, bitchId),
+          eq(heatCycles.status, 'active')
         )
       )
       .limit(1);
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
 
     // Create heat cycle
     const [heatCycle] = await db
-      .insert(heatCyclesTable)
+      .insert(heatCycles)
       .values({
         breederId: session.user.id,
         bitchId,
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
 
     // Create Day 5 reminder
     try {
-      await db.insert(progesteroneReminders).values({
+      await db.insert(heatCycleReminders).values({
         heatCycleId: heatCycle.id,
         breederId: session.user.id,
         reminderType: 'test_due',

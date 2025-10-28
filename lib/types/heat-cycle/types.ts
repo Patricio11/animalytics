@@ -2,7 +2,7 @@
 export type HeatCycleStatus = 'active' | 'completed' | 'cancelled';
 export type BreedingMethod = 'natural_ai' | 'frozen';
 export type ProgesteroneUnit = 'nanograms' | 'nanomoles';
-export type Laboratory = 'VIDAS' | 'IDEXX';
+export type Laboratory = 'VIDAS' | 'IDEXX' | 'IMMULITE' | 'RIA' | 'ELISA' | 'OTHER';
 
 export interface HeatCycle {
   id: string;

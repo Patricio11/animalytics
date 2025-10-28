@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { 
-  heatCyclesTable, 
+  heatCycles, 
   heatCycleProgesteroneReadings, 
-  progesteroneReminders 
+  heatCycleReminders 
 } from '@/lib/db/schema';
 import { auth } from '@/lib/auth/config';
 import {
@@ -81,11 +81,11 @@ export async function POST(request: NextRequest) {
     // Verify the heat cycle belongs to the breeder
     const [heatCycle] = await db
       .select()
-      .from(heatCyclesTable)
+      .from(heatCycles)
       .where(
         and(
-          eq(heatCyclesTable.id, heatCycleId),
-          eq(heatCyclesTable.breederId, session.user.id)
+          eq(heatCycles.id, heatCycleId),
+          eq(heatCycles.breederId, session.user.id)
         )
       )
       .limit(1);
@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
       .insert(heatCycleProgesteroneReadings)
       .values({
         heatCycleId,
+        breederId: session.user.id,
         day,
         testDate,
         progesteroneLevel: progesteroneLevel.toString(),
@@ -152,7 +153,7 @@ export async function POST(request: NextRequest) {
 
     // Update heat cycle with estimates and current day
     const [updatedCycle] = await db
-      .update(heatCyclesTable)
+      .update(heatCycles)
       .set({
         currentDay: day,
         estimatedOvulationDay: estimatedOvulationDay || undefined,
@@ -160,7 +161,7 @@ export async function POST(request: NextRequest) {
         estimatedWhelpingDate: estimatedWhelpingDate?.toISOString().split('T')[0],
         updatedAt: new Date(),
       })
-      .where(eq(heatCyclesTable.id, heatCycleId))
+      .where(eq(heatCycles.id, heatCycleId))
       .returning();
 
     // Check if breeding window is open
@@ -168,7 +169,7 @@ export async function POST(request: NextRequest) {
 
     // Create reminder for next test
     try {
-      await db.insert(progesteroneReminders).values({
+      await db.insert(heatCycleReminders).values({
         heatCycleId,
         breederId: session.user.id,
         reminderType: nextTest.days === 1 ? 'daily_test' : 'test_due',
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
     // If breeding window is open, create breeding window reminder
     if (breedingWindowOpen && progesteroneLevel >= 15 && progesteroneLevel < 25) {
       try {
-        await db.insert(progesteroneReminders).values({
+        await db.insert(heatCycleReminders).values({
           heatCycleId,
           breederId: session.user.id,
           reminderType: 'breeding_window',

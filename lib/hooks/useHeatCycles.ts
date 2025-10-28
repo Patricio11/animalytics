@@ -19,8 +19,9 @@ export function useHeatCycles() {
       if (!response.ok) {
         throw new Error('Failed to fetch heat cycles');
       }
-      const data = await response.json();
-      return data.data || data; // Handle both wrapped and unwrapped responses
+      const result = await response.json();
+      // API returns { success: true, data: { cycles, total, page, pageSize } }
+      return result.data?.cycles || result.data || result;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -119,16 +120,23 @@ export function useCreateHeatCycle() {
         throw new Error(error.error || 'Failed to create heat cycle');
       }
 
-      return response.json();
+      const result = await response.json();
+      // API returns { success: true, data: { heatCycle, firstReminderDate } }
+      return result.data || result;
     },
     onSuccess: (data) => {
       // Invalidate and refetch active cycles
       queryClient.invalidateQueries({ queryKey: ['heat-cycles', 'active'] });
-      queryClient.invalidateQueries({ queryKey: ['heat-cycles', 'bitch', data.heatCycle.bitchId] });
+      queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+      if (data.heatCycle?.bitchId) {
+        queryClient.invalidateQueries({ queryKey: ['heat-cycles', 'bitch', data.heatCycle.bitchId] });
+      }
 
       toast({
         title: 'Heat Cycle Started',
-        description: `First progesterone test due on ${data.firstReminderDate.toLocaleDateString()}`,
+        description: data.firstReminderDate 
+          ? `First progesterone test due on ${new Date(data.firstReminderDate).toLocaleDateString()}`
+          : 'Heat cycle tracking started successfully',
       });
     },
     onError: (error) => {
