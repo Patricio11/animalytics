@@ -85,7 +85,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-surface shadow-card">
-      <SidebarContent className="bg-surface">
+      <SidebarContent className="bg-surface [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors">
         <div className="p-4 group-data-[collapsible=icon]:p-2 border-b border-primary/10">
           <Link href="/" className="flex items-center justify-start group-data-[collapsible=icon]:justify-center hover:opacity-90 transition-all duration-200">
             <div className="w-40 h-auto flex items-center justify-start group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 overflow-hidden">
