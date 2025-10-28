@@ -185,17 +185,15 @@ export async function POST(request: NextRequest) {
       return errorResponse('This bitch already has an active heat cycle', 409);
     }
 
-    // Calculate current day based on start date
-    const currentDay = differenceInDays(new Date(), new Date(startDate)) + 1;
-
     // Create heat cycle
+    // Always start at Day 1 - currentDay will update when readings are added
     const [heatCycle] = await db
       .insert(heatCycles)
       .values({
         breederId: session.user.id,
         bitchId,
         startDate,
-        currentDay: Math.max(1, currentDay), // At least Day 1
+        currentDay: 1, // Always start at Day 1
         status: 'active',
         breedingMethod,
       })
