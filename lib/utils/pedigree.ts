@@ -37,8 +37,13 @@ async function fetchManualEntries(animalId: string): Promise<Map<string, Pedigre
     .from(manualPedigreeEntries)
     .where(eq(manualPedigreeEntries.animalId, animalId));
 
+  console.log(`🔍 Fetched ${entries.length} manual pedigree entries for animal ${animalId}:`, 
+    entries.map(e => ({ position: e.position, name: e.name }))
+  );
+
   const manualNodes = new Map<string, PedigreeNode>();
 
+  // First pass: Create all nodes
   for (const entry of entries) {
     manualNodes.set(entry.position, {
       id: entry.id,
@@ -56,6 +61,22 @@ async function fetchManualEntries(animalId: string): Promise<Map<string, Pedigre
     });
   }
 
+  // Second pass: Link children to parents
+  for (const [position, node] of manualNodes.entries()) {
+    const damPosition = `${position}.dam`;
+    const sirePosition = `${position}.sire`;
+    
+    if (manualNodes.has(damPosition)) {
+      node.dam = manualNodes.get(damPosition)!;
+      console.log(`🔗 Linked ${damPosition} to ${position}`);
+    }
+    
+    if (manualNodes.has(sirePosition)) {
+      node.sire = manualNodes.get(sirePosition)!;
+      console.log(`🔗 Linked ${sirePosition} to ${position}`);
+    }
+  }
+
   return manualNodes;
 }
 
@@ -67,6 +88,7 @@ async function fetchManualEntries(animalId: string): Promise<Map<string, Pedigre
  * @param maxGens - Maximum generations to fetch
  * @param rootAnimalId - Root animal ID (for fetching manual entries)
  * @param currentPath - Current path in tree (e.g., 'dam', 'dam.sire')
+ * @param manualEntriesMap - Pre-fetched manual entries map (passed through recursion)
  * @returns Pedigree node with nested parents
  */
 export async function fetchPedigree(
@@ -74,14 +96,15 @@ export async function fetchPedigree(
   depth = 0,
   maxGens = 4,
   rootAnimalId?: string,
-  currentPath = ''
+  currentPath = '',
+  manualEntriesMap?: Map<string, PedigreeNode>
 ): Promise<PedigreeNode | null> {
   if (!nodeId || depth >= maxGens) return null;
 
-  // Fetch manual entries for root animal
-  const manualEntries = rootAnimalId && depth === 0 
+  // Fetch manual entries for root animal only once at the start
+  const manualEntries = manualEntriesMap || (rootAnimalId && depth === 0 
     ? await fetchManualEntries(rootAnimalId) 
-    : new Map<string, PedigreeNode>();
+    : new Map<string, PedigreeNode>());
 
   const [animal] = await db
     .select()
@@ -95,12 +118,16 @@ export async function fetchPedigree(
   const damPath = currentPath ? `${currentPath}.dam` : 'dam';
   const sirePath = currentPath ? `${currentPath}.sire` : 'sire';
 
+  console.log(`🔍 Depth ${depth}, checking paths:`, { damPath, sirePath, hasManualDam: manualEntries.has(damPath), hasManualSire: manualEntries.has(sirePath) });
+
   // Fetch dam - check manual entries first, then linked animals
   let dam: PedigreeNode | null = null;
   if (manualEntries.has(damPath)) {
+    console.log(`✅ Found manual dam at ${damPath}:`, manualEntries.get(damPath)?.name);
     dam = manualEntries.get(damPath)!;
   } else if (animal.damId) {
-    dam = await fetchPedigree(animal.damId, depth + 1, maxGens, rootAnimalId, damPath);
+    console.log(`🔄 Recursing for dam: ${animal.damId}`);
+    dam = await fetchPedigree(animal.damId, depth + 1, maxGens, rootAnimalId, damPath, manualEntries);
   } else if (animal.damName && animal.damRegisteredName) {
     // Legacy manual entry from animal table
     dam = {
@@ -122,9 +149,11 @@ export async function fetchPedigree(
   // Fetch sire - check manual entries first, then linked animals
   let sire: PedigreeNode | null = null;
   if (manualEntries.has(sirePath)) {
+    console.log(`✅ Found manual sire at ${sirePath}:`, manualEntries.get(sirePath)?.name);
     sire = manualEntries.get(sirePath)!;
   } else if (animal.sireId) {
-    sire = await fetchPedigree(animal.sireId, depth + 1, maxGens, rootAnimalId, sirePath);
+    console.log(`🔄 Recursing for sire: ${animal.sireId}`);
+    sire = await fetchPedigree(animal.sireId, depth + 1, maxGens, rootAnimalId, sirePath, manualEntries);
   } else if (animal.sireName && animal.sireRegisteredName) {
     // Legacy manual entry from animal table
     sire = {

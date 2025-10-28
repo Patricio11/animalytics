@@ -45,7 +45,7 @@ export default function SignUp() {
     setMounted(true);
   }, []);
 
-  // Redirect if already logged in
+  // Redirect if already logged in.
   useEffect(() => {
     if (mounted && !isPending && session) {
       router.replace('/dashboard');
@@ -94,8 +94,6 @@ export default function SignUp() {
       },
       {
         onSuccess: async () => {
-          console.log('Sign up successful');
-
           // Wait a moment for session to be established
           await new Promise(resolve => setTimeout(resolve, 1000));
 

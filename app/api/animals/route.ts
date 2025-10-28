@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { animals } from '@/lib/db/schema/animals';
+import { animals, manualPedigreeEntries } from '@/lib/db/schema/animals';
 import { auth } from '@/lib/auth/config';
 import {
   successResponse,
@@ -159,6 +159,7 @@ export async function POST(request: NextRequest) {
         notes: validatedData.notes,
         sireId: validatedData.sireId,
         damId: validatedData.damId,
+        // Keep legacy fields for backward compatibility but also create manual entries
         sireName: validatedData.sireName,
         sireRegisteredName: validatedData.sireRegisteredName,
         damName: validatedData.damName,
@@ -166,7 +167,51 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return createdResponse(newAnimal[0], 'Animal created successfully');
+    const createdAnimal = newAnimal[0];
+
+    // Create manual pedigree entries for parents if provided manually
+    // This ensures they appear in the pedigree tree properly
+    if (validatedData.sireName && validatedData.sireRegisteredName && !validatedData.sireId) {
+      console.log('📝 Creating manual pedigree entry for sire:', validatedData.sireName);
+      try {
+        await db.insert(manualPedigreeEntries).values({
+          animalId: createdAnimal.id,
+          userId: session.user.id,
+          position: 'sire',
+          generation: 1,
+          name: validatedData.sireName,
+          registeredName: validatedData.sireRegisteredName,
+          sex: 'male',
+          notes: 'Created during animal registration',
+        });
+        console.log('✅ Manual sire entry created');
+      } catch (error) {
+        console.error('Failed to create manual sire entry:', error);
+        // Don't fail the whole operation
+      }
+    }
+
+    if (validatedData.damName && validatedData.damRegisteredName && !validatedData.damId) {
+      console.log('📝 Creating manual pedigree entry for dam:', validatedData.damName);
+      try {
+        await db.insert(manualPedigreeEntries).values({
+          animalId: createdAnimal.id,
+          userId: session.user.id,
+          position: 'dam',
+          generation: 1,
+          name: validatedData.damName,
+          registeredName: validatedData.damRegisteredName,
+          sex: 'female',
+          notes: 'Created during animal registration',
+        });
+        console.log('✅ Manual dam entry created');
+      } catch (error) {
+        console.error('Failed to create manual dam entry:', error);
+        // Don't fail the whole operation
+      }
+    }
+
+    return createdResponse(createdAnimal, 'Animal created successfully');
   } catch (error) {
     console.error('Error creating animal:', error);
     return serverErrorResponse('Failed to create animal');
