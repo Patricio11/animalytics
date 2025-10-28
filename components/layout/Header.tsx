@@ -17,16 +17,43 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationBell } from "@/components/notifications";
 import { useAuth, useRole } from "@/lib/auth/client";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { useState } from "react";
 
 export function Header() {
   const { user, signOut, isLoading } = useAuth();
   const { role, isBreeder } = useRole();
   const router = useRouter();
+  const { toast } = useToast();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
-    router.push('/auth/signin');
+    if (isSigningOut) return; // Prevent double clicks
+    
+    setIsSigningOut(true);
+    
+    try {
+      await signOut();
+      
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully signed out.",
+      });
+      
+      // Force redirect to sign in page
+      window.location.href = '/auth/signin';
+    } catch (error) {
+      console.error('Sign out error:', error);
+      
+      toast({
+        title: "Error",
+        description: "There was an error signing you out. Please try again.",
+        variant: "destructive",
+      });
+      
+      setIsSigningOut(false);
+    }
   };
 
   // Get user initials for avatar fallback
@@ -134,10 +161,10 @@ export function Header() {
             <DropdownMenuItem
               className="text-destructive hover-elevate cursor-pointer"
               onClick={handleSignOut}
-              disabled={isLoading}
+              disabled={isLoading || isSigningOut}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Sign Out</span>
+              <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -35,16 +35,22 @@ export default function SignUp() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   // Fetch breeds for breed selector
   const { data: allBreeds, isLoading: breedsLoading } = useBreeds();
 
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Redirect if already logged in
   useEffect(() => {
-    if (!isPending && session) {
+    if (mounted && !isPending && session) {
       router.replace('/dashboard');
     }
-  }, [session, isPending, router]);
+  }, [mounted, session, isPending, router]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -80,73 +86,73 @@ export default function SignUp() {
       return;
     }
 
-    try {
-      const signupResult = await authClient.signUp.email({
+    await authClient.signUp.email(
+      {
         email: formData.email,
         password: formData.password,
         name: `${formData.firstName} ${formData.lastName}`,
-        callbackURL: "/dashboard",
-      });
+      },
+      {
+        onSuccess: async () => {
+          console.log('Sign up successful');
 
-      console.log('Signup result:', signupResult);
+          // Wait a moment for session to be established
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Wait a moment for session to be established
-      await new Promise(resolve => setTimeout(resolve, 1000));
+          // Initialize regional settings based on location
+          try {
+            const regionalResponse = await fetch('/api/settings/regional/initialize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+            });
 
-      // Initialize regional settings based on location
-      try {
-        const regionalResponse = await fetch('/api/settings/regional/initialize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', // Important: include session cookies
-        });
+            if (regionalResponse.ok) {
+              const regionalData = await regionalResponse.json();
+              console.log('✅ Regional settings initialized:', regionalData);
+            } else {
+              const errorData = await regionalResponse.json();
+              console.error('Regional settings error:', errorData);
+            }
+          } catch (regionalError) {
+            console.error('Failed to initialize regional settings:', regionalError);
+          }
 
-        console.log('Regional response status:', regionalResponse.status);
+          // Save breed preferences if user is a breeder and selected breeds
+          if (formData.role === "breeder" && selectedBreedIds.length > 0) {
+            try {
+              await fetch('/api/breeders/breed-preferences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ breedIds: selectedBreedIds }),
+              });
+            } catch (prefError) {
+              console.error('Failed to save breed preferences:', prefError);
+            }
+          }
 
-        if (regionalResponse.ok) {
-          const regionalData = await regionalResponse.json();
-          console.log('✅ Regional settings initialized:', regionalData);
-        } else {
-          const errorData = await regionalResponse.json();
-          console.error('Regional settings error:', errorData);
-        }
-      } catch (regionalError) {
-        console.error('Failed to initialize regional settings:', regionalError);
-        // Don't block signup if regional settings fail
-      }
-
-      // Save breed preferences if user is a breeder and selected breeds
-      if (formData.role === "breeder" && selectedBreedIds.length > 0) {
-        try {
-          await fetch('/api/breeders/breed-preferences', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ breedIds: selectedBreedIds }),
+          toast({
+            title: "Welcome to Animalytics!",
+            description: "Your account has been created successfully.",
           });
-        } catch (prefError) {
-          console.error('Failed to save breed preferences:', prefError);
-          // Don't block signup if preferences fail to save
-        }
+
+          // Force redirect to dashboard
+          window.location.href = "/dashboard";
+        },
+        onError: (ctx) => {
+          // Handle error here since onError prevents catch block
+          const errorMessage = "Failed to create account. Please check your information and try again.";
+          
+          setError(errorMessage);
+          toast({
+            title: "Sign Up Failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+        },
       }
-
-      toast({
-        title: "Success",
-        description: "Account created successfully. Regional settings have been configured based on your location.",
-      });
-
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create account. Please try again.";
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    );
   };
 
   const handleGoogleSignUp = async () => {
@@ -169,6 +175,11 @@ export default function SignUp() {
       setIsLoading(false);
     }
   };
+
+  // Show nothing during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex">

@@ -22,44 +22,53 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!isPending && session) {
+    if (mounted && !isPending && session) {
       router.replace('/dashboard');
     }
-  }, [session, isPending, router]);
+  }, [mounted, session, isPending, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    try {
-      await authClient.signIn.email({
+    await authClient.signIn.email(
+      {
         email,
         password,
-        callbackURL: "/dashboard",
-      });
-
-      toast({
-        title: "Success",
-        description: "Signed in successfully",
-      });
-
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Invalid email or password";
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Welcome back!",
+            description: "You have been successfully signed in.",
+          });
+          // Force redirect to dashboard
+          window.location.href = "/dashboard";
+        },
+        onError: (ctx) => {
+          // Handle error here since onError prevents catch block
+          const errorMessage = "Invalid email or password. Please check your credentials and try again.";
+          
+          setError(errorMessage);
+          toast({
+            title: "Sign In Failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+        },
+      }
+    );
   };
 
   const handleGoogleSignIn = async () => {
@@ -72,16 +81,24 @@ export default function SignIn() {
         callbackURL: "/dashboard",
       });
     } catch (err) {
-      const errorMessage = "Google sign-in is not available at the moment";
+      console.error('Google sign in error:', err);
+      const errorMessage = err instanceof Error
+        ? err.message
+        : "Google sign-in is not available at the moment. Please try signing in with email instead.";
       setError(errorMessage);
       toast({
-        title: "Error",
+        title: "Google Sign In Failed",
         description: errorMessage,
         variant: "destructive",
       });
       setIsLoading(false);
     }
   };
+
+  // Show nothing during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex">
