@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { format, formatDistanceToNow, isBefore, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { AddHealthRecordDialog } from "@/components/breeder/animals/AddHealthRecordDialog";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ interface HealthTabProps {
 export function HealthTab({ animalId, animalName }: HealthTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { settings } = useRegionalSettings();
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -56,6 +58,7 @@ export function HealthTab({ animalId, animalName }: HealthTabProps) {
   const vaccinations = records.filter((r: any) => r.recordType === "vaccination");
   const medications = records.filter((r: any) => r.recordType === "medication");
   const checkups = records.filter((r: any) => r.recordType === "checkup");
+  const certificates = records.filter((r: any) => r.certificateUrl);
 
   // Calculate health stats
   const upcomingVaccinations = vaccinations.filter((v: any) => 
@@ -105,6 +108,13 @@ export function HealthTab({ animalId, animalName }: HealthTabProps) {
       case "surgery": return "text-pink-500 bg-pink-500/10";
       default: return "text-gray-500 bg-gray-500/10";
     }
+  };
+
+  const formatCurrency = (cents: number | null, currency: string) => {
+    if (!cents) return '-';
+    const amount = cents / 100;
+    const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency;
+    return `${symbol}${amount.toFixed(2)}`;
   };
 
   if (isLoading) {
@@ -191,10 +201,11 @@ export function HealthTab({ animalId, animalName }: HealthTabProps) {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between mb-4">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+          <TabsList className="grid grid-cols-6 w-full max-w-3xl">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="vaccinations">Vaccinations</TabsTrigger>
             <TabsTrigger value="medications">Medications</TabsTrigger>
+            <TabsTrigger value="certificates">Certificates</TabsTrigger>
             <TabsTrigger value="appointments">Appointments</TabsTrigger>
             <TabsTrigger value="veterinary">Veterinary</TabsTrigger>
           </TabsList>
@@ -271,6 +282,12 @@ export function HealthTab({ animalId, animalName }: HealthTabProps) {
                                 Next due: {format(new Date(record.nextDueDate), "MMM dd, yyyy")}
                               </span>
                             </div>
+                          )}
+                          
+                          {record.cost && (
+                            <p className="text-sm font-medium text-foreground mt-2">
+                              Cost: {formatCurrency(record.cost, record.currency || settings.currency)}
+                            </p>
                           )}
                           
                           {record.certificateUrl && (
@@ -416,6 +433,94 @@ export function HealthTab({ animalId, animalName }: HealthTabProps) {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Health Certificates Tab */}
+        <TabsContent value="certificates" className="space-y-6">
+          <Card className="shadow-card border-primary/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-500" />
+                Health Certificates & Documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {certificates.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-2">No health certificates uploaded</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upload vaccination certificates, lab results, or medical documents
+                  </p>
+                  <Button onClick={() => setShowAddRecord(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Health Record with Certificate
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {certificates.map((cert: any) => {
+                    const Icon = getRecordIcon(cert.recordType);
+                    return (
+                      <Card key={cert.id} className="border-primary/10 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3 mb-3">
+                            <div className={cn("p-2 rounded-lg", getRecordColor(cert.recordType))}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm capitalize mb-1">
+                                {cert.recordType}
+                                {cert.vaccinationType && ` - ${cert.vaccinationType}`}
+                              </h4>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(cert.recordDate), "MMM dd, yyyy")}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {cert.recordType}
+                            </Badge>
+                          </div>
+
+                          {cert.veterinarianName && (
+                            <p className="text-xs text-muted-foreground mb-2">
+                              Dr. {cert.veterinarianName}
+                              {cert.clinicName && ` • ${cert.clinicName}`}
+                            </p>
+                          )}
+
+                          {cert.cost && (
+                            <p className="text-sm font-medium text-foreground mb-3">
+                              Cost: {formatCurrency(cert.cost, cert.currency || settings.currency)}
+                            </p>
+                          )}
+
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => window.open(cert.certificateUrl, '_blank')}
+                            >
+                              <Download className="w-3 h-3 mr-2" />
+                              View Certificate
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteMutation.mutate(cert.id)}
+                            >
+                              <Trash2 className="w-3 h-3 text-destructive" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

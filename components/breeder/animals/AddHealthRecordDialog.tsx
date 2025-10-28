@@ -23,6 +23,7 @@ import {
 import { DocumentUpload } from "@/components/upload";
 import { STORAGE_PATHS } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { Heart, Save, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -41,6 +42,7 @@ export function AddHealthRecordDialog({
 }: AddHealthRecordDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { settings } = useRegionalSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -130,6 +132,7 @@ export function AddHealthRecordDialog({
         diagnosis: formData.diagnosis || undefined,
         treatment: formData.treatment || undefined,
         cost: formData.cost ? parseFloat(formData.cost) * 100 : undefined, // Convert to cents
+        currency: settings.currency, // Use breeder's currency setting
         notes: formData.notes || undefined,
         certificateUrl: formData.certificateUrl || undefined,
       };
@@ -339,15 +342,22 @@ export function AddHealthRecordDialog({
 
           {/* Cost */}
           <div className="space-y-2">
-            <Label htmlFor="cost">Cost (USD)</Label>
-            <Input
-              id="cost"
-              type="number"
-              step="0.01"
-              value={formData.cost}
-              onChange={(e) => updateField("cost", e.target.value)}
-              placeholder="0.00"
-            />
+            <Label htmlFor="cost">Cost ({settings.currency})</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {settings.currency === 'USD' ? '$' : settings.currency === 'EUR' ? '€' : settings.currency === 'GBP' ? '£' : settings.currency}
+              </span>
+              <Input
+                id="cost"
+                type="number"
+                step="0.01"
+                value={formData.cost}
+                onChange={(e) => updateField("cost", e.target.value)}
+                placeholder="0.00"
+                className="pl-8"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Enter the cost in {settings.currency}</p>
           </div>
 
           {/* Certificate Upload */}
