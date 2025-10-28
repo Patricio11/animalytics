@@ -62,7 +62,7 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
           <Alert className="border-amber-500/50 bg-amber-500/10">
             <Info className="h-4 w-4 text-amber-500" />
             <AlertDescription className="ml-2">
-              All your female dogs currently have active heat cycles. You can start a new cycle once an existing cycle is completed or cancelled.
+              No bitches available. Please add a female dog to start tracking heat cycles.
             </AlertDescription>
           </Alert>
         ) : (
@@ -78,28 +78,34 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
                   <SelectValue placeholder="Choose a female dog..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {animals.filter(a => a.sex === 'female').map(animal => (
-                <SelectItem key={animal.id} value={animal.id}>
-                  <div className="flex items-center gap-3 py-1">
-                    <Avatar className="w-8 h-8 border-2 border-primary/20">
-                      <AvatarImage src={animal.profilePhotoUrl} alt={animal.name} />
-                      <AvatarFallback className="bg-gradient-brand text-white text-xs">
-                        {animal.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="font-medium">{animal.name}</div>
-                      <div className="text-xs text-muted-foreground">{animal.breed}</div>
+                  {animals.filter(a => a.sex === 'female').length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No bitches available
                     </div>
-                    {animal.registeredName && (
-                      <Badge variant="outline" className="text-xs">
-                        Registered
-                      </Badge>
-                    )}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
+                  ) : (
+                    animals.filter(a => a.sex === 'female').map(animal => (
+                      <SelectItem key={animal.id} value={animal.id}>
+                        <div className="flex items-center gap-3 py-1">
+                          <Avatar className="w-8 h-8 border-2 border-primary/20">
+                            <AvatarImage src={animal.profilePhotoUrl} alt={animal.name} />
+                            <AvatarFallback className="bg-gradient-brand text-white text-xs">
+                              {animal.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="font-medium">{animal.name}</div>
+                            <div className="text-xs text-muted-foreground">{animal.breed}</div>
+                          </div>
+                          {animal.registeredName && (
+                            <Badge variant="outline" className="text-xs">
+                              Registered
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
           </Select>
           {selectedAnimal && (
             <div className="p-3 bg-chart-3/10 border border-chart-3/20 rounded-lg flex items-center gap-3">
