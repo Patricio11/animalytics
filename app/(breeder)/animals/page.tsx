@@ -63,11 +63,12 @@ export default function Animals() {
         const imageUrl = profilePhoto?.fileUrl || 
                          animal.photos?.[0]?.fileUrl || 
                          animal.profileImageUrl ||
-                         "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face";
+                         undefined; // No placeholder URL - let the card handle it
         
         return {
           id: animal.id,
           name: animal.name,
+          registeredName: animal.registeredName,
           breed: animal.breed?.name || "Unknown",
           gender: animal.sex as "male" | "female",
           dateOfBirth: animal.dateOfBirth ? new Date(animal.dateOfBirth) : new Date(),

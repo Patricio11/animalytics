@@ -5,6 +5,7 @@ export interface APIAnimal {
   id: string;
   userId: string;
   name: string;
+  registeredName: string | null;
   breedId: string | null;
   sex: 'male' | 'female';
   dateOfBirth: string | null;

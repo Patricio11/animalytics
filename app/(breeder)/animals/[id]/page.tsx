@@ -287,8 +287,8 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                         </div>
                       </>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Eye className="w-16 h-16 text-primary/40" />
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+                        <Eye className="w-16 h-16 text-muted-foreground/30" />
                       </div>
                     )}
                   </div>
