@@ -15,7 +15,7 @@ import {
   serverErrorResponse,
 } from '@/lib/api/response';
 import { eq, and } from 'drizzle-orm';
-import { addDays } from 'date-fns';
+import { addDays, differenceInDays } from 'date-fns';
 import { z } from 'zod';
 import {
   detectPhase,
@@ -40,11 +40,11 @@ import type {
 
 const createReadingSchema = z.object({
   heatCycleId: z.string().uuid('Invalid heat cycle ID'),
-  day: z.number().int().min(1).max(30),
+  day: z.number().int().min(1).max(30).optional(), // Optional - will be auto-calculated if not provided
   testDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
   progesteroneLevel: z.number().min(0).max(50),
   unit: z.enum(['nanograms', 'nanomoles']).optional(),
-  laboratory: z.enum(['VIDAS', 'IDEXX']).optional(),
+  laboratory: z.enum(['VIDAS', 'IDEXX', 'IMMULITE', 'RIA', 'ELISA', 'OTHER']).optional(),
   notes: z.string().optional(),
 });
 
@@ -98,6 +98,21 @@ export async function POST(request: NextRequest) {
       return errorResponse('Cannot add readings to inactive heat cycle', 400);
     }
 
+    // Auto-calculate day if not provided
+    // Day = difference between test date and start date + 1
+    const calculatedDay: number = day ?? (() => {
+      const daysDiff = differenceInDays(new Date(testDate), new Date(heatCycle.startDate));
+      return daysDiff + 1;
+    })();
+    
+    // Validate calculated day
+    if (calculatedDay < 1) {
+      return errorResponse('Test date cannot be before the heat cycle start date', 400);
+    }
+    if (calculatedDay > 30) {
+      return errorResponse('Test date is too far from the start date (max 30 days)', 400);
+    }
+
     // Detect phase
     const phaseInfo = detectPhase(progesteroneLevel);
 
@@ -110,7 +125,7 @@ export async function POST(request: NextRequest) {
       .values({
         heatCycleId,
         breederId: session.user.id,
-        day,
+        day: calculatedDay,
         testDate,
         progesteroneLevel: progesteroneLevel.toString(),
         unit,
@@ -155,7 +170,7 @@ export async function POST(request: NextRequest) {
     const [updatedCycle] = await db
       .update(heatCycles)
       .set({
-        currentDay: day,
+        currentDay: calculatedDay,
         estimatedOvulationDay: estimatedOvulationDay || undefined,
         estimatedOvulationDate: estimatedOvulationDate?.toISOString().split('T')[0],
         estimatedWhelpingDate: estimatedWhelpingDate?.toISOString().split('T')[0],
@@ -175,7 +190,7 @@ export async function POST(request: NextRequest) {
         reminderType: nextTest.days === 1 ? 'daily_test' : 'test_due',
         dueDate: nextTest.date.toISOString().split('T')[0],
         dueTime: '09:00:00',
-        title: `Day ${day + nextTest.days} Progesterone Test Due`,
+        title: `Day ${calculatedDay + nextTest.days} Progesterone Test Due`,
         message: nextTest.reason,
         priority: nextTest.days === 1 ? 'high' : 'normal',
         channels: ['email', 'in_app'],
@@ -194,7 +209,7 @@ export async function POST(request: NextRequest) {
           dueDate: new Date().toISOString().split('T')[0],
           dueTime: new Date().toISOString().split('T')[1].substring(0, 8),
           title: 'Breeding Window Open!',
-          message: `Optimal breeding time detected for Day ${day}. Progesterone level: ${progesteroneLevel} ng/mL`,
+          message: `Optimal breeding time detected for Day ${calculatedDay}. Progesterone level: ${progesteroneLevel} ng/mL`,
           priority: 'urgent',
           channels: ['email', 'sms', 'in_app'],
         });
@@ -203,7 +218,7 @@ export async function POST(request: NextRequest) {
         await createBreedingWindowNotification({
           userId: session.user.id,
           bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
-          day,
+          day: calculatedDay,
           progesteroneLevel,
           heatCycleId,
           breedingMethod: heatCycle.breedingMethod,
@@ -219,7 +234,7 @@ export async function POST(request: NextRequest) {
         await createDailyTestNotification({
           userId: session.user.id,
           bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
-          day,
+          day: calculatedDay,
           lastLevel: progesteroneLevel,
           heatCycleId,
         });
@@ -229,12 +244,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create ovulation notification if detected
-    if (phaseInfo.phase === 'Ovulation' && updatedCycle.estimatedOvulationDay === day) {
+    if (phaseInfo.phase === 'Ovulation' && updatedCycle.estimatedOvulationDay === calculatedDay) {
       try {
         await createOvulationNotification({
           userId: session.user.id,
           bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
-          day,
+          day: calculatedDay,
           heatCycleId,
         });
       } catch (error) {
