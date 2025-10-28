@@ -176,9 +176,13 @@ export default function SignUp() {
     }
   };
 
-  // Show nothing during SSR to prevent hydration mismatch
+  // Show consistent loading state during SSR and initial client render
   if (!mounted) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
   }
 
   return (
