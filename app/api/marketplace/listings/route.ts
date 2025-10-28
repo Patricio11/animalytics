@@ -10,12 +10,9 @@ import { eq, and, desc } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('=== CREATE LISTING API CALLED ===');
-    
     const session = await auth.api.getSession({ headers: request.headers });
     
     if (!session) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
