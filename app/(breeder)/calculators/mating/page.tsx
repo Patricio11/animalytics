@@ -277,7 +277,7 @@ export default function MatingCalculatorPage() {
                           matingDate: mating.matingDate,
                           progesteroneLevel: 0,
                           status: mating.status as any,
-                          progesteroneCycleRating: mating.progesteroneCycleRating || 0,
+                          progesteroneCycleRating: mating.progesteroneRating || 0,
                           conceptionRating: mating.conceptionRating || 0,
                           overallRating: mating.overallRating || 0,
                           createdAt: typeof mating.createdAt === 'string' ? mating.createdAt : mating.createdAt.toISOString(),

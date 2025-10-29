@@ -58,7 +58,7 @@ export interface APIMating {
   actualWhelping: string | null;
   status: 'planned' | 'confirmed' | 'resulted_in_litter' | 'no_pregnancy';
   notes: string | null;
-  progesteroneCycleRating: number | null;
+  progesteroneRating: number | null;
   conceptionRating: number | null;
   overallRating: number | null;
   createdAt: Date;

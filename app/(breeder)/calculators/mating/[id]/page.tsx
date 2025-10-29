@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { ProgesteroneInputForm } from "@/components/breeder/calculators/ProgesteroneInputForm";
 import { MatingDetailSkeleton } from "@/components/breeder/calculators/MatingDetailSkeleton";
 import { DeleteMatingDialog } from "@/components/breeder/calculators/DeleteMatingDialog";
-import { useMating, useDeleteMating } from "@/lib/api/queries/matings";
+import { useMating, useDeleteMating, useCalculateMating } from "@/lib/api/queries/matings";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,12 +36,12 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
   const { id } = use(params);
   const router = useRouter();
   const { toast } = useToast();
-  const [isCalculating, setIsCalculating] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Fetch mating record from API
   const { data: mating, isLoading, isError, refetch: refetchMating } = useMating(id);
   const deleteMatingMutation = useDeleteMating();
+  const calculateMatingMutation = useCalculateMating();
   
   // Fetch progesterone tests for the bitch
   const { data: progTests } = useQuery({
@@ -100,14 +100,12 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
     ? mating.overallRating
     : parseFloat(mating.overallRating || '0');
   
-  // Calculate ratings using existing endpoint
+  // Calculate ratings using mutation hook
   const handleCalculateRatings = async () => {
-    setIsCalculating(true);
     try {
-      const response = await fetch(`/api/matings/${id}/calculate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      await calculateMatingMutation.mutateAsync({
+        id,
+        data: {
           progesterone: latestProgTest ? {
             laboratory: latestProgTest.laboratory,
             unit: latestProgTest.unit,
@@ -115,12 +113,8 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
             readings: latestProgTest.readings
           } : undefined,
           conception: mating.calculationData
-        })
+        }
       });
-      
-      if (!response.ok) throw new Error('Failed to calculate ratings');
-      
-      await refetchMating();
       
       toast({
         title: "Ratings calculated",
@@ -133,8 +127,6 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
         title: "Calculation failed",
         description: "Could not calculate ratings. Please try again."
       });
-    } finally {
-      setIsCalculating(false);
     }
   };
 
@@ -444,12 +436,12 @@ export default function MatingDetailPage({ params }: { params: Promise<{ id: str
               <CardContent className="pt-6">
                 <Button
                   onClick={handleCalculateRatings}
-                  disabled={isCalculating || (!latestProgTest && !mating.calculationData)}
+                  disabled={calculateMatingMutation.isPending || (!latestProgTest && !mating.calculationData)}
                   className="w-full bg-gradient-brand hover:opacity-90 shadow-card"
                   size="lg"
                 >
                   <Calculator className="w-5 h-5 mr-2" />
-                  {isCalculating ? 'Calculating...' : 'Calculate Overall Rating'}
+                  {calculateMatingMutation.isPending ? 'Calculating...' : 'Calculate Overall Rating'}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center mt-3">
                   Combines progesterone (40%) and conception (60%) ratings
