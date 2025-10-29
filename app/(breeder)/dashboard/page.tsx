@@ -81,22 +81,37 @@ export default function Dashboard() {
     };
   }) || [];
 
-  // Transform upcoming tasks - keep full task data for edit functionality, limit to 4
-  const upcomingTasks = stats?.upcomingTasks.slice(0, 4).map((task: APITask) => ({
-    ...task, // Keep all original task data
-    id: task.id,
-    title: task.title || `${task.type} task`,
-    description: task.notes || "",
-    dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
-    date: task.dueDate || new Date().toISOString(),
-    priority: task.priority as "high" | "medium" | "low",
-    category: task.type as "health" | "breeding" | "feeding",
-    animalName: task.animal?.name || "N/A",
-    animalId: task.animalId,
-    completed: !!task.completedAt,
-    notes: task.notes || "",
-    type: task.type, // Ensure type is included
-  })) || [];
+  // Helper to check if task is progesterone test
+  const isProgesteroneTask = (task: any) => {
+    try {
+      const taskData = typeof task.taskData === 'string' 
+        ? JSON.parse(task.taskData) 
+        : task.taskData;
+      return taskData?.eventType === 'progesterone_test';
+    } catch {
+      return false;
+    }
+  };
+
+  // Transform upcoming tasks - exclude progesterone tasks (they have their own widget), limit to 4
+  const upcomingTasks = stats?.upcomingTasks
+    .filter((task: APITask) => !isProgesteroneTask(task))
+    .slice(0, 4)
+    .map((task: APITask) => ({
+      ...task, // Keep all original task data
+      id: task.id,
+      title: task.title || `${task.type} task`,
+      description: task.notes || "",
+      dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
+      date: task.dueDate || new Date().toISOString(),
+      priority: task.priority as "high" | "medium" | "low",
+      category: task.type as "health" | "breeding" | "feeding",
+      animalName: task.animal?.name || "N/A",
+      animalId: task.animalId,
+      completed: !!task.completedAt,
+      notes: task.notes || "",
+      type: task.type, // Ensure type is included
+    })) || [];
 
   return (
     <div className="min-h-screen bg-surface-secondary">
