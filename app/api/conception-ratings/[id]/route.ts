@@ -11,7 +11,7 @@ import { eq, and } from 'drizzle-orm';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session
@@ -25,7 +25,7 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    const matingId = params.id;
+    const { id: matingId } = await params;
 
     // Check if mating exists and belongs to user
     const mating = await db.query.matings.findFirst({

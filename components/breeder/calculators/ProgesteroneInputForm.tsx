@@ -521,11 +521,11 @@ export function ProgesteroneInputForm() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {readings.map((reading) => {
+              {readings.map((reading, index) => {
                 const validation = validateReading(reading.value, reading.day);
                 return (
                   <DailyReadingInput
-                    key={reading.day}
+                    key={`day-${reading.day}-${index}`}
                     day={reading.day}
                     value={reading.value}
                     date={reading.date}

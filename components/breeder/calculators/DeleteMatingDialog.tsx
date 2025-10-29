@@ -41,24 +41,26 @@ export function DeleteMatingDialog({
             </div>
             <AlertDialogTitle className="text-xl">Delete Mating Record</AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="text-base space-y-3">
-            {matingInfo ? (
-              <>
-                <p>
-                  Are you sure you want to delete the mating record between{" "}
-                  <span className="font-semibold text-foreground">{matingInfo.bitchName}</span> and{" "}
-                  <span className="font-semibold text-foreground">{matingInfo.dogName}</span>?
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Mating Date: {matingInfo.matingDate}
-                </p>
-              </>
-            ) : (
-              <p>Are you sure you want to delete this mating record?</p>
-            )}
-            <p className="text-destructive font-medium">
-              This action cannot be undone. All associated data including ratings and notes will be permanently deleted.
-            </p>
+          <AlertDialogDescription className="text-base">
+            <div className="space-y-3">
+              {matingInfo ? (
+                <>
+                  <div>
+                    Are you sure you want to delete the mating record between{" "}
+                    <span className="font-semibold text-foreground">{matingInfo.bitchName}</span> and{" "}
+                    <span className="font-semibold text-foreground">{matingInfo.dogName}</span>?
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Mating Date: {matingInfo.matingDate}
+                  </div>
+                </>
+              ) : (
+                <div>Are you sure you want to delete this mating record?</div>
+              )}
+              <div className="text-destructive font-medium">
+                This action cannot be undone. All associated data including ratings and notes will be permanently deleted.
+              </div>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
