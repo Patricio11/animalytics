@@ -21,6 +21,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Activity, AlertCircle, Loader2, TrendingUp, Calendar } from 'lucide-react';
 import { format, addDays, differenceInDays } from 'date-fns';
+import { getPhaseInfo } from '@/lib/utils/progesterone';
 
 interface AddReadingModalProps {
   open: boolean;
@@ -52,76 +53,8 @@ export function AddReadingModal({
     ? differenceInDays(new Date(testDate), new Date(startDate)) + 1
     : cycleDay;
 
-  // Determine phase based on level and provide next action
-  const getPhaseInfo = (level: number, day: number) => {
-    if (level < 1.5) {
-      return {
-        phase: 'Anestrus',
-        color: 'text-gray-600',
-        bg: 'bg-gray-100 dark:bg-gray-900/20',
-        icon: '⚪',
-        description: 'Out of heat - Not yet started',
-        nextAction: 'Retest in 2-3 days',
-      };
-    } else if (level < 4) {
-      return {
-        phase: 'Early Heat',
-        color: 'text-blue-600',
-        bg: 'bg-blue-100 dark:bg-blue-900/20',
-        icon: '🔵',
-        description: 'Baseline established',
-        nextAction: 'Next test in 3 days',
-      };
-    } else if (level < 10) {
-      return {
-        phase: 'LH Surge Approaching',
-        color: 'text-purple-600',
-        bg: 'bg-purple-100 dark:bg-purple-900/20',
-        icon: '🟣',
-        description: 'Progesterone rising',
-        nextAction: 'Test every 2 days',
-      };
-    } else if (level < 15) {
-      return {
-        phase: 'Rising Fast',
-        color: 'text-orange-600',
-        bg: 'bg-orange-100 dark:bg-orange-900/20',
-        icon: '🟠',
-        description: 'Approaching ovulation',
-        nextAction: 'Test daily - Ovulation imminent',
-      };
-    } else if (level < 25) {
-      return {
-        phase: 'Breeding Window - Natural/Fresh AI',
-        color: 'text-green-600',
-        bg: 'bg-green-100 dark:bg-green-900/20',
-        icon: '🟢',
-        description: 'Optimal range for natural breeding or fresh AI',
-        nextAction: 'Test daily - Consider breeding now',
-      };
-    } else if (level < 35) {
-      return {
-        phase: 'Peak - Frozen AI',
-        color: 'text-red-600',
-        bg: 'bg-red-100 dark:bg-red-900/20',
-        icon: '🔴',
-        description: 'Optimal range for frozen semen AI',
-        nextAction: 'Test daily - Breed within 24-48 hours',
-      };
-    } else {
-      return {
-        phase: 'Post-Ovulation',
-        color: 'text-pink-600',
-        bg: 'bg-pink-100 dark:bg-pink-900/20',
-        icon: '🌸',
-        description: 'Past optimal breeding window',
-        nextAction: 'Continue monitoring if breeding occurred',
-      };
-    }
-  };
-
   const level = parseFloat(progesteroneLevel);
-  const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay) : null;
+  const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay, testDate ? new Date(testDate) : undefined) : null;
 
   const handleSubmit = async () => {
     if (testDate && progesteroneLevel) {

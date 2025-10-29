@@ -1,4 +1,4 @@
-import { addDays } from "date-fns";
+import { addDays, format } from "date-fns";
 
 /**
  * Phase information for progesterone levels
@@ -285,4 +285,89 @@ export function formatProgesteroneLevel(
 ): string {
   const unitLabel = unit === 'nanograms' ? 'ng/mL' : 'nmol/L';
   return `${level.toFixed(1)} ${unitLabel}`;
+}
+
+/**
+ * Get detailed phase information with styling and recommendations
+ * Used in modals and forms for progesterone reading entry
+ * @param level - Progesterone level in ng/mL
+ * @param day - Cycle day number
+ * @param testDate - Optional date of the test to calculate next action date
+ */
+export function getPhaseInfo(level: number, day: number, testDate?: Date) {
+  // Helper to format next action with date
+  const formatNextAction = (daysToAdd: number, action: string): string => {
+    if (!testDate) {
+      return action;
+    }
+    const nextDate = addDays(testDate, daysToAdd);
+    const dayName = format(nextDate, 'EEEE'); // e.g., "Friday"
+    const dateStr = format(nextDate, 'MMM dd'); // e.g., "Oct 29"
+    return `${action} (${dayName}, ${dateStr})`;
+  };
+
+  if (level < 1.5) {
+    return {
+      phase: 'Anestrus',
+      color: 'text-gray-600',
+      bg: 'bg-gray-100 dark:bg-gray-900/20',
+      icon: '⚪',
+      description: 'Out of heat - Not yet started',
+      nextAction: formatNextAction(2, 'Retest in 2-3 days'),
+    };
+  } else if (level < 4) {
+    return {
+      phase: 'Early Heat',
+      color: 'text-blue-600',
+      bg: 'bg-blue-100 dark:bg-blue-900/20',
+      icon: '🔵',
+      description: 'Baseline established',
+      nextAction: formatNextAction(3, 'Next test in 3 days'),
+    };
+  } else if (level < 10) {
+    return {
+      phase: 'LH has been reached',
+      color: 'text-purple-600',
+      bg: 'bg-purple-100 dark:bg-purple-900/20',
+      icon: '🟣',
+      description: 'LH has been reached and therefore it is rising',
+      nextAction: formatNextAction(2, 'Test every 2 days'),
+    };
+  } else if (level < 15) {
+    return {
+      phase: 'Rising Fast',
+      color: 'text-orange-600',
+      bg: 'bg-orange-100 dark:bg-orange-900/20',
+      icon: '🟠',
+      description: 'Approaching ovulation',
+      nextAction: formatNextAction(1, 'Test daily - Ovulation imminent'),
+    };
+  } else if (level < 25) {
+    return {
+      phase: 'Breeding Window - Natural/Fresh AI',
+      color: 'text-green-600',
+      bg: 'bg-green-100 dark:bg-green-900/20',
+      icon: '🟢',
+      description: 'Optimal range for natural breeding or fresh AI',
+      nextAction: formatNextAction(1, 'Test daily - Consider breeding now'),
+    };
+  } else if (level < 35) {
+    return {
+      phase: 'Peak - Frozen AI',
+      color: 'text-red-600',
+      bg: 'bg-red-100 dark:bg-red-900/20',
+      icon: '🔴',
+      description: 'Optimal range for frozen semen AI',
+      nextAction: formatNextAction(1, 'Test daily - Breed within 24-48 hours'),
+    };
+  } else {
+    return {
+      phase: 'Post-Ovulation',
+      color: 'text-pink-600',
+      bg: 'bg-pink-100 dark:bg-pink-900/20',
+      icon: '🌸',
+      description: 'Past optimal breeding window',
+      nextAction: testDate ? 'Continue monitoring if breeding occurred' : 'Continue monitoring if breeding occurred',
+    };
+  }
 }
