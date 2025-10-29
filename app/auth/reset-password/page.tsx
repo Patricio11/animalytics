@@ -83,6 +83,8 @@ export default function ResetPassword() {
     }
 
     try {
+      console.log("🔐 Attempting password reset with token:", token);
+      
       // Better Auth password reset
       const response = await fetch("/api/auth/reset-password", {
         method: "POST",
@@ -91,14 +93,21 @@ export default function ResetPassword() {
         },
         body: JSON.stringify({
           token,
-          password,
+          newPassword: password, // Better Auth expects 'newPassword'
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to reset password");
+        console.error("Password reset failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: data.error,
+          message: data.message,
+          fullResponse: data,
+        });
+        throw new Error(data.error || data.message || "Failed to reset password");
       }
 
       setResetSuccess(true);

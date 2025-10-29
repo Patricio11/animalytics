@@ -21,6 +21,12 @@ const getEmailConfig = (): EmailConfig => {
 
   if (isDevelopment) {
     // Mailtrap for testing
+    console.log('📧 Email Config (Development):');
+    console.log('  Host:', process.env.MAILTRAP_HOST || 'sandbox.smtp.mailtrap.io');
+    console.log('  Port:', process.env.MAILTRAP_PORT || '2525');
+    console.log('  User:', process.env.MAILTRAP_USER ? '✓ Set' : '✗ Missing');
+    console.log('  Pass:', process.env.MAILTRAP_PASS ? '✓ Set' : '✗ Missing');
+    
     return {
       host: process.env.MAILTRAP_HOST || 'sandbox.smtp.mailtrap.io',
       port: parseInt(process.env.MAILTRAP_PORT || '2525'),
@@ -181,6 +187,26 @@ export async function sendPasswordResetEmail(
   return sendEmail({
     to,
     subject: '🔐 Reset Your Password - Animalytics',
+    html,
+  });
+}
+
+/**
+ * Send email verification email
+ */
+export async function sendVerificationEmail(
+  to: string,
+  data: {
+    name: string;
+    verificationUrl: string;
+    token: string;
+  }
+): Promise<boolean> {
+  const html = generateVerificationEmailHTML(data);
+  
+  return sendEmail({
+    to,
+    subject: '✉️ Verify Your Email - Animalytics',
     html,
   });
 }
@@ -546,6 +572,149 @@ function generateDailyTestReminderHTML(data: {
     <div class="footer">
       <p>This is an automated reminder from Animalytics</p>
       <p>© ${new Date().getFullYear()} Animalytics. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Generate email verification HTML
+ */
+function generateVerificationEmailHTML(data: {
+  name: string;
+  verificationUrl: string;
+  token: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo {
+      font-size: 36px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+    .title {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1f2937;
+      margin-bottom: 16px;
+    }
+    .message {
+      font-size: 16px;
+      color: #4b5563;
+      margin-bottom: 32px;
+      line-height: 1.8;
+    }
+    .button-container {
+      text-align: center;
+      margin: 32px 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white !important;
+      padding: 16px 40px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: translateY(-2px);
+    }
+    .info-box {
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
+      padding: 16px;
+      margin: 24px 0;
+      border-radius: 4px;
+    }
+    .info-box p {
+      margin: 8px 0;
+      color: #1e40af;
+      font-size: 14px;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .footer p {
+      margin: 8px 0;
+    }
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🐕 Animalytics</div>
+      <div class="title">✉️ Verify Your Email</div>
+    </div>
+    
+    <div class="message">
+      <p>Hi ${data.name},</p>
+      <p>Welcome to Animalytics! Please verify your email address to activate your account and start managing your breeding program.</p>
+    </div>
+    
+    <div class="button-container">
+      <a href="${data.verificationUrl}" class="button">Verify Email Address</a>
+    </div>
+    
+    <div class="info-box">
+      <p><strong>ℹ️ Important:</strong></p>
+      <p>• This link will expire in 24 hours</p>
+      <p>• You must verify your email to access all features</p>
+      <p>• If you didn't create this account, please ignore this email</p>
+    </div>
+    
+    <div class="message">
+      <p><strong>Can't click the button?</strong> Copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; color: #667eea; font-size: 14px;">${data.verificationUrl}</p>
+    </div>
+    
+    <div class="footer">
+      <p>This verification email was sent from your Animalytics account.</p>
+      <p>If you didn't sign up, please <a href="mailto:support@animalytics.com">contact support</a>.</p>
+      <p style="margin-top: 16px;">© ${new Date().getFullYear()} Animalytics. All rights reserved.</p>
     </div>
   </div>
 </body>

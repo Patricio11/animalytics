@@ -86,56 +86,51 @@ export default function SignUp() {
       return;
     }
 
-    await authClient.signUp.email(
+    // First, create the account
+    const signupResult = await authClient.signUp.email(
       {
         email: formData.email,
         password: formData.password,
         name: `${formData.firstName} ${formData.lastName}`,
       },
       {
-        onSuccess: async () => {
-          // Wait a moment for session to be established
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          // Initialize regional settings based on location
+        onSuccess: async (data) => {
+          console.log("✅ Account created successfully");
+          
+          // Now save preferences to database (even though user is unverified)
+          // This is fine - the data is tied to their account
           try {
-            const regionalResponse = await fetch('/api/settings/regional/initialize', {
+            console.log('💾 Saving user preferences to database...');
+            
+            // Save role and breed preferences using email as identifier
+            // We'll use a special endpoint that works for unverified users
+            const response = await fetch('/api/auth/save-signup-preferences', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
+              body: JSON.stringify({
+                email: formData.email,
+                role: formData.role,
+                breedIds: selectedBreedIds,
+              }),
             });
 
-            if (regionalResponse.ok) {
-              const regionalData = await regionalResponse.json();
-              console.log('✅ Regional settings initialized:', regionalData);
+            if (response.ok) {
+              console.log('✅ Preferences saved to database');
             } else {
-              const errorData = await regionalResponse.json();
-              console.error('Regional settings error:', errorData);
+              console.error('Failed to save preferences:', await response.text());
             }
-          } catch (regionalError) {
-            console.error('Failed to initialize regional settings:', regionalError);
+          } catch (error) {
+            console.error('Error saving preferences:', error);
           }
-
-          // Save breed preferences if user is a breeder and selected breeds
-          if (formData.role === "breeder" && selectedBreedIds.length > 0) {
-            try {
-              await fetch('/api/breeders/breed-preferences', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ breedIds: selectedBreedIds }),
-              });
-            } catch (prefError) {
-              console.error('Failed to save breed preferences:', prefError);
-            }
-          }
-
+          
           toast({
-            title: "Welcome to Animalytics!",
-            description: "Your account has been created successfully.",
+            title: "Account Created!",
+            description: "Please check your email to verify your account.",
           });
 
-          // Force redirect to dashboard
-          window.location.href = "/dashboard";
+          // Redirect to verification notice page
+          router.push(`/auth/verify-email-notice?email=${encodeURIComponent(formData.email)}`);
+          setIsLoading(false);
         },
         onError: (ctx) => {
           // Handle error here since onError prevents catch block
