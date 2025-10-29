@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema/users";
+import { sendPasswordResetEmail } from "@/lib/services/email";
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000",
@@ -17,17 +18,19 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Disabled for development testing
-    sendResetPassword: async ({ user, url }) => {
-      // Send password reset email via Mailtrap
-      await fetch(`${process.env.SMTP_HOST}/api/send-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: user.email,
-          subject: 'Reset your password',
-          html: `<p>Click <a href="${url}">here</a> to reset your password.</p>`,
-        }),
-      });
+    sendResetPassword: async ({ user, url, token }) => {
+      // Send password reset email using our email service
+      try {
+        await sendPasswordResetEmail(user.email, {
+          name: user.name || 'User',
+          resetUrl: url,
+          token,
+        });
+        console.log('Password reset email sent to:', user.email);
+      } catch (error) {
+        console.error('Failed to send password reset email:', error);
+        throw error;
+      }
     },
   },
   socialProviders: {

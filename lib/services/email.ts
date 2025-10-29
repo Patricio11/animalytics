@@ -165,6 +165,26 @@ export async function sendDailyTestReminderEmail(
   });
 }
 
+/**
+ * Send password reset email
+ */
+export async function sendPasswordResetEmail(
+  to: string,
+  data: {
+    name: string;
+    resetUrl: string;
+    token: string;
+  }
+): Promise<boolean> {
+  const html = generatePasswordResetEmailHTML(data);
+  
+  return sendEmail({
+    to,
+    subject: '🔐 Reset Your Password - Animalytics',
+    html,
+  });
+}
+
 // ============================================================================
 // EMAIL TEMPLATES
 // ============================================================================
@@ -526,6 +546,163 @@ function generateDailyTestReminderHTML(data: {
     <div class="footer">
       <p>This is an automated reminder from Animalytics</p>
       <p>© ${new Date().getFullYear()} Animalytics. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Generate password reset email HTML
+ */
+function generatePasswordResetEmailHTML(data: {
+  name: string;
+  resetUrl: string;
+  token: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo {
+      font-size: 36px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+    .title {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1f2937;
+      margin-bottom: 16px;
+    }
+    .message {
+      font-size: 16px;
+      color: #4b5563;
+      margin-bottom: 32px;
+      line-height: 1.8;
+    }
+    .button-container {
+      text-align: center;
+      margin: 32px 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white !important;
+      padding: 16px 40px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: translateY(-2px);
+    }
+    .security-notice {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px;
+      margin: 24px 0;
+      border-radius: 4px;
+    }
+    .security-notice p {
+      margin: 8px 0;
+      color: #92400e;
+      font-size: 14px;
+    }
+    .token-box {
+      background: #f3f4f6;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 24px 0;
+      text-align: center;
+    }
+    .token {
+      font-family: 'Courier New', monospace;
+      font-size: 18px;
+      font-weight: bold;
+      color: #1f2937;
+      letter-spacing: 2px;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .footer p {
+      margin: 8px 0;
+    }
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🐕 Animalytics</div>
+      <div class="title">🔐 Reset Your Password</div>
+    </div>
+    
+    <div class="message">
+      <p>Hi ${data.name},</p>
+      <p>We received a request to reset your password for your Animalytics account. Click the button below to create a new password:</p>
+    </div>
+    
+    <div class="button-container">
+      <a href="${data.resetUrl}" class="button">Reset Password</a>
+    </div>
+    
+    <div class="security-notice">
+      <p><strong>⚠️ Security Notice:</strong></p>
+      <p>• This link will expire in 1 hour for your security</p>
+      <p>• If you didn't request this reset, please ignore this email</p>
+      <p>• Never share this link with anyone</p>
+    </div>
+    
+    <div class="message">
+      <p><strong>Can't click the button?</strong> Copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; color: #667eea; font-size: 14px;">${data.resetUrl}</p>
+    </div>
+    
+    <div class="footer">
+      <p>This password reset was requested from your Animalytics account.</p>
+      <p>If you didn't make this request, please <a href="mailto:support@animalytics.com">contact support</a> immediately.</p>
+      <p style="margin-top: 16px;">© ${new Date().getFullYear()} Animalytics. All rights reserved.</p>
     </div>
   </div>
 </body>

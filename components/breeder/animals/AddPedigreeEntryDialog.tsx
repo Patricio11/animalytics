@@ -210,10 +210,27 @@ export function AddPedigreeEntryDialog({
       }
       linkAnimalMutation.mutate();
     } else {
-      if (!manualFormData.name.trim()) {
+      // Validate required fields
+      if (!manualFormData.registeredName.trim()) {
         toast({
           title: "Validation Error",
-          description: "Name is required",
+          description: "Registered Name is required",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!manualFormData.registrationNumber.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Registration Number is required",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!manualFormData.color.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Color is required",
           variant: "destructive",
         });
         return;
@@ -333,38 +350,71 @@ export function AddPedigreeEntryDialog({
 
           {/* Manual Entry Form */}
           <TabsContent value="manual" className="space-y-4 mt-4">
-            {/* Name and Registered Name - Same Row */}
+            {/* Registered Name and Registration Number - Same Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Name - Required */}
+              {/* Registered Name - Required */}
               <div className="space-y-2">
-                <Label htmlFor="name">
-                  Name <span className="text-destructive">*</span>
+                <Label htmlFor="registeredName" className="text-base font-semibold">
+                  Registered Name <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="name"
-                  value={manualFormData.name}
-                  onChange={(e) => updateManualFormData("name", e.target.value)}
-                  placeholder="Enter name"
+                  id="registeredName"
+                  value={manualFormData.registeredName}
+                  onChange={(e) => updateManualFormData("registeredName", e.target.value)}
+                  placeholder="Full registered/official name"
                   className="border-primary/20 focus:border-primary"
                   required
                 />
               </div>
 
-              {/* Registered Name */}
+              {/* Registration Number - Required */}
               <div className="space-y-2">
-                <Label htmlFor="registeredName">Registered Name</Label>
+                <Label htmlFor="registrationNumber" className="text-base font-semibold">
+                  Registration Number <span className="text-destructive">*</span>
+                </Label>
                 <Input
-                  id="registeredName"
-                  value={manualFormData.registeredName}
-                  onChange={(e) => updateManualFormData("registeredName", e.target.value)}
-                  placeholder="Full registered name (optional)"
+                  id="registrationNumber"
+                  value={manualFormData.registrationNumber}
+                  onChange={(e) => updateManualFormData("registrationNumber", e.target.value)}
+                  placeholder="Official registration number"
                   className="border-primary/20 focus:border-primary"
+                  required
                 />
               </div>
             </div>
 
-            {/* Sex and Date of Birth - Same Row */}
+            {/* Call Name and Color - Same Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Call Name */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Call Name</Label>
+                <Input
+                  id="name"
+                  value={manualFormData.name}
+                  onChange={(e) => updateManualFormData("name", e.target.value)}
+                  placeholder="Everyday name"
+                  className="border-primary/20 focus:border-primary"
+                />
+              </div>
+
+              {/* Color - Required */}
+              <div className="space-y-2">
+                <Label htmlFor="color">
+                  Color <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="color"
+                  value={manualFormData.color}
+                  onChange={(e) => updateManualFormData("color", e.target.value)}
+                  placeholder="Coat color"
+                  className="border-primary/20 focus:border-primary"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Sex, Date of Birth, and Microchip - Three Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Sex */}
               <div className="space-y-2">
                 <Label htmlFor="sex">Sex</Label>
@@ -394,42 +444,15 @@ export function AddPedigreeEntryDialog({
                   className="border-primary/20 focus:border-primary"
                 />
               </div>
-            </div>
-
-            {/* Color - Full Row */}
-            <div className="space-y-2">
-              <Label htmlFor="color">Color</Label>
-              <Input
-                id="color"
-                value={manualFormData.color}
-                onChange={(e) => updateManualFormData("color", e.target.value)}
-                placeholder="Enter color"
-                className="border-primary/20 focus:border-primary"
-              />
-            </div>
-
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Registration Number */}
-              <div className="space-y-2">
-                <Label htmlFor="registrationNumber">Registration Number</Label>
-                <Input
-                  id="registrationNumber"
-                  value={manualFormData.registrationNumber}
-                  onChange={(e) => updateManualFormData("registrationNumber", e.target.value)}
-                  placeholder="Enter registration number"
-                  className="border-primary/20 focus:border-primary"
-                />
-              </div>
 
               {/* Microchip Number */}
               <div className="space-y-2">
-                <Label htmlFor="microchipNumber">Microchip Number</Label>
+                <Label htmlFor="microchipNumber">Microchip</Label>
                 <Input
                   id="microchipNumber"
                   value={manualFormData.microchipNumber}
                   onChange={(e) => updateManualFormData("microchipNumber", e.target.value)}
-                  placeholder="Enter microchip number"
+                  placeholder="Microchip number"
                   className="border-primary/20 focus:border-primary"
                 />
               </div>
@@ -450,7 +473,7 @@ export function AddPedigreeEntryDialog({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                This animal will be stored as an external entry and will appear with a special indicator in the pedigree tree.
+                <strong>Note:</strong> Registered Name, Registration Number, and Color are required. This entry will be stored as external pedigree data.
               </AlertDescription>
             </Alert>
           </TabsContent>
@@ -482,7 +505,7 @@ export function AddPedigreeEntryDialog({
             disabled={
               isPending ||
               (mode === "system" && !selectedAnimalId) ||
-              (mode === "manual" && !manualFormData.name.trim())
+              (mode === "manual" && (!manualFormData.registeredName.trim() || !manualFormData.registrationNumber.trim() || !manualFormData.color.trim()))
             }
             className="bg-gradient-brand hover:opacity-90"
           >
