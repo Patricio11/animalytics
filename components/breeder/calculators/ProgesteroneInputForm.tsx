@@ -427,7 +427,7 @@ export function ProgesteroneInputForm() {
         <Alert className="border-chart-3/50 bg-chart-3/10">
           <Info className="h-4 w-4 text-chart-3" />
           <AlertDescription className="ml-2">
-            You have {progesteroneStore.readings.length} saved progesterone reading(s).
+            You have {readings.length} saved progesterone reading(s).
             Continue adding more readings or click Reset to start fresh.
           </AlertDescription>
         </Alert>
