@@ -63,7 +63,7 @@ export function ConceptionRatingWizard({
     const litters = wizardData.litters || [];
     const totalLitters = litters.length;
     const totalPuppies = litters.reduce((sum, l) => sum + (l.puppyCount || 0), 0);
-    const successfulLitters = litters.filter(l => !l.complications).length;
+    const successfulLitters = litters.filter(l => !l.hasComplications).length;
     const averageLitterSize = totalLitters > 0 ? totalPuppies / totalLitters : undefined;
 
     // Transform wizard data to ConceptionInputs format
@@ -150,8 +150,8 @@ export function ConceptionRatingWizard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bitchId: wizardData.bitchId,
-          dogId: wizardData.useFrozenSemen ? null : wizardData.dogId,
-          frozenSemenId: wizardData.useFrozenSemen ? wizardData.frozenSemenId : null,
+          dogId: wizardData.useFrozenSemen ? null : (wizardData.dogId || null),
+          frozenSemenId: wizardData.useFrozenSemen ? (wizardData.frozenSemenId || null) : null,
           matingDate: new Date().toISOString().split('T')[0],
           breedingMethod: wizardData.useFrozenSemen ? 'frozen' : 'natural_ai',
           calculationData: wizardData,

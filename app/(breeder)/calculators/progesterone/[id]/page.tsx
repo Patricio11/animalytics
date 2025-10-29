@@ -15,6 +15,7 @@ import {
 } from '@/components/breeder/calculators';
 import { useHeatCycle, useUpdateProgesteroneReading, useDeleteProgesteroneReading } from '@/lib/hooks/useHeatCycles';
 import { useBreedingRecords, useCreateBreedingRecord, useDeleteBreedingRecord } from '@/lib/hooks/useBreedingRecords';
+import { useAnimals } from '@/lib/api/queries/animals';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,11 +48,15 @@ export default function CycleDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const { data: cycle, isLoading, error, refetch } = useHeatCycle(id);
   const { data: breedingRecords } = useBreedingRecords(id);
+  const { data: animalsData } = useAnimals();
   const [showAddReadingForm, setShowAddReadingForm] = useState(false);
   const [showEditReadingForm, setShowEditReadingForm] = useState(false);
   const [showAddBreedingForm, setShowAddBreedingForm] = useState(false);
   const [selectedReading, setSelectedReading] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Filter for male animals (studs)
+  const maleAnimals = animalsData?.filter((animal: any) => animal.sex === 'male') || [];
   
   const updateReading = useUpdateProgesteroneReading();
   const deleteReading = useDeleteProgesteroneReading();
@@ -673,7 +678,14 @@ export default function CycleDetailPage({ params }: PageProps) {
           onOpenChange={setShowAddBreedingForm}
           heatCycleId={id}
           startDate={typeof cycle.startDate === 'string' ? cycle.startDate : cycle.startDate.toISOString().split('T')[0]}
-          studs={[]} // TODO: Fetch male animals
+          studs={maleAnimals.map((animal: any) => ({
+            id: animal.id,
+            name: animal.name,
+            registeredName: animal.registeredName,
+            breed: animal.breed,
+            profileImageUrl: animal.profileImageUrl,
+            sex: animal.sex
+          }))}
           isSubmitting={createBreedingRecord.isPending}
           onSubmit={async (data) => {
             await createBreedingRecord.mutateAsync({

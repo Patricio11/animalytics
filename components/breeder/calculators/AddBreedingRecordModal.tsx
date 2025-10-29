@@ -22,11 +22,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Heart, AlertCircle, Loader2, Calendar, Info } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
+import { AnimalCombobox, AnimalOption } from '@/components/ui/animal-combobox';
 
 interface Animal {
   id: string;
   name: string;
   registeredName?: string;
+  breed?: { name: string };
+  profileImageUrl?: string;
+  sex?: string;
 }
 
 interface AddBreedingRecordModalProps {
@@ -186,23 +190,18 @@ export function AddBreedingRecordModal({
             {studType === 'own' ? (
               <div className="space-y-2">
                 <Label htmlFor="studId">Select Stud</Label>
-                <Select value={studId} onValueChange={setStudId}>
-                  <SelectTrigger id="studId">
-                    <SelectValue placeholder="Choose a stud..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {studs.map((stud) => (
-                      <SelectItem key={stud.id} value={stud.id}>
-                        {stud.name}
-                        {stud.registeredName && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            ({stud.registeredName})
-                          </span>
-                        )}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AnimalCombobox
+                  animals={studs.map((stud) => ({
+                    id: stud.id,
+                    name: stud.name,
+                    breed: stud.breed?.name || 'Unknown',
+                    profileImageUrl: stud.profileImageUrl,
+                    sex: stud.sex || 'male',
+                  }))}
+                  value={studId}
+                  onValueChange={setStudId}
+                  placeholder="Search for a stud..."
+                />
               </div>
             ) : (
               <div className="space-y-3">
