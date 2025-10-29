@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { TaskCard } from "@/components/breeder/tasks/TaskCard";
 import { TaskDialog } from "@/components/breeder/tasks/TaskDialog";
 import { TaskViewModal } from "@/components/breeder/tasks/TaskViewModal";
@@ -12,12 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby, Loader2, AlertCircle as AlertCircleIcon } from "lucide-react";
+import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby, Loader2, AlertCircle as AlertCircleIcon, Droplet } from "lucide-react";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useCompleteTask } from "@/lib/api/queries/tasks";
 import { useAnimals } from "@/lib/api/queries/animals";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function TasksPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any | undefined>();
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
@@ -34,6 +37,15 @@ export default function TasksPage() {
   // Fetch tasks and animals from API
   const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useTasks();
   const { data: animalsData } = useAnimals();
+
+  // Check for progesterone filter from URL
+  useEffect(() => {
+    const filter = searchParams.get('filter');
+    if (filter === 'progesterone') {
+      setActiveTab('progesterone');
+      setFilterType('event');
+    }
+  }, [searchParams]);
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
@@ -187,16 +199,32 @@ export default function TasksPage() {
     });
   }, [tasksData, filterType, filterPriority, searchQuery]);
 
+  // Helper to check if task is progesterone test
+  const isProgesteroneTask = (task: any) => {
+    try {
+      const taskData = typeof task.taskData === 'string' 
+        ? JSON.parse(task.taskData) 
+        : task.taskData;
+      return taskData?.eventType === 'progesterone_test';
+    } catch {
+      return false;
+    }
+  };
+
   // Categorize tasks by status
   const categorizedTasks = useMemo(() => {
     const now = new Date();
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    // Filter progesterone tasks
+    const progesteroneTasks = filteredTasks.filter((t: any) => isProgesteroneTask(t));
 
     return {
       pending: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) > now),
       overdue: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) <= now),
       dueSoon: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) <= threeDaysFromNow && new Date(t.dueDate) > now),
       completed: filteredTasks.filter((t: any) => t.completedAt),
+      progesterone: progesteroneTasks.filter((t: any) => !t.completedAt),
     };
   }, [filteredTasks]);
 
@@ -369,12 +397,19 @@ export default function TasksPage() {
         </Card>
 
         {/* Main Content */}
-        <Tabs defaultValue="pending" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-surface shadow-card">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5 bg-surface shadow-card">
             <TabsTrigger value="pending" className="text-xs sm:text-sm">
               Pending
               <Badge variant="secondary" className="ml-1 text-xs">
                 {categorizedTasks.pending.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="progesterone" className="text-xs sm:text-sm">
+              <Droplet className="w-3 h-3 mr-1" />
+              Tests
+              <Badge className="ml-1 text-xs bg-gradient-to-r from-pink-500 to-purple-600 text-white border-0">
+                {categorizedTasks.progesterone.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="overdue" className="text-xs sm:text-sm">
@@ -412,7 +447,27 @@ export default function TasksPage() {
               <div className="text-center py-12">
                 <CheckSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">No pending tasks</h3>
-                <p className="text-muted-foreground">Great job! All tasks are completed.</p>
+                <p className="text-muted-foreground">All caught up!</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="progesterone" className="space-y-4">
+            {categorizedTasks.progesterone.map((task: any) => (
+              <TaskCard
+                key={task.id}
+                task={transformTask(task) as any}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleComplete={handleToggleComplete}
+                onView={handleView}
+              />
+            ))}
+            {categorizedTasks.progesterone.length === 0 && (
+              <div className="text-center py-12">
+                <Droplet className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No progesterone tests scheduled</h3>
+                <p className="text-muted-foreground">Start a heat cycle to schedule tests</p>
               </div>
             )}
           </TabsContent>

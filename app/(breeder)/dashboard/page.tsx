@@ -9,6 +9,7 @@ import { TaskCard } from "@/components/breeder/TaskCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { TaskDialog } from "@/components/breeder/tasks/TaskDialog";
 import { TaskViewModal } from "@/components/breeder/tasks/TaskViewModal";
+import { ProgesteroneTasksWidget } from "@/components/breeder/dashboard/ProgesteroneTasksWidget";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
@@ -281,8 +282,11 @@ export default function Dashboard() {
               </section>
             </div>
 
-            {/* Right Column - Tasks */}
+            {/* Right Column - Tasks & Progesterone */}
             <div className="space-y-6">
+              {/* Progesterone Tasks Widget */}
+              <ProgesteroneTasksWidget />
+
               <section>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-foreground">Upcoming Tasks</h2>
