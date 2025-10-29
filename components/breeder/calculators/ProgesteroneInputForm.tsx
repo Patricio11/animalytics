@@ -57,24 +57,28 @@ export function ProgesteroneInputForm() {
   // Convert Zustand readings to local state format
   const initializeReadings = (): DailyReading[] => {
     if (progesteroneStore.readings.length > 0) {
-      // Create array with saved days
-      const savedDays: DailyReading[] = [];
+      // Create array with saved days and deduplicate by day number
+      const dayMap = new Map<number, DailyReading>();
       
       progesteroneStore.readings.forEach(reading => {
         if (reading.day >= 1 && reading.day <= 15) {
-          savedDays.push({
-            day: reading.day as DayNumber,
-            value: reading.value.toString(),
-            date: new Date(reading.date)
-          });
+          // Only keep the first occurrence of each day, or the one with a value
+          const existing = dayMap.get(reading.day);
+          if (!existing || (!existing.value && reading.value)) {
+            dayMap.set(reading.day, {
+              day: reading.day as DayNumber,
+              value: reading.value.toString(),
+              date: new Date(reading.date)
+            });
+          }
         }
       });
 
-      // Sort by day
-      savedDays.sort((a, b) => a.day - b.day);
+      // Convert map to array and sort by day
+      const savedDays = Array.from(dayMap.values()).sort((a, b) => a.day - b.day);
       
       // If no Day 1, add it
-      if (savedDays.length === 0 || savedDays[0].day !== 1) {
+      if (!dayMap.has(1)) {
         savedDays.unshift({ day: 1, value: '', date: undefined });
       }
 
