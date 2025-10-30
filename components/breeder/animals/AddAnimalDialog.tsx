@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCreateAnimal, useAnimals } from "@/lib/api/queries/animals";
 import { useBreedPreferences } from "@/lib/api/queries/breed-preferences";
@@ -133,6 +133,15 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     // Only show preferred breeds
     return allBreeds.filter(breed => preferredBreedIds.includes(breed.id));
   }, [allBreeds, preferredBreedIds, showAllBreeds]);
+  
+  // Auto-select breed if there's only one available
+  useEffect(() => {
+    if (breeds.length === 1 && !formData.breed && open) {
+      // Automatically select the only available breed
+      console.log('Auto-selecting breed:', breeds[0].name);
+      updateFormData("breed", breeds[0].name);
+    }
+  }, [breeds, formData.breed, open]);
   
   // Filter breeds based on search
   const filteredBreeds = useMemo(() => {
