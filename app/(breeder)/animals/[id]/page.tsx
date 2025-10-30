@@ -12,7 +12,7 @@ import { LitterDetailsTab } from "@/components/breeder/animals/LitterDetailsTab"
 import { RemindersTab } from "@/components/breeder/animals/RemindersTab";
 import { PedigreeTab } from "@/components/breeder/animals/PedigreeTab";
 import { HealthTab } from "@/components/breeder/animals/HealthTab";
-import { EditAnimalDialog } from "@/components/breeder/animals/EditAnimalDialog";
+import { EditAnimalDialogMultiStep } from "@/components/breeder/animals/EditAnimalDialogMultiStep";
 import { ProfilePhotoEditor } from "@/components/breeder/animals/ProfilePhotoEditor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -419,16 +419,58 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
             {/* Animal Details Card */}
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-6 space-y-6">
-                <div className="space-y-4">
+                <div className="space-y-3">
+                  {/* Sex Badge */}
                   <div className="flex items-start gap-3">
                     <Badge className="bg-gradient-brand text-white shadow-card">
                       {animal.sex === 'female' ? '♀ Female' : '♂ Male'}
                     </Badge>
                   </div>
 
-                  <h1 className="text-3xl font-bold text-foreground">{animal.name}</h1>
+                  {/* Registered Name (Most Prominent) and Call Name */}
+                  <div>
+                    {/* Registered Name - Bold and Prominent */}
+                    {animal.registeredName && (
+                      <div className="mb-1">
+                        <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Registered Name</div>
+                        <h1 className="text-2xl font-bold text-foreground leading-tight">
+                          {animal.registeredName}
+                        </h1>
+                      </div>
+                    )}
+                    
+                    {/* Call Name - Normal Weight */}
+                    <div className={animal.registeredName ? "mt-2" : ""}>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                        {animal.registeredName ? "Call Name" : "Name"}
+                      </div>
+                      <div className="text-lg font-normal text-foreground">
+                        {animal.name}
+                      </div>
+                    </div>
+                  </div>
 
-                  <div className="text-lg text-muted-foreground">{animal.breed?.name || 'Unknown Breed'}</div>
+                  {/* Breed, Breeder, Owner - Side by Side Grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">Breed</div>
+                      <div className="text-sm font-medium text-foreground">{animal.breed?.name || 'Unknown'}</div>
+                    </div>
+                    
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">Breeder</div>
+                      <div className="text-sm font-medium text-foreground">
+                        {animal.breederName || (animal.breederId ? 'In System' : 'Not Specified')}
+                      </div>
+                    </div>
+                    
+                    <div className="col-span-2">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">Owner</div>
+                      <div className="text-sm font-medium text-foreground">
+                        {animal.ownerName || (animal.ownerId ? 'You' : 'Not Specified')}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <Separator />
@@ -585,26 +627,12 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
         onOpenChange={setLightboxOpen}
       />
 
-      {/* Edit Animal Dialog */}
-      <EditAnimalDialog
+      {/* Edit Animal Dialog - Multi-Step */}
+      <EditAnimalDialogMultiStep
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         animalId={animal.id}
-        animalData={{
-          name: animal.name,
-          sex: animal.sex,
-          breed: animal.breed?.name || '',
-          dateOfBirth: new Date(animal.dateOfBirth),
-          color: animal.color || '',
-          markings: animal.markings || '',
-          weight: animal.weight || '',
-          microchipId: animal.microchipNumber || '',
-          registrationNumber: animal.registrationNumber || '',
-          bloodline: '',
-          description: animal.bio || '',
-          location: '',
-          imageUrl: animal.profileImageUrl || '',
-        }}
+        animalData={animal}
       />
 
       {/* Profile Photo Editor */}
