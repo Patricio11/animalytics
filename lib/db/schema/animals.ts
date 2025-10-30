@@ -102,11 +102,21 @@ export const animals = pgTable('animals', {
   damId: uuid('dam_id'), // Mother - references animals.id (if in system)
   sireId: uuid('sire_id'), // Father - references animals.id (if in system)
   
-  // Manual parent entry (for parents not in system)
-  damName: text('dam_name'),
-  damRegisteredName: text('dam_registered_name'),
-  sireName: text('sire_name'),
-  sireRegisteredName: text('sire_registered_name'),
+  // Note: For manual parent entry (parents not in system), use manualPedigreeEntries table
+  // with position='dam' or position='sire'
+
+  // Breeder information
+  // Note: breederId references user who bred this animal (never changes)
+  breederId: text('breeder_id').references(() => users.id), // If breeder is in system
+  breederName: text('breeder_name'), // If breeder is external (manual entry)
+  breederRegistrationNumber: text('breeder_registration_number'), // Kennel club breeder ID
+  
+  // Owner information
+  // Note: ownerId is current owner (can change when animal is sold)
+  // For ownership history tracking, see separate ownership_history table (to be created)
+  ownerId: text('owner_id').references(() => users.id), // Current owner (if in system)
+  ownerName: text('owner_name'), // If owner is external (manual entry)
+  ownerRegistrationNumber: text('owner_registration_number'), // Owner's registration ID
 
   // Status
   isActive: boolean('is_active').default(true),

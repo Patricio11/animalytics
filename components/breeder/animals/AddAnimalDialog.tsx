@@ -46,6 +46,18 @@ interface AnimalFormData {
   microchipId: string;
   registrationNumber: string;
   
+  // Breeder information
+  breederMode: 'self' | 'select' | 'manual';
+  breederId: string;
+  breederName: string;
+  breederRegistrationNumber: string;
+  
+  // Owner information
+  ownerMode: 'self' | 'select' | 'manual';
+  ownerId: string;
+  ownerName: string;
+  ownerRegistrationNumber: string;
+  
   // Parent selection mode
   sireMode: 'manual' | 'select';
   damMode: 'manual' | 'select';
@@ -88,6 +100,14 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     weight: "",
     microchipId: "",
     registrationNumber: "",
+    breederMode: "self",
+    breederId: "",
+    breederName: "",
+    breederRegistrationNumber: "",
+    ownerMode: "self",
+    ownerId: "",
+    ownerName: "",
+    ownerRegistrationNumber: "",
     sireMode: "manual",
     damMode: "manual",
     sireId: "",
@@ -262,9 +282,27 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         registrationNumber: formData.registrationNumber || undefined,
         bio: formData.description || undefined,
         
+        // Breeder information - send based on mode
+        // Note: breederId will be set to current user ID on backend if mode is 'self'
+        breederMode: formData.breederMode,
+        breederId: formData.breederMode === 'select' ? formData.breederId || undefined : undefined,
+        breederName: formData.breederMode === 'manual' ? formData.breederName || undefined : undefined,
+        breederRegistrationNumber: formData.breederMode === 'manual' ? formData.breederRegistrationNumber || undefined : undefined,
+        
+        // Owner information - send based on mode
+        // Note: ownerId will be set to current user ID on backend if mode is 'self'
+        // When animal is sold, backend will update ownerId and create ownership history entry
+        ownerMode: formData.ownerMode,
+        ownerId: formData.ownerMode === 'select' ? formData.ownerId || undefined : undefined,
+        ownerName: formData.ownerMode === 'manual' ? formData.ownerName || undefined : undefined,
+        ownerRegistrationNumber: formData.ownerMode === 'manual' ? formData.ownerRegistrationNumber || undefined : undefined,
+        
         // Parent information - send based on mode
+        // Note: Backend checks for registrationNumber + registeredName and creates manualPedigreeEntries
         sireId: formData.sireMode === 'select' ? formData.sireId || undefined : undefined,
         damId: formData.damMode === 'select' ? formData.damId || undefined : undefined,
+        
+        // Manual parent data (backend will create manualPedigreeEntries if these are provided)
         sireRegistrationNumber: formData.sireMode === 'manual' ? formData.sireRegistrationNumber || undefined : undefined,
         sireRegisteredName: formData.sireMode === 'manual' ? formData.sireRegisteredName || undefined : undefined,
         damRegistrationNumber: formData.damMode === 'manual' ? formData.damRegistrationNumber || undefined : undefined,
@@ -326,6 +364,14 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         weight: "",
         microchipId: "",
         registrationNumber: "",
+        breederMode: "self",
+        breederId: "",
+        breederName: "",
+        breederRegistrationNumber: "",
+        ownerMode: "self",
+        ownerId: "",
+        ownerName: "",
+        ownerRegistrationNumber: "",
         sireMode: "manual",
         damMode: "manual",
         sireId: "",
@@ -706,6 +752,180 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   />
                 </div>
               </div>
+
+              {/* Breeder Information - Fieldset */}
+              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+                <legend className="text-sm font-semibold px-2 text-primary">Breeder</legend>
+                
+                {/* Mode Selection */}
+                <RadioGroup 
+                  value={formData.breederMode} 
+                  onValueChange={(value: 'self' | 'select' | 'manual') => {
+                    updateFormData("breederMode", value);
+                    // Clear fields when switching modes
+                    if (value === 'self' || value === 'select') {
+                      updateFormData("breederName", "");
+                      updateFormData("breederRegistrationNumber", "");
+                    }
+                    if (value === 'self' || value === 'manual') {
+                      updateFormData("breederId", "");
+                    }
+                  }}
+                  className="mb-4"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="self" id="breeder-self" />
+                      <Label htmlFor="breeder-self" className="font-normal cursor-pointer">
+                        I am the breeder
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="select" id="breeder-select" />
+                      <Label htmlFor="breeder-select" className="font-normal cursor-pointer">
+                        Select from system
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="manual" id="breeder-manual" />
+                      <Label htmlFor="breeder-manual" className="font-normal cursor-pointer">
+                        Enter manually
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+
+                {/* Manual Entry */}
+                {formData.breederMode === 'manual' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="breederName">Breeder Name</Label>
+                      <Input
+                        id="breederName"
+                        value={formData.breederName}
+                        onChange={(e) => updateFormData("breederName", e.target.value)}
+                        placeholder="e.g., John Smith Kennels"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="breederRegistrationNumber">Registration Number</Label>
+                      <Input
+                        id="breederRegistrationNumber"
+                        value={formData.breederRegistrationNumber}
+                        onChange={(e) => updateFormData("breederRegistrationNumber", e.target.value)}
+                        placeholder="e.g., AKC-BREEDER-123"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Select from System - Placeholder for future */}
+                {formData.breederMode === 'select' && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Breeder selection from system will be available soon.
+                    </p>
+                  </div>
+                )}
+
+                {/* Self Mode - Show confirmation */}
+                {formData.breederMode === 'self' && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      ✓ You will be recorded as the breeder of this animal.
+                    </p>
+                  </div>
+                )}
+              </fieldset>
+
+              {/* Owner Information - Fieldset */}
+              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+                <legend className="text-sm font-semibold px-2 text-primary">Owner</legend>
+                
+                {/* Mode Selection */}
+                <RadioGroup 
+                  value={formData.ownerMode} 
+                  onValueChange={(value: 'self' | 'select' | 'manual') => {
+                    updateFormData("ownerMode", value);
+                    // Clear fields when switching modes
+                    if (value === 'self' || value === 'select') {
+                      updateFormData("ownerName", "");
+                      updateFormData("ownerRegistrationNumber", "");
+                    }
+                    if (value === 'self' || value === 'manual') {
+                      updateFormData("ownerId", "");
+                    }
+                  }}
+                  className="mb-4"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="self" id="owner-self" />
+                      <Label htmlFor="owner-self" className="font-normal cursor-pointer">
+                        I am the owner
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="select" id="owner-select" />
+                      <Label htmlFor="owner-select" className="font-normal cursor-pointer">
+                        Select from system
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="manual" id="owner-manual" />
+                      <Label htmlFor="owner-manual" className="font-normal cursor-pointer">
+                        Enter manually
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+
+                {/* Manual Entry */}
+                {formData.ownerMode === 'manual' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="ownerName">Owner Name</Label>
+                      <Input
+                        id="ownerName"
+                        value={formData.ownerName}
+                        onChange={(e) => updateFormData("ownerName", e.target.value)}
+                        placeholder="e.g., Jane Doe"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ownerRegistrationNumber">Registration Number</Label>
+                      <Input
+                        id="ownerRegistrationNumber"
+                        value={formData.ownerRegistrationNumber}
+                        onChange={(e) => updateFormData("ownerRegistrationNumber", e.target.value)}
+                        placeholder="e.g., AKC-OWNER-456"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Select from System - Placeholder for future */}
+                {formData.ownerMode === 'select' && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Owner selection from system will be available soon.
+                    </p>
+                  </div>
+                )}
+
+                {/* Self Mode - Show confirmation */}
+                {formData.ownerMode === 'self' && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      ✓ You will be recorded as the owner of this animal.
+                    </p>
+                  </div>
+                )}
+              </fieldset>
 
               {/* Sire (Father) Information - Fieldset */}
               <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">

@@ -41,10 +41,20 @@ const createAnimalSchema = z.object({
   // Parent information (relational or manual)
   sireId: z.string().optional(),
   damId: z.string().optional(),
-  sireName: z.string().optional(),
+  sireRegistrationNumber: z.string().optional(),
   sireRegisteredName: z.string().optional(),
-  damName: z.string().optional(),
+  damRegistrationNumber: z.string().optional(),
   damRegisteredName: z.string().optional(),
+  
+  // Breeder and Owner information
+  breederMode: z.enum(['self', 'select', 'manual']).optional(),
+  breederId: z.string().optional(),
+  breederName: z.string().optional(),
+  breederRegistrationNumber: z.string().optional(),
+  ownerMode: z.enum(['self', 'select', 'manual']).optional(),
+  ownerId: z.string().optional(),
+  ownerName: z.string().optional(),
+  ownerRegistrationNumber: z.string().optional(),
 });
 
 // ============================================================================
@@ -159,11 +169,16 @@ export async function POST(request: NextRequest) {
         notes: validatedData.notes,
         sireId: validatedData.sireId,
         damId: validatedData.damId,
-        // Keep legacy fields for backward compatibility but also create manual entries
-        sireName: validatedData.sireName,
-        sireRegisteredName: validatedData.sireRegisteredName,
-        damName: validatedData.damName,
-        damRegisteredName: validatedData.damRegisteredName,
+        
+        // Breeder information - set breederId to current user if mode is 'self'
+        breederId: validatedData.breederMode === 'self' ? session.user.id : validatedData.breederId,
+        breederName: validatedData.breederMode === 'manual' ? validatedData.breederName : undefined,
+        breederRegistrationNumber: validatedData.breederMode === 'manual' ? validatedData.breederRegistrationNumber : undefined,
+        
+        // Owner information - set ownerId to current user if mode is 'self'
+        ownerId: validatedData.ownerMode === 'self' ? session.user.id : validatedData.ownerId,
+        ownerName: validatedData.ownerMode === 'manual' ? validatedData.ownerName : undefined,
+        ownerRegistrationNumber: validatedData.ownerMode === 'manual' ? validatedData.ownerRegistrationNumber : undefined,
       })
       .returning();
 
@@ -171,16 +186,18 @@ export async function POST(request: NextRequest) {
 
     // Create manual pedigree entries for parents if provided manually
     // This ensures they appear in the pedigree tree properly
-    if (validatedData.sireName && validatedData.sireRegisteredName && !validatedData.sireId) {
-      console.log('📝 Creating manual pedigree entry for sire:', validatedData.sireName);
+    // Check for registrationNumber and registeredName (not name - name is deprecated)
+    if (validatedData.sireRegistrationNumber && validatedData.sireRegisteredName && !validatedData.sireId) {
+      console.log('📝 Creating manual pedigree entry for sire:', validatedData.sireRegisteredName);
       try {
         await db.insert(manualPedigreeEntries).values({
           animalId: createdAnimal.id,
           userId: session.user.id,
           position: 'sire',
           generation: 1,
-          name: validatedData.sireName,
+          name: validatedData.sireRegisteredName, // Use registered name as name
           registeredName: validatedData.sireRegisteredName,
+          registrationNumber: validatedData.sireRegistrationNumber,
           sex: 'male',
           notes: 'Created during animal registration',
         });
@@ -191,16 +208,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (validatedData.damName && validatedData.damRegisteredName && !validatedData.damId) {
-      console.log('📝 Creating manual pedigree entry for dam:', validatedData.damName);
+    if (validatedData.damRegistrationNumber && validatedData.damRegisteredName && !validatedData.damId) {
+      console.log('📝 Creating manual pedigree entry for dam:', validatedData.damRegisteredName);
       try {
         await db.insert(manualPedigreeEntries).values({
           animalId: createdAnimal.id,
           userId: session.user.id,
           position: 'dam',
           generation: 1,
-          name: validatedData.damName,
+          name: validatedData.damRegisteredName, // Use registered name as name
           registeredName: validatedData.damRegisteredName,
+          registrationNumber: validatedData.damRegistrationNumber,
           sex: 'female',
           notes: 'Created during animal registration',
         });
