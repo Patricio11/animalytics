@@ -233,9 +233,12 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
     { value: 'pedigree', label: 'Pedigree', icon: Share2 },
     { value: 'photos-docs', label: 'Photos & Docs', icon: Award },
     { value: 'feeding', label: 'Feeding', icon: Calendar },
-    { value: 'semen', label: 'Semen', icon: Shield },
+    // Sex-specific tabs
+    ...(animal.sex === 'male' ? [
+      { value: 'semen', label: 'Semen', icon: Shield },
+    ] : []),
     ...(animal.sex === 'female' ? [
-      { value: 'seasons', label: 'Seasons', icon: Heart },
+      { value: 'seasons', label: 'Cycle History', icon: Heart },
       { value: 'litters', label: 'Litter Details', icon: Activity },
     ] : []),
     { value: 'reminders', label: 'Reminders', icon: Calendar },
