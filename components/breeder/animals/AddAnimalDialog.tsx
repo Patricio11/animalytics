@@ -55,9 +55,9 @@ interface AnimalFormData {
   damId: string;
   
   // For manual entry (if not in system)
-  sireName: string;
+  sireRegistrationNumber: string;
   sireRegisteredName: string;
-  damName: string;
+  damRegistrationNumber: string;
   damRegisteredName: string;
 
   // Step 4: Additional Info
@@ -92,9 +92,9 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     damMode: "manual",
     sireId: "",
     damId: "",
-    sireName: "",
+    sireRegistrationNumber: "",
     sireRegisteredName: "",
-    damName: "",
+    damRegistrationNumber: "",
     damRegisteredName: "",
     description: "",
     location: ""
@@ -265,9 +265,9 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         // Parent information - send based on mode
         sireId: formData.sireMode === 'select' ? formData.sireId || undefined : undefined,
         damId: formData.damMode === 'select' ? formData.damId || undefined : undefined,
-        sireName: formData.sireMode === 'manual' ? formData.sireName || undefined : undefined,
+        sireRegistrationNumber: formData.sireMode === 'manual' ? formData.sireRegistrationNumber || undefined : undefined,
         sireRegisteredName: formData.sireMode === 'manual' ? formData.sireRegisteredName || undefined : undefined,
-        damName: formData.damMode === 'manual' ? formData.damName || undefined : undefined,
+        damRegistrationNumber: formData.damMode === 'manual' ? formData.damRegistrationNumber || undefined : undefined,
         damRegisteredName: formData.damMode === 'manual' ? formData.damRegisteredName || undefined : undefined,
       };
 
@@ -330,9 +330,9 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         damMode: "manual",
         sireId: "",
         damId: "",
-        sireName: "",
+        sireRegistrationNumber: "",
         sireRegisteredName: "",
-        damName: "",
+        damRegistrationNumber: "",
         damRegisteredName: "",
         description: "",
         location: ""
@@ -361,10 +361,10 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         // Validate parent selection based on mode
         const sireValid = formData.sireMode === 'select' 
           ? formData.sireId !== '' 
-          : (formData.sireName !== '' && formData.sireRegisteredName !== '');
+          : (formData.sireRegistrationNumber !== '' && formData.sireRegisteredName !== '');
         const damValid = formData.damMode === 'select'
           ? formData.damId !== ''
-          : (formData.damName !== '' && formData.damRegisteredName !== '');
+          : (formData.damRegistrationNumber !== '' && formData.damRegisteredName !== '');
         return sireValid && damValid;
       case 4:
         return formData.location !== ''; // Location is required
@@ -720,7 +720,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                     if (value === 'manual') {
                       updateFormData("sireId", "");
                     } else {
-                      updateFormData("sireName", "");
+                      updateFormData("sireRegistrationNumber", "");
                       updateFormData("sireRegisteredName", "");
                     }
                   }}
@@ -746,22 +746,22 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 {formData.sireMode === 'manual' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="sireName">Name *</Label>
-                      <Input
-                        id="sireName"
-                        value={formData.sireName}
-                        onChange={(e) => updateFormData("sireName", e.target.value)}
-                        placeholder="e.g., Max"
-                        className="bg-background border-primary/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
                       <Label htmlFor="sireRegisteredName">Registered Name *</Label>
                       <Input
                         id="sireRegisteredName"
                         value={formData.sireRegisteredName}
                         onChange={(e) => updateFormData("sireRegisteredName", e.target.value)}
                         placeholder="e.g., Champion Goldcrest's Maximus Rex"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sireRegistrationNumber">Registration Number *</Label>
+                      <Input
+                        id="sireRegistrationNumber"
+                        value={formData.sireRegistrationNumber}
+                        onChange={(e) => updateFormData("sireRegistrationNumber", e.target.value)}
+                        placeholder="e.g., AKC-12345678"
                         className="bg-background border-primary/20"
                       />
                     </div>
@@ -839,7 +839,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                     if (value === 'manual') {
                       updateFormData("damId", "");
                     } else {
-                      updateFormData("damName", "");
+                      updateFormData("damRegistrationNumber", "");
                       updateFormData("damRegisteredName", "");
                     }
                   }}
@@ -865,22 +865,22 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 {formData.damMode === 'manual' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="damName">Name *</Label>
-                      <Input
-                        id="damName"
-                        value={formData.damName}
-                        onChange={(e) => updateFormData("damName", e.target.value)}
-                        placeholder="e.g., Bella"
-                        className="bg-background border-primary/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
                       <Label htmlFor="damRegisteredName">Registered Name *</Label>
                       <Input
                         id="damRegisteredName"
                         value={formData.damRegisteredName}
                         onChange={(e) => updateFormData("damRegisteredName", e.target.value)}
                         placeholder="e.g., Grand Champion Silverstone's Bella Luna"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="damRegistrationNumber">Registration Number *</Label>
+                      <Input
+                        id="damRegistrationNumber"
+                        value={formData.damRegistrationNumber}
+                        onChange={(e) => updateFormData("damRegistrationNumber", e.target.value)}
+                        placeholder="e.g., AKC-87654321"
                         className="bg-background border-primary/20"
                       />
                     </div>
