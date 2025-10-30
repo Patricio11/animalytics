@@ -118,8 +118,8 @@ export default function ResetPassword() {
 
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        router.push("/auth/login");
-      }, 3000);
+        router.push("/auth/signin");
+      }, 2000);
     } catch (err: any) {
       setError(err.message || "Failed to reset password. The link may have expired.");
       console.error("Password reset error:", err);
@@ -201,7 +201,7 @@ export default function ResetPassword() {
                     </AlertDescription>
                   </Alert>
                   <Button
-                    onClick={() => router.push("/auth/login")}
+                    onClick={() => router.push("/auth/signin")}
                     className="w-full bg-gradient-brand hover:opacity-90"
                   >
                     Go to Login
@@ -299,7 +299,7 @@ export default function ResetPassword() {
                   </Button>
 
                   <div className="text-center text-sm">
-                    <Link href="/auth/login" className="text-primary hover:underline">
+                    <Link href="/auth/signin" className="text-primary hover:underline">
                       Back to Login
                     </Link>
                   </div>

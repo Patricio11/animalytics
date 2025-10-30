@@ -43,16 +43,23 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true, // Send verification email automatically on signup
     sendOnSignIn: true, // Send verification email on signin if not verified
+    autoSignInAfterVerification: false, // Don't auto sign in, redirect to login page
     sendVerificationEmail: async ({ user, url, token }: any, request: any) => {
       // Send email verification email
       try {
         console.log('📧 Sending verification email...');
         console.log('User:', user.email);
-        console.log('Verification URL:', url);
+        console.log('Original Verification URL:', url);
+        
+        // Modify the URL to include callbackURL parameter for redirect to signin
+        const baseURL = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
+        const modifiedUrl = `${url}&callbackURL=${encodeURIComponent(`${baseURL}/auth/signin?verified=true`)}`;
+        
+        console.log('Modified Verification URL:', modifiedUrl);
         
         await sendVerificationEmail(user.email, {
           name: user.name || 'User',
-          verificationUrl: url,
+          verificationUrl: modifiedUrl,
           token,
         });
         

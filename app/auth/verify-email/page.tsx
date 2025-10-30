@@ -60,8 +60,8 @@ export default function VerifyEmail() {
 
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        router.push("/auth/login");
-      }, 3000);
+        router.push("/auth/signin");
+      }, 2000);
     } catch (err: any) {
       setError(err.message || "Failed to verify email. The link may have expired.");
       console.error("Email verification error:", err);
@@ -159,7 +159,7 @@ export default function VerifyEmail() {
                     </p>
                   </div>
                   <Button
-                    onClick={() => router.push("/auth/login")}
+                    onClick={() => router.push("/auth/signin")}
                     className="w-full bg-gradient-brand hover:opacity-90"
                   >
                     Go to Login
@@ -194,7 +194,7 @@ export default function VerifyEmail() {
 
                   <div className="flex flex-col gap-2">
                     <Button
-                      onClick={() => router.push("/auth/login")}
+                      onClick={() => router.push("/auth/signin")}
                       variant="outline"
                       className="w-full"
                     >

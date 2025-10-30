@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         email,
-        callbackURL: `${baseURL}/auth/verify-email`,
+        callbackURL: `${baseURL}/auth/signin?verified=true`,
       }),
     });
 

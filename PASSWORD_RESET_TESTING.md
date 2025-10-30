@@ -72,7 +72,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 7. Auto-redirect to login page after 3 seconds
 
 ### Step 4: Login with New Password
-1. Navigate to: `http://localhost:3000/auth/login`
+1. Navigate to: `http://localhost:3000/auth/signin`
 2. Enter email and NEW password
 3. Should successfully log in
 
