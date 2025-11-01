@@ -1,0 +1,118 @@
+🚨 URGENT: FIX EMAIL SENDING ISSUE
+
+The error "Invalid credentials" means your Mailtrap username/password are wrong or not loaded.
+
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: CHECK YOUR MAILTRAP CREDENTIALS
+═══════════════════════════════════════════════════════════════════
+
+1. Go to https://mailtrap.io
+2. Log in to your account
+3. Click on your inbox
+4. Find "SMTP Settings" or "Show Credentials"
+5. Copy the EXACT values for:
+   - Username (looks like: 1c0c2641bb7952)
+   - Password (looks like: 3637068c3c2487)
+
+═══════════════════════════════════════════════════════════════════
+
+STEP 2: UPDATE YOUR .env.local FILE
+═══════════════════════════════════════════════════════════════════
+
+1. Open this file:
+   c:\Users\patri\Downloads\animal\the system\animalytics\.env.local
+
+2. Make sure these lines exist (use YOUR credentials from Mailtrap):
+
+MAILTRAP_HOST=sandbox.smtp.mailtrap.io
+MAILTRAP_PORT=587
+MAILTRAP_USER=YOUR_USERNAME_HERE
+MAILTRAP_PASS=YOUR_PASSWORD_HERE
+EMAIL_FROM=Animalytics <noreply@animalytics.co.za>
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
+
+3. Replace YOUR_USERNAME_HERE with your actual Mailtrap username
+4. Replace YOUR_PASSWORD_HERE with your actual Mailtrap password
+5. Save the file
+
+═══════════════════════════════════════════════════════════════════
+
+STEP 3: RESTART DEV SERVER (CRITICAL!)
+═══════════════════════════════════════════════════════════════════
+
+You MUST restart the dev server after changing .env.local
+
+1. Stop the server: Press Ctrl+C in the terminal
+2. Start it again: npm run dev
+3. Wait for "Ready" message
+
+═══════════════════════════════════════════════════════════════════
+
+STEP 4: TEST EMAIL SENDING
+═══════════════════════════════════════════════════════════════════
+
+1. Open your browser
+2. Go to: http://localhost:3000/api/test-email
+3. You should see: "Test email sent successfully!"
+4. Check your Mailtrap inbox - you should see a test email
+
+═══════════════════════════════════════════════════════════════════
+
+STEP 5: TEST PASSWORD RESET
+═══════════════════════════════════════════════════════════════════
+
+1. Go to: http://localhost:3000/auth/forgot-password
+2. Enter a registered user's email
+3. Click "Send Reset Link"
+4. Check terminal - should see: "✅ Password reset email sent successfully"
+5. Check Mailtrap inbox - should see password reset email
+6. Click "Reset Password" button in email
+7. Enter new password
+8. Login with new password
+
+═══════════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+❌ If you still see "Invalid credentials":
+   - Double-check you copied credentials correctly from Mailtrap
+   - Make sure there are no extra spaces
+   - Try regenerating credentials in Mailtrap
+   - Make sure you restarted the dev server
+
+❌ If terminal shows "✗ Missing" for User or Pass:
+   - Check .env.local file name is correct (with the dot at start)
+   - Make sure it's in the project root folder
+   - Restart dev server completely
+   - No quotes needed around values in .env.local
+
+❌ If /api/test-email fails:
+   - Check terminal logs for specific error
+   - Try port 2525 instead of 587 in .env.local
+   - Make sure Mailtrap account is active
+
+═══════════════════════════════════════════════════════════════════
+
+WHAT TO SHARE IF STILL NOT WORKING
+═══════════════════════════════════════════════════════════════════
+
+1. What you see when you visit: http://localhost:3000/api/test-email
+2. Terminal output (the logs that appear)
+3. Screenshot of your Mailtrap SMTP settings page
+4. Confirm you restarted the dev server
+
+═══════════════════════════════════════════════════════════════════
+
+IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════
+
+✅ Email verification is DISABLED for now (to avoid confusion)
+✅ Users can register and login immediately
+✅ Password reset will work once SMTP is configured
+✅ Once SMTP works, everything else will work automatically
+
+═══════════════════════════════════════════════════════════════════
