@@ -23,11 +23,24 @@ export const auth = betterAuth({
       try {
         console.log('🔐 Sending password reset email...');
         console.log('User:', user.email);
-        console.log('Reset URL:', url);
+        console.log('Original Reset URL:', url);
+        console.log('Token:', token);
+        
+        // Modify the URL to include token as query param in the callbackURL
+        // Better Auth URL format: /api/auth/reset-password/TOKEN?callbackURL=...
+        // We need to replace the callbackURL with one that includes the token
+        const baseURL = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
+        
+        // Parse the URL and replace the callbackURL parameter
+        const urlObj = new URL(url);
+        urlObj.searchParams.set('callbackURL', `${baseURL}/auth/reset-password?token=${token}`);
+        const modifiedUrl = urlObj.toString();
+        
+        console.log('Modified Reset URL:', modifiedUrl);
         
         await sendPasswordResetEmail(user.email, {
           name: user.name || 'User',
-          resetUrl: url,
+          resetUrl: modifiedUrl,
           token,
         });
         
@@ -53,7 +66,11 @@ export const auth = betterAuth({
         
         // Modify the URL to include callbackURL parameter for redirect to signin
         const baseURL = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
-        const modifiedUrl = `${url}&callbackURL=${encodeURIComponent(`${baseURL}/auth/signin?verified=true`)}`;
+        
+        // Parse the URL and replace the callbackURL parameter
+        const urlObj = new URL(url);
+        urlObj.searchParams.set('callbackURL', `${baseURL}/auth/signin?verified=true`);
+        const modifiedUrl = urlObj.toString();
         
         console.log('Modified Verification URL:', modifiedUrl);
         

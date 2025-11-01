@@ -26,11 +26,25 @@ export default function ResetPassword() {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get token from URL
+    // Get token from URL - Better Auth passes it as a query param after redirect
+    // The flow is: /api/auth/reset-password/TOKEN?callbackURL=... -> redirects to -> /auth/reset-password?token=TOKEN
     const tokenParam = searchParams.get('token');
+    
+    // Also check if token is in the URL hash (some email clients encode it there)
+    if (!tokenParam && typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      const hashToken = hash.match(/token=([^&]+)/)?.[1];
+      if (hashToken) {
+        setToken(decodeURIComponent(hashToken));
+        return;
+      }
+    }
+    
     if (!tokenParam) {
+      console.error("❌ No reset token found in URL");
       setError("Invalid or missing reset token");
     } else {
+      console.log("✅ Reset token found:", tokenParam.substring(0, 10) + "...");
       setToken(tokenParam);
     }
   }, [searchParams]);
