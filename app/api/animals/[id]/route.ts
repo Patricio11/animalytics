@@ -64,6 +64,27 @@ export async function GET(
       ),
       with: {
         breed: true,
+        // Parent relations (if in system)
+        sire: {
+          columns: {
+            id: true,
+            name: true,
+            registeredName: true,
+            registrationNumber: true,
+          },
+        },
+        dam: {
+          columns: {
+            id: true,
+            name: true,
+            registeredName: true,
+            registrationNumber: true,
+          },
+        },
+        // Manual pedigree entries (if parents not in system)
+        manualPedigreeEntries: {
+          where: (entries, { eq }) => eq(entries.generation, 1), // Only get direct parents
+        },
         // Photos (from animalPhotos table)
         photos: {
           orderBy: (photos, { asc }) => [asc(photos.displayOrder)],

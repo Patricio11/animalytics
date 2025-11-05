@@ -127,6 +127,44 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
   // Pre-fill form data when dialog opens with existing animal data
   useEffect(() => {
     if (open && animalData) {
+      // Find manual pedigree entries for sire and dam
+      const manualSire = animalData.manualPedigreeEntries?.find((entry: any) => entry.position === 'sire');
+      const manualDam = animalData.manualPedigreeEntries?.find((entry: any) => entry.position === 'dam');
+      
+      // Determine sire mode and data
+      let sireMode: 'select' | 'manual' = 'manual';
+      let sireRegNumber = "";
+      let sireRegName = "";
+      
+      if (animalData.sireId && animalData.sire) {
+        // Sire is in system
+        sireMode = 'select';
+        sireRegNumber = animalData.sire.registrationNumber || "";
+        sireRegName = animalData.sire.registeredName || animalData.sire.name || "";
+      } else if (manualSire) {
+        // Sire is manual entry
+        sireMode = 'manual';
+        sireRegNumber = manualSire.registrationNumber || "";
+        sireRegName = manualSire.registeredName || manualSire.name || "";
+      }
+      
+      // Determine dam mode and data
+      let damMode: 'select' | 'manual' = 'manual';
+      let damRegNumber = "";
+      let damRegName = "";
+      
+      if (animalData.damId && animalData.dam) {
+        // Dam is in system
+        damMode = 'select';
+        damRegNumber = animalData.dam.registrationNumber || "";
+        damRegName = animalData.dam.registeredName || animalData.dam.name || "";
+      } else if (manualDam) {
+        // Dam is manual entry
+        damMode = 'manual';
+        damRegNumber = manualDam.registrationNumber || "";
+        damRegName = manualDam.registeredName || manualDam.name || "";
+      }
+      
       setFormData({
         profilePhotoUrl: animalData.profileImageUrl || null,
         name: animalData.name || "",
@@ -136,7 +174,7 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         dateOfBirth: animalData.dateOfBirth ? new Date(animalData.dateOfBirth) : undefined,
         color: animalData.color || "",
         markings: animalData.markings || "",
-        weight: animalData.weight || "",
+        weight: animalData.weight?.toString() || "",
         microchipId: animalData.microchipNumber || "",
         registrationNumber: animalData.registrationNumber || "",
         breederMode: animalData.breederId ? 'self' : animalData.breederName ? 'manual' : 'self',
@@ -147,14 +185,17 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         ownerId: animalData.ownerId || "",
         ownerName: animalData.ownerName || "",
         ownerRegistrationNumber: animalData.ownerRegistrationNumber || "",
-        sireMode: animalData.sireId ? 'select' : 'manual',
-        damMode: animalData.damId ? 'select' : 'manual',
+        // Sire data (from system or manual)
+        sireMode: sireMode,
         sireId: animalData.sireId || "",
+        sireRegistrationNumber: sireRegNumber,
+        sireRegisteredName: sireRegName,
+        // Dam data (from system or manual)
+        damMode: damMode,
         damId: animalData.damId || "",
-        sireRegistrationNumber: "",
-        sireRegisteredName: "",
-        damRegistrationNumber: "",
-        damRegisteredName: "",
+        damRegistrationNumber: damRegNumber,
+        damRegisteredName: damRegName,
+        // Additional info
         description: animalData.bio || "",
         location: animalData.location || ""
       });

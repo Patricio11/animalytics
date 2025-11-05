@@ -13,7 +13,8 @@ import {
   animalDocuments,
   feedingPlans,
   healthRecords,
-  animalReminders
+  animalReminders,
+  manualPedigreeEntries
 } from './animals';
 import { matings } from './matings';
 import { progesteroneTests } from './progesterone-tests';
@@ -57,6 +58,18 @@ export const animalsRelations = relations(animals, ({ one, many }) => ({
     fields: [animals.breedId],
     references: [breeds.id],
   }),
+  
+  // Pedigree relations (parent animals in system)
+  sire: one(animals, {
+    fields: [animals.sireId],
+    references: [animals.id],
+    relationName: 'sire',
+  }),
+  dam: one(animals, {
+    fields: [animals.damId],
+    references: [animals.id],
+    relationName: 'dam',
+  }),
 
   // Has many
   matingsAsBitch: many(matings, { relationName: 'bitch' }),
@@ -71,6 +84,7 @@ export const animalsRelations = relations(animals, ({ one, many }) => ({
   feedingPlans: many(feedingPlans),
   healthRecords: many(healthRecords),
   reminders: many(animalReminders),
+  manualPedigreeEntries: many(manualPedigreeEntries),
 }));
 
 // ============================================================================
@@ -316,5 +330,20 @@ export const progesteroneTestsRelations = relations(progesteroneTests, ({ one })
   mating: one(matings, {
     fields: [progesteroneTests.matingId],
     references: [matings.id],
+  }),
+}));
+
+// ============================================================================
+// MANUAL PEDIGREE ENTRIES RELATIONS
+// ============================================================================
+
+export const manualPedigreeEntriesRelations = relations(manualPedigreeEntries, ({ one }) => ({
+  animal: one(animals, {
+    fields: [manualPedigreeEntries.animalId],
+    references: [animals.id],
+  }),
+  user: one(users, {
+    fields: [manualPedigreeEntries.userId],
+    references: [users.id],
   }),
 }));
