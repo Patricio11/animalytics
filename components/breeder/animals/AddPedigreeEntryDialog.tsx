@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -38,6 +38,7 @@ interface AddPedigreeEntryDialogProps {
   positionLabel: string; // 'Dam', 'Sire', 'Granddam', etc.
   requiredSex?: "male" | "female"; // Based on position
   animalBreed?: string | null; // Breed from the animal (auto-populated)
+  existingEntry?: any; // Existing manual pedigree entry to edit
   onSuccess?: () => void;
 }
 
@@ -50,6 +51,7 @@ export function AddPedigreeEntryDialog({
   positionLabel,
   requiredSex,
   animalBreed,
+  existingEntry,
   onSuccess,
 }: AddPedigreeEntryDialogProps) {
   const { toast } = useToast();
@@ -73,6 +75,40 @@ export function AddPedigreeEntryDialog({
   const updateManualFormData = (field: string, value: any) => {
     setManualFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  // Pre-populate form when editing existing entry
+  useEffect(() => {
+    if (open && existingEntry) {
+      // Set mode to manual since we have an existing manual entry
+      setMode("manual");
+      
+      // Pre-fill the form with existing data
+      setManualFormData({
+        name: existingEntry.name || "",
+        registeredName: existingEntry.registeredName || "",
+        registrationNumber: existingEntry.registrationNumber || "",
+        microchipNumber: existingEntry.microchipNumber || "",
+        sex: existingEntry.sex || requiredSex || "",
+        dateOfBirth: existingEntry.dateOfBirth || "",
+        color: existingEntry.color || "",
+        notes: existingEntry.notes || "",
+      });
+    } else if (open && !existingEntry) {
+      // Reset to defaults when adding new entry
+      setMode("system");
+      setManualFormData({
+        name: "",
+        registeredName: "",
+        registrationNumber: "",
+        microchipNumber: "",
+        sex: requiredSex || "",
+        dateOfBirth: "",
+        color: "",
+        notes: "",
+      });
+      setSelectedAnimalId(null);
+    }
+  }, [open, existingEntry, requiredSex]);
 
   // Fetch all animals from API
   const { data: animalsData, isLoading: isLoadingAnimals } = useQuery({

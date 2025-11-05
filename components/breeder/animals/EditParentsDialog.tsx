@@ -27,6 +27,8 @@ interface EditParentsDialogProps {
   animalName: string;
   currentDamId?: string;
   currentSireId?: string;
+  manualSire?: any; // Manual pedigree entry for sire
+  manualDam?: any; // Manual pedigree entry for dam
   onSuccess?: () => void;
 }
 
@@ -37,6 +39,8 @@ export function EditParentsDialog({
   animalName,
   currentDamId,
   currentSireId,
+  manualSire,
+  manualDam,
   onSuccess,
 }: EditParentsDialogProps) {
   const { toast } = useToast();
@@ -98,8 +102,8 @@ export function EditParentsDialog({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          damId: damId,
-          sireId: sireId,
+          damId: damId || null,
+          sireId: sireId || null,
         }),
       });
 
@@ -110,23 +114,11 @@ export function EditParentsDialog({
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({
-        title: "Parents Updated",
-        description: "Parent links have been updated successfully",
+        title: "Parents updated",
+        description: "The pedigree has been updated successfully.",
       });
-
-      // Show warnings if any
-      if (data.warnings && data.warnings.length > 0) {
-        data.warnings.forEach((warning: string) => {
-          toast({
-            title: "Warning",
-            description: warning,
-            variant: "default",
-          });
-        });
-      }
-
       onSuccess?.();
       onOpenChange(false);
     },
@@ -146,11 +138,11 @@ export function EditParentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Parents</DialogTitle>
           <DialogDescription>
-            Update the dam (mother) and sire (father) for {animalName}
+            Update the sire (father) and dam (mother) for {animalName}
           </DialogDescription>
         </DialogHeader>
 
@@ -166,123 +158,7 @@ export function EditParentsDialog({
 
             {!isLoadingAnimals && (
               <>
-                {/* Dam (Mother) Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold">
-                      Dam (Mother)
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => {
-                        setAddPedigreeConfig({
-                          position: "dam",
-                          generation: 1,
-                          label: "Dam",
-                          requiredSex: "female",
-                        });
-                        setAddPedigreeDialogOpen(true);
-                      }}
-                    >
-                      + Add Dam
-                    </Button>
-                  </div>
-
-                  <Popover open={damPopoverOpen} onOpenChange={setDamPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between bg-background border-primary/20"
-                      >
-                        {selectedDam ? selectedDam.name : "Select dam (optional)"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[500px] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search dams..." className="h-9" />
-                        <CommandList>
-                          {dams.length === 0 ? (
-                            <CommandEmpty className="py-6 text-center text-sm">
-                              No female animals found. Add a female animal first.
-                            </CommandEmpty>
-                          ) : (
-                            <CommandGroup>
-                              {/* None option */}
-                              <CommandItem
-                                value="none"
-                                onSelect={() => {
-                                  setDamId(null);
-                                  setDamPopoverOpen(false);
-                                }}
-                                className="px-3 py-3"
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-3 h-4 w-4 shrink-0",
-                                    !damId ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <span className="text-muted-foreground">No dam selected</span>
-                              </CommandItem>
-
-                              {dams.map((dam: any) => (
-                                <CommandItem
-                                  key={dam.id}
-                                  value={`${dam.name}-${dam.id}`}
-                                  onSelect={() => {
-                                    setDamId(dam.id);
-                                    setDamPopoverOpen(false);
-                                  }}
-                                  className="px-3 py-3"
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-3 h-4 w-4 shrink-0",
-                                      damId === dam.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col gap-1 min-w-0">
-                                    <span className="font-medium truncate">{dam.name}</span>
-                                    {dam.registeredName && (
-                                      <span className="text-xs text-muted-foreground truncate">
-                                        {dam.registeredName}
-                                      </span>
-                                    )}
-                                    {dam.breed?.name && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {dam.breed.name}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          )}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  {damId && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDamId(null)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Clear dam
-                    </Button>
-                  )}
-                </div>
-
-                {/* Sire (Father) Section */}
+                {/* Sire (Father) Section - FIRST */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-base font-semibold">
@@ -303,9 +179,20 @@ export function EditParentsDialog({
                         setAddPedigreeDialogOpen(true);
                       }}
                     >
-                      + Add Sire
+                      {currentSireId || manualSire ? "✏️ Edit Sire" : "+ Add Sire"}
                     </Button>
                   </div>
+
+                  {/* Show manual sire info if exists and no system sire selected */}
+                  {manualSire && !sireId && (
+                    <div className="p-3 bg-muted/50 rounded-md border border-primary/20">
+                      <p className="text-sm font-medium">{manualSire.registeredName || manualSire.name}</p>
+                      {manualSire.registrationNumber && (
+                        <p className="text-xs text-muted-foreground">Reg: {manualSire.registrationNumber}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">Manual Entry</p>
+                    </div>
+                  )}
 
                   <Popover open={sirePopoverOpen} onOpenChange={setSirePopoverOpen}>
                     <PopoverTrigger asChild>
@@ -314,7 +201,7 @@ export function EditParentsDialog({
                         role="combobox"
                         className="w-full justify-between bg-background border-primary/20"
                       >
-                        {selectedSire ? selectedSire.name : "Select sire (optional)"}
+                        {selectedSire ? selectedSire.name : "Select sire from system (optional)"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
@@ -398,6 +285,133 @@ export function EditParentsDialog({
                   )}
                 </div>
 
+                {/* Dam (Mother) Section - SECOND */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold">
+                      Dam (Mother)
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setAddPedigreeConfig({
+                          position: "dam",
+                          generation: 1,
+                          label: "Dam",
+                          requiredSex: "female",
+                        });
+                        setAddPedigreeDialogOpen(true);
+                      }}
+                    >
+                      {currentDamId || manualDam ? "✏️ Edit Dam" : "+ Add Dam"}
+                    </Button>
+                  </div>
+
+                  {/* Show manual dam info if exists and no system dam selected */}
+                  {manualDam && !damId && (
+                    <div className="p-3 bg-muted/50 rounded-md border border-primary/20">
+                      <p className="text-sm font-medium">{manualDam.registeredName || manualDam.name}</p>
+                      {manualDam.registrationNumber && (
+                        <p className="text-xs text-muted-foreground">Reg: {manualDam.registrationNumber}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">Manual Entry</p>
+                    </div>
+                  )}
+
+                  <Popover open={damPopoverOpen} onOpenChange={setDamPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between bg-background border-primary/20"
+                      >
+                        {selectedDam ? selectedDam.name : "Select dam from system (optional)"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[500px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search dams..." className="h-9" />
+                        <CommandList>
+                          {dams.length === 0 ? (
+                            <CommandEmpty className="py-6 text-center text-sm">
+                              No female animals found. Add a female animal first.
+                            </CommandEmpty>
+                          ) : (
+                            <CommandGroup>
+                              {/* None option */}
+                              <CommandItem
+                                value="none"
+                                onSelect={() => {
+                                  setDamId(null);
+                                  setDamPopoverOpen(false);
+                                }}
+                                className="px-3 py-3"
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-3 h-4 w-4 shrink-0",
+                                    !damId ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <span className="text-muted-foreground">No dam selected</span>
+                              </CommandItem>
+
+                              {dams.map((dam: any) => (
+                                <CommandItem
+                                  key={dam.id}
+                                  value={`${dam.name}-${dam.id}`}
+                                  onSelect={() => {
+                                    setDamId(dam.id);
+                                    setDamPopoverOpen(false);
+                                  }}
+                                  className="px-3 py-3"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-3 h-4 w-4 shrink-0",
+                                      damId === dam.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col gap-1 min-w-0">
+                                    <span className="font-medium truncate">{dam.name}</span>
+                                    {dam.registeredName && (
+                                      <span className="text-xs text-muted-foreground truncate">
+                                        {dam.registeredName}
+                                      </span>
+                                    )}
+                                    {dam.breed?.name && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {dam.breed.name}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
+                  {damId && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDamId(null)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Clear dam
+                    </Button>
+                  )}
+                </div>
+
                 {/* Info Alert */}
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
@@ -458,6 +472,11 @@ export function EditParentsDialog({
           generation={addPedigreeConfig.generation}
           positionLabel={addPedigreeConfig.label}
           requiredSex={addPedigreeConfig.requiredSex}
+          existingEntry={
+            addPedigreeConfig.position === "sire" ? manualSire :
+            addPedigreeConfig.position === "dam" ? manualDam :
+            undefined
+          }
           onSuccess={() => {
             setAddPedigreeDialogOpen(false);
             setAddPedigreeConfig(null);

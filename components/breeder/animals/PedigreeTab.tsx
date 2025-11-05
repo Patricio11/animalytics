@@ -382,8 +382,10 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
         onOpenChange={setEditDialogOpen}
         animalId={animalId}
         animalName={animalName}
-        currentDamId={data?.pedigree?.dam?.id}
-        currentSireId={data?.pedigree?.sire?.id}
+        currentDamId={data?.pedigree?.dam?.isManualEntry ? undefined : data?.pedigree?.dam?.id}
+        currentSireId={data?.pedigree?.sire?.isManualEntry ? undefined : data?.pedigree?.sire?.id}
+        manualSire={data?.pedigree?.sire?.isManualEntry ? data?.pedigree?.sire : undefined}
+        manualDam={data?.pedigree?.dam?.isManualEntry ? data?.pedigree?.dam : undefined}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["pedigree", animalId] });
         }}
