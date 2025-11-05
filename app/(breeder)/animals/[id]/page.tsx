@@ -283,7 +283,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                         <img
                           src={primaryPhoto}
                           alt={animal.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-contain bg-muted/30 group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
                           <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -323,7 +323,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                         <img 
                           src={photo} 
                           alt={`${animal.name} ${index + 1}`} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                          className="w-full h-full object-contain bg-muted/30 group-hover:scale-110 transition-transform duration-300" 
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                       </div>

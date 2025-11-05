@@ -261,7 +261,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                   <img
                     src={images[0]}
                     alt={listing.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain bg-muted/30 group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
                     <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -296,7 +296,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                         <img 
                           src={image} 
                           alt={`Additional ${index + 1}`} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                          className="w-full h-full object-contain bg-muted/30 group-hover:scale-110 transition-transform duration-300" 
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                       </div>
@@ -443,7 +443,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                           <img
                             src={listing.animal.profilePhotoUrl}
                             alt={listing.animal.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-contain bg-muted/30 group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
