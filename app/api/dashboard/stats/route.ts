@@ -146,6 +146,18 @@ export async function GET(request: NextRequest) {
       with: {
         breed: true,
         photos: true,
+        owner: {
+          columns: {
+            id: true,
+            displayName: true,
+          }
+        },
+        breeder: {
+          columns: {
+            id: true,
+            displayName: true,
+          }
+        },
       },
       orderBy: (animals, { desc }) => [desc(animals.createdAt)],
       limit: 5,

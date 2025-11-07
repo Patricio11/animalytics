@@ -45,6 +45,14 @@ export interface APIAnimal {
     displayOrder: number;
     isPrimary: boolean;
   }[];
+  owner?: {
+    id: string;
+    displayName: string;
+  } | null;
+  breeder?: {
+    id: string;
+    displayName: string;
+  } | null;
 }
 
 export interface APIMating {

@@ -58,6 +58,16 @@ export const animalsRelations = relations(animals, ({ one, many }) => ({
     fields: [animals.breedId],
     references: [breeds.id],
   }),
+  owner: one(users, {
+    fields: [animals.ownerId],
+    references: [users.id],
+    relationName: 'owner',
+  }),
+  breeder: one(users, {
+    fields: [animals.breederId],
+    references: [users.id],
+    relationName: 'breeder',
+  }),
   
   // Pedigree relations (parent animals in system)
   sire: one(animals, {

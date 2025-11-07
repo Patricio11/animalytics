@@ -15,6 +15,8 @@ interface AnimalCardProps {
   imageUrl?: string;
   status?: 'available' | 'pregnant' | 'breeding' | 'retired';
   lastMating?: Date;
+  ownerName?: string;
+  breederName?: string;
   onEdit?: () => void;
   onShare?: () => void;
 }
@@ -29,6 +31,8 @@ export function AnimalCard({
   imageUrl,
   status = 'available',
   lastMating,
+  ownerName,
+  breederName,
   onEdit,
   onShare
 }: AnimalCardProps) {
@@ -133,6 +137,23 @@ export function AnimalCard({
               <span className="text-foreground font-semibold">{format(dateOfBirth, 'MMM yyyy')}</span>
             </div>
           </div>
+
+          {(ownerName || breederName) && (
+            <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-border/50">
+              {ownerName && (
+                <div className="flex flex-col space-y-1">
+                  <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Owner</span>
+                  <span className="text-foreground font-semibold truncate" title={ownerName}>{ownerName}</span>
+                </div>
+              )}
+              {breederName && (
+                <div className="flex flex-col space-y-1">
+                  <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Breeder</span>
+                  <span className="text-foreground font-semibold truncate" title={breederName}>{breederName}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {lastMating && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg p-2 transition-colors duration-300 group-hover:bg-muted/50">

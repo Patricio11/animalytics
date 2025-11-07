@@ -78,6 +78,8 @@ export default function Dashboard() {
       dateOfBirth: animal.dateOfBirth ? new Date(animal.dateOfBirth) : new Date(),
       imageUrl,
       status: animal.isBreedingActive ? ("breeding" as const) : ("available" as const),
+      ownerName: animal.owner?.displayName,
+      breederName: animal.breeder?.displayName,
     };
   }) || [];
 
