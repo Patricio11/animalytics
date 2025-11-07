@@ -460,14 +460,14 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                     <div>
                       <div className="text-xs text-muted-foreground uppercase tracking-wide">Breeder</div>
                       <div className="text-sm font-medium text-foreground">
-                        {animal.breederName || (animal.breederId ? 'In System' : 'Not Specified')}
+                        {animal.breederName || animal.breeder?.name || 'Not Specified'}
                       </div>
                     </div>
                     
                     <div className="col-span-2">
                       <div className="text-xs text-muted-foreground uppercase tracking-wide">Owner</div>
                       <div className="text-sm font-medium text-foreground">
-                        {animal.ownerName || (animal.ownerId ? 'You' : 'Not Specified')}
+                        {animal.ownerName || animal.owner?.name || 'Not Specified'}
                       </div>
                     </div>
                   </div>

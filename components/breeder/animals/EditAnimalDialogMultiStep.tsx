@@ -361,6 +361,7 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         microchipNumber: formData.microchipId || undefined,
         registrationNumber: formData.registrationNumber || undefined,
         bio: formData.description || undefined,
+        location: formData.location || undefined,
         
         // Breeder information - send based on mode
         // Note: breederId will be set to current user ID on backend if mode is 'self'

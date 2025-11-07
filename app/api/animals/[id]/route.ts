@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { animals } from '@/lib/db/schema/animals';
+import { animals, manualPedigreeEntries } from '@/lib/db/schema/animals';
 import { auth } from '@/lib/auth/config';
 import {
   successResponse,
@@ -38,6 +38,24 @@ const updateAnimalSchema = z.object({
   isDeceased: z.boolean().optional(),
   deceasedDate: z.string().optional(),
   notes: z.string().optional(),
+  location: z.string().optional(),
+  // Breeder information
+  breederMode: z.enum(['self', 'select', 'manual']).optional(),
+  breederId: z.string().optional(),
+  breederName: z.string().optional(),
+  breederRegistrationNumber: z.string().optional(),
+  // Owner information
+  ownerMode: z.enum(['self', 'select', 'manual']).optional(),
+  ownerId: z.string().optional(),
+  ownerName: z.string().optional(),
+  ownerRegistrationNumber: z.string().optional(),
+  // Parent information
+  sireId: z.string().optional(),
+  damId: z.string().optional(),
+  sireRegistrationNumber: z.string().optional(),
+  sireRegisteredName: z.string().optional(),
+  damRegistrationNumber: z.string().optional(),
+  damRegisteredName: z.string().optional(),
 });
 
 // ============================================================================
@@ -64,6 +82,19 @@ export async function GET(
       ),
       with: {
         breed: true,
+        // Owner and Breeder information
+        owner: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
+        breeder: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
         // Parent relations (if in system)
         sire: {
           columns: {
@@ -189,6 +220,7 @@ export async function PATCH(
     if (validatedData.isDeceased !== undefined) updateData.isDeceased = validatedData.isDeceased;
     if (validatedData.deceasedDate !== undefined) updateData.deceasedDate = validatedData.deceasedDate;
     if (validatedData.notes !== undefined) updateData.notes = validatedData.notes;
+    if (validatedData.location !== undefined) updateData.location = validatedData.location;
     
     // Convert numbers to strings for decimal fields
     if (validatedData.weight !== undefined) updateData.weight = String(validatedData.weight);
@@ -196,6 +228,40 @@ export async function PATCH(
     
     // Handle titles array (jsonb field)
     if (validatedData.titles !== undefined) updateData.titles = validatedData.titles;
+    
+    // Handle breeder information
+    if (validatedData.breederMode === 'self') {
+      updateData.breederId = session.user.id;
+      updateData.breederName = null;
+      updateData.breederRegistrationNumber = null;
+    } else if (validatedData.breederMode === 'manual') {
+      updateData.breederId = null;
+      updateData.breederName = validatedData.breederName || null;
+      updateData.breederRegistrationNumber = validatedData.breederRegistrationNumber || null;
+    } else if (validatedData.breederMode === 'select' && validatedData.breederId) {
+      updateData.breederId = validatedData.breederId;
+      updateData.breederName = null;
+      updateData.breederRegistrationNumber = null;
+    }
+    
+    // Handle owner information
+    if (validatedData.ownerMode === 'self') {
+      updateData.ownerId = session.user.id;
+      updateData.ownerName = null;
+      updateData.ownerRegistrationNumber = null;
+    } else if (validatedData.ownerMode === 'manual') {
+      updateData.ownerId = null;
+      updateData.ownerName = validatedData.ownerName || null;
+      updateData.ownerRegistrationNumber = validatedData.ownerRegistrationNumber || null;
+    } else if (validatedData.ownerMode === 'select' && validatedData.ownerId) {
+      updateData.ownerId = validatedData.ownerId;
+      updateData.ownerName = null;
+      updateData.ownerRegistrationNumber = null;
+    }
+    
+    // Handle parent information (sire/dam)
+    if (validatedData.sireId !== undefined) updateData.sireId = validatedData.sireId || null;
+    if (validatedData.damId !== undefined) updateData.damId = validatedData.damId || null;
     
     // Always update timestamp
     updateData.updatedAt = new Date();
@@ -211,6 +277,48 @@ export async function PATCH(
 
     if (!updated.length) {
       return notFoundResponse('Animal not found');
+    }
+
+    // Handle manual pedigree entries (for parents not in system)
+    // Delete existing manual entries for this animal (generation 1 = direct parents)
+    await db
+      .delete(manualPedigreeEntries)
+      .where(
+        and(
+          eq(manualPedigreeEntries.animalId, id),
+          eq(manualPedigreeEntries.generation, 1)
+        )
+      );
+
+    // Create new manual entries if provided
+    const manualEntries: Array<typeof manualPedigreeEntries.$inferInsert> = [];
+    
+    if (validatedData.sireRegistrationNumber && validatedData.sireRegisteredName) {
+      manualEntries.push({
+        animalId: id,
+        userId: session.user.id,
+        position: 'sire',
+        generation: 1,
+        name: validatedData.sireRegisteredName,
+        registeredName: validatedData.sireRegisteredName,
+        registrationNumber: validatedData.sireRegistrationNumber,
+      });
+    }
+    
+    if (validatedData.damRegistrationNumber && validatedData.damRegisteredName) {
+      manualEntries.push({
+        animalId: id,
+        userId: session.user.id,
+        position: 'dam',
+        generation: 1,
+        name: validatedData.damRegisteredName,
+        registeredName: validatedData.damRegisteredName,
+        registrationNumber: validatedData.damRegistrationNumber,
+      });
+    }
+    
+    if (manualEntries.length > 0) {
+      await db.insert(manualPedigreeEntries).values(manualEntries);
     }
 
     return successResponse(updated[0], 'Animal updated successfully');

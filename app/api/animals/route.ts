@@ -37,6 +37,7 @@ const createAnimalSchema = z.object({
   isChampion: z.boolean().optional(),
   titles: z.array(z.string()).optional(),
   notes: z.string().optional(),
+  location: z.string().optional(),
   
   // Parent information (relational or manual)
   sireId: z.string().optional(),
@@ -167,6 +168,7 @@ export async function POST(request: NextRequest) {
         isChampion: validatedData.isChampion,
         titles: validatedData.titles,
         notes: validatedData.notes,
+        location: validatedData.location,
         sireId: validatedData.sireId,
         damId: validatedData.damId,
         

@@ -118,6 +118,9 @@ export const animals = pgTable('animals', {
   ownerName: text('owner_name'), // If owner is external (manual entry)
   ownerRegistrationNumber: text('owner_registration_number'), // Owner's registration ID
 
+  // Location
+  location: text('location'), // City, State/Province, Country
+
   // Status
   isActive: boolean('is_active').default(true),
   isDeceased: boolean('is_deceased').default(false),
