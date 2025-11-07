@@ -149,13 +149,13 @@ export async function GET(request: NextRequest) {
         owner: {
           columns: {
             id: true,
-            displayName: true,
+            name: true,
           }
         },
         breeder: {
           columns: {
             id: true,
-            displayName: true,
+            name: true,
           }
         },
       },
@@ -200,6 +200,9 @@ export async function GET(request: NextRequest) {
     // ========================================================================
 
     const stats = {
+      // Current user ID for comparison
+      currentUserId: session.user.id,
+
       // Dashboard expects: totalAnimals.total, totalAnimals.male, totalAnimals.female
       totalAnimals: {
         total: Number(animalStats[0]?.total) || 0,

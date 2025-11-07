@@ -47,11 +47,11 @@ export interface APIAnimal {
   }[];
   owner?: {
     id: string;
-    displayName: string;
+    name: string;
   } | null;
   breeder?: {
     id: string;
-    displayName: string;
+    name: string;
   } | null;
 }
 
