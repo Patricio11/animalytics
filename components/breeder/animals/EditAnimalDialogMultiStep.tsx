@@ -14,9 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PawPrint, ArrowLeft, ArrowRight, Check, CalendarIcon, ChevronsUpDown, Upload, X, ImageIcon, Loader2 } from "lucide-react";
+import { PawPrint, ArrowLeft, ArrowRight, Check, ChevronsUpDown, Upload, X, ImageIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -687,28 +687,15 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
 
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                <div className="relative">
-                  <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth ? format(formData.dateOfBirth, "yyyy-MM-dd") : ""}
-                    onChange={(e) => {
-                      const dateValue = e.target.value;
-                      if (dateValue) {
-                        updateFormData("dateOfBirth", new Date(dateValue));
-                      } else {
-                        updateFormData("dateOfBirth", undefined);
-                      }
-                    }}
-                    max={format(new Date(), "yyyy-MM-dd")}
-                    min="1990-01-01"
-                    className="pl-10 bg-background border-primary/20 focus:border-primary [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:hover:bg-primary/10 [&::-webkit-calendar-picker-indicator]:rounded [&::-webkit-calendar-picker-indicator]:p-1"
-                  />
-                </div>
+                <DatePicker
+                  date={formData.dateOfBirth}
+                  onDateChange={(date) => updateFormData("dateOfBirth", date)}
+                  placeholder="Select date of birth"
+                  maxDate={new Date()}
+                />
                 {formData.dateOfBirth && (
                   <p className="text-xs text-muted-foreground">
-                    Selected: {format(formData.dateOfBirth, "MMMM d, yyyy")}
+                    Age: {Math.floor((new Date().getTime() - formData.dateOfBirth.getTime()) / (1000 * 60 * 60 * 24 * 365.25))} years old
                   </p>
                 )}
               </div>

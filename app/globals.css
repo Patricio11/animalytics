@@ -265,4 +265,24 @@ All colors MUST be HSL.
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+
+  /* Fix react-day-picker calendar alignment - FORCE equal column widths */
+  .rdp table {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+  
+  .rdp thead tr,
+  .rdp tbody tr {
+    display: table-row !important;
+    width: 100% !important;
+  }
+  
+  .rdp th,
+  .rdp td {
+    display: table-cell !important;
+    width: 14.285714% !important; /* 100% / 7 days */
+    text-align: center !important;
+    padding: 0.5rem !important;
+  }
 }
