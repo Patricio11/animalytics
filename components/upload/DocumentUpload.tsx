@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { uploadFile, FILE_VALIDATION, type UploadResult } from "@/lib/supabase/upload";
 import { type StoragePath } from "@/lib/supabase/client";
-import { Upload, X, FileText, Loader2, AlertCircle, File, Download } from "lucide-react";
+import { Upload, X, FileText, Loader2, AlertCircle, File, Download, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DocumentUploadProps {
@@ -42,6 +42,7 @@ export function DocumentUpload({
   const [documentName, setDocumentName] = useState<string | null>(currentDocumentName || null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.toLowerCase().split('.').pop();
@@ -135,6 +136,19 @@ export function DocumentUpload({
     fileInputRef.current?.click();
   };
 
+  const handleCameraClick = () => {
+    cameraInputRef.current?.click();
+  };
+
+  const handleCameraCapture = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError(null);
+    setSelectedFile(file);
+    setDocumentName(file.name);
+  }, []);
+
   return (
     <div className={cn("space-y-4", className)}>
       {label && (
@@ -208,18 +222,31 @@ export function DocumentUpload({
 
       {/* Upload Area */}
       {!documentUrl && !selectedFile && (
-        <Card
-          className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer"
-          onClick={handleButtonClick}
-        >
-          <div className="flex flex-col items-center justify-center p-8 text-center">
-            <div className="rounded-full bg-primary/10 p-4 mb-4">
-              <FileText className="h-8 w-8 text-primary" />
+        <div className="space-y-3">
+          <Card
+            className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={handleButtonClick}
+          >
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <div className="rounded-full bg-primary/10 p-4 mb-4">
+                <FileText className="h-8 w-8 text-primary" />
+              </div>
+              <p className="text-sm font-medium mb-1">Click to upload document</p>
+              <p className="text-xs text-muted-foreground">{helperText}</p>
             </div>
-            <p className="text-sm font-medium mb-1">Click to upload document</p>
-            <p className="text-xs text-muted-foreground">{helperText}</p>
-          </div>
-        </Card>
+          </Card>
+          
+          {/* Camera Capture Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCameraClick}
+            className="w-full"
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            Take Photo with Camera
+          </Button>
+        </div>
       )}
 
       {/* Hidden File Input */}
@@ -228,6 +255,16 @@ export function DocumentUpload({
         type="file"
         accept={allowedTypes?.join(',') || FILE_VALIDATION.DOCUMENT.allowedTypes.join(',')}
         onChange={handleFileSelect}
+        className="hidden"
+      />
+      
+      {/* Hidden Camera Input */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleCameraCapture}
         className="hidden"
       />
 

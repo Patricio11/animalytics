@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { uploadFile, FILE_VALIDATION, type UploadResult } from "@/lib/supabase/upload";
 import { type StoragePath } from "@/lib/supabase/client";
-import { Upload, X, Image as ImageIcon, Loader2, AlertCircle } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Loader2, AlertCircle, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -93,6 +93,7 @@ export function ImageUpload({
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const aspectRatioClass = {
     square: "aspect-square",
@@ -171,6 +172,10 @@ export function ImageUpload({
     fileInputRef.current?.click();
   };
 
+  const handleCameraClick = () => {
+    cameraInputRef.current?.click();
+  };
+
   return (
     <div className={cn("space-y-4", className)}>
       {label && (
@@ -210,21 +215,34 @@ export function ImageUpload({
 
       {/* Upload Area */}
       {!previewUrl && (
-        <Card
-          className={cn(
-            "border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer",
-            aspectRatioClass
-          )}
-          onClick={handleButtonClick}
-        >
-          <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-            <div className="rounded-full bg-primary/10 p-4 mb-4">
-              <ImageIcon className="h-8 w-8 text-primary" />
+        <div className="space-y-3">
+          <Card
+            className={cn(
+              "border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer",
+              aspectRatioClass
+            )}
+            onClick={handleButtonClick}
+          >
+            <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+              <div className="rounded-full bg-primary/10 p-4 mb-4">
+                <ImageIcon className="h-8 w-8 text-primary" />
+              </div>
+              <p className="text-sm font-medium mb-1">Click to upload image</p>
+              <p className="text-xs text-muted-foreground">{helperText}</p>
             </div>
-            <p className="text-sm font-medium mb-1">Click to upload image</p>
-            <p className="text-xs text-muted-foreground">{helperText}</p>
-          </div>
-        </Card>
+          </Card>
+          
+          {/* Camera Capture Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCameraClick}
+            className="w-full"
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            Take Photo with Camera
+          </Button>
+        </div>
       )}
 
       {/* Hidden File Input */}
@@ -232,6 +250,16 @@ export function ImageUpload({
         ref={fileInputRef}
         type="file"
         accept={FILE_VALIDATION.IMAGE.allowedTypes.join(',')}
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      
+      {/* Hidden Camera Input */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
         onChange={handleFileSelect}
         className="hidden"
       />
