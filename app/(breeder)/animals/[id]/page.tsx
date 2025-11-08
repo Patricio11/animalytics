@@ -359,7 +359,12 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   </TabsContent>
 
                   <TabsContent value="health" className="mt-0">
-                    <HealthTab animalId={animal.id} animalName={animal.name} />
+                    <HealthTab 
+                      animalId={animal.id} 
+                      animalName={animal.name}
+                      animalSex={animal.sex}
+                      animalDateOfBirth={animal.dateOfBirth}
+                    />
                   </TabsContent>
 
                   <TabsContent value="pedigree" className="mt-0">

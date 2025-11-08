@@ -35,9 +35,11 @@ import { cn } from "@/lib/utils";
 interface HealthTabProps {
   animalId: string;
   animalName: string;
+  animalSex?: 'male' | 'female';
+  animalDateOfBirth?: string;
 }
 
-export function HealthTab({ animalId, animalName }: HealthTabProps) {
+export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }: HealthTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { settings } = useRegionalSettings();
@@ -606,6 +608,8 @@ export function HealthTab({ animalId, animalName }: HealthTabProps) {
         onOpenChange={setShowAddRecord}
         animalId={animalId}
         animalName={animalName}
+        animalSex={animalSex}
+        animalDateOfBirth={animalDateOfBirth}
       />
     </div>
   );

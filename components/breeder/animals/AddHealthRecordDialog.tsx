@@ -24,14 +24,18 @@ import { DocumentUpload } from "@/components/upload";
 import { STORAGE_PATHS } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
-import { Heart, Save, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { Heart, Save, Loader2, Info } from "lucide-react";
+import { format, differenceInWeeks } from "date-fns";
+import { calculateVaccinationDueDate } from "@/lib/utils/vaccination-schedules";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddHealthRecordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   animalId: string;
   animalName: string;
+  animalSex?: 'male' | 'female';
+  animalDateOfBirth?: Date | string;
 }
 
 export function AddHealthRecordDialog({
@@ -39,6 +43,8 @@ export function AddHealthRecordDialog({
   onOpenChange,
   animalId,
   animalName,
+  animalSex,
+  animalDateOfBirth,
 }: AddHealthRecordDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -163,6 +169,59 @@ export function AddHealthRecordDialog({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Auto-calculate next due date when vaccination type or record date changes
+  const handleVaccinationTypeChange = (vaccinationType: string) => {
+    updateField('vaccinationType', vaccinationType);
+    
+    if (vaccinationType && formData.recordDate && animalDateOfBirth) {
+      const recordDate = new Date(formData.recordDate);
+      const birthDate = new Date(animalDateOfBirth);
+      const ageInWeeks = differenceInWeeks(recordDate, birthDate);
+      
+      // Determine species from sex (assuming dogs and cats)
+      // In a real scenario, you'd have species data
+      const species: 'dog' | 'cat' = 'dog'; // Default to dog
+      
+      const schedule = calculateVaccinationDueDate(
+        vaccinationType,
+        recordDate,
+        species,
+        ageInWeeks
+      );
+      
+      if (schedule) {
+        updateField('nextDueDate', format(schedule.nextDueDate, 'yyyy-MM-dd'));
+        toast({
+          title: "Next Due Date Calculated",
+          description: `${schedule.interval} - ${schedule.notes}`,
+        });
+      }
+    }
+  };
+
+  const handleRecordDateChange = (date: string) => {
+    updateField('recordDate', date);
+    
+    // Recalculate if vaccination type is already selected
+    if (formData.vaccinationType && animalDateOfBirth) {
+      const recordDate = new Date(date);
+      const birthDate = new Date(animalDateOfBirth);
+      const ageInWeeks = differenceInWeeks(recordDate, birthDate);
+      const species: 'dog' | 'cat' = 'dog';
+      
+      const schedule = calculateVaccinationDueDate(
+        formData.vaccinationType,
+        recordDate,
+        species,
+        ageInWeeks
+      );
+      
+      if (schedule) {
+        updateField('nextDueDate', format(schedule.nextDueDate, 'yyyy-MM-dd'));
+      }
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -209,7 +268,7 @@ export function AddHealthRecordDialog({
               id="recordDate"
               type="date"
               value={formData.recordDate}
-              onChange={(e) => updateField("recordDate", e.target.value)}
+              onChange={(e) => handleRecordDateChange(e.target.value)}
               required
             />
           </div>
@@ -241,13 +300,32 @@ export function AddHealthRecordDialog({
             <>
               <div className="space-y-2">
                 <Label htmlFor="vaccinationType">Vaccination Type *</Label>
-                <Input
-                  id="vaccinationType"
+                <Select
                   value={formData.vaccinationType}
-                  onChange={(e) => updateField("vaccinationType", e.target.value)}
-                  placeholder="e.g., Rabies, DHPP, Bordetella"
-                  required
-                />
+                  onValueChange={handleVaccinationTypeChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select vaccination type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Rabies">Rabies</SelectItem>
+                    <SelectItem value="DHPP">DHPP (Distemper, Hepatitis, Parvovirus, Parainfluenza)</SelectItem>
+                    <SelectItem value="CPV">CPV (Canine Parvovirus)</SelectItem>
+                    <SelectItem value="CDV">CDV (Canine Distemper)</SelectItem>
+                    <SelectItem value="CAV-2">CAV-2 (Canine Adenovirus)</SelectItem>
+                    <SelectItem value="Bordetella">Bordetella (Kennel Cough)</SelectItem>
+                    <SelectItem value="Leptospirosis">Leptospirosis</SelectItem>
+                    <SelectItem value="Parainfluenza">Parainfluenza</SelectItem>
+                    <SelectItem value="Canine Herpes">Canine Herpes (Breeding)</SelectItem>
+                    <SelectItem value="FVRCP">FVRCP (Feline Viral Rhinotracheitis, Calicivirus, Panleukopenia)</SelectItem>
+                    <SelectItem value="FeLV">FeLV (Feline Leukemia)</SelectItem>
+                    <SelectItem value="Chlamydia">Chlamydia felis</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  <Info className="w-3 h-3 inline mr-1" />
+                  Next due date will be auto-calculated based on SA guidelines
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="nextDueDate">Next Due Date</Label>
@@ -257,6 +335,9 @@ export function AddHealthRecordDialog({
                   value={formData.nextDueDate}
                   onChange={(e) => updateField("nextDueDate", e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Auto-calculated based on vaccination type and animal age
+                </p>
               </div>
             </>
           )}
