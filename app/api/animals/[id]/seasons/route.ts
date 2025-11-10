@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { seasons, animals } from '@/lib/db/schema/animals';
+import { tasks } from '@/lib/db/schema/tasks';
 import { auth } from '@/lib/auth/config';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { createId } from '@paralleldrive/cuid2';
+import { addDays, format as formatDate, differenceInDays, parseISO } from 'date-fns';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -14,7 +16,9 @@ const createSeasonSchema = z.object({
   startDate: z.string(), // ISO date string
   endDate: z.string().optional(),
   status: z.enum(['active', 'completed']).optional().default('active'),
+  durationDays: z.number().optional(),
   notes: z.string().optional(),
+  createReminder: z.boolean().optional().default(true),
 });
 
 const updateSeasonSchema = createSeasonSchema.partial();
@@ -74,7 +78,8 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: animalSeasons,
+      seasons: animalSeasons,
+      count: animalSeasons.length,
     });
   } catch (error) {
     console.error('Error fetching seasons:', error);
@@ -153,17 +158,77 @@ export async function POST(
         startDate: validatedData.startDate,
         endDate: validatedData.endDate || null,
         status: validatedData.status || 'active',
-        durationDays,
+        durationDays: validatedData.durationDays || durationDays,
         hasProgesteroneReadings: false,
         progesteroneReadingCount: 0,
         notes: validatedData.notes || null,
       })
       .returning();
 
+    // Create reminder for next predicted season if requested
+    let reminderCreated = false;
+    if (validatedData.createReminder) {
+      try {
+        // Get all previous seasons to calculate average cycle length
+        const previousSeasons = await db
+          .select()
+          .from(seasons)
+          .where(and(
+            eq(seasons.animalId, animalId),
+            eq(seasons.status, 'completed')
+          ))
+          .orderBy(desc(seasons.startDate))
+          .limit(5);
+
+        // Calculate average cycle length if we have at least 2 seasons
+        if (previousSeasons.length >= 1) {
+          const intervals: number[] = [];
+          for (let i = 0; i < previousSeasons.length - 1; i++) {
+            const current = parseISO(previousSeasons[i].startDate);
+            const next = parseISO(previousSeasons[i + 1].startDate);
+            intervals.push(differenceInDays(current, next));
+          }
+
+          // Use average or default to 21 days (typical cycle)
+          const avgInterval = intervals.length > 0
+            ? Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length)
+            : 21;
+
+          // Predict next season date
+          const lastStartDate = parseISO(validatedData.startDate);
+          const predictedNextDate = addDays(lastStartDate, avgInterval);
+          
+          // Create reminder 7 days before predicted date
+          const reminderDate = addDays(predictedNextDate, -7);
+
+          // Only create reminder if it's in the future
+          if (reminderDate > new Date()) {
+            await db.insert(tasks).values({
+              userId: session.user.id,
+              title: `${animal.name} - Upcoming Heat Cycle`,
+              description: `${animal.name} may be coming into season soon (predicted: ${formatDate(predictedNextDate, 'MMM dd, yyyy')}). Keep an eye out for early signs like behavioral changes, swelling, or spotting. Consider scheduling progesterone testing if planning to breed.`,
+              dueDate: formatDate(reminderDate, 'yyyy-MM-dd'),
+              priority: 'normal',
+              status: 'pending',
+              category: 'breeding',
+              animalId: animalId,
+            });
+            reminderCreated = true;
+          }
+        }
+      } catch (error) {
+        console.error('Error creating reminder:', error);
+        // Don't fail the whole request if reminder creation fails
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: season,
-      message: 'Season created successfully',
+      reminderCreated,
+      message: reminderCreated 
+        ? 'Season created and reminder set for next predicted cycle'
+        : 'Season created successfully',
     });
   } catch (error) {
     console.error('Error creating season:', error);

@@ -7,7 +7,7 @@ import { ProfileTab } from "@/components/breeder/animals/ProfileTab";
 import { PhotosDocsTab } from "@/components/breeder/animals/PhotosDocsTab";
 import { FeedingPlanTab } from "@/components/breeder/animals/FeedingPlanTab";
 import { SemenTab } from "@/components/breeder/animals/SemenTab";
-import { SeasonsTab } from "@/components/breeder/animals/SeasonsTab";
+import { SeasonHistoryTab } from "@/components/breeder/animals/SeasonHistoryTab";
 import { LitterDetailsTab } from "@/components/breeder/animals/LitterDetailsTab";
 import { RemindersTab } from "@/components/breeder/animals/RemindersTab";
 import { PedigreeTab } from "@/components/breeder/animals/PedigreeTab";
@@ -392,9 +392,10 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   {animal.sex === 'female' && (
                     <>
                       <TabsContent value="seasons" className="mt-0">
-                        <SeasonsTab
+                        <SeasonHistoryTab
                           animalId={animal.id}
-                          seasons={animal.seasons || []}
+                          animalName={animal.name}
+                          animalSex={animal.sex}
                         />
                       </TabsContent>
 

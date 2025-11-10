@@ -13,6 +13,7 @@ const updateSeasonSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   status: z.enum(['active', 'completed']).optional(),
+  durationDays: z.number().optional(),
   notes: z.string().optional(),
 });
 
