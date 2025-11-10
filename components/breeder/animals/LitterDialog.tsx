@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Baby, AlertCircle, Calendar } from "lucide-react";
 import type { Litter } from "@/lib/types/animal";
 import { format, addDays, differenceInDays } from "date-fns";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface LitterDialogProps {
   open: boolean;
@@ -36,10 +37,10 @@ export function LitterDialog({
   mode = 'create',
   availableSires,
 }: LitterDialogProps) {
-  const [matingDate, setMatingDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [matingDate, setMatingDate] = useState<Date | undefined>(new Date());
   const [sireId, setSireId] = useState('');
   const [sireName, setSireName] = useState('');
-  const [actualWhelpingDate, setActualWhelpingDate] = useState('');
+  const [actualWhelpingDate, setActualWhelpingDate] = useState<Date | undefined>();
   const [puppyCount, setPuppyCount] = useState('');
   const [survivingPuppies, setSurvivingPuppies] = useState('');
   const [complications, setComplications] = useState(false);
@@ -50,10 +51,10 @@ export function LitterDialog({
   // Load existing litter data when editing
   useEffect(() => {
     if (existingLitter && mode === 'edit') {
-      setMatingDate(existingLitter.matingDate);
+      setMatingDate(existingLitter.matingDate ? new Date(existingLitter.matingDate) : undefined);
       setSireId(existingLitter.sireId);
       setSireName(existingLitter.sireName);
-      setActualWhelpingDate(existingLitter.whelpingDate || '');
+      setActualWhelpingDate(existingLitter.whelpingDate ? new Date(existingLitter.whelpingDate) : undefined);
       setPuppyCount(existingLitter.puppyCount?.toString() || '');
       setSurvivingPuppies(existingLitter.survivingPuppies?.toString() || '');
       setComplications(existingLitter.complications);
@@ -72,10 +73,10 @@ export function LitterDialog({
   }, [open]);
 
   const resetForm = () => {
-    setMatingDate(format(new Date(), 'yyyy-MM-dd'));
+    setMatingDate(new Date());
     setSireId('');
     setSireName('');
-    setActualWhelpingDate('');
+    setActualWhelpingDate(undefined);
     setPuppyCount('');
     setSurvivingPuppies('');
     setComplications(false);
@@ -87,15 +88,14 @@ export function LitterDialog({
   // Auto-calculate expected whelping date (mating date + 63 days)
   const getExpectedWhelpingDate = () => {
     if (!matingDate) return '';
-    const matingDateObj = new Date(matingDate);
-    const expectedDate = addDays(matingDateObj, 63);
+    const expectedDate = addDays(matingDate, 63);
     return format(expectedDate, 'yyyy-MM-dd');
   };
 
   // Calculate days since mating
   const getDaysSinceMating = () => {
     if (!matingDate) return 0;
-    return differenceInDays(new Date(), new Date(matingDate));
+    return differenceInDays(new Date(), matingDate);
   };
 
   // Calculate days until expected whelping
@@ -165,11 +165,11 @@ export function LitterDialog({
     const isWhelped = !!actualWhelpingDate;
 
     const litter: Omit<Litter, 'id'> = {
-      matingDate,
+      matingDate: matingDate?.toISOString(),
       sireId,
       sireName,
       expectedWhelpingDate,
-      whelpingDate: actualWhelpingDate || undefined,
+      whelpingDate: actualWhelpingDate?.toISOString() || undefined,
       puppyCount: puppyCount ? parseInt(puppyCount) : undefined,
       survivingPuppies: survivingPuppies ? parseInt(survivingPuppies) : undefined,
       complications,
@@ -235,12 +235,11 @@ export function LitterDialog({
             <Label htmlFor="mating-date">
               Mating Date <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="mating-date"
-              type="date"
-              value={matingDate}
-              onChange={(e) => setMatingDate(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={matingDate}
+              onDateChange={setMatingDate}
+              placeholder="Select mating date"
+              maxDate={new Date()}
               className="bg-background border-primary/20"
             />
             {errors.matingDate && (
@@ -270,13 +269,12 @@ export function LitterDialog({
           {/* Actual Whelping Date */}
           <div className="space-y-2">
             <Label htmlFor="whelping-date">Actual Whelping Date (Optional)</Label>
-            <Input
-              id="whelping-date"
-              type="date"
-              value={actualWhelpingDate}
-              onChange={(e) => setActualWhelpingDate(e.target.value)}
-              min={matingDate}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={actualWhelpingDate}
+              onDateChange={setActualWhelpingDate}
+              placeholder="Select whelping date"
+              minDate={matingDate}
+              maxDate={new Date()}
               className="bg-background border-primary/20"
             />
             {errors.actualWhelpingDate && (
