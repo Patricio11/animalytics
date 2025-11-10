@@ -205,13 +205,13 @@ export async function POST(
           if (reminderDate > new Date()) {
             await db.insert(tasks).values({
               userId: session.user.id,
+              animalId: animalId,
+              type: 'event',
               title: `${animal.name} - Upcoming Heat Cycle`,
               description: `${animal.name} may be coming into season soon (predicted: ${formatDate(predictedNextDate, 'MMM dd, yyyy')}). Keep an eye out for early signs like behavioral changes, swelling, or spotting. Consider scheduling progesterone testing if planning to breed.`,
               dueDate: formatDate(reminderDate, 'yyyy-MM-dd'),
-              priority: 'normal',
+              priority: 'medium',
               status: 'pending',
-              category: 'breeding',
-              animalId: animalId,
             });
             reminderCreated = true;
           }
