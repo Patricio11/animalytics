@@ -5,16 +5,18 @@ import { Animal } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Calendar, Award, Heart, Syringe, Stethoscope, Pill, AlertTriangle, Activity, ChevronRight, AlertCircle } from "lucide-react";
+import { Edit, Calendar, Award, Heart, Syringe, Stethoscope, Pill, AlertTriangle, Activity, ChevronRight, AlertCircle, Users, Baby, ArrowRight } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { HealthRecordDetailDialog } from "./HealthRecordDetailDialog";
+import { PedigreeTab } from "./PedigreeTab";
 
 interface ProfileTabProps {
   animal: Animal;
+  animalId: string;
   onEdit?: () => void;
 }
 
-export function ProfileTab({ animal, onEdit }: ProfileTabProps) {
+export function ProfileTab({ animal, animalId, onEdit }: ProfileTabProps) {
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -253,6 +255,134 @@ export function ProfileTab({ animal, onEdit }: ProfileTabProps) {
           </CardContent>
         </Card>
       ) : null}
+
+      {/* Full Pedigree Section */}
+      <div className="border-t border-primary/10 pt-6">
+        <PedigreeTab animalId={animalId} animalName={animal.name} />
+      </div>
+
+      {/* Litters Information - Only for females */}
+      {((animal as any).sex === 'female' || (animal as any).sex === 'bitch') && (animal as any).litters && (animal as any).litters.length > 0 && (
+        <Card className="shadow-card border-primary/10">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Baby className="w-5 h-5 text-chart-2" />
+              Litters & Breeding History
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-3 border-b border-primary/10">
+              <div className="text-center p-3 rounded-lg bg-background border border-primary/10">
+                <div className="text-2xl font-bold text-foreground">
+                  {(animal as any).litters.length}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">Total Litters</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-background border border-primary/10">
+                <div className="text-2xl font-bold text-foreground">
+                  {(animal as any).litters.reduce((sum: number, litter: any) =>
+                    sum + (litter.puppyCount || 0), 0)}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">Total Puppies</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-background border border-primary/10">
+                <div className="text-2xl font-bold text-foreground">
+                  {Math.round((animal as any).litters.reduce((sum: number, litter: any) =>
+                    sum + (litter.puppyCount || 0), 0) / (animal as any).litters.length) || 0}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">Avg Litter Size</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-background border border-primary/10">
+                <div className="text-2xl font-bold text-foreground">
+                  {(animal as any).litters.filter((l: any) => l.status === 'whelped').length}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">Whelped</div>
+              </div>
+            </div>
+
+            {/* Recent Litters */}
+            <div className="space-y-3">
+              {(animal as any).litters.slice(0, 3).map((litter: any) => {
+                const isExpected = litter.status === 'expected';
+                const whelpingDate = litter.actualWhelpingDate || litter.expectedWhelpingDate;
+                const daysUntilWhelping = whelpingDate ? differenceInDays(new Date(whelpingDate), new Date()) : null;
+
+                return (
+                  <div
+                    key={litter.id}
+                    className="p-4 rounded-lg border border-primary/10 bg-background hover:bg-accent/5 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={isExpected ? "default" : "secondary"}>
+                            {litter.status}
+                          </Badge>
+                          {litter.hasComplications && (
+                            <Badge variant="outline" className="bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 border-orange-200">
+                              Complications
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="text-sm text-muted-foreground">
+                          Sire: <span className="font-medium text-foreground">{litter.sireName || 'Unknown'}</span>
+                        </div>
+
+                        <div className="text-sm text-muted-foreground mt-1">
+                          Mating: {format(new Date(litter.matingDate), 'MMM dd, yyyy')}
+                        </div>
+
+                        {whelpingDate && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {isExpected ? 'Expected' : 'Whelped'}: {format(new Date(whelpingDate), 'MMM dd, yyyy')}
+                            {daysUntilWhelping !== null && isExpected && (
+                              <span className="ml-1 font-medium">
+                                ({daysUntilWhelping > 0 ? `${daysUntilWhelping} days` : 'Due now'})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {litter.puppyCount > 0 && (
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-foreground">
+                            {litter.puppyCount}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {litter.maleCount || 0}M / {litter.femaleCount || 0}F
+                          </div>
+                          {litter.survivingPuppies !== undefined && litter.survivingPuppies !== litter.puppyCount && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {litter.survivingPuppies} surviving
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {litter.notes && (
+                      <div className="text-sm text-muted-foreground italic mt-2 pt-2 border-t border-primary/10">
+                        {litter.notes}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {(animal as any).litters.length > 3 && (
+              <div className="text-center pt-2">
+                <div className="text-sm text-muted-foreground">
+                  + {(animal as any).litters.length - 3} more litter{(animal as any).litters.length - 3 !== 1 ? 's' : ''}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Health Records */}
       {(animal as any).healthRecords && (animal as any).healthRecords.length > 0 && (

@@ -355,7 +355,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
                 <div className="p-6">
                   <TabsContent value="profile" className="mt-0">
-                    <ProfileTab animal={animal} onEdit={() => setShowEditDialog(true)} />
+                    <ProfileTab animal={animal} animalId={animal.id} onEdit={() => setShowEditDialog(true)} />
                   </TabsContent>
 
                   <TabsContent value="health" className="mt-0">
