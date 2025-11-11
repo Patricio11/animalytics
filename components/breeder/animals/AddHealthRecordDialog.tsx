@@ -28,6 +28,7 @@ import { Heart, Save, Loader2, Info } from "lucide-react";
 import { format, differenceInWeeks } from "date-fns";
 import { calculateVaccinationDueDate } from "@/lib/utils/vaccination-schedules";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface AddHealthRecordDialogProps {
   open: boolean;
@@ -53,16 +54,16 @@ export function AddHealthRecordDialog({
 
   const [formData, setFormData] = useState({
     recordType: "vaccination",
-    recordDate: format(new Date(), "yyyy-MM-dd"),
+    recordDate: new Date(),
     veterinarianName: "",
     clinicName: "",
     vaccinationType: "",
-    nextDueDate: "",
+    nextDueDate: undefined as Date | undefined,
     medicationName: "",
     dosage: "",
     frequency: "",
-    startDate: "",
-    endDate: "",
+    startDate: undefined as Date | undefined,
+    endDate: undefined as Date | undefined,
     diagnosis: "",
     treatment: "",
     cost: "",
@@ -106,16 +107,16 @@ export function AddHealthRecordDialog({
   const resetForm = () => {
     setFormData({
       recordType: "vaccination",
-      recordDate: format(new Date(), "yyyy-MM-dd"),
+      recordDate: new Date(),
       veterinarianName: "",
       clinicName: "",
       vaccinationType: "",
-      nextDueDate: "",
+      nextDueDate: undefined,
       medicationName: "",
       dosage: "",
       frequency: "",
-      startDate: "",
-      endDate: "",
+      startDate: undefined,
+      endDate: undefined,
       diagnosis: "",
       treatment: "",
       cost: "",
@@ -132,7 +133,7 @@ export function AddHealthRecordDialog({
       // Prepare data based on record type
       const submitData: any = {
         recordType: formData.recordType,
-        recordDate: formData.recordDate,
+        recordDate: format(formData.recordDate, 'yyyy-MM-dd'),
         veterinarianName: formData.veterinarianName || undefined,
         clinicName: formData.clinicName || undefined,
         diagnosis: formData.diagnosis || undefined,
@@ -146,15 +147,15 @@ export function AddHealthRecordDialog({
       // Add type-specific fields
       if (formData.recordType === "vaccination") {
         submitData.vaccinationType = formData.vaccinationType;
-        submitData.nextDueDate = formData.nextDueDate || undefined;
+        submitData.nextDueDate = formData.nextDueDate ? format(formData.nextDueDate, 'yyyy-MM-dd') : undefined;
       }
 
       if (formData.recordType === "medication") {
         submitData.medicationName = formData.medicationName;
         submitData.dosage = formData.dosage || undefined;
         submitData.frequency = formData.frequency || undefined;
-        submitData.startDate = formData.startDate || undefined;
-        submitData.endDate = formData.endDate || undefined;
+        submitData.startDate = formData.startDate ? format(formData.startDate, 'yyyy-MM-dd') : undefined;
+        submitData.endDate = formData.endDate ? format(formData.endDate, 'yyyy-MM-dd') : undefined;
       }
 
       await createMutation.mutateAsync(submitData);
@@ -165,32 +166,31 @@ export function AddHealthRecordDialog({
     }
   };
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // Auto-calculate next due date when vaccination type or record date changes
   const handleVaccinationTypeChange = (vaccinationType: string) => {
     updateField('vaccinationType', vaccinationType);
-    
+
     if (vaccinationType && formData.recordDate && animalDateOfBirth) {
-      const recordDate = new Date(formData.recordDate);
       const birthDate = new Date(animalDateOfBirth);
-      const ageInWeeks = differenceInWeeks(recordDate, birthDate);
-      
+      const ageInWeeks = differenceInWeeks(formData.recordDate, birthDate);
+
       // Determine species from sex (assuming dogs and cats)
       // In a real scenario, you'd have species data
       const species: 'dog' | 'cat' = 'dog'; // Default to dog
-      
+
       const schedule = calculateVaccinationDueDate(
         vaccinationType,
-        recordDate,
+        formData.recordDate,
         species,
         ageInWeeks
       );
-      
+
       if (schedule) {
-        updateField('nextDueDate', format(schedule.nextDueDate, 'yyyy-MM-dd'));
+        updateField('nextDueDate', schedule.nextDueDate);
         toast({
           title: "Next Due Date Calculated",
           description: `${schedule.interval} - ${schedule.notes}`,
@@ -199,25 +199,24 @@ export function AddHealthRecordDialog({
     }
   };
 
-  const handleRecordDateChange = (date: string) => {
+  const handleRecordDateChange = (date: Date | undefined) => {
     updateField('recordDate', date);
-    
+
     // Recalculate if vaccination type is already selected
-    if (formData.vaccinationType && animalDateOfBirth) {
-      const recordDate = new Date(date);
+    if (date && formData.vaccinationType && animalDateOfBirth) {
       const birthDate = new Date(animalDateOfBirth);
-      const ageInWeeks = differenceInWeeks(recordDate, birthDate);
+      const ageInWeeks = differenceInWeeks(date, birthDate);
       const species: 'dog' | 'cat' = 'dog';
-      
+
       const schedule = calculateVaccinationDueDate(
         formData.vaccinationType,
-        recordDate,
+        date,
         species,
         ageInWeeks
       );
-      
+
       if (schedule) {
-        updateField('nextDueDate', format(schedule.nextDueDate, 'yyyy-MM-dd'));
+        updateField('nextDueDate', schedule.nextDueDate);
       }
     }
   };
@@ -264,12 +263,11 @@ export function AddHealthRecordDialog({
           {/* Record Date */}
           <div className="space-y-2">
             <Label htmlFor="recordDate">Date *</Label>
-            <Input
-              id="recordDate"
-              type="date"
-              value={formData.recordDate}
-              onChange={(e) => handleRecordDateChange(e.target.value)}
-              required
+            <DatePicker
+              date={formData.recordDate}
+              onDateChange={handleRecordDateChange}
+              placeholder="Select record date"
+              maxDate={new Date()}
             />
           </div>
 
@@ -329,11 +327,11 @@ export function AddHealthRecordDialog({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="nextDueDate">Next Due Date</Label>
-                <Input
-                  id="nextDueDate"
-                  type="date"
-                  value={formData.nextDueDate}
-                  onChange={(e) => updateField("nextDueDate", e.target.value)}
+                <DatePicker
+                  date={formData.nextDueDate}
+                  onDateChange={(date) => updateField("nextDueDate", date)}
+                  placeholder="Select next due date"
+                  minDate={formData.recordDate}
                 />
                 <p className="text-xs text-muted-foreground">
                   Auto-calculated based on vaccination type and animal age
@@ -378,20 +376,19 @@ export function AddHealthRecordDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => updateField("startDate", e.target.value)}
+                  <DatePicker
+                    date={formData.startDate}
+                    onDateChange={(date) => updateField("startDate", date)}
+                    placeholder="Select start date"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endDate">End Date</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => updateField("endDate", e.target.value)}
+                  <DatePicker
+                    date={formData.endDate}
+                    onDateChange={(date) => updateField("endDate", date)}
+                    placeholder="Select end date"
+                    minDate={formData.startDate}
                   />
                 </div>
               </div>
