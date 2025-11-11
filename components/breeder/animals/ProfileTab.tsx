@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Animal } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Calendar, MapPin, Award, Heart, FileText } from "lucide-react";
-import { format } from "date-fns";
+import { Edit, Calendar, Award, Heart, Syringe, Stethoscope, Pill, AlertTriangle, Activity, ChevronRight, AlertCircle } from "lucide-react";
+import { format, differenceInDays } from "date-fns";
+import { HealthRecordDetailDialog } from "./HealthRecordDetailDialog";
 
 interface ProfileTabProps {
   animal: Animal;
@@ -13,6 +15,9 @@ interface ProfileTabProps {
 }
 
 export function ProfileTab({ animal, onEdit }: ProfileTabProps) {
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const calculateAge = (dateOfBirth: string | Date) => {
     const dob = new Date(dateOfBirth);
     const today = new Date();
@@ -22,6 +27,49 @@ export function ProfileTab({ animal, onEdit }: ProfileTabProps) {
       age--;
     }
     return age;
+  };
+
+  const getRecordIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'vaccination':
+        return <Syringe className="w-4 h-4" />;
+      case 'checkup':
+        return <Stethoscope className="w-4 h-4" />;
+      case 'medication':
+        return <Pill className="w-4 h-4" />;
+      case 'illness':
+        return <AlertTriangle className="w-4 h-4" />;
+      case 'injury':
+        return <Heart className="w-4 h-4" />;
+      case 'surgery':
+        return <Activity className="w-4 h-4" />;
+      default:
+        return <Heart className="w-4 h-4" />;
+    }
+  };
+
+  const getRecordColor = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'vaccination':
+        return 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-950/50 text-blue-700 dark:text-blue-300';
+      case 'checkup':
+        return 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-950/50 text-green-700 dark:text-green-300';
+      case 'medication':
+        return 'bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-950/50 text-purple-700 dark:text-purple-300';
+      case 'illness':
+        return 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-950/50 text-orange-700 dark:text-orange-300';
+      case 'injury':
+        return 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-950/50 text-red-700 dark:text-red-300';
+      case 'surgery':
+        return 'bg-pink-50 dark:bg-pink-950/30 border-pink-200 dark:border-pink-800 hover:bg-pink-100 dark:hover:bg-pink-950/50 text-pink-700 dark:text-pink-300';
+      default:
+        return 'bg-gray-50 dark:bg-gray-950/30 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-950/50 text-gray-700 dark:text-gray-300';
+    }
+  };
+
+  const handleRecordClick = (record: any) => {
+    setSelectedRecord(record);
+    setIsDialogOpen(true);
   };
 
   const age = animal.dateOfBirth ? calculateAge(animal.dateOfBirth) : 'Unknown';
@@ -216,29 +264,84 @@ export function ProfileTab({ animal, onEdit }: ProfileTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {(animal as any).healthRecords.slice(0, 3).map((record: any) => (
-              <div
-                key={record.id}
-                className="p-4 rounded-lg border border-primary/10 bg-background"
-              >
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <div className="font-semibold text-foreground capitalize">{record.recordType || record.type}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(new Date(record.recordDate || record.date), 'MMM dd, yyyy')}
+            {(animal as any).healthRecords.slice(0, 3).map((record: any) => {
+              const recordType = record.recordType || record.type;
+              const recordDate = record.recordDate || record.date;
+              const isVaccination = recordType?.toLowerCase() === 'vaccination';
+              const nextDueDate = record.nextDueDate ? new Date(record.nextDueDate) : null;
+              const isOverdue = nextDueDate && nextDueDate < new Date();
+              const daysUntilDue = nextDueDate ? differenceInDays(nextDueDate, new Date()) : null;
+
+              return (
+                <div
+                  key={record.id}
+                  onClick={() => handleRecordClick(record)}
+                  className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${getRecordColor(recordType)} group`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="mt-0.5">
+                        {getRecordIcon(recordType)}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="font-semibold capitalize">{recordType}</div>
+                          <div className="text-sm opacity-70">
+                            {format(new Date(recordDate), 'MMM dd, yyyy')}
+                          </div>
+                        </div>
+
+                        {/* Vaccination specific info */}
+                        {isVaccination && record.vaccinationType && (
+                          <div className="text-sm">
+                            <span className="opacity-70">Type:</span> <span className="font-medium capitalize">{record.vaccinationType}</span>
+                          </div>
+                        )}
+
+                        {isVaccination && nextDueDate && (
+                          <div className="flex items-center gap-2">
+                            {isOverdue ? (
+                              <div className="flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>Overdue: {format(nextDueDate, 'MMM dd, yyyy')}</span>
+                              </div>
+                            ) : (
+                              <div className="text-sm opacity-70">
+                                Next due: {format(nextDueDate, 'MMM dd, yyyy')}
+                                {daysUntilDue !== null && daysUntilDue <= 30 && (
+                                  <span className="ml-1 font-medium">({daysUntilDue} days)</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {record.description && (
+                          <div className="text-sm opacity-80">{record.description}</div>
+                        )}
+
+                        {(record.veterinarianName || record.veterinarian) && (
+                          <div className="text-sm opacity-70">
+                            By {record.veterinarianName || record.veterinarian}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
-                <div className="text-sm text-foreground mb-1">{record.description}</div>
-                {record.veterinarian && (
-                  <div className="text-sm text-muted-foreground">By {record.veterinarian}</div>
-                )}
-                {record.notes && (
-                  <div className="text-sm text-muted-foreground mt-2 italic">{record.notes}</div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}
+
+      {/* Health Record Detail Dialog */}
+      <HealthRecordDetailDialog
+        record={selectedRecord}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+      />
 
       {/* Breeding Status */}
       {(animal as any).isBreedingActive !== undefined && (
