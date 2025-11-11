@@ -103,6 +103,18 @@ export async function GET(request: NextRequest) {
       with: {
         breed: true,
         photos: true,
+        owner: {
+          columns: {
+            id: true,
+            name: true,
+          }
+        },
+        breeder: {
+          columns: {
+            id: true,
+            name: true,
+          }
+        },
       },
       orderBy: [desc(animals.createdAt)],
     });
