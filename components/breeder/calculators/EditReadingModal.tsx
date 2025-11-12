@@ -20,8 +20,9 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Edit, AlertCircle, Loader2, TrendingUp, Calendar } from 'lucide-react';
-import { format, addDays, differenceInDays } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { getPhaseInfo } from '@/lib/utils/progesterone';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface Reading {
   id: string;
@@ -49,7 +50,7 @@ export function EditReadingModal({
   onSubmit,
   isSubmitting = false,
 }: EditReadingModalProps) {
-  const [testDate, setTestDate] = useState<string>('');
+  const [testDate, setTestDate] = useState<Date>(new Date());
   const [progesteroneLevel, setProgesteroneLevel] = useState<string>('');
   const [laboratory, setLaboratory] = useState<string>('VIDAS');
   const [notes, setNotes] = useState<string>('');
@@ -57,10 +58,10 @@ export function EditReadingModal({
   // Initialize form when reading changes
   useEffect(() => {
     if (reading) {
-      const dateStr = typeof reading.testDate === 'string' 
-        ? reading.testDate 
-        : format(new Date(reading.testDate), 'yyyy-MM-dd');
-      setTestDate(dateStr);
+      const date = typeof reading.testDate === 'string'
+        ? new Date(reading.testDate)
+        : new Date(reading.testDate);
+      setTestDate(date);
       setProgesteroneLevel(reading.progesteroneLevel.toString());
       setLaboratory(reading.laboratory || 'VIDAS');
       setNotes(reading.notes || '');
@@ -69,16 +70,16 @@ export function EditReadingModal({
 
   // Calculate which day this test date represents
   const calculatedDay = testDate
-    ? differenceInDays(new Date(testDate), new Date(startDate)) + 1
+    ? differenceInDays(testDate, new Date(startDate)) + 1
     : reading?.day || 1;
 
   const level = parseFloat(progesteroneLevel);
-  const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay, testDate ? new Date(testDate) : undefined) : null;
+  const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay, testDate) : null;
 
   const handleSubmit = async () => {
     if (testDate && progesteroneLevel) {
       await onSubmit({
-        testDate,
+        testDate: format(testDate, 'yyyy-MM-dd'),
         progesteroneLevel: parseFloat(progesteroneLevel),
         laboratory,
         notes,
@@ -107,12 +108,11 @@ export function EditReadingModal({
           {/* Test Date */}
           <div className="space-y-2">
             <Label htmlFor="testDate">Test Date *</Label>
-            <Input
-              id="testDate"
-              type="date"
-              value={testDate}
-              onChange={(e) => setTestDate(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={testDate}
+              onDateChange={(date) => setTestDate(date || new Date())}
+              placeholder="Select test date"
+              maxDate={new Date()}
             />
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="w-3 h-3" />

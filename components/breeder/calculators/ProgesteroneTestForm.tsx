@@ -163,7 +163,7 @@ export function ProgesteroneTestForm({
       setError("Please select a test date");
       return;
     }
-    onSubmit({ testDate: new Date(testDate), level: numLevel });
+    onSubmit({ testDate: testDate, level: numLevel });
   };
 
   const isValid = testDate && level && !error && phaseInfo;
@@ -190,12 +190,11 @@ export function ProgesteroneTestForm({
           <Label htmlFor="test-date" className="text-sm font-semibold">
             Test Date *
           </Label>
-          <Input
-            id="test-date"
-            type="date"
-            value={testDate}
-            onChange={(e) => setTestDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
+          <DatePicker
+            date={testDate}
+            onDateChange={(date) => setTestDate(date || new Date())}
+            placeholder="Select test date"
+            maxDate={new Date()}
             className="bg-background border-primary/20"
           />
         </div>

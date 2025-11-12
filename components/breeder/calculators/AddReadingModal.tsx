@@ -22,6 +22,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Activity, AlertCircle, Loader2, TrendingUp, Calendar } from 'lucide-react';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { getPhaseInfo } from '@/lib/utils/progesterone';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface AddReadingModalProps {
   open: boolean;
@@ -42,29 +43,29 @@ export function AddReadingModal({
   onSubmit,
   isSubmitting = false,
 }: AddReadingModalProps) {
-  const [testDate, setTestDate] = useState<string>(
-    format(addDays(new Date(startDate), cycleDay - 1), 'yyyy-MM-dd')
+  const [testDate, setTestDate] = useState<Date>(
+    addDays(new Date(startDate), cycleDay - 1)
   );
   const [progesteroneLevel, setProgesteroneLevel] = useState<string>('');
   const [laboratory, setLaboratory] = useState<string>('VIDAS');
 
   // Calculate which day this test date represents
   const calculatedDay = testDate
-    ? differenceInDays(new Date(testDate), new Date(startDate)) + 1
+    ? differenceInDays(testDate, new Date(startDate)) + 1
     : cycleDay;
 
   const level = parseFloat(progesteroneLevel);
-  const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay, testDate ? new Date(testDate) : undefined) : null;
+  const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay, testDate) : null;
 
   const handleSubmit = async () => {
     if (testDate && progesteroneLevel) {
       await onSubmit({
-        testDate: new Date(testDate),
+        testDate: testDate,
         level: parseFloat(progesteroneLevel),
         laboratory,
       });
       // Reset form
-      setTestDate(format(addDays(new Date(startDate), cycleDay - 1), 'yyyy-MM-dd'));
+      setTestDate(addDays(new Date(startDate), cycleDay - 1));
       setProgesteroneLevel('');
       setLaboratory('VIDAS');
     }
@@ -89,12 +90,11 @@ export function AddReadingModal({
           {/* Test Date */}
           <div className="space-y-2">
             <Label htmlFor="testDate">Test Date *</Label>
-            <Input
-              id="testDate"
-              type="date"
-              value={testDate}
-              onChange={(e) => setTestDate(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={testDate}
+              onDateChange={(date) => setTestDate(date || new Date())}
+              placeholder="Select test date"
+              maxDate={new Date()}
             />
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="w-3 h-3" />
