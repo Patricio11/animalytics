@@ -46,8 +46,10 @@ This guide will help you set up Google OAuth authentication for the Animalytics 
 
 **App Domain:**
 - **Application home page:** `https://yourdomain.com` (or `http://localhost:3000` for development)
-- **Application privacy policy link:** `https://yourdomain.com/privacy`
-- **Application terms of service link:** `https://yourdomain.com/terms`
+- **Application privacy policy link:** `https://yourdomain.com/privacy` (or `http://localhost:3000/privacy` for development)
+- **Application terms of service link:** `https://yourdomain.com/terms` (or `http://localhost:3000/terms` for development)
+
+> **Note:** The Privacy Policy and Terms of Service pages are already created and accessible at these URLs.
 
 **Authorized domains:**
 - Add your domain: `yourdomain.com`
