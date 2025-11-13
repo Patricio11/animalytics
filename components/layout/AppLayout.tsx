@@ -4,6 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Header } from "@/components/layout/Header";
 import { useIsTablet } from "@/hooks/use-is-tablet";
+import { useOAuthInit } from "@/lib/hooks/use-oauth-init";
 import { useState, useEffect } from "react";
 
 interface AppLayoutProps {
@@ -13,6 +14,9 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const isTablet = useIsTablet();
   const [defaultOpen, setDefaultOpen] = useState(true);
+
+  // Initialize OAuth user profile if needed
+  useOAuthInit();
 
   useEffect(() => {
     // Default to collapsed on tablet and mobile devices
