@@ -31,7 +31,7 @@ export async function requireAuth() {
  * Require specific role - redirects to unauthorized if role doesn't match
  * Use this in Server Components that require specific roles
  */
-type UserRole = "breeder" | "veterinarian" | "admin" | "event_organizer";
+type UserRole = "breeder" | "veterinarian" | "admin" | "event_organizer" | "buyer";
 
 export async function requireRole(
   allowedRoles: Array<UserRole>
@@ -109,6 +109,16 @@ export async function canAccessRoute(route: string) {
       "/events",
       "/registrations",
       "/results",
+      "/settings",
+    ],
+    buyer: [
+      "/buyer/dashboard",
+      "/buyer/messages",
+      "/buyer/purchases",
+      "/buyer/saved",
+      "/buyer/profile",
+      "/marketplace",
+      "/wallet",
       "/settings",
     ],
   };
