@@ -13,8 +13,20 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditListingDialog } from "@/components/breeder/marketplace/EditListingDialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
   ArrowLeft, Heart, Share2, Eye, MapPin, Phone, Mail, Calendar,
-  Star, Award, Shield, Building2, Edit, Trash2, LogIn
+  Star, Award, Shield, Edit, Trash2, LogIn, MessageSquare, Send, Loader2,
+  ShoppingCart, Truck, MapPinned
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/utils/currency";
@@ -38,6 +50,13 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [isInitiatingPurchase, setIsInitiatingPurchase] = useState(false);
+  const [purchaseNotes, setPurchaseNotes] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState("pickup");
 
   // Fetch listing from API
   const { data: listingData, isLoading, error } = useQuery({
@@ -88,7 +107,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
   // Handle share
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/marketplace/${id}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -109,6 +128,103 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
       } catch (err) {
         console.error('Failed to copy:', err);
       }
+    }
+  };
+
+  // Handle send message to seller
+  const handleSendMessage = async () => {
+    if (!messageText.trim()) {
+      toast({
+        title: "Message Required",
+        description: "Please enter a message to send to the seller.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingMessage(true);
+    try {
+      const response = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId: listing?.userId,
+          listingId: id,
+          message: messageText.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send message');
+      }
+
+      const data = await response.json();
+
+      toast({
+        title: "Message Sent",
+        description: "Your message has been sent to the seller.",
+      });
+
+      setContactDialogOpen(false);
+      setMessageText("");
+
+      // Navigate to the conversation
+      router.push(`/buyer/messages/${data.conversationId}`);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  // Handle initiate purchase
+  const handleInitiatePurchase = async () => {
+    setIsInitiatingPurchase(true);
+    try {
+      const response = await fetch('/api/purchases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId: id,
+          animalId: listing?.animalId,
+          deliveryMethod: deliveryMethod,
+          notes: purchaseNotes.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to initiate purchase');
+      }
+
+      const data = await response.json();
+
+      toast({
+        title: "Purchase Initiated",
+        description: "Your purchase request has been sent to the seller.",
+      });
+
+      setPurchaseDialogOpen(false);
+      setPurchaseNotes("");
+      setDeliveryMethod("pickup");
+
+      // Navigate to the purchase detail
+      router.push(`/buyer/purchases/${data.purchase.id}`);
+    } catch (error) {
+      console.error('Error initiating purchase:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to initiate purchase. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsInitiatingPurchase(false);
     }
   };
 
@@ -549,17 +665,34 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
 
                 {isAuthenticated && !isOwner ? (
                   <>
-                    <Button className="w-full bg-gradient-brand hover:opacity-90 shadow-card">
-                      <Mail className="w-4 h-4 mr-2" />
-                      Send Message
+                    {/* Show Buy Now for purchasable categories */}
+                    {['dog_for_sale', 'pups_for_sale', 'frozen_semen'].includes(listing.category) && listing.price && (
+                      <Button
+                        className="w-full bg-green-600 hover:bg-green-700 text-white shadow-card"
+                        onClick={() => setPurchaseDialogOpen(true)}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Buy Now
+                      </Button>
+                    )}
+
+                    <Button
+                      variant={['dog_for_sale', 'pups_for_sale', 'frozen_semen'].includes(listing.category) ? "outline" : "default"}
+                      className={['dog_for_sale', 'pups_for_sale', 'frozen_semen'].includes(listing.category)
+                        ? "w-full hover:bg-primary/10 hover:border-primary shadow-card"
+                        : "w-full bg-gradient-brand hover:opacity-90 shadow-card"}
+                      onClick={() => setContactDialogOpen(true)}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      {['dog_for_sale', 'pups_for_sale', 'frozen_semen'].includes(listing.category) ? 'Ask Question' : 'Send Message'}
                     </Button>
 
                     <div className="flex gap-2">
                       <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
                         <Heart className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card"
                         onClick={handleShare}
                       >
@@ -694,6 +827,189 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
         open={lightboxOpen}
         onOpenChange={setLightboxOpen}
       />
+
+      {/* Contact Seller Dialog */}
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contact Seller</DialogTitle>
+            <DialogDescription>
+              Send a message to {listing.contactName || 'the seller'} about this listing
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Listing Preview */}
+          <div className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
+              <img
+                src={images[0]}
+                alt={listing.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">{listing.title}</p>
+              <p className="text-xs text-muted-foreground">{listing.breed}</p>
+              {listing.price && (
+                <p className="text-sm font-semibold text-primary mt-1">
+                  {CURRENCIES[listing.currency as keyof typeof CURRENCIES]?.symbol || listing.currency}
+                  {(listing.price / 100).toLocaleString()}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="message">Your Message</Label>
+            <Textarea
+              id="message"
+              placeholder={`Hi, I'm interested in ${listing.title}. Is it still available?`}
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              rows={4}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Be specific about your questions or interest to get a better response.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setContactDialogOpen(false)}
+              disabled={isSendingMessage}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendMessage}
+              disabled={isSendingMessage || !messageText.trim()}
+              className="bg-gradient-brand hover:opacity-90"
+            >
+              {isSendingMessage ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send Message
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Purchase Dialog */}
+      <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Initiate Purchase</DialogTitle>
+            <DialogDescription>
+              Start the purchase process for this listing
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Listing Preview */}
+          <div className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
+              <img
+                src={images[0]}
+                alt={listing.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">{listing.title}</p>
+              <p className="text-xs text-muted-foreground">{listing.breed}</p>
+              {listing.price && (
+                <p className="text-lg font-bold text-primary mt-1">
+                  {CURRENCIES[listing.currency as keyof typeof CURRENCIES]?.symbol || listing.currency}
+                  {(listing.price / 100).toLocaleString()}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Delivery Method */}
+          <div className="space-y-3">
+            <Label>Delivery Method</Label>
+            <RadioGroup value={deliveryMethod} onValueChange={setDeliveryMethod}>
+              <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                <RadioGroupItem value="pickup" id="pickup" />
+                <Label htmlFor="pickup" className="flex items-center gap-2 cursor-pointer flex-1">
+                  <MapPinned className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Pickup</p>
+                    <p className="text-xs text-muted-foreground">Collect in person</p>
+                  </div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                <RadioGroupItem value="delivery" id="delivery" />
+                <Label htmlFor="delivery" className="flex items-center gap-2 cursor-pointer flex-1">
+                  <Truck className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Delivery</p>
+                    <p className="text-xs text-muted-foreground">Ship to your address</p>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="purchaseNotes">Additional Notes (Optional)</Label>
+            <Textarea
+              id="purchaseNotes"
+              placeholder="Any special requests or questions for the seller..."
+              value={purchaseNotes}
+              onChange={(e) => setPurchaseNotes(e.target.value)}
+              rows={3}
+              className="resize-none"
+            />
+          </div>
+
+          {/* Payment Info */}
+          <Alert className="border-blue-500/20 bg-blue-500/10">
+            <ShoppingCart className="h-4 w-4 text-blue-500" />
+            <AlertDescription className="text-sm">
+              This will send a purchase request to the seller. Payment details will be arranged after confirmation.
+            </AlertDescription>
+          </Alert>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPurchaseDialogOpen(false)}
+              disabled={isInitiatingPurchase}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleInitiatePurchase}
+              disabled={isInitiatingPurchase}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isInitiatingPurchase ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Confirm Purchase
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

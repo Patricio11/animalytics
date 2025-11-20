@@ -1,6 +1,7 @@
 "use client";
 
-import { Home, MessageSquare, ShoppingBag, Heart, User, Settings, Search, Bell, HelpCircle, Wallet } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Home, MessageSquare, ShoppingBag, Heart, User, Settings, Search, HelpCircle, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 
 const menuItems = [
@@ -68,6 +70,27 @@ const secondaryItems = [
 
 export function BuyerSidebar() {
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread message count
+  useEffect(() => {
+    async function fetchUnreadCount() {
+      try {
+        const res = await fetch('/api/conversations/unread');
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    }
+
+    fetchUnreadCount();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-surface shadow-card">
@@ -94,6 +117,11 @@ export function BuyerSidebar() {
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
                       <item.icon className="w-4 h-4 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5" />
                       <span>{item.title}</span>
+                      {item.badge && unreadCount > 0 && (
+                        <SidebarMenuBadge className="bg-destructive text-destructive-foreground">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </SidebarMenuBadge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

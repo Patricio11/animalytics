@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck, GitBranch } from "lucide-react";
+import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck, GitBranch, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -49,6 +49,11 @@ const menuItems = [
     title: "Marketplace",
     url: "/marketplace",
     icon: ShoppingBag,
+  },
+  {
+    title: "My Sales",
+    url: "/sales",
+    icon: DollarSign,
   },
 ];
 
