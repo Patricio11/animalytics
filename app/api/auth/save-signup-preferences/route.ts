@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { breederBreedPreferences } from '@/lib/db/schema/user-breed-preferences';
 import { breederProfiles } from '@/lib/db/schema/profiles';
+import { buyerProfiles } from '@/lib/db/schema/buyer-profiles';
 import { eq } from 'drizzle-orm';
 import { detectAndGetRegionalPreferences, getClientIp } from '@/lib/utils/location';
 
@@ -130,6 +131,37 @@ export async function POST(request: NextRequest) {
       } catch (breedError) {
         console.error('Failed to save breed preferences:', breedError);
         // Don't fail the whole request if breed preferences fail
+      }
+    }
+
+    // 3. Create buyer profile if user is a buyer
+    if (role === 'buyer') {
+      try {
+        console.log('🛒 Creating buyer profile...');
+
+        // Check if profile already exists
+        const [existingBuyerProfile] = await db
+          .select()
+          .from(buyerProfiles)
+          .where(eq(buyerProfiles.userId, user.id))
+          .limit(1);
+
+        if (!existingBuyerProfile) {
+          // Generate display name from user name
+          const displayName = user.name || 'Buyer';
+
+          await db.insert(buyerProfiles).values({
+            userId: user.id,
+            displayName: displayName,
+          });
+
+          console.log('✅ Buyer profile created');
+        } else {
+          console.log('ℹ️ Buyer profile already exists');
+        }
+      } catch (buyerError) {
+        console.error('Failed to create buyer profile:', buyerError);
+        // Don't fail the whole request if buyer profile creation fails
       }
     }
 

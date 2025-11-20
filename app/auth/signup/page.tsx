@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PawPrint, Eye, EyeOff, User, Mail, Lock, AlertCircle, Stethoscope, Users, Calendar, Heart } from "lucide-react";
+import { PawPrint, Eye, EyeOff, User, Mail, Lock, AlertCircle, Stethoscope, Users, Calendar, Heart, ShoppingCart } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -27,7 +27,7 @@ export default function SignUp() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "breeder" as "breeder" | "veterinarian" | "admin" | "event_organizer",
+    role: "breeder" as "breeder" | "veterinarian" | "admin" | "event_organizer" | "buyer",
   });
   const [selectedBreedIds, setSelectedBreedIds] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -256,6 +256,12 @@ export default function SignUp() {
                         <div className="flex items-center">
                           <PawPrint className="mr-2 h-4 w-4" />
                           Breeder
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="buyer">
+                        <div className="flex items-center">
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          Buyer / Pet Owner
                         </div>
                       </SelectItem>
                       <SelectItem value="veterinarian">

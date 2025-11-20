@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, boolean, pgEnum, jsonb } from 'drizzle-orm/pg-core';
 
-export const userRoleEnum = pgEnum('user_role', ['breeder', 'veterinarian', 'admin', 'event_organizer']);
+export const userRoleEnum = pgEnum('user_role', ['breeder', 'veterinarian', 'admin', 'event_organizer', 'buyer']);
 export const planEnum = pgEnum('plan', ['free', 'premium', 'professional', 'enterprise']);
 
 export const users = pgTable('users', {

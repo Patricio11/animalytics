@@ -1,0 +1,378 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { conversations, messages } from '@/lib/db/schema/conversations';
+import { eq, and, desc, gt, lt, ne } from 'drizzle-orm';
+import { auth } from '@/lib/auth/config';
+import { headers } from 'next/headers';
+
+/**
+ * GET /api/conversations/[id]/messages
+ * Get messages for a conversation with pagination
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: conversationId } = await params;
+
+    // Get current session
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+
+    // Get conversation
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+
+    if (!conversation) {
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if user is part of the conversation
+    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+      return NextResponse.json(
+        { error: 'Access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Get query params for pagination
+    const { searchParams } = new URL(request.url);
+    const cursor = searchParams.get('cursor'); // Message ID to start from
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const direction = searchParams.get('direction') || 'older'; // 'older' or 'newer'
+
+    // Build query
+    let query = db
+      .select()
+      .from(messages)
+      .where(
+        and(
+          eq(messages.conversationId, conversationId),
+          eq(messages.isDeleted, false)
+        )
+      )
+      .limit(limit + 1); // Get one extra to check if there are more
+
+    // Apply cursor pagination
+    if (cursor) {
+      // Get the cursor message's timestamp
+      const [cursorMessage] = await db
+        .select({ createdAt: messages.createdAt })
+        .from(messages)
+        .where(eq(messages.id, cursor))
+        .limit(1);
+
+      if (cursorMessage) {
+        if (direction === 'older') {
+          query = db
+            .select()
+            .from(messages)
+            .where(
+              and(
+                eq(messages.conversationId, conversationId),
+                eq(messages.isDeleted, false),
+                lt(messages.createdAt, cursorMessage.createdAt)
+              )
+            )
+            .orderBy(desc(messages.createdAt))
+            .limit(limit + 1);
+        } else {
+          query = db
+            .select()
+            .from(messages)
+            .where(
+              and(
+                eq(messages.conversationId, conversationId),
+                eq(messages.isDeleted, false),
+                gt(messages.createdAt, cursorMessage.createdAt)
+              )
+            )
+            .orderBy(messages.createdAt)
+            .limit(limit + 1);
+        }
+      }
+    } else {
+      // No cursor - get most recent messages
+      query = db
+        .select()
+        .from(messages)
+        .where(
+          and(
+            eq(messages.conversationId, conversationId),
+            eq(messages.isDeleted, false)
+          )
+        )
+        .orderBy(desc(messages.createdAt))
+        .limit(limit + 1);
+    }
+
+    const fetchedMessages = await query;
+
+    // Check if there are more messages
+    const hasMore = fetchedMessages.length > limit;
+    if (hasMore) {
+      fetchedMessages.pop(); // Remove the extra message
+    }
+
+    // For display, reverse to show oldest first
+    const sortedMessages = direction === 'newer'
+      ? fetchedMessages
+      : fetchedMessages.reverse();
+
+    // Get next cursor
+    const nextCursor = hasMore && fetchedMessages.length > 0
+      ? fetchedMessages[fetchedMessages.length - 1].id
+      : null;
+
+    return NextResponse.json({
+      success: true,
+      messages: sortedMessages,
+      pagination: {
+        hasMore,
+        nextCursor,
+        count: sortedMessages.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch messages' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/conversations/[id]/messages
+ * Send a new message in a conversation
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: conversationId } = await params;
+
+    // Get current session
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+
+    // Get conversation
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+
+    if (!conversation) {
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if user is part of the conversation
+    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+      return NextResponse.json(
+        { error: 'Access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Check if conversation is blocked
+    if (conversation.status === 'blocked') {
+      return NextResponse.json(
+        { error: 'This conversation is blocked' },
+        { status: 403 }
+      );
+    }
+
+    // Determine user role
+    const userRole = conversation.buyerId === userId ? 'buyer' : 'seller';
+
+    // Check if user is blocked
+    const isBlocked = userRole === 'buyer'
+      ? conversation.blockedBySeller
+      : conversation.blockedByBuyer;
+
+    if (isBlocked) {
+      return NextResponse.json(
+        { error: 'You cannot send messages to this user' },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { message, messageType = 'text', attachments, metadata } = body;
+
+    // Validate message
+    if (!message || message.trim() === '') {
+      return NextResponse.json(
+        { error: 'Message content is required' },
+        { status: 400 }
+      );
+    }
+
+    // Create message
+    const [newMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId,
+        senderId: userId,
+        message: message.trim(),
+        messageType,
+        attachments: attachments || null,
+        metadata: metadata ? JSON.stringify(metadata) : null,
+      })
+      .returning();
+
+    // Update conversation
+    const updateData: Record<string, unknown> = {
+      lastMessageAt: new Date(),
+      lastMessagePreview: message.trim().substring(0, 100),
+      updatedAt: new Date(),
+      // Unarchive if it was archived
+      archivedByBuyer: false,
+      archivedBySeller: false,
+    };
+
+    // Increment unread count for the other participant
+    if (userRole === 'buyer') {
+      updateData.unreadCountSeller = conversation.unreadCountSeller + 1;
+    } else {
+      updateData.unreadCountBuyer = conversation.unreadCountBuyer + 1;
+    }
+
+    await db
+      .update(conversations)
+      .set(updateData)
+      .where(eq(conversations.id, conversationId));
+
+    return NextResponse.json({
+      success: true,
+      message: newMessage,
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    return NextResponse.json(
+      { error: 'Failed to send message' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/conversations/[id]/messages
+ * Delete a message (soft delete)
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: conversationId } = await params;
+
+    // Get current session
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+
+    // Get message ID from request body
+    const body = await request.json();
+    const { messageId } = body;
+
+    if (!messageId) {
+      return NextResponse.json(
+        { error: 'Message ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get the message
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, messageId))
+      .limit(1);
+
+    if (!message) {
+      return NextResponse.json(
+        { error: 'Message not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if message belongs to this conversation
+    if (message.conversationId !== conversationId) {
+      return NextResponse.json(
+        { error: 'Message not found in this conversation' },
+        { status: 404 }
+      );
+    }
+
+    // Check if user is the sender
+    if (message.senderId !== userId) {
+      return NextResponse.json(
+        { error: 'You can only delete your own messages' },
+        { status: 403 }
+      );
+    }
+
+    // Soft delete the message
+    await db
+      .update(messages)
+      .set({
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(messages.id, messageId));
+
+    return NextResponse.json({
+      success: true,
+      message: 'Message deleted',
+    });
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete message' },
+      { status: 500 }
+    );
+  }
+}

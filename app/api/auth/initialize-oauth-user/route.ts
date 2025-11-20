@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { breederProfiles } from '@/lib/db/schema/profiles';
+import { buyerProfiles } from '@/lib/db/schema/buyer-profiles';
 import { accounts } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { detectAndGetRegionalPreferences, getClientIp } from '@/lib/utils/location';
@@ -91,40 +92,79 @@ export async function POST(request: NextRequest) {
       // Don't fail the whole request if regional settings fail
     }
 
-    // 2. Create breeder profile if it doesn't exist
-    try {
-      const [existingProfile] = await db
-        .select()
-        .from(breederProfiles)
-        .where(eq(breederProfiles.userId, userId))
-        .limit(1);
+    // 2. Get the user to check their role
+    const [currentUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
-      if (!existingProfile) {
-        console.log('👤 Creating breeder profile for OAuth user...');
+    const userRole = currentUser?.role || 'breeder';
 
-        // Generate slug from user name
-        const displayName = session.user.name || 'Breeder';
-        const slug = displayName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '') + '-' + userId.substring(0, 8);
+    // 3. Create appropriate profile based on role
+    if (userRole === 'buyer') {
+      // Create buyer profile
+      try {
+        const [existingBuyerProfile] = await db
+          .select()
+          .from(buyerProfiles)
+          .where(eq(buyerProfiles.userId, userId))
+          .limit(1);
 
-        await db.insert(breederProfiles).values({
-          userId: userId,
-          displayName: displayName,
-          slug: slug,
-          location: {
-            country: 'US',
-          },
-        });
+        if (!existingBuyerProfile) {
+          console.log('🛒 Creating buyer profile for OAuth user...');
 
-        console.log('✅ Breeder profile created');
-      } else {
-        console.log('ℹ️ Breeder profile already exists');
+          const displayName = session.user.name || 'Buyer';
+
+          await db.insert(buyerProfiles).values({
+            userId: userId,
+            displayName: displayName,
+          });
+
+          console.log('✅ Buyer profile created');
+        } else {
+          console.log('ℹ️ Buyer profile already exists');
+        }
+      } catch (profileError) {
+        console.error('Failed to create buyer profile:', profileError);
+        // Don't fail the whole request if profile creation fails
       }
-    } catch (profileError) {
-      console.error('Failed to create breeder profile:', profileError);
-      // Don't fail the whole request if profile creation fails
+    } else {
+      // Create breeder profile (default for breeder, veterinarian, etc.)
+      try {
+        const [existingProfile] = await db
+          .select()
+          .from(breederProfiles)
+          .where(eq(breederProfiles.userId, userId))
+          .limit(1);
+
+        if (!existingProfile) {
+          console.log('👤 Creating breeder profile for OAuth user...');
+
+          // Generate slug from user name
+          const displayName = session.user.name || 'Breeder';
+          const slug = displayName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '') + '-' + userId.substring(0, 8);
+
+          await db.insert(breederProfiles).values({
+            userId: userId,
+            displayName: displayName,
+            slug: slug,
+            location: {
+              country: 'US',
+            },
+          });
+
+          console.log('✅ Breeder profile created');
+        } else {
+          console.log('ℹ️ Breeder profile already exists');
+        }
+      } catch (profileError) {
+        console.error('Failed to create breeder profile:', profileError);
+        // Don't fail the whole request if profile creation fails
+      }
     }
 
     console.log('🎉 OAuth user initialization complete');
