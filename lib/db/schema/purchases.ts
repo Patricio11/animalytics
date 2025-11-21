@@ -2,6 +2,7 @@ import { pgTable, text, timestamp, boolean, integer, decimal, uuid, pgEnum, date
 import { users } from './users';
 import { listings } from './marketplace';
 import { animals } from './animals';
+import { escrows } from './wallet';
 
 /**
  * Purchase Status Enum
@@ -112,6 +113,21 @@ export const purchases = pgTable('purchases', {
   cancelledBy: text('cancelled_by'), // 'buyer' or 'seller'
   refundAmount: integer('refund_amount'), // in cents
   refundedAt: timestamp('refunded_at'),
+
+  // Escrow Integration
+  escrowId: uuid('escrow_id').references(() => escrows.id, { onDelete: 'set null' }),
+
+  // Buyer Confirmation
+  buyerConfirmedReceipt: boolean('buyer_confirmed_receipt').default(false),
+  buyerConfirmedAt: timestamp('buyer_confirmed_at'),
+
+  // Seller Confirmation
+  sellerConfirmedHandover: boolean('seller_confirmed_handover').default(false),
+  sellerConfirmedAt: timestamp('seller_confirmed_at'),
+
+  // Auto-release Settings
+  autoReleaseDate: timestamp('auto_release_date'),
+  autoReleaseEnabled: boolean('auto_release_enabled').default(true),
 
   // Dispute Handling
   isDisputed: boolean('is_disputed').default(false),

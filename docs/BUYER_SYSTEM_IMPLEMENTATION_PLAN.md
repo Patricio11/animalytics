@@ -826,11 +826,375 @@ tiny: 'text-xs'
 
 ---
 
+---
+
+## 💰 Payment & Escrow System Architecture
+
+### Overview
+
+The payment system uses an **escrow model** to protect both buyers and sellers:
+1. Buyer pays → Funds held in escrow
+2. Seller confirms and prepares animal
+3. Buyer confirms receipt → Funds released to seller wallet
+4. Seller can then request withdrawal
+
+### 6.1 Payment Flow Diagram
+
+```
+Buyer Initiates Purchase
+         ↓
+    Select Payment Method
+         ↓
+   ┌─────────────────┐
+   │ Wallet  │ Stripe │ Bank │
+   └─────────────────┘
+         ↓
+    Payment Processed
+         ↓
+  ╔═══════════════════════╗
+  ║   ESCROW CREATED      ║
+  ║  Funds held safely    ║
+  ╚═══════════════════════╝
+         ↓
+  Seller Notified of Payment
+         ↓
+   Seller Confirms Order
+         ↓
+   Seller Prepares Animal
+         ↓
+    Handover Occurs
+         ↓
+ BUYER CONFIRMS RECEIPT ★
+         ↓
+  ╔═══════════════════════╗
+  ║   ESCROW RELEASED     ║
+  ║  → Seller Wallet      ║
+  ║  (minus platform fee) ║
+  ╚═══════════════════════╝
+         ↓
+   Seller Can Withdraw
+```
+
+### 6.2 Database Schema Enhancements
+
+**Existing Tables (Already Created):**
+- `wallets` - Multi-currency user wallets
+- `transactions` - Complete audit trail
+- `escrows` - Hold funds during transactions
+- `payout_requests` - Withdrawal requests
+
+**Purchase Table Additions Needed:**
+```typescript
+// Add to purchases table
+escrowId: uuid('escrow_id').references(() => escrows.id),
+
+// Confirmation tracking
+buyerConfirmedReceipt: boolean('buyer_confirmed_receipt').default(false),
+buyerConfirmedAt: timestamp('buyer_confirmed_at'),
+sellerConfirmedHandover: boolean('seller_confirmed_handover').default(false),
+sellerConfirmedAt: timestamp('seller_confirmed_at'),
+
+// Auto-release configuration
+autoReleaseDate: timestamp('auto_release_date'), // 7 days after delivery
+autoReleaseEnabled: boolean('auto_release_enabled').default(true),
+```
+
+### 6.3 Modular Payment Provider Architecture
+
+**Design Principles:**
+- Provider-agnostic abstraction layer
+- Easy to add new payment providers
+- Consistent interface across all providers
+- Stripe as primary provider (can add PayPal, Bank Transfer, Crypto later)
+
+**Payment Service Interface:**
+```typescript
+// lib/services/payment/types.ts
+interface PaymentProvider {
+  name: string;
+
+  // Core operations
+  createPaymentIntent(params: PaymentIntentParams): Promise<PaymentIntent>;
+  confirmPayment(paymentIntentId: string): Promise<PaymentResult>;
+  refundPayment(paymentIntentId: string, amount?: number): Promise<RefundResult>;
+
+  // Webhooks
+  handleWebhook(payload: any, signature: string): Promise<WebhookEvent>;
+
+  // Customer management
+  createCustomer(user: User): Promise<string>;
+  getCustomer(customerId: string): Promise<CustomerDetails>;
+}
+
+interface PaymentIntentParams {
+  amount: number;           // in cents
+  currency: string;
+  customerId?: string;
+  metadata: {
+    purchaseId: string;
+    buyerId: string;
+    sellerId: string;
+    listingId: string;
+  };
+  description?: string;
+}
+
+interface PaymentResult {
+  success: boolean;
+  transactionId: string;
+  status: 'succeeded' | 'pending' | 'failed';
+  amount: number;
+  fee: number;
+}
+```
+
+**Provider Factory Pattern:**
+```typescript
+// lib/services/payment/factory.ts
+export function getPaymentProvider(provider: string): PaymentProvider {
+  switch (provider) {
+    case 'stripe':
+      return new StripeProvider();
+    case 'paypal':
+      return new PayPalProvider(); // Future
+    case 'bank_transfer':
+      return new BankTransferProvider(); // Future
+    default:
+      throw new Error(`Unknown payment provider: ${provider}`);
+  }
+}
+
+// Usage in API routes
+const provider = getPaymentProvider('stripe');
+const intent = await provider.createPaymentIntent({...});
+```
+
+**Stripe Implementation:**
+```typescript
+// lib/services/payment/providers/stripe.ts
+import Stripe from 'stripe';
+
+export class StripeProvider implements PaymentProvider {
+  private stripe: Stripe;
+
+  constructor() {
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  }
+
+  async createPaymentIntent(params: PaymentIntentParams) {
+    const intent = await this.stripe.paymentIntents.create({
+      amount: params.amount,
+      currency: params.currency,
+      customer: params.customerId,
+      metadata: params.metadata,
+      automatic_payment_methods: { enabled: true },
+    });
+
+    return {
+      id: intent.id,
+      clientSecret: intent.client_secret,
+      status: intent.status,
+    };
+  }
+
+  async confirmPayment(paymentIntentId: string) {
+    const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    return {
+      success: intent.status === 'succeeded',
+      transactionId: intent.id,
+      status: intent.status,
+      amount: intent.amount,
+      fee: intent.application_fee_amount || 0,
+    };
+  }
+
+  // ... other methods
+}
+```
+
+**Adding a New Provider (Example: PayPal):**
+```typescript
+// lib/services/payment/providers/paypal.ts
+export class PayPalProvider implements PaymentProvider {
+  // Implement the same interface
+  // All business logic remains the same
+  // Only the provider-specific API calls change
+}
+```
+
+### 6.4 API Routes for Payment System
+
+**Escrow Management:**
+- `POST /api/escrow/create` - Create escrow for purchase
+- `GET /api/escrow/[id]` - Get escrow details
+- `POST /api/escrow/[id]/release` - Release funds to seller
+- `POST /api/escrow/[id]/refund` - Refund to buyer
+- `POST /api/escrow/[id]/dispute` - Open dispute
+
+**Purchase Payment:**
+- `POST /api/purchases/[id]/pay` - Process payment
+- `POST /api/purchases/[id]/confirm-receipt` - Buyer confirms receipt
+- `POST /api/purchases/[id]/confirm-handover` - Seller confirms handover
+- `GET /api/purchases/[id]/payment-intent` - Get Stripe payment intent
+
+**Wallet Integration:**
+- `GET /api/wallet` - Get wallet balance
+- `GET /api/wallet/pending` - Get pending/escrowed amounts
+- `POST /api/wallet/withdraw` - Request withdrawal
+- `GET /api/wallet/transactions` - Transaction history
+
+**Webhooks:**
+- `POST /api/webhooks/stripe` - Stripe webhook handler
+- `POST /api/webhooks/paypal` - PayPal webhook handler (future)
+
+### 6.4 Purchase Status Flow with Payment
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ STATUS               │ PAYMENT STATE    │ ESCROW STATE │
+├─────────────────────────────────────────────────────────┤
+│ pending              │ awaiting         │ -            │
+│ payment_pending      │ processing       │ -            │
+│ payment_completed    │ completed        │ held         │
+│ confirmed            │ completed        │ held         │
+│ preparing            │ completed        │ held         │
+│ ready_for_pickup     │ completed        │ held         │
+│ in_transit           │ completed        │ held         │
+│ delivered            │ completed        │ held         │
+│ completed            │ completed        │ released     │
+│ cancelled            │ refunded         │ refunded     │
+│ disputed             │ on_hold          │ disputed     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 6.5 Escrow Release Conditions
+
+**Automatic Release:**
+1. Buyer confirms receipt of animal/item
+2. OR 7 days after seller marks "delivered" (configurable)
+3. AND no active dispute
+
+**Manual Release:**
+1. Admin intervention for disputes
+2. Seller appeals auto-refund
+
+**Refund Conditions:**
+1. Buyer cancels before shipment
+2. Seller cancels at any point
+3. Item not as described (with evidence)
+4. Dispute resolved in buyer's favor
+
+### 6.6 Platform Fee Structure
+
+```typescript
+const PLATFORM_FEE_CONFIG = {
+  // Percentage-based fees
+  standardFee: 5, // 5% for most transactions
+  premiumSellerFee: 3, // 3% for verified sellers
+
+  // Minimum/maximum fees (in cents)
+  minimumFee: 500, // $5 minimum
+  maximumFee: 50000, // $500 maximum
+
+  // Fee calculation
+  calculateFee: (amount: number, sellerTier: string) => {
+    const rate = sellerTier === 'premium' ? 0.03 : 0.05;
+    const fee = Math.round(amount * rate);
+    return Math.min(Math.max(fee, 500), 50000);
+  }
+};
+```
+
+### 6.7 Withdrawal Rules
+
+**Seller Can Withdraw When:**
+1. Funds are in wallet (not escrowed)
+2. KYC verification completed
+3. No pending disputes on related transactions
+4. Minimum withdrawal amount met ($25)
+
+**Withdrawal Processing:**
+1. Seller requests withdrawal
+2. System checks eligibility
+3. Admin approval (for large amounts or first withdrawal)
+4. Funds transferred via selected method
+5. Transaction logged in history
+
+### 6.8 Buyer Protection Features
+
+**Money-Back Guarantee:**
+- Full refund if item not as described
+- Automatic refund if seller doesn't confirm within 3 days
+- Dispute resolution with evidence submission
+
+**Transaction Safety:**
+- Funds held until buyer confirms
+- Clear status tracking at every step
+- Automatic notifications
+
+**Communication Audit:**
+- All messages logged
+- Evidence for disputes
+- Seller response time tracking
+
+### 6.9 Seller Protection Features
+
+**Payment Security:**
+- Buyer can't cancel after payment without valid reason
+- Auto-release if buyer doesn't respond
+- Dispute evidence submission
+
+**Chargeback Protection:**
+- Escrow system prevents most chargebacks
+- Documentation requirements
+
+### 6.10 Frontend Components for Payment
+
+**PaymentMethodSelector:**
+```tsx
+<PaymentMethodSelector
+  methods={['wallet', 'stripe', 'bank_transfer']}
+  selectedMethod={method}
+  onSelect={setMethod}
+  walletBalance={walletBalance}
+  amount={totalAmount}
+/>
+```
+
+**EscrowStatusBanner:**
+```tsx
+<EscrowStatusBanner
+  status={escrow.status}
+  amount={escrow.amount}
+  releaseDate={escrow.autoReleaseDate}
+  onConfirmReceipt={handleConfirmReceipt}
+/>
+```
+
+**ConfirmReceiptDialog:**
+```tsx
+<ConfirmReceiptDialog
+  purchase={purchase}
+  onConfirm={handleConfirmReceipt}
+  onDispute={handleOpenDispute}
+/>
+```
+
+**WithdrawalRequestForm:**
+```tsx
+<WithdrawalRequestForm
+  availableBalance={availableBalance}
+  pendingBalance={pendingBalance}
+  onSubmit={handleWithdrawal}
+/>
+```
+
+---
+
 ## 🎯 Future Enhancements
 
 ### Phase 4 (Post-MVP)
 - Video chat for animal viewing
-- Escrow payment system
 - Buyer reputation system
 - Advanced search with AI
 - Price prediction model
@@ -839,6 +1203,9 @@ tiny: 'text-xs'
 - Financing options
 - Multi-animal wishlist
 - Auto-bid on listings
+- Split payments
+- Installment plans
+- International currency exchange
 
 ---
 
