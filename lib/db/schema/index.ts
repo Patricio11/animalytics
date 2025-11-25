@@ -14,6 +14,7 @@ export * from './reports';
 export * from './marketplace';
 export * from './conversations';
 export * from './purchases';
+export * from './payment-settings';
 export * from './user-breed-preferences';
 export * from './notifications';
 export * from './relations';

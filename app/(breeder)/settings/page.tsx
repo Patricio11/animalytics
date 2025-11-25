@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Palette, Database, Globe, Heart } from "lucide-react";
+import { User, Bell, Shield, Palette, Database, Globe, Heart, CreditCard } from "lucide-react";
 import { BreedPreferencesSection } from "@/components/settings/BreedPreferencesSection";
+import { PaymentSettings } from "@/components/settings/PaymentSettings";
 import {
   ProfileSettings,
   NotificationsSettings,
@@ -13,6 +15,20 @@ import {
 } from "@/components/breeder/settings";
 
 export default function Settings() {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    async function checkAdmin() {
+      try {
+        const response = await fetch("/api/admin/payment-settings");
+        setIsAdmin(response.ok);
+      } catch {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, []);
   return (
     <div className="min-h-screen bg-surface-secondary">
       <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
@@ -23,7 +39,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 gap-1 bg-surface shadow-card">
+          <TabsList className={`grid w-full grid-cols-2 gap-1 bg-surface shadow-card ${isAdmin ? 'sm:grid-cols-8' : 'sm:grid-cols-7'}`}>
             <TabsTrigger value="profile" data-testid="tab-profile" className="text-xs sm:text-sm">
               <User className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Profile</span>
@@ -52,6 +68,12 @@ export default function Settings() {
               <Database className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Data</span>
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="payments" data-testid="tab-payments" className="text-xs sm:text-sm">
+                <CreditCard className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Payments</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Profile Settings */}
@@ -88,6 +110,13 @@ export default function Settings() {
           <TabsContent value="data" className="space-y-6">
             <DataSettings />
           </TabsContent>
+
+          {/* Payment Settings (Admin Only) */}
+          {isAdmin && (
+            <TabsContent value="payments" className="space-y-6">
+              <PaymentSettings />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

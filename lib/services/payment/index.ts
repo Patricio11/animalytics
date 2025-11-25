@@ -14,6 +14,10 @@ export * from './types';
 // Re-export providers
 export { stripeProvider } from './stripe-provider';
 
+// Re-export services
+export { escrowService } from './escrow-service';
+export { settingsService } from './settings-service';
+
 /**
  * Payment Provider Factory
  *

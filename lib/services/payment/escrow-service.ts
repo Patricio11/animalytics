@@ -8,8 +8,9 @@
 import { db } from '@/lib/db';
 import { escrows, wallets, transactions } from '@/lib/db/schema/wallet';
 import { purchases } from '@/lib/db/schema/purchases';
-import { eq, and, sql } from 'drizzle-orm';
-import { calculatePlatformFee, EscrowStatus, canReleaseEscrow } from './types';
+import { eq, sql } from 'drizzle-orm';
+import { canReleaseEscrow } from './types';
+import { settingsService } from './settings-service';
 
 export interface CreateEscrowParams {
   purchaseId: string;
@@ -43,7 +44,8 @@ export interface RefundEscrowParams {
  */
 export async function createEscrow(params: CreateEscrowParams): Promise<EscrowResult> {
   try {
-    const platformFee = calculatePlatformFee(params.amount, params.isPremiumSeller || false);
+    // Calculate fee using database settings
+    const platformFee = await settingsService.calculateFee(params.amount, params.isPremiumSeller || false);
     const sellerAmount = params.amount - platformFee;
 
     // Create escrow record

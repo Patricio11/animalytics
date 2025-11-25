@@ -3,9 +3,15 @@
  *
  * Handles all Stripe-specific payment operations while conforming
  * to the PaymentProvider interface for seamless provider switching.
+ *
+ * IMPORTANT: This provider reads credentials from the database,
+ * not from environment variables. Configure in Settings > Payments.
  */
 
 import Stripe from 'stripe';
+import { db } from '@/lib/db';
+import { paymentProviders } from '@/lib/db/schema/payment-settings';
+import { eq } from 'drizzle-orm';
 import {
   PaymentProvider,
   PaymentIntentParams,
@@ -18,35 +24,142 @@ import {
   WebhookVerificationResult,
 } from './types';
 
-// Lazy initialization of Stripe client
-let stripeInstance: Stripe | null = null;
+// Cache for Stripe instance and credentials
+let stripeCache: {
+  instance: Stripe | null;
+  secretKey: string | null;
+  webhookSecret: string | null;
+  timestamp: number;
+} = {
+  instance: null,
+  secretKey: null,
+  webhookSecret: null,
+  timestamp: 0,
+};
 
-function getStripe(): Stripe {
-  if (!stripeInstance) {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-    if (!secretKey) {
-      throw new Error('STRIPE_SECRET_KEY is not configured');
-    }
-    stripeInstance = new Stripe(secretKey);
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get Stripe credentials from database
+ */
+async function getStripeCredentials(): Promise<{
+  secretKey: string | null;
+  apiKey: string | null;
+  webhookSecret: string | null;
+  isEnabled: boolean;
+}> {
+  const [provider] = await db
+    .select()
+    .from(paymentProviders)
+    .where(eq(paymentProviders.providerKey, 'stripe'));
+
+  if (!provider) {
+    return {
+      secretKey: null,
+      apiKey: null,
+      webhookSecret: null,
+      isEnabled: false,
+    };
   }
-  return stripeInstance;
+
+  return {
+    secretKey: provider.secretKey,
+    apiKey: provider.apiKey,
+    webhookSecret: provider.webhookSecret,
+    isEnabled: provider.isEnabled,
+  };
+}
+
+/**
+ * Get or create Stripe instance with database credentials
+ */
+async function getStripe(): Promise<Stripe> {
+  const now = Date.now();
+
+  // Check if we need to refresh credentials
+  if (stripeCache.instance && now - stripeCache.timestamp < CACHE_TTL) {
+    return stripeCache.instance;
+  }
+
+  // Fetch credentials from database
+  const credentials = await getStripeCredentials();
+
+  if (!credentials.secretKey) {
+    throw new Error('Stripe secret key not configured. Go to Settings > Payments to configure.');
+  }
+
+  // Create new instance
+  stripeCache = {
+    instance: new Stripe(credentials.secretKey),
+    secretKey: credentials.secretKey,
+    webhookSecret: credentials.webhookSecret,
+    timestamp: now,
+  };
+
+  return stripeCache.instance;
+}
+
+/**
+ * Get webhook secret from cache or database
+ */
+async function getWebhookSecret(): Promise<string | null> {
+  const now = Date.now();
+
+  // Return cached if valid
+  if (stripeCache.webhookSecret && now - stripeCache.timestamp < CACHE_TTL) {
+    return stripeCache.webhookSecret;
+  }
+
+  // Fetch from database
+  const credentials = await getStripeCredentials();
+  stripeCache.webhookSecret = credentials.webhookSecret;
+  stripeCache.timestamp = now;
+
+  return credentials.webhookSecret;
+}
+
+/**
+ * Clear the Stripe cache (call after updating credentials)
+ */
+export function clearStripeCache(): void {
+  stripeCache = {
+    instance: null,
+    secretKey: null,
+    webhookSecret: null,
+    timestamp: 0,
+  };
 }
 
 export class StripeProvider implements PaymentProvider {
   name: 'stripe' = 'stripe';
 
-  isConfigured(): boolean {
-    return !!process.env.STRIPE_SECRET_KEY && !!process.env.STRIPE_PUBLISHABLE_KEY;
+  /**
+   * Check if Stripe is configured in the database
+   */
+  async isConfiguredAsync(): Promise<boolean> {
+    const credentials = await getStripeCredentials();
+    return credentials.isEnabled && !!credentials.secretKey;
   }
 
-  private get stripe(): Stripe {
+  /**
+   * Synchronous check - uses cached value or returns false
+   * For async operations, use isConfiguredAsync()
+   */
+  isConfigured(): boolean {
+    // Check cache first
+    if (stripeCache.secretKey) {
+      return true;
+    }
+    // Fallback to env vars for backward compatibility during migration
+    return !!process.env.STRIPE_SECRET_KEY;
+  }
+
+  private async getStripeClient(): Promise<Stripe> {
     return getStripe();
   }
 
   async createPaymentIntent(params: PaymentIntentParams): Promise<PaymentIntentResult> {
-    if (!this.isConfigured()) {
-      throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY.');
-    }
+    const stripe = await this.getStripeClient();
 
     const intentParams: Stripe.PaymentIntentCreateParams = {
       amount: params.amount,
@@ -72,7 +185,7 @@ export class StripeProvider implements PaymentProvider {
       intentParams.description = params.description;
     }
 
-    const paymentIntent = await this.stripe.paymentIntents.create(intentParams);
+    const paymentIntent = await stripe.paymentIntents.create(intentParams);
 
     return {
       id: paymentIntent.id,
@@ -84,12 +197,9 @@ export class StripeProvider implements PaymentProvider {
   }
 
   async confirmPayment(paymentIntentId: string): Promise<PaymentConfirmResult> {
-    if (!this.isConfigured()) {
-      throw new Error('Stripe is not configured.');
-    }
-
     try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+      const stripe = await this.getStripeClient();
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
       return {
         success: paymentIntent.status === 'succeeded',
@@ -112,11 +222,9 @@ export class StripeProvider implements PaymentProvider {
   }
 
   async refund(params: RefundParams): Promise<RefundResult> {
-    if (!this.isConfigured()) {
-      throw new Error('Stripe is not configured.');
-    }
-
     try {
+      const stripe = await this.getStripeClient();
+
       const refundParams: Stripe.RefundCreateParams = {
         payment_intent: params.paymentIntentId,
       };
@@ -132,7 +240,7 @@ export class StripeProvider implements PaymentProvider {
         refundParams.metadata = { reason: params.reason };
       }
 
-      const refund = await this.stripe.refunds.create(refundParams);
+      const refund = await stripe.refunds.create(refundParams);
 
       return {
         success: refund.status === 'succeeded',
@@ -153,12 +261,10 @@ export class StripeProvider implements PaymentProvider {
   }
 
   async createCustomer(params: CustomerParams): Promise<CustomerResult> {
-    if (!this.isConfigured()) {
-      throw new Error('Stripe is not configured.');
-    }
+    const stripe = await this.getStripeClient();
 
     // Check if customer already exists
-    const existingCustomers = await this.stripe.customers.list({
+    const existingCustomers = await stripe.customers.list({
       email: params.email,
       limit: 1,
     });
@@ -186,7 +292,7 @@ export class StripeProvider implements PaymentProvider {
       customerParams.phone = params.phone;
     }
 
-    const customer = await this.stripe.customers.create(customerParams);
+    const customer = await stripe.customers.create(customerParams);
 
     return {
       id: customer.id,
@@ -196,12 +302,9 @@ export class StripeProvider implements PaymentProvider {
   }
 
   async getCustomer(customerId: string): Promise<CustomerResult | null> {
-    if (!this.isConfigured()) {
-      throw new Error('Stripe is not configured.');
-    }
-
     try {
-      const customer = await this.stripe.customers.retrieve(customerId);
+      const stripe = await this.getStripeClient();
+      const customer = await stripe.customers.retrieve(customerId);
 
       if (customer.deleted) {
         return null;
@@ -218,17 +321,18 @@ export class StripeProvider implements PaymentProvider {
   }
 
   async verifyWebhook(payload: string, signature: string): Promise<WebhookVerificationResult> {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const webhookSecret = await getWebhookSecret();
 
     if (!webhookSecret) {
       return {
         valid: false,
-        error: 'Webhook secret not configured',
+        error: 'Webhook secret not configured. Go to Settings > Payments to configure.',
       };
     }
 
     try {
-      const event = this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+      const stripe = await this.getStripeClient();
+      const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
 
       return {
         valid: true,
@@ -273,8 +377,8 @@ export class StripeProvider implements PaymentProvider {
    * Get the Stripe instance for advanced operations
    * (Use sparingly - prefer interface methods)
    */
-  getStripeInstance(): Stripe {
-    return this.stripe;
+  async getStripeInstance(): Promise<Stripe> {
+    return this.getStripeClient();
   }
 }
 
