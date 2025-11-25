@@ -4,9 +4,19 @@ import React, { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Edit2, Plus, Download, Loader2 } from "lucide-react";
+import { Edit2, Plus, Download, Loader2, Trash2 } from "lucide-react";
 import { EditParentsDialog } from "@/components/breeder/animals/EditParentsDialog";
 import { AddPedigreeEntryDialog } from "@/components/breeder/animals/AddPedigreeEntryDialog";
 import { PedigreeCertificatePDF } from "@/components/breeder/animals/PedigreeCertificatePDF";
@@ -41,6 +51,8 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<{ animalId: string; entryId: string; name: string } | null>(null);
   const [manualEntryConfig, setManualEntryConfig] = useState<{
     position: string;
     generation: number;
@@ -83,6 +95,43 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
     setManualEntryConfig(null);
     if (onUpdate) {
       onUpdate();
+    }
+  };
+
+  const handleDeleteClick = (animalId: string, entryId: string, name: string) => {
+    setEntryToDelete({ animalId, entryId, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!entryToDelete) return;
+
+    try {
+      const response = await fetch(`/api/animals/${entryToDelete.animalId}/pedigree/manual/${entryToDelete.entryId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete entry');
+      }
+
+      toast({
+        title: "Entry Deleted",
+        description: "Pedigree entry has been removed successfully",
+      });
+
+      setDeleteDialogOpen(false);
+      setEntryToDelete(null);
+
+      if (onUpdate) {
+        onUpdate();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete pedigree entry",
+        variant: "destructive",
+      });
     }
   };
 
@@ -159,18 +208,20 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
               onEdit={handleEditClick}
               onAddManual={handleAddManualClick}
               onEditManual={handleEditManualClick}
+              onDelete={handleDeleteClick}
+              subjectId={node.id}
             />
           </div>
 
           {/* Generation 1 - Parents */}
           <div className="col-span-1 flex flex-col justify-center gap-8">
             <div className="relative">
-              <PedigreeCard animal={node.sire} generation={1} position="sire" label="SIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.sire} generation={1} position="sire" label="SIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               {/* Connecting line to subject */}
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.dam} generation={1} position="dam" label="DAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.dam} generation={1} position="dam" label="DAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               {/* Connecting line to subject */}
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
@@ -180,20 +231,20 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
           <div className="col-span-1 flex flex-col justify-center gap-4">
             {/* Sire's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.sire?.sire} generation={2} position="sire.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.sire?.sire} generation={2} position="sire.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.sire?.dam} generation={2} position="sire.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.sire?.dam} generation={2} position="sire.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             {/* Dam's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.dam?.sire} generation={2} position="dam.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.dam?.sire} generation={2} position="dam.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.dam?.dam} generation={2} position="dam.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.dam?.dam} generation={2} position="dam.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
           </div>
@@ -202,38 +253,38 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
           <div className="col-span-1 flex flex-col justify-center gap-2">
             {/* Sire's Sire's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="sire.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="sire.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             {/* Sire's Dam's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             {/* Dam's Sire's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             {/* Dam's Dam's parents */}
             <div className="relative">
-              <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
             <div className="relative">
-              <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} />
+              <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} subjectId={node.id} />
               <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
             </div>
           </div>
@@ -274,6 +325,28 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate }: Pedi
         />
       )}
 
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Pedigree Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold text-foreground">{entryToDelete?.name}</span> from the pedigree? 
+              This action cannot be undone and will permanently remove this entry from the family tree.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Entry
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Hidden PDF Component for Generation */}
       <div className="fixed left-[-9999px] top-0">
         <PedigreeCertificatePDF
@@ -301,9 +374,11 @@ interface PedigreeCardProps {
   onEdit?: (animal: PedigreeNode | null | undefined) => void;
   onAddManual?: (position: string, generation: number, label: string) => void;
   onEditManual?: (animal: PedigreeNode, position: string, generation: number, label: string) => void;
+  onDelete?: (animalId: string, entryId: string, name: string) => void;
+  subjectId?: string;
 }
 
-function PedigreeCard({ animal, generation, position, label, compact = false, onEdit, onAddManual, onEditManual }: PedigreeCardProps) {
+function PedigreeCard({ animal, generation, position, label, compact = false, onEdit, onAddManual, onEditManual, onDelete, subjectId }: PedigreeCardProps) {
   if (!animal) {
     return (
       <Card 
@@ -355,17 +430,36 @@ function PedigreeCard({ animal, generation, position, label, compact = false, on
       )}
       onClick={handleClick}
     >
-      {/* Edit Button Overlay */}
+      {/* Edit and Delete Button Overlay */}
       {canEdit && !compact && (
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className={cn(
-            "rounded-full p-1.5 shadow-lg",
-            animal.isManualEntry 
-              ? "bg-amber-500 text-white" 
-              : "bg-primary text-primary-foreground"
-          )}>
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+          <div 
+            className={cn(
+              "rounded-full p-1.5 shadow-lg cursor-pointer hover:scale-110 transition-transform",
+              animal.isManualEntry 
+                ? "bg-amber-500 text-white hover:bg-amber-600" 
+                : "bg-primary text-primary-foreground hover:bg-primary/90"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick();
+            }}
+            title="Edit"
+          >
             <Edit2 className="w-3 h-3" />
           </div>
+          {animal.isManualEntry && onDelete && subjectId && (
+            <div 
+              className="rounded-full p-1.5 shadow-lg cursor-pointer hover:scale-110 transition-transform bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(subjectId, animal.id, animal.registeredName || animal.name);
+              }}
+              title="Delete"
+            >
+              <Trash2 className="w-3 h-3" />
+            </div>
+          )}
         </div>
       )}
       <div className={cn("space-y-1", compact && "space-y-0.5")}>
