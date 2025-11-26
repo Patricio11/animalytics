@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,6 +57,8 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
   const [isInitiatingPurchase, setIsInitiatingPurchase] = useState(false);
   const [purchaseNotes, setPurchaseNotes] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("pickup");
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSavingListing, setIsSavingListing] = useState(false);
 
   // Fetch listing from API
   const { data: listingData, isLoading, error } = useQuery({
@@ -71,6 +73,28 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
   const listing = listingData?.listing;
   const isOwner = session?.user?.id === listing?.userId;
   const isAuthenticated = !!session;
+
+  // Check if listing is saved
+  const { data: savedData } = useQuery({
+    queryKey: ['saved-listings'],
+    queryFn: async () => {
+      if (!session) return { saved: [] };
+      const response = await fetch('/api/marketplace/saved');
+      if (!response.ok) return { saved: [] };
+      return response.json();
+    },
+    enabled: !!session,
+  });
+
+  // Update isSaved state when savedData or listing changes
+  useEffect(() => {
+    if (savedData?.saved && listing?.id) {
+      const isSavedListing = savedData.saved.some(
+        (s: any) => s.listingId === listing.id
+      );
+      setIsSaved(isSavedListing);
+    }
+  }, [savedData, listing]);
 
   // Delete handler
   const handleDelete = async () => {
@@ -131,6 +155,53 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
     }
   };
 
+  // Handle save/unsave listing
+  const handleToggleSave = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Sign In Required",
+        description: "Please sign in to save listings.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingListing(true);
+    try {
+      const response = await fetch('/api/marketplace/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId: id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save listing');
+      }
+
+      const data = await response.json();
+      setIsSaved(data.saved);
+
+      toast({
+        title: data.saved ? "Listing Saved" : "Listing Removed",
+        description: data.message,
+      });
+
+      // Invalidate saved listings query
+      queryClient.invalidateQueries({ queryKey: ['saved-listings'] });
+    } catch (error) {
+      console.error('Error saving listing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update saved status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingListing(false);
+    }
+  };
+
   // Handle send message to seller
   const handleSendMessage = async () => {
     if (!messageText.trim()) {
@@ -148,9 +219,9 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          recipientId: listing?.userId,
+          sellerId: listing?.userId,
           listingId: id,
-          message: messageText.trim(),
+          initialMessage: messageText.trim(),
         }),
       });
 
@@ -688,8 +759,18 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                     </Button>
 
                     <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1 hover:bg-primary/10 hover:border-primary shadow-card">
-                        <Heart className="w-4 h-4" />
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 shadow-card",
+                          isSaved
+                            ? "bg-red-50 border-red-300 hover:bg-red-100 hover:border-red-400"
+                            : "hover:bg-primary/10 hover:border-primary"
+                        )}
+                        onClick={handleToggleSave}
+                        disabled={isSavingListing}
+                      >
+                        <Heart className={cn("w-4 h-4", isSaved && "fill-red-500 text-red-500")} />
                       </Button>
                       <Button
                         variant="outline"
