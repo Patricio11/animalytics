@@ -6,7 +6,7 @@ import { requireRole } from "@/lib/auth/server";
  *
  * This layout protects all buyer routes by requiring:
  * 1. User must be authenticated (or redirected to /auth/signin)
- * 2. User must have 'buyer' role (or redirected to /unauthorized)
+ * 2. User must have 'buyer' or 'breeder' role (breeders can buy from other breeders)
  */
 export default async function BuyerRouteLayout({
   children,
@@ -16,8 +16,9 @@ export default async function BuyerRouteLayout({
   // Check authentication and role
   // This will automatically redirect if:
   // - Not authenticated → /auth/signin
-  // - Not a buyer → /unauthorized
-  await requireRole(["buyer"]);
+  // - Not a buyer or breeder → /unauthorized
+  // Note: Breeders can access buyer routes when purchasing from other breeders
+  await requireRole(["buyer", "breeder"]);
 
   return <BuyerLayout>{children}</BuyerLayout>;
 }

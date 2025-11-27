@@ -1,8 +1,9 @@
 "use client";
 
-import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck, GitBranch, DollarSign } from "lucide-react";
+import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck, GitBranch, DollarSign, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 
 const menuItems = [
@@ -51,6 +53,12 @@ const menuItems = [
     icon: ShoppingBag,
   },
   {
+    title: "Messages",
+    url: "/buyer/messages",
+    icon: MessageSquare,
+    badge: true,
+  },
+  {
     title: "My Sales",
     url: "/sales",
     icon: DollarSign,
@@ -87,6 +95,45 @@ const secondaryItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [hasConversations, setHasConversations] = useState(false);
+
+  // Fetch unread message count and check if user has conversations
+  useEffect(() => {
+    async function fetchMessagingData() {
+      try {
+        // Fetch unread count
+        const unreadRes = await fetch('/api/conversations/unread');
+        if (unreadRes.ok) {
+          const unreadData = await unreadRes.json();
+          const buyerUnread = unreadData.breakdown?.asBuyer || 0;
+          setUnreadCount(buyerUnread);
+        }
+
+        // Fetch conversations to check if user has any as buyer
+        const conversationsRes = await fetch('/api/conversations');
+        if (conversationsRes.ok) {
+          const conversationsData = await conversationsRes.json();
+          setHasConversations(conversationsData.conversations?.length > 0);
+        }
+      } catch (error) {
+        console.error('Error fetching messaging data:', error);
+      }
+    }
+
+    fetchMessagingData();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchMessagingData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter menu items - only show Messages if breeder has conversations
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.title === 'Messages') {
+      return hasConversations; // Only show if breeder has conversations
+    }
+    return true; // Show all other items
+  });
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-surface shadow-card">
@@ -107,12 +154,17 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3 py-2 uppercase tracking-wider">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1 group-data-[collapsible=icon]:gap-2">
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url || pathname.startsWith(item.url + '/')} tooltip={item.title}>
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
                       <item.icon className="w-4 h-4 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5" />
                       <span>{item.title}</span>
+                      {item.badge && unreadCount > 0 && (
+                        <SidebarMenuBadge className="bg-destructive text-destructive-foreground">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </SidebarMenuBadge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
