@@ -270,8 +270,24 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-surface shadow-card rounded-lg p-8 text-center">
-                    <p className="text-muted-foreground">No animals yet. Add your first animal to get started!</p>
+                  <div className="bg-surface shadow-card rounded-lg p-12 text-center space-y-4">
+                    <div className="flex justify-center mb-4">
+                      <div className="rounded-full bg-primary/10 p-4">
+                        <Heart className="w-8 h-8 text-primary" />
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground">No animals yet</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">
+                      Get started by adding your first animal to begin tracking their health, breeding, and activities.
+                    </p>
+                    <Button
+                      onClick={() => setShowAddAnimal(true)}
+                      className="bg-gradient-brand hover:opacity-90 shadow-card mt-4"
+                      data-testid="button-add-first-animal"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Your First Animal
+                    </Button>
                   </div>
                 )}
               </section>

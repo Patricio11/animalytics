@@ -135,14 +135,12 @@ export async function GET(request: NextRequest) {
       .where(eq(listings.userId, session.user.id));
 
     // ========================================================================
-    // 7. Recent Activity (Last 30 days)
+    // 7. Recent Activity
     // ========================================================================
 
+    // Get recent animals (all animals, ordered by creation date)
     const recentAnimals = await db.query.animals.findMany({
-      where: and(
-        eq(animals.userId, session.user.id),
-        gte(animals.createdAt, thirtyDaysAgo)
-      ),
+      where: eq(animals.userId, session.user.id),
       with: {
         breed: true,
         photos: true,
@@ -160,7 +158,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: (animals, { desc }) => [desc(animals.createdAt)],
-      limit: 5,
+      limit: 6, // Show up to 6 animals on dashboard
     });
 
     const recentMatings = await db.query.matings.findMany({
