@@ -95,7 +95,10 @@ export function ProgesteroneChart({
     const maxLevel = Math.max(...levels);
     const minLevel = Math.min(...levels);
     const avgLevel = levels.reduce((a, b) => a + b, 0) / levels.length;
-    const lastReading = readings[readings.length - 1];
+    // Get the reading with the highest day number (latest reading)
+    const lastReading = readings.reduce((latest, current) => 
+      current.day > latest.day ? current : latest
+    , readings[0]);
 
     return {
       maxLevel,

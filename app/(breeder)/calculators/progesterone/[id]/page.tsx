@@ -224,7 +224,7 @@ export default function CycleDetailPage({ params }: PageProps) {
 
         {/* Breeding Window Alert - Simplified for detail page */}
         {cycle.status === 'active' && cycle.readings && cycle.readings.length > 0 && (() => {
-          const lastReading = cycle.readings[cycle.readings.length - 1];
+          const lastReading = cycle.readings[0];
           const lastLevel = parseFloat(String(lastReading.progesteroneLevel));
           return lastLevel >= 15 && (
             <Card className="shadow-card bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
@@ -273,7 +273,7 @@ export default function CycleDetailPage({ params }: PageProps) {
                 <div>
                   <p className="text-sm text-muted-foreground">Last Reading</p>
                   <p className="text-2xl font-bold text-purple-600">
-                    {parseFloat(String(cycle.readings[cycle.readings.length - 1].progesteroneLevel)).toFixed(1)} ng/mL
+                    {parseFloat(String(cycle.readings[0].progesteroneLevel)).toFixed(1)} ng/mL
                   </p>
                 </div>
               )}

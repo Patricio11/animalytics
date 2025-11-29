@@ -312,7 +312,7 @@ export default function ProgesteronePage() {
                               <p className="text-sm text-muted-foreground">Last Reading</p>
                               <p className="text-lg font-semibold text-foreground">
                                 {cycle.readings && cycle.readings.length > 0
-                                  ? `${parseFloat(cycle.readings[cycle.readings.length - 1].progesteroneLevel).toFixed(1)} ng/mL`
+                                  ? `${parseFloat(cycle.readings[0].progesteroneLevel).toFixed(1)} ng/mL`
                                   : 'N/A'}
                               </p>
                             </div>
@@ -320,7 +320,7 @@ export default function ProgesteronePage() {
                               <p className="text-sm text-muted-foreground">Status</p>
                               <p className="text-lg font-semibold text-purple-600">
                                 {cycle.readings && cycle.readings.length > 0
-                                  ? cycle.readings[cycle.readings.length - 1].phase
+                                  ? cycle.readings[0].phase
                                   : 'No readings'}
                               </p>
                             </div>
