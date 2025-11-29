@@ -49,21 +49,15 @@ export async function GET(request: NextRequest) {
       );
     } else {
       // Get active conversations (not archived by this user)
-      whereClause = and(
-        or(
+      // User is buyer and hasn't archived OR user is seller and hasn't archived
+      whereClause = or(
+        and(
           eq(conversations.buyerId, userId),
-          eq(conversations.sellerId, userId)
+          eq(conversations.archivedByBuyer, false)
         ),
-        // Not archived by the current user
-        or(
-          and(
-            eq(conversations.buyerId, userId),
-            eq(conversations.archivedByBuyer, false)
-          ),
-          and(
-            eq(conversations.sellerId, userId),
-            eq(conversations.archivedBySeller, false)
-          )
+        and(
+          eq(conversations.sellerId, userId),
+          eq(conversations.archivedBySeller, false)
         )
       );
     }

@@ -3,7 +3,6 @@
 import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck, GitBranch, DollarSign, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarMenuBadge,
 } from "@/components/ui/sidebar";
+import { useRealtimeMessagingConditional } from "@/hooks/useRealtimeMessaging";
 
 const menuItems = [
   {
@@ -95,37 +95,13 @@ const secondaryItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [hasConversations, setHasConversations] = useState(false);
 
-  // Fetch unread message count and check if user has conversations
-  useEffect(() => {
-    async function fetchMessagingData() {
-      try {
-        // Fetch unread count
-        const unreadRes = await fetch('/api/conversations/unread');
-        if (unreadRes.ok) {
-          const unreadData = await unreadRes.json();
-          const buyerUnread = unreadData.breakdown?.asBuyer || 0;
-          setUnreadCount(buyerUnread);
-        }
-
-        // Fetch conversations to check if user has any as buyer
-        const conversationsRes = await fetch('/api/conversations');
-        if (conversationsRes.ok) {
-          const conversationsData = await conversationsRes.json();
-          setHasConversations(conversationsData.conversations?.length > 0);
-        }
-      } catch (error) {
-        console.error('Error fetching messaging data:', error);
-      }
-    }
-
-    fetchMessagingData();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchMessagingData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  // Real-time messaging updates using SSE
+  // For breeders: only show buyer messages (when they're purchasing from others)
+  // Only show Messages link if breeder has conversations
+  const { unreadCount, hasConversations } = useRealtimeMessagingConditional({
+    showOnlyAsBuyer: true, // Breeders only see messages where they're the buyer
+  });
 
   // Filter menu items - only show Messages if breeder has conversations
   const filteredMenuItems = menuItems.filter(item => {

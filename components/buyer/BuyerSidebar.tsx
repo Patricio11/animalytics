@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Home, MessageSquare, ShoppingBag, Heart, User, Settings, Search, HelpCircle, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarMenuBadge,
 } from "@/components/ui/sidebar";
+import { useRealtimeMessaging } from "@/hooks/useRealtimeMessaging";
 
 const menuItems = [
   {
@@ -70,27 +70,10 @@ const secondaryItems = [
 
 export function BuyerSidebar() {
   const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Fetch unread message count
-  useEffect(() => {
-    async function fetchUnreadCount() {
-      try {
-        const res = await fetch('/api/conversations/unread');
-        if (res.ok) {
-          const data = await res.json();
-          setUnreadCount(data.unreadCount || 0);
-        }
-      } catch (error) {
-        console.error('Error fetching unread count:', error);
-      }
-    }
-
-    fetchUnreadCount();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  // Real-time messaging updates using SSE
+  // For buyers: show all messages (both as buyer and seller)
+  const { unreadCount } = useRealtimeMessaging();
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-surface shadow-card">
