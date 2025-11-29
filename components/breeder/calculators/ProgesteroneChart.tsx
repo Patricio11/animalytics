@@ -71,20 +71,34 @@ export function ProgesteroneChart({
   showBreedingWindow = true,
   height = 400,
 }: ProgesteroneChartProps) {
+  // Helper function to get color based on progesterone level
+  const getColorForLevel = (level: number) => {
+    if (level < 1.5) return '#9ca3af'; // Gray - Anestrus
+    if (level < 4) return '#a855f7'; // Purple - LH Surge
+    if (level < 9) return '#ef4444'; // Red - Ovulation
+    if (level < 15) return '#f59e0b'; // Amber - Egg Maturation
+    if (level < 25) return '#10b981'; // Green - Fertile Window
+    return '#059669'; // Dark Green - Late Stage
+  };
+
   // Prepare chart data
   const chartData = useMemo(() => {
     return readings
       .sort((a, b) => a.day - b.day)
-      .map((reading) => ({
-        day: reading.day,
-        level: reading.progesteroneLevel,
-        phase: reading.phase,
-        phaseColor: reading.phaseColor,
-        date: typeof reading.testDate === 'string' 
-          ? new Date(reading.testDate).toLocaleDateString() 
-          : reading.testDate.toLocaleDateString(),
-        notes: reading.notes,
-      }));
+      .map((reading) => {
+        const level = reading.progesteroneLevel;
+        return {
+          day: reading.day,
+          level: level,
+          phase: reading.phase,
+          phaseColor: reading.phaseColor || getColorForLevel(level),
+          dotColor: getColorForLevel(level),
+          date: typeof reading.testDate === 'string' 
+            ? new Date(reading.testDate).toLocaleDateString() 
+            : reading.testDate.toLocaleDateString(),
+          notes: reading.notes,
+        };
+      });
   }, [readings]);
 
   // Calculate statistics
@@ -109,6 +123,52 @@ export function ProgesteroneChart({
     };
   }, [readings]);
 
+  // Custom dot component with dynamic colors
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (!payload) return null;
+
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={6}
+        fill={payload.dotColor}
+        stroke="#fff"
+        strokeWidth={2}
+        className="drop-shadow-md"
+      />
+    );
+  };
+
+  // Custom active dot with glow effect
+  const CustomActiveDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (!payload) return null;
+
+    return (
+      <>
+        <circle
+          cx={cx}
+          cy={cy}
+          r={12}
+          fill={payload.dotColor}
+          opacity={0.3}
+          className="animate-pulse"
+        />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={8}
+          fill={payload.dotColor}
+          stroke="#fff"
+          strokeWidth={3}
+          className="drop-shadow-lg"
+        />
+      </>
+    );
+  };
+
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload || !payload.length) return null;
@@ -116,7 +176,7 @@ export function ProgesteroneChart({
     const data = payload[0].payload;
 
     return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border-2 border-gray-200 dark:border-gray-700">
         <p className="font-semibold text-gray-900 dark:text-white mb-2">
           Day {data.day}
         </p>
@@ -124,14 +184,18 @@ export function ProgesteroneChart({
           {data.date}
         </p>
         <div className="flex items-center gap-2 mb-2">
-          <span className="font-bold text-lg text-purple-600 dark:text-purple-400">
+          <div 
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: data.dotColor }}
+          />
+          <span className="font-bold text-lg" style={{ color: data.dotColor }}>
             {data.level.toFixed(1)} ng/mL
           </span>
         </div>
         {data.phase && (
           <Badge 
             variant="secondary" 
-            className="text-xs"
+            className="text-xs text-white"
             style={{ backgroundColor: data.phaseColor || '#9ca3af' }}
           >
             {data.phase}
@@ -207,9 +271,20 @@ export function ProgesteroneChart({
             margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
           >
             <defs>
+              {/* Gradient for area fill */}
               <linearGradient id="colorLevel" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
                 <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
+              </linearGradient>
+              
+              {/* Multi-color gradient for line stroke */}
+              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#9ca3af" />
+                <stop offset="20%" stopColor="#a855f7" />
+                <stop offset="40%" stopColor="#ef4444" />
+                <stop offset="60%" stopColor="#f59e0b" />
+                <stop offset="80%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#059669" />
               </linearGradient>
             </defs>
 
@@ -301,14 +376,14 @@ export function ProgesteroneChart({
               stroke="none"
             />
 
-            {/* Main line */}
+            {/* Main line with gradient and custom dots */}
             <Line
               type="monotone"
               dataKey="level"
-              stroke="#8b5cf6"
+              stroke="url(#lineGradient)"
               strokeWidth={3}
-              dot={{ fill: '#8b5cf6', r: 5 }}
-              activeDot={{ r: 8, fill: '#7c3aed' }}
+              dot={<CustomDot />}
+              activeDot={<CustomActiveDot />}
               name="Progesterone Level"
             />
           </ComposedChart>
