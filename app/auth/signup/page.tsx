@@ -45,10 +45,19 @@ export default function SignUp() {
     setMounted(true);
   }, []);
 
-  // Redirect if already logged in.
+  // Redirect if already logged in based on role
   useEffect(() => {
     if (mounted && !isPending && session) {
-      router.replace('/dashboard');
+      const userRole = (session.user as any)?.role as string;
+      let redirectUrl = "/dashboard"; // Default for breeder, vet, event_organizer
+
+      if (userRole === "admin") {
+        redirectUrl = "/admin/dashboard";
+      } else if (userRole === "buyer") {
+        redirectUrl = "/buyer/dashboard";
+      }
+
+      router.replace(redirectUrl);
     }
   }, [mounted, session, isPending, router]);
 
@@ -153,9 +162,11 @@ export default function SignUp() {
     setError("");
 
     try {
+      // Google OAuth will handle redirect in callback
+      // The auth system should redirect based on role after successful OAuth
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: "/dashboard", // This will be overridden by role-based redirect in middleware/layout
       });
     } catch (err) {
       const errorMessage = "Google sign-up is not available at the moment";

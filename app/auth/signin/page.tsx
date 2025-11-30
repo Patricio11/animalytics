@@ -32,7 +32,18 @@ export default function SignIn() {
   // Redirect if already logged in
   useEffect(() => {
     if (mounted && !isPending && session) {
-      router.replace('/dashboard');
+      const userRole = (session.user as any)?.role as string;
+
+      // Redirect based on role
+      let redirectUrl = "/dashboard"; // Default for breeder, vet, event_organizer
+
+      if (userRole === "admin") {
+        redirectUrl = "/admin/dashboard";
+      } else if (userRole === "buyer") {
+        redirectUrl = "/buyer/dashboard";
+      }
+
+      router.replace(redirectUrl);
     }
   }, [mounted, session, isPending, router]);
 
@@ -47,18 +58,31 @@ export default function SignIn() {
         password,
       },
       {
-        onSuccess: () => {
+        onSuccess: async (ctx) => {
           toast({
             title: "Welcome back!",
             description: "You have been successfully signed in.",
           });
-          // Force redirect to dashboard
-          window.location.href = "/dashboard";
+
+          // Get the user's role from the session
+          const userRole = ctx.data?.user?.role as string;
+
+          // Redirect based on role
+          let redirectUrl = "/dashboard"; // Default for breeder, vet, event_organizer
+
+          if (userRole === "admin") {
+            redirectUrl = "/admin/dashboard";
+          } else if (userRole === "buyer") {
+            redirectUrl = "/buyer/dashboard";
+          }
+
+          // Force redirect to role-specific dashboard
+          window.location.href = redirectUrl;
         },
         onError: (ctx) => {
           // Handle error here since onError prevents catch block
           const errorMessage = "Invalid email or password. Please check your credentials and try again.";
-          
+
           setError(errorMessage);
           toast({
             title: "Sign In Failed",

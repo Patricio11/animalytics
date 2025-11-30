@@ -92,10 +92,10 @@ export async function GET(request: NextRequest) {
         total: sql<number>`count(*)::int`,
         pending: sql<number>`COUNT(CASE WHEN ${purchases.status} = 'pending' THEN 1 END)::int`,
         completed: sql<number>`COUNT(CASE WHEN ${purchases.status} = 'completed' THEN 1 END)::int`,
-        inEscrow: sql<number>`COUNT(CASE WHEN ${purchases.status} = 'in_escrow' THEN 1 END)::int`,
+        inEscrow: sql<number>`COUNT(CASE WHEN ${purchases.status} = 'payment_completed' THEN 1 END)::int`,
         disputed: sql<number>`COUNT(CASE WHEN ${purchases.status} = 'disputed' THEN 1 END)::int`,
-        totalRevenue: sql<number>`SUM(${purchases.amount})::int`,
-        revenueThisMonth: sql<number>`SUM(CASE WHEN ${purchases.createdAt} >= ${thirtyDaysAgo} THEN ${purchases.amount} ELSE 0 END)::int`,
+        totalRevenue: sql<number>`COALESCE(SUM(${purchases.totalAmount}), 0)::int`,
+        revenueThisMonth: sql<number>`COALESCE(SUM(CASE WHEN ${purchases.createdAt} >= ${thirtyDaysAgo} THEN ${purchases.totalAmount} ELSE 0 END), 0)::int`,
       })
       .from(purchases);
 
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
     const recentPurchases = await db
       .select({
         id: purchases.id,
-        amount: purchases.amount,
+        amount: purchases.totalAmount,
         status: purchases.status,
         buyerId: purchases.buyerId,
         sellerId: purchases.sellerId,

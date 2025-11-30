@@ -5,9 +5,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function UnauthorizedPage() {
   const router = useRouter();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await authClient.signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account",
+      });
+      router.push("/auth/signin");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -41,11 +62,9 @@ export default function UnauthorizedPage() {
             </Button>
             <Button
               variant="ghost"
-              asChild
+              onClick={handleSignOut}
             >
-              <Link href="/auth/signin">
-                Sign Out
-              </Link>
+              Sign Out
             </Button>
           </div>
         </CardContent>
