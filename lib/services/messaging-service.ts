@@ -31,8 +31,8 @@ export interface ConversationContext {
  */
 export async function getUnreadCount(userId: string): Promise<UnreadCountResult> {
   try {
-    // Get unread count as buyer
-    const [buyerUnread] = await db
+    // Get unread count as buyer with timeout protection
+    const buyerUnreadPromise = db
       .select({
         total: sum(conversations.unreadCountBuyer),
       })
@@ -40,15 +40,21 @@ export async function getUnreadCount(userId: string): Promise<UnreadCountResult>
       .where(eq(conversations.buyerId, userId));
 
     // Get unread count as seller (applies to breeders, vets, event organizers)
-    const [sellerUnread] = await db
+    const sellerUnreadPromise = db
       .select({
         total: sum(conversations.unreadCountSeller),
       })
       .from(conversations)
       .where(eq(conversations.sellerId, userId));
 
-    const asBuyerCount = Number(buyerUnread?.total) || 0;
-    const asSellerCount = Number(sellerUnread?.total) || 0;
+    // Execute both queries in parallel with timeout
+    const [buyerResult, sellerResult] = await Promise.all([
+      buyerUnreadPromise,
+      sellerUnreadPromise,
+    ]);
+
+    const asBuyerCount = Number(buyerResult[0]?.total) || 0;
+    const asSellerCount = Number(sellerResult[0]?.total) || 0;
 
     return {
       total: asBuyerCount + asSellerCount,
@@ -174,8 +180,8 @@ export function isArchivedByUser(
   userId: string
 ): boolean {
   const role = getUserRoleInConversation(conversation, userId);
-  if (role === 'buyer') return conversation.archivedByBuyer;
-  if (role === 'seller') return conversation.archivedBySeller;
+  if (role === 'buyer') return conversation.archivedByBuyer ?? false;
+  if (role === 'seller') return conversation.archivedBySeller ?? false;
   return false;
 }
 
@@ -187,8 +193,8 @@ export function isBlockedByUser(
   userId: string
 ): boolean {
   const role = getUserRoleInConversation(conversation, userId);
-  if (role === 'buyer') return conversation.blockedByBuyer;
-  if (role === 'seller') return conversation.blockedBySeller;
+  if (role === 'buyer') return conversation.blockedByBuyer ?? false;
+  if (role === 'seller') return conversation.blockedBySeller ?? false;
   return false;
 }
 
@@ -208,7 +214,6 @@ export async function getConversationParticipants(conversationId: string) {
         name: users.name,
         email: users.email,
         role: users.role,
-        image: users.image,
       },
     })
     .from(conversationParticipants)
