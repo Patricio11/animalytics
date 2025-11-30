@@ -61,6 +61,8 @@ interface Conversation {
     category: string;
     price: number | null;
     currency: string | null;
+    additionalImages?: string[];
+    animalId?: string;
   } | null;
   isBlocked: boolean;
   blockedByMe: boolean;
@@ -367,8 +369,18 @@ export default function ConversationPage() {
               <Link href={`/marketplace/${conversation.listing.id}`}>
                 <Card className="max-w-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-3 flex items-center gap-3">
-                    <div className="h-12 w-12 bg-muted rounded flex items-center justify-center">
-                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                    <div className="h-16 w-16 bg-muted rounded overflow-hidden flex-shrink-0">
+                      {conversation.listing.additionalImages && conversation.listing.additionalImages.length > 0 ? (
+                        <img
+                          src={conversation.listing.additionalImages[0]}
+                          alt={conversation.listing.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">

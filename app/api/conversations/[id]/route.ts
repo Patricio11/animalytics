@@ -129,6 +129,8 @@ export async function GET(
           price: listings.price,
           currency: listings.currency,
           status: listings.status,
+          additionalImages: listings.additionalImages,
+          animalId: listings.animalId,
         })
         .from(listings)
         .where(eq(listings.id, conversation.listingId))
