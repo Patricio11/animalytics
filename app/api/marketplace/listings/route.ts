@@ -102,8 +102,8 @@ export async function POST(request: NextRequest) {
           registrationNumber: animal.registrationNumber,
           healthCertified: animal.healthCertifications ? true : false,
           championLines: animal.isChampion,
-          status: 'active',
-          publishedAt: new Date(),
+          status: 'pending', // Requires admin approval before going live
+          requiresApproval: true,
         })
         .returning();
       
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
     let listingsQuery;
     
     if (publicOnly) {
-      // Get all active public listings
+      // Get all active, approved public listings (status=active means admin approved)
       listingsQuery = await db.query.listings.findMany({
         where: eq(listings.status, 'active'),
         with: {

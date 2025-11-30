@@ -14,7 +14,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    
+    const session = await auth.api.getSession({ headers: request.headers });
+
     const listing = await db.query.listings.findFirst({
       where: eq(listings.id, id),
       with: {
@@ -31,8 +32,19 @@ export async function GET(
         },
       },
     });
-    
+
     if (!listing) {
+      return NextResponse.json(
+        { error: 'Listing not found' },
+        { status: 404 }
+      );
+    }
+
+    // Only allow viewing active listings publicly, or if user is the owner/admin
+    const isOwner = session && listing.userId === session.user.id;
+    const isAdmin = session && session.user.role === 'admin';
+
+    if (listing.status !== 'active' && !isOwner && !isAdmin) {
       return NextResponse.json(
         { error: 'Listing not found' },
         { status: 404 }
@@ -99,24 +111,53 @@ export async function PATCH(
       );
     }
     
+    // Prepare update data
+    const updateData: Record<string, any> = {
+      title: body.title,
+      description: body.description,
+      price: body.price ? Math.round(body.price * 100) : null,
+      currency: body.currency || 'USD',
+      contactName: body.contactName,
+      contactEmail: body.contactEmail,
+      contactPhone: body.contactPhone,
+      location: body.contactLocation,
+      availabilityNotes: body.availabilityNotes,
+      clinicId: body.clinicId,
+      additionalImages: body.additionalImages || [],
+      updatedAt: new Date(),
+    };
+
+    // Only allow status changes to draft or if admin
+    // Users cannot set status to 'active' - only admins can approve
+    if (body.status) {
+      const isAdmin = session.user.role === 'admin';
+
+      if (body.status === 'active' && !isAdmin) {
+        return NextResponse.json(
+          { error: 'Only administrators can approve listings' },
+          { status: 403 }
+        );
+      }
+
+      // Users can only set to draft
+      if (body.status === 'draft' || isAdmin) {
+        updateData.status = body.status;
+      }
+    }
+
+    // If listing was previously rejected and user is updating, reset to pending for re-review
+    if (existingListing.status === 'removed' && existingListing.rejectedAt) {
+      updateData.status = 'pending';
+      updateData.requiresApproval = true;
+      updateData.rejectedBy = null;
+      updateData.rejectedAt = null;
+      updateData.rejectionReason = null;
+    }
+
     // Update listing
     const [updatedListing] = await db
       .update(listings)
-      .set({
-        title: body.title,
-        description: body.description,
-        price: body.price ? Math.round(body.price * 100) : null,
-        currency: body.currency || 'USD',
-        contactName: body.contactName,
-        contactEmail: body.contactEmail,
-        contactPhone: body.contactPhone,
-        location: body.contactLocation,
-        availabilityNotes: body.availabilityNotes,
-        clinicId: body.clinicId,
-        additionalImages: body.additionalImages || [],
-        status: body.status || existingListing.status,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(listings.id, id))
       .returning();
     

@@ -179,6 +179,14 @@ export const listings = pgTable('listings', {
   interestedCount: integer('interested_count').default(0),
   inquiryCount: integer('inquiry_count').default(0),
 
+  // Admin approval
+  requiresApproval: boolean('requires_approval').default(true), // Requires admin approval before going live
+  approvedBy: text('approved_by').references(() => users.id), // Admin who approved
+  approvedAt: timestamp('approved_at'), // When it was approved
+  rejectedBy: text('rejected_by').references(() => users.id), // Admin who rejected
+  rejectedAt: timestamp('rejected_at'), // When it was rejected
+  rejectionReason: text('rejection_reason'), // Why it was rejected
+
   // Expiration
   expiresAt: timestamp('expires_at'),
   autoRenew: boolean('auto_renew').default(false),
