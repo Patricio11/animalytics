@@ -17,6 +17,7 @@ export async function GET(
 ) {
   try {
     const { id: conversationId } = await params;
+    console.log('🔍 [Conversation Detail] Fetching conversation:', conversationId);
 
     // Get current session
     const session = await auth.api.getSession({
@@ -24,6 +25,7 @@ export async function GET(
     });
 
     if (!session) {
+      console.log('❌ [Conversation Detail] No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -31,6 +33,7 @@ export async function GET(
     }
 
     const userId = session.user.id;
+    console.log('✅ [Conversation Detail] User ID:', userId);
 
     // Get conversation
     const [conversation] = await db
@@ -39,7 +42,15 @@ export async function GET(
       .where(eq(conversations.id, conversationId))
       .limit(1);
 
+    console.log('📊 [Conversation Detail] Conversation found:', conversation ? 'Yes' : 'No');
+    if (conversation) {
+      console.log('📊 [Conversation Detail] Buyer ID:', conversation.buyerId);
+      console.log('📊 [Conversation Detail] Seller ID:', conversation.sellerId);
+      console.log('📊 [Conversation Detail] Listing ID:', conversation.listingId);
+    }
+
     if (!conversation) {
+      console.log('❌ [Conversation Detail] Conversation not found in database');
       return NextResponse.json(
         { error: 'Conversation not found' },
         { status: 404 }
@@ -109,6 +120,7 @@ export async function GET(
     // Get listing if exists
     let listing = null;
     if (conversation.listingId) {
+      console.log('🔍 [Conversation Detail] Fetching listing:', conversation.listingId);
       const [listingData] = await db
         .select({
           id: listings.id,
@@ -121,7 +133,8 @@ export async function GET(
         .from(listings)
         .where(eq(listings.id, conversation.listingId))
         .limit(1);
-      listing = listingData;
+      listing = listingData || null; // Ensure null if listing not found
+      console.log('📊 [Conversation Detail] Listing found:', listing ? 'Yes' : 'No');
     }
 
     // Get other participant details
@@ -129,18 +142,21 @@ export async function GET(
       ? conversation.sellerId
       : conversation.buyerId;
 
+    console.log('🔍 [Conversation Detail] Fetching other user:', otherUserId);
     const [otherUser] = await db
       .select({
         id: users.id,
         name: users.name,
-        image: users.image,
+        image: users.avatar, // Using avatar column from users table
         email: users.email,
       })
       .from(users)
       .where(eq(users.id, otherUserId))
       .limit(1);
+    console.log('📊 [Conversation Detail] Other user found:', otherUser ? 'Yes' : 'No');
 
     // Get messages
+    console.log('🔍 [Conversation Detail] Fetching messages');
     const conversationMessages = await db
       .select()
       .from(messages)
@@ -151,7 +167,9 @@ export async function GET(
         )
       )
       .orderBy(desc(messages.createdAt));
+    console.log('📊 [Conversation Detail] Messages count:', conversationMessages.length);
 
+    console.log('✅ [Conversation Detail] Returning success response');
     return NextResponse.json({
       success: true,
       conversation: {
@@ -180,7 +198,8 @@ export async function GET(
       messages: conversationMessages.reverse(), // Oldest first for display
     });
   } catch (error) {
-    console.error('Error fetching conversation:', error);
+    console.error('❌ [Conversation Detail] Error fetching conversation:', error);
+    console.error('❌ [Conversation Detail] Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     return NextResponse.json(
       { error: 'Failed to fetch conversation' },
       { status: 500 }

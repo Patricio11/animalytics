@@ -1,6 +1,7 @@
 "use client";
 
-import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck, GitBranch, DollarSign, MessageSquare } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Home, PawPrint, Activity, CheckSquare, ShoppingBag, Calculator, Users, FileText, Settings, Wallet, BadgeCheck, GitBranch, DollarSign, MessageSquare, Heart } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -54,9 +55,19 @@ const menuItems = [
   },
   {
     title: "Messages",
-    url: "/buyer/messages",
+    url: "/messages",
     icon: MessageSquare,
     badge: true,
+  },
+  {
+    title: "My Purchases",
+    url: "/purchases",
+    icon: ShoppingBag,
+  },
+  {
+    title: "Saved Listings",
+    url: "/saved",
+    icon: Heart,
   },
   {
     title: "My Sales",
@@ -95,6 +106,8 @@ const secondaryItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const [hasPurchases, setHasPurchases] = useState(false);
+  const [hasSavedListings, setHasSavedListings] = useState(false);
 
   // Real-time messaging updates using SSE
   // For breeders: only show buyer messages (when they're purchasing from others)
@@ -103,10 +116,41 @@ export function AppSidebar() {
     showOnlyAsBuyer: true, // Breeders only see messages where they're the buyer
   });
 
-  // Filter menu items - only show Messages if breeder has conversations
+  // Check if user has purchases or saved listings
+  useEffect(() => {
+    async function checkUserData() {
+      try {
+        // Check for purchases
+        const purchasesRes = await fetch('/api/purchases');
+        if (purchasesRes.ok) {
+          const purchasesData = await purchasesRes.json();
+          setHasPurchases(purchasesData.purchases?.length > 0);
+        }
+
+        // Check for saved listings
+        const savedRes = await fetch('/api/marketplace/saved');
+        if (savedRes.ok) {
+          const savedData = await savedRes.json();
+          setHasSavedListings(savedData.saved?.length > 0);
+        }
+      } catch (error) {
+        console.error('Error checking user data:', error);
+      }
+    }
+
+    checkUserData();
+  }, []);
+
+  // Filter menu items - only show if user has relevant data
   const filteredMenuItems = menuItems.filter(item => {
     if (item.title === 'Messages') {
       return hasConversations; // Only show if breeder has conversations
+    }
+    if (item.title === 'My Purchases') {
+      return hasPurchases; // Only show if breeder has purchases
+    }
+    if (item.title === 'Saved Listings') {
+      return hasSavedListings; // Only show if breeder has saved listings
     }
     return true; // Show all other items
   });

@@ -13,12 +13,15 @@ import { headers } from 'next/headers';
  */
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 [Conversations List] Fetching conversations');
+
     // Get current session
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
     if (!session) {
+      console.log('❌ [Conversations List] No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -26,6 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id;
+    console.log('✅ [Conversations List] User ID:', userId);
 
     // Get query params
     const { searchParams } = new URL(request.url);
@@ -63,6 +67,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch conversations with related data
+    console.log('🔍 [Conversations List] Fetching from database...');
     const userConversations = await db
       .select({
         conversation: conversations,
@@ -79,9 +84,13 @@ export async function GET(request: NextRequest) {
       .where(whereClause)
       .orderBy(desc(conversations.lastMessageAt));
 
+    console.log('📊 [Conversations List] Found conversations:', userConversations.length);
+
     // Get participant details for each conversation
     const conversationsWithParticipants = await Promise.all(
-      userConversations.map(async ({ conversation, listing }) => {
+      userConversations.map(async ({ conversation, listing }, index) => {
+        console.log(`🔍 [Conversations List] Processing conversation ${index + 1}/${userConversations.length}`);
+        console.log(`📊 [Conversations List] Listing for conversation ${index + 1}:`, listing ? 'Has data' : 'Null', listing?.id || 'no ID');
         // Determine the other participant
         const otherUserId = conversation.buyerId === userId
           ? conversation.sellerId
@@ -92,7 +101,7 @@ export async function GET(request: NextRequest) {
           .select({
             id: users.id,
             name: users.name,
-            image: users.image,
+            image: users.avatar, // Using avatar column from users table
           })
           .from(users)
           .where(eq(users.id, otherUserId))
@@ -120,7 +129,7 @@ export async function GET(request: NextRequest) {
             name: 'Unknown User',
             image: null,
           },
-          listing: listing ? {
+          listing: (listing && listing.id) ? {
             id: listing.id,
             title: listing.title,
             category: listing.category,
@@ -137,12 +146,14 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    console.log('✅ [Conversations List] Returning success response with', conversationsWithParticipants.length, 'conversations');
     return NextResponse.json({
       success: true,
       conversations: conversationsWithParticipants,
     });
   } catch (error) {
-    console.error('Error fetching conversations:', error);
+    console.error('❌ [Conversations List] Error fetching conversations:', error);
+    console.error('❌ [Conversations List] Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     return NextResponse.json(
       { error: 'Failed to fetch conversations' },
       { status: 500 }

@@ -90,7 +90,7 @@ export default function ConversationPage() {
           setConversation(data.conversation);
           setMessages(data.messages || []);
         } else if (res.status === 404) {
-          router.push('/buyer/messages');
+          router.push('/messages');
         }
       } catch (error) {
         console.error('Error fetching conversation:', error);
@@ -197,7 +197,7 @@ export default function ConversationPage() {
       });
 
       if (res.ok) {
-        router.push('/buyer/messages');
+        router.push('/messages');
       }
     } catch (error) {
       console.error('Error archiving conversation:', error);
@@ -304,7 +304,7 @@ export default function ConversationPage() {
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild className="lg:hidden">
-              <Link href="/buyer/messages">
+              <Link href="/messages">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>

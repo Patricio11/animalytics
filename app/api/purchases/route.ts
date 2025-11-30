@@ -115,12 +115,12 @@ export async function GET(request: NextRequest) {
             name: 'Unknown User',
             image: null,
           },
-          listing: listing ? {
+          listing: (listing && listing.id) ? {
             id: listing.id,
             title: listing.title,
             category: listing.category,
           } : null,
-          animal: animal ? {
+          animal: (animal && animal.id) ? {
             id: animal.id,
             name: animal.name,
             breed: animal.breed,
