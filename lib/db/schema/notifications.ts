@@ -15,6 +15,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'ovulation_detected',
   'whelping_approaching',
   'heat_cycle_started',
+  'heat_cycle_completed',
   
   // Breeding & Litters
   'breeding_scheduled',

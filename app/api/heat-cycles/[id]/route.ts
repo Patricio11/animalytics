@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { heatCycles, heatCycleProgesteroneReadings, heatCycleReminders, breedingRecords, animals } from '@/lib/db/schema';
+import { heatCycles, heatCycleProgesteroneReadings, heatCycleReminders, breedingRecords, animals, notifications } from '@/lib/db/schema';
 import { auth } from '@/lib/auth/config';
 import {
   successResponse,
@@ -157,6 +157,47 @@ export async function PATCH(
       })
       .where(eq(heatCycles.id, id))
       .returning();
+
+    // Send notification when cycle is completed
+    if (status === 'completed') {
+      // Get bitch details
+      const bitch = await db.query.animals.findFirst({
+        where: eq(animals.id, existingCycle.bitchId),
+        columns: { name: true },
+      });
+
+      // Get total readings count
+      const readings = await db.query.heatCycleProgesteroneReadings.findMany({
+        where: eq(heatCycleProgesteroneReadings.heatCycleId, id),
+      });
+
+      const totalDays = existingCycle.currentDay || 1;
+      const readingsCount = readings.length;
+
+      await db.insert(notifications).values({
+        userId: session.user.id,
+        type: 'heat_cycle_completed',
+        category: 'breeding',
+        priority: 'normal',
+        title: `Heat Cycle Completed Successfully`,
+        message: `${bitch?.name || 'Your dog'}'s heat cycle has been completed. Total duration: ${totalDays} days with ${readingsCount} progesterone readings. Next expected heat cycle: ${nextExpectedCycleDate ? new Date(nextExpectedCycleDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set'}.`,
+        actionLabel: 'View Cycle Details',
+        actionUrl: `/calculators/progesterone/${id}`,
+        relatedEntityType: 'heat_cycle',
+        relatedEntityId: id,
+        icon: '✅',
+        iconColor: '#10b981',
+        metadata: JSON.stringify({
+          heatCycleId: id,
+          bitchId: existingCycle.bitchId,
+          bitchName: bitch?.name,
+          totalDays,
+          readingsCount,
+          nextExpectedCycleDate,
+          completedAt: new Date().toISOString(),
+        }),
+      });
+    }
 
     return successResponse({
       cycle: updatedCycle,
