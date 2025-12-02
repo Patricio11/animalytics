@@ -196,6 +196,9 @@ export default function PedigreePage() {
                   <CardTitle>Pedigree Tree</CardTitle>
                   <CardDescription>
                     {selectedAnimal.registeredName || selectedAnimal.name}'s family tree
+                    {!isOwner && (
+                      <span className="ml-2 text-xs text-amber-600 font-medium">• View-only mode</span>
+                    )}
                   </CardDescription>
                 </div>
                 
@@ -266,11 +269,13 @@ export default function PedigreePage() {
                       node={pedigreeData.pedigree}
                       generations={3}
                       onUpdate={() => queryClient.invalidateQueries({ queryKey: ["pedigree", selectedAnimalId] })}
+                      isOwner={isOwner}
                     />
                   ) : (
                     <PedigreeTree
                       node={pedigreeData.pedigree}
                       generations={4}
+                      isOwner={isOwner}
                     />
                   )}
                 </div>

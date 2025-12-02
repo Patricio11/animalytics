@@ -208,15 +208,17 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
             {createSnapshotMutation.isPending ? "Saving..." : "Snapshot"}
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setImportDialogOpen(true)}
-            className="hover:bg-primary/10 hover:border-primary shadow-card"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import CSV
-          </Button>
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportDialogOpen(true)}
+              className="hover:bg-primary/10 hover:border-primary shadow-card"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
+          )}
 
           <Button
             variant="outline"
@@ -370,13 +372,15 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
                   <p className="text-muted-foreground">
                     No pedigree data available yet.
                   </p>
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => setEditDialogOpen(true)}
-                  >
-                    Add Parents
-                  </Button>
+                  {isOwner && (
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => setEditDialogOpen(true)}
+                    >
+                      Add Parents
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
