@@ -275,6 +275,9 @@ export default function CycleDetailPage({ params }: PageProps) {
                   <p className="text-2xl font-bold text-purple-600">
                     {parseFloat(String(cycle.readings[0].progesteroneLevel)).toFixed(1)} ng/mL
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {format(new Date(cycle.readings[0].testDate), 'MMM dd, yyyy')}
+                  </p>
                 </div>
               )}
               {cycle.estimatedOvulationDay && (

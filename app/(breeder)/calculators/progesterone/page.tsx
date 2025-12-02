@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { 
   StartCycleModal,
   ProgesteroneListSkeleton,
+  CompletedCycleCard,
+  CancelledCycleCard,
 } from '@/components/breeder/calculators';
 import { useHeatCycles, useCreateHeatCycle, useCancelHeatCycle, useDeleteHeatCycle, useCompleteHeatCycle } from '@/lib/hooks/useHeatCycles';
 import { useAnimals } from '@/lib/api/queries/animals';
@@ -12,21 +14,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   Activity, 
   Calendar, 
   TrendingUp, 
   Clock, 
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
+  Plus,
   ArrowRight,
-  BarChart3,
-  FileText,
-  MoreVertical,
   Edit,
   XCircle,
   Trash2,
+  MoreVertical,
+  CheckCircle2,
+  AlertCircle,
+  BarChart3,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -378,48 +379,11 @@ export default function ProgesteronePage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {completedCycles.map((cycle: any) => (
-                      <Card 
-                        key={cycle.id} 
-                        className="shadow-card bg-surface border-0 hover:shadow-lg transition-shadow cursor-pointer"
+                      <CompletedCycleCard
+                        key={cycle.id}
+                        cycle={cycle}
                         onClick={() => handleViewCycle(cycle.id)}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h3 className="font-semibold text-lg">{cycle.bitch?.name || 'Unknown'}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(cycle.startDate), 'MMM dd, yyyy')} - 
-                                {cycle.endDate ? format(new Date(cycle.endDate), 'MMM dd, yyyy') : 'Ongoing'}
-                              </p>
-                            </div>
-                            <Badge variant="outline">Completed</Badge>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-muted-foreground">Duration</p>
-                              <p className="font-semibold">
-                                {cycle.endDate 
-                                  ? `${differenceInDays(new Date(cycle.endDate), new Date(cycle.startDate))} days`
-                                  : 'N/A'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Readings</p>
-                              <p className="font-semibold">{cycle.readings?.length || 0}</p>
-                            </div>
-                          </div>
-                          {cycle.nextExpectedCycleDate && (
-                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                                📅 Next Expected Heat: {format(new Date(cycle.nextExpectedCycleDate), 'MMM dd, yyyy')}
-                                <span className="text-xs text-blue-700 dark:text-blue-300 ml-2">
-                                  ({differenceInDays(new Date(cycle.nextExpectedCycleDate), new Date())} days)
-                                </span>
-                              </p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                      />
                     ))}
                   </div>
                 )}
@@ -440,22 +404,11 @@ export default function ProgesteronePage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {cancelledCycles.map((cycle: any) => (
-                      <Card 
-                        key={cycle.id} 
-                        className="shadow-card bg-surface border-0 opacity-75"
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h3 className="font-semibold text-lg">{cycle.bitch?.name || 'Unknown'}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(cycle.startDate), 'MMM dd, yyyy')}
-                              </p>
-                            </div>
-                            <Badge variant="destructive">Cancelled</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <CancelledCycleCard
+                        key={cycle.id}
+                        cycle={cycle}
+                        onClick={() => handleViewCycle(cycle.id)}
+                      />
                     ))}
                   </div>
                 )}

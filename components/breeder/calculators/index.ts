@@ -1,5 +1,7 @@
 export { HeatCycleStartCard } from './HeatCycleStartCard';
 export { ActiveCycleCard } from './ActiveCycleCard';
+export { CompletedCycleCard } from './CompletedCycleCard';
+export { CancelledCycleCard } from './CancelledCycleCard';
 export { ProgesteroneTestForm } from './ProgesteroneTestForm';
 export { BreedingWindowAlert } from './BreedingWindowAlert';
 export { ProgesteroneChart } from './ProgesteroneChart';
