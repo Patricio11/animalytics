@@ -1,13 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { X, Archive, ExternalLink } from 'lucide-react';
+import { X, Archive, ExternalLink, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useMarkAsRead, useArchiveNotification, useDeleteNotification } from '@/lib/hooks/useNotifications';
 import { NOTIFICATION_CONFIGS } from '@/lib/types/notification';
 import type { Notification } from '@/lib/types/notification';
+import { NotificationDetailModal } from '@/components/notifications/NotificationDetailModal';
 import Link from 'next/link';
 
 interface NotificationListProps {
@@ -21,14 +23,24 @@ export function NotificationList({
   compact = false,
   showActions = true 
 }: NotificationListProps) {
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  
   const markAsRead = useMarkAsRead();
   const archiveNotification = useArchiveNotification();
   const deleteNotification = useDeleteNotification();
 
   const handleNotificationClick = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setModalOpen(true);
     if (!notification.read) {
       markAsRead.mutate(notification.id);
     }
+  };
+
+  const handleViewClick = (e: React.MouseEvent, notification: Notification) => {
+    e.stopPropagation();
+    handleNotificationClick(notification);
   };
 
   const handleArchive = (e: React.MouseEvent, id: string) => {
@@ -56,10 +68,11 @@ export function NotificationList({
           <div
             key={notification.id}
             className={cn(
-              'group relative p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors',
+              'group relative p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer',
               !notification.read && 'bg-purple-50/50 dark:bg-purple-950/20',
               compact && 'p-3'
             )}
+            onClick={() => handleNotificationClick(notification)}
           >
             {/* Unread Indicator */}
             {!notification.read && (
@@ -139,6 +152,15 @@ export function NotificationList({
               {/* Actions */}
               {showActions && (
                 <div className="flex-shrink-0 flex items-start gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-purple-50 hover:text-purple-600"
+                    onClick={(e) => handleViewClick(e, notification)}
+                    title="View Details"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
                   {!notification.archived && (
                     <Button
                       variant="ghost"
@@ -165,6 +187,13 @@ export function NotificationList({
           </div>
         );
       })}
+
+      {/* Notification Detail Modal */}
+      <NotificationDetailModal
+        notification={selectedNotification}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 }

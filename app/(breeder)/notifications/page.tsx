@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, CheckCheck, Trash2, Eye, Calendar, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import { NotificationDetailModal } from '@/components/notifications/NotificationDetailModal';
+import { NotificationDetailModal } from '@/components/notifications';
 
 export default function NotificationsPage() {
   const router = useRouter();
