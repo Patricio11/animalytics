@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import { notFound, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/client";
 import { useAnimal } from "@/lib/api/queries/animals";
 import { ProfileTab } from "@/components/breeder/animals/ProfileTab";
 import { PhotosDocsTab } from "@/components/breeder/animals/PhotosDocsTab";
@@ -368,7 +369,11 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   </TabsContent>
 
                   <TabsContent value="pedigree" className="mt-0">
-                    <PedigreeTab animalId={animal.id} animalName={animal.name} />
+                    <PedigreeTab 
+                      animalId={animal.id} 
+                      animalName={animal.name}
+                      animalUserId={animal.userId}
+                    />
                   </TabsContent>
 
                   <TabsContent value="photos-docs" className="mt-0">

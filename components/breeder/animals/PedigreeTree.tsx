@@ -23,9 +23,10 @@ type PedigreeNode = {
 interface PedigreeTreeProps {
   node: PedigreeNode;
   generations?: number;
+  isOwner?: boolean;
 }
 
-export function PedigreeTree({ node, generations = 4 }: PedigreeTreeProps) {
+export function PedigreeTree({ node, generations = 4, isOwner = true }: PedigreeTreeProps) {
   // Build rows for each generation
   const buildGenerationRows = (root: PedigreeNode, maxGens: number) => {
     const rows: (PedigreeNode | null)[][] = [];

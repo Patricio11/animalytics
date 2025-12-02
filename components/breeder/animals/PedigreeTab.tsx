@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -30,9 +31,12 @@ import { cn } from "@/lib/utils";
 interface PedigreeTabProps {
   animalId: string;
   animalName: string;
+  animalUserId?: string;
 }
 
-export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
+export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabProps) {
+  const { user } = useAuth();
+  const isOwner = user?.id === animalUserId;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -145,8 +149,11 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Pedigree</h2>
           <p className="text-sm text-muted-foreground">
-            View and manage {animalName}'s family tree
+            {isOwner ? `View and manage ${animalName}'s family tree` : `View ${animalName}'s family tree`}
           </p>
+          {!isOwner && (
+            <p className="text-xs text-amber-600 mt-1">View-only mode</p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -178,15 +185,17 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
             </Button>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setEditDialogOpen(true)}
-            className="hover:bg-primary/10 hover:border-primary shadow-card"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Parents
-          </Button>
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditDialogOpen(true)}
+              className="hover:bg-primary/10 hover:border-primary shadow-card"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Parents
+            </Button>
+          )}
 
           <Button
             variant="outline"
@@ -346,9 +355,14 @@ export function PedigreeTab({ animalId, animalName }: PedigreeTabProps) {
                     node={data.pedigree} 
                     generations={3} 
                     onUpdate={() => queryClient.invalidateQueries({ queryKey: ["pedigree", animalId] })}
+                    isOwner={isOwner}
                   />
                 ) : (
-                  <PedigreeTree node={data.pedigree} generations={generations} />
+                  <PedigreeTree 
+                    node={data.pedigree} 
+                    generations={generations}
+                    isOwner={isOwner}
+                  />
                 )
               ) : (
                 <div className="text-center py-12">
