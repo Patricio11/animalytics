@@ -6,7 +6,7 @@ import {
   StartCycleModal,
   ProgesteroneListSkeleton,
 } from '@/components/breeder/calculators';
-import { useHeatCycles, useCreateHeatCycle, useCancelHeatCycle, useDeleteHeatCycle } from '@/lib/hooks/useHeatCycles';
+import { useHeatCycles, useCreateHeatCycle, useCancelHeatCycle, useDeleteHeatCycle, useCompleteHeatCycle } from '@/lib/hooks/useHeatCycles';
 import { useAnimals } from '@/lib/api/queries/animals';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -44,6 +44,7 @@ export default function ProgesteronePage() {
   const [activeTab, setActiveTab] = useState('active');
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [startCycleModalOpen, setStartCycleModalOpen] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<any>(null);
   
@@ -52,6 +53,7 @@ export default function ProgesteronePage() {
   const createCycle = useCreateHeatCycle();
   const cancelCycle = useCancelHeatCycle();
   const deleteCycle = useDeleteHeatCycle();
+  const completeCycle = useCompleteHeatCycle();
 
   // Helper function to calculate expected day based on readings or date
   const getDisplayDay = (cycle: any) => {
@@ -267,6 +269,16 @@ export default function ProgesteronePage() {
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem 
+                                    className="text-green-600"
+                                    onClick={() => {
+                                      setSelectedCycle(cycle);
+                                      setCompleteModalOpen(true);
+                                    }}
+                                  >
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    Complete Cycle
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
                                     className="text-amber-600"
                                     onClick={() => {
                                       setSelectedCycle(cycle);
@@ -315,6 +327,11 @@ export default function ProgesteronePage() {
                                   ? `${parseFloat(cycle.readings[0].progesteroneLevel).toFixed(1)} ng/mL`
                                   : 'N/A'}
                               </p>
+                              {cycle.readings && cycle.readings.length > 0 && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {format(new Date(cycle.readings[0].testDate), 'MMM dd, yyyy')}
+                                </p>
+                              )}
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Status</p>
@@ -390,6 +407,16 @@ export default function ProgesteronePage() {
                               <p className="font-semibold">{cycle.readings?.length || 0}</p>
                             </div>
                           </div>
+                          {cycle.nextExpectedCycleDate && (
+                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                📅 Next Expected Heat: {format(new Date(cycle.nextExpectedCycleDate), 'MMM dd, yyyy')}
+                                <span className="text-xs text-blue-700 dark:text-blue-300 ml-2">
+                                  ({differenceInDays(new Date(cycle.nextExpectedCycleDate), new Date())} days)
+                                </span>
+                              </p>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     ))}
@@ -436,6 +463,23 @@ export default function ProgesteronePage() {
           </>
         )}
       </div>
+
+      {/* Complete Cycle Confirmation Modal */}
+      <ConfirmCancelModal
+        open={completeModalOpen}
+        onOpenChange={setCompleteModalOpen}
+        onConfirm={async () => {
+          if (selectedCycle) {
+            await completeCycle.mutateAsync(selectedCycle.id);
+            setCompleteModalOpen(false);
+            setSelectedCycle(null);
+          }
+        }}
+        itemName={selectedCycle?.bitch?.name}
+        isLoading={completeCycle.isPending}
+        title="Complete Heat Cycle"
+        description={`Mark the heat cycle for "${selectedCycle?.bitch?.name}" as completed? The cycle will be moved to the Completed tab and a reminder will be set for the next expected heat cycle.`}
+      />
 
       {/* Cancel Confirmation Modal */}
       <ConfirmCancelModal

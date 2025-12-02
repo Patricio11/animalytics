@@ -9,6 +9,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   // Progesterone & Heat Cycles
   'progesterone_test_due',
   'progesterone_daily_test',
+  'progesterone_next_cycle',
   'breeding_window_open',
   'breeding_window_closing',
   'ovulation_detected',

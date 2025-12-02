@@ -91,6 +91,10 @@ export const heatCycles = pgTable('heat_cycles', {
   successful: boolean('successful'), // Did breeding result in pregnancy?
   actualWhelpingDate: date('actual_whelping_date'),
   
+  // Next Cycle Tracking
+  nextExpectedCycleDate: date('next_expected_cycle_date'), // Expected date of next heat (typically 6 months)
+  nextCycleReminderSent: boolean('next_cycle_reminder_sent').default(false),
+  
   // Metadata
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

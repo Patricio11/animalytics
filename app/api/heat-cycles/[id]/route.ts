@@ -136,6 +136,15 @@ export async function PATCH(
       return errorResponse('Heat cycle not found or does not belong to you', 404);
     }
 
+    // Calculate next expected cycle date if completing (typically 6 months for dogs)
+    let nextExpectedCycleDate = existingCycle.nextExpectedCycleDate;
+    if (status === 'completed' && !nextExpectedCycleDate) {
+      const endDate = new Date();
+      const nextDate = new Date(endDate);
+      nextDate.setMonth(nextDate.getMonth() + 6); // Add 6 months
+      nextExpectedCycleDate = nextDate.toISOString().split('T')[0];
+    }
+
     // Update the cycle
     const [updatedCycle] = await db
       .update(heatCycles)
@@ -143,6 +152,7 @@ export async function PATCH(
         status: status || existingCycle.status,
         notes: notes !== undefined ? notes : existingCycle.notes,
         endDate: status === 'cancelled' || status === 'completed' ? new Date().toISOString().split('T')[0] : existingCycle.endDate,
+        nextExpectedCycleDate: status === 'completed' ? nextExpectedCycleDate : existingCycle.nextExpectedCycleDate,
         updatedAt: new Date(),
       })
       .where(eq(heatCycles.id, id))
