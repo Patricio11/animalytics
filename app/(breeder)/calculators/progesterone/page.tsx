@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
 import { ConfirmCancelModal } from '@/components/ui/confirm-cancel-modal';
+import { ConfirmCompleteModal } from '@/components/ui/confirm-complete-modal';
 import { format, differenceInDays } from 'date-fns';
 
 export default function ProgesteronePage() {
@@ -465,7 +466,7 @@ export default function ProgesteronePage() {
       </div>
 
       {/* Complete Cycle Confirmation Modal */}
-      <ConfirmCancelModal
+      <ConfirmCompleteModal
         open={completeModalOpen}
         onOpenChange={setCompleteModalOpen}
         onConfirm={async () => {
@@ -477,8 +478,6 @@ export default function ProgesteronePage() {
         }}
         itemName={selectedCycle?.bitch?.name}
         isLoading={completeCycle.isPending}
-        title="Complete Heat Cycle"
-        description={`Mark the heat cycle for "${selectedCycle?.bitch?.name}" as completed? The cycle will be moved to the Completed tab and a reminder will be set for the next expected heat cycle.`}
       />
 
       {/* Cancel Confirmation Modal */}

@@ -206,8 +206,10 @@ export function useCompleteHeatCycle() {
 
   return useMutation<void, Error, string>({
     mutationFn: async (cycleId) => {
-      const response = await fetch(`/api/heat-cycles/${cycleId}/complete`, {
-        method: 'POST',
+      const response = await fetch(`/api/heat-cycles/${cycleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed' }),
       });
 
       if (!response.ok) {
@@ -220,7 +222,7 @@ export function useCompleteHeatCycle() {
 
       toast({
         title: 'Heat Cycle Completed',
-        description: 'Cycle has been marked as completed',
+        description: 'Cycle has been marked as completed successfully',
       });
     },
     onError: (error) => {
