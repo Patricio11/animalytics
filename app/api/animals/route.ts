@@ -157,6 +157,16 @@ export async function POST(request: NextRequest) {
 
     const validatedData = validation.data;
 
+    // Log parent information for debugging
+    console.log('🔍 Creating animal with parent info:', {
+      sireId: validatedData.sireId,
+      damId: validatedData.damId,
+      sireRegistrationNumber: validatedData.sireRegistrationNumber,
+      sireRegisteredName: validatedData.sireRegisteredName,
+      damRegistrationNumber: validatedData.damRegistrationNumber,
+      damRegisteredName: validatedData.damRegisteredName,
+    });
+
     // Create animal - map only fields that exist in the database schema
     const newAnimal = await db
       .insert(animals)
@@ -199,6 +209,12 @@ export async function POST(request: NextRequest) {
       .returning();
 
     const createdAnimal = newAnimal[0];
+
+    console.log('✅ Animal created with ID:', createdAnimal.id);
+    console.log('📊 Saved parent IDs:', {
+      sireId: createdAnimal.sireId,
+      damId: createdAnimal.damId,
+    });
 
     // Create manual pedigree entries for parents if provided manually
     // This ensures they appear in the pedigree tree properly
