@@ -306,7 +306,7 @@ export default function TasksPage() {
             <p className="text-muted-foreground">Manage your breeding program tasks and reminders</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button
+            {/* <Button
               variant="outline"
               onClick={() => setShowPuppyGenerator(!showPuppyGenerator)}
               className="hover:bg-primary/10 hover:border-primary shadow-card w-full sm:w-auto"
@@ -314,7 +314,7 @@ export default function TasksPage() {
               <Baby className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Puppy Feeding</span>
               <span className="sm:hidden">Puppy Feed</span>
-            </Button>
+            </Button> */}
             <Button
               onClick={handleCreateNew}
               className="bg-gradient-brand hover:opacity-90 shadow-card w-full sm:w-auto"
