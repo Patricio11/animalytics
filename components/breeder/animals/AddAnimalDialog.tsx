@@ -141,9 +141,11 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       if (locationString) {
         setFormData(prev => ({ ...prev, location: locationString }));
         console.log('📍 Pre-populated location from regional settings:', locationString);
+      } else {
+        console.log('⚠️ Regional settings location data not available:', regionalSettings);
       }
     }
-  }, [open, regionalSettings, formData.location]);
+  }, [open, regionalSettings.city, regionalSettings.region, regionalSettings.country, formData.location]);
 
   const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -1165,10 +1167,15 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   id="location"
                   value={formData.location}
                   onChange={(e) => updateFormData("location", e.target.value)}
-                  placeholder="City, State"
+                  placeholder="e.g., Johannesburg, Gauteng, South Africa"
                   className="bg-background border-primary/20"
                   required
                 />
+                {!formData.location && (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Tip: This should auto-fill from your profile settings
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
