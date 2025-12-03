@@ -11,6 +11,11 @@ export interface RegionalSettings {
   measurementUnit: 'metric' | 'imperial';
   firstDayOfWeek: 0 | 1;
   language: string;
+  // Location data
+  country?: string;
+  countryCode?: string;
+  city?: string;
+  region?: string;
 }
 
 interface RegionalSettingsContextType {
@@ -60,6 +65,11 @@ export function RegionalSettingsProvider({ children }: { children: React.ReactNo
             measurementUnit: result.data.measurementUnit || defaultSettings.measurementUnit,
             firstDayOfWeek: result.data.firstDayOfWeek ?? defaultSettings.firstDayOfWeek,
             language: result.data.language || defaultSettings.language,
+            // Location data
+            country: result.data.country,
+            countryCode: result.data.countryCode,
+            city: result.data.city,
+            region: result.data.region,
           };
           console.log('✅ Settings loaded:', newSettings);
           setSettings(newSettings);

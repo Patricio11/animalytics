@@ -64,6 +64,7 @@ export const animals = pgTable('animals', {
   dateOfBirth: date('date_of_birth'),
   microchipNumber: text('microchip_number'),
   registrationNumber: text('registration_number'),
+  dndProfileNumber: text('dnd_profile_number'), // DND profile number
   weight: decimal('weight', { precision: 5, scale: 2 }), // kg
   height: decimal('height', { precision: 5, scale: 2 }), // cm at shoulder
   color: text('color'),

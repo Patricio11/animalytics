@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCreateAnimal, useAnimals } from "@/lib/api/queries/animals";
 import { useBreedPreferences } from "@/lib/api/queries/breed-preferences";
 import { useBreeds } from "@/lib/api/queries/breeds";
+import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,15 +46,16 @@ interface AnimalFormData {
   // Step 3: Registration & Parentage
   microchipId: string;
   registrationNumber: string;
+  dndProfileNumber: string;
   
   // Breeder information
-  breederMode: 'self' | 'select' | 'manual';
+  breederMode: 'self' | 'manual';
   breederId: string;
   breederName: string;
   breederRegistrationNumber: string;
   
   // Owner information
-  ownerMode: 'self' | 'select' | 'manual';
+  ownerMode: 'self' | 'manual';
   ownerId: string;
   ownerName: string;
   ownerRegistrationNumber: string;
@@ -87,6 +89,9 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const [showAllBreeds, setShowAllBreeds] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   
+  // Get regional settings for location pre-population
+  const { settings: regionalSettings } = useRegionalSettings();
+  
   // Form data state - must be declared before useMemo hooks that depend on it
   const [formData, setFormData] = useState<AnimalFormData>({
     profilePhotoUrl: null,
@@ -100,6 +105,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
     weight: "",
     microchipId: "",
     registrationNumber: "",
+    dndProfileNumber: "",
     breederMode: "self",
     breederId: "",
     breederName: "",
@@ -121,6 +127,23 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   });
 
   const totalSteps = 4;
+
+  // Pre-populate location from regional settings when dialog opens
+  useEffect(() => {
+    if (open && !formData.location) {
+      // Build location string from regional settings
+      const locationParts = [];
+      if (regionalSettings.city) locationParts.push(regionalSettings.city);
+      if (regionalSettings.region) locationParts.push(regionalSettings.region);
+      if (regionalSettings.country) locationParts.push(regionalSettings.country);
+      
+      const locationString = locationParts.join(', ');
+      if (locationString) {
+        setFormData(prev => ({ ...prev, location: locationString }));
+        console.log('📍 Pre-populated location from regional settings:', locationString);
+      }
+    }
+  }, [open, regionalSettings, formData.location]);
 
   const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -285,7 +308,6 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         // Breeder information - send based on mode
         // Note: breederId will be set to current user ID on backend if mode is 'self'
         breederMode: formData.breederMode,
-        breederId: formData.breederMode === 'select' ? formData.breederId || undefined : undefined,
         breederName: formData.breederMode === 'manual' ? formData.breederName || undefined : undefined,
         breederRegistrationNumber: formData.breederMode === 'manual' ? formData.breederRegistrationNumber || undefined : undefined,
         
@@ -293,7 +315,6 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         // Note: ownerId will be set to current user ID on backend if mode is 'self'
         // When animal is sold, backend will update ownerId and create ownership history entry
         ownerMode: formData.ownerMode,
-        ownerId: formData.ownerMode === 'select' ? formData.ownerId || undefined : undefined,
         ownerName: formData.ownerMode === 'manual' ? formData.ownerName || undefined : undefined,
         ownerRegistrationNumber: formData.ownerMode === 'manual' ? formData.ownerRegistrationNumber || undefined : undefined,
         
@@ -364,6 +385,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         weight: "",
         microchipId: "",
         registrationNumber: "",
+        dndProfileNumber: "",
         breederMode: "self",
         breederId: "",
         breederName: "",
@@ -715,7 +737,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 <p className="text-sm text-muted-foreground">Official registration and parent information</p>
               </div>
 
-              {/* Registration Numbers - Side by Side */}
+              {/* Registration Numbers - Grid Layout */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="microchipId">Microchip ID</Label>
@@ -738,6 +760,17 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                     className="bg-background border-primary/20"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dndProfileNumber">DND Profile No.</Label>
+                  <Input
+                    id="dndProfileNumber"
+                    value={formData.dndProfileNumber}
+                    onChange={(e) => updateFormData("dndProfileNumber", e.target.value)}
+                    placeholder="DND profile number"
+                    className="bg-background border-primary/20"
+                  />
+                </div>
               </div>
 
               {/* Breeder Information - Fieldset */}
@@ -747,15 +780,12 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 {/* Mode Selection */}
                 <RadioGroup 
                   value={formData.breederMode} 
-                  onValueChange={(value: 'self' | 'select' | 'manual') => {
+                  onValueChange={(value: 'self' | 'manual') => {
                     updateFormData("breederMode", value);
                     // Clear fields when switching modes
-                    if (value === 'self' || value === 'select') {
+                    if (value === 'self') {
                       updateFormData("breederName", "");
                       updateFormData("breederRegistrationNumber", "");
-                    }
-                    if (value === 'self' || value === 'manual') {
-                      updateFormData("breederId", "");
                     }
                   }}
                   className="mb-4"
@@ -765,12 +795,6 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                       <RadioGroupItem value="self" id="breeder-self" />
                       <Label htmlFor="breeder-self" className="font-normal cursor-pointer">
                         I am the breeder
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="select" id="breeder-select" />
-                      <Label htmlFor="breeder-select" className="font-normal cursor-pointer">
-                        Select from system
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -808,15 +832,6 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   </div>
                 )}
 
-                {/* Select from System - Placeholder for future */}
-                {formData.breederMode === 'select' && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Breeder selection from system will be available soon.
-                    </p>
-                  </div>
-                )}
-
                 {/* Self Mode - Show confirmation */}
                 {formData.breederMode === 'self' && (
                   <div className="space-y-2">
@@ -834,15 +849,12 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 {/* Mode Selection */}
                 <RadioGroup 
                   value={formData.ownerMode} 
-                  onValueChange={(value: 'self' | 'select' | 'manual') => {
+                  onValueChange={(value: 'self' | 'manual') => {
                     updateFormData("ownerMode", value);
                     // Clear fields when switching modes
-                    if (value === 'self' || value === 'select') {
+                    if (value === 'self') {
                       updateFormData("ownerName", "");
                       updateFormData("ownerRegistrationNumber", "");
-                    }
-                    if (value === 'self' || value === 'manual') {
-                      updateFormData("ownerId", "");
                     }
                   }}
                   className="mb-4"
@@ -852,12 +864,6 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                       <RadioGroupItem value="self" id="owner-self" />
                       <Label htmlFor="owner-self" className="font-normal cursor-pointer">
                         I am the owner
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="select" id="owner-select" />
-                      <Label htmlFor="owner-select" className="font-normal cursor-pointer">
-                        Select from system
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -892,15 +898,6 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                         className="bg-background border-primary/20"
                       />
                     </div>
-                  </div>
-                )}
-
-                {/* Select from System - Placeholder for future */}
-                {formData.ownerMode === 'select' && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Owner selection from system will be available soon.
-                    </p>
                   </div>
                 )}
 

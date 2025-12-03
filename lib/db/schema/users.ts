@@ -30,6 +30,11 @@ export const users = pgTable('users', {
     timeFormat: '12h' | '24h';
     measurementUnit: 'metric' | 'imperial';
     firstDayOfWeek: 0 | 1; // 0 = Sunday (US), 1 = Monday (Europe/SA)
+    // Location data (detected during registration)
+    country?: string; // Full country name: 'South Africa', 'United States'
+    countryCode?: string; // ISO 3166-1 alpha-2: 'ZA', 'US', 'GB'
+    city?: string; // City name: 'Johannesburg', 'New York'
+    region?: string; // State/Province: 'Gauteng', 'New York', 'California'
   }>().default({
     notifications: true,
     emailUpdates: true,

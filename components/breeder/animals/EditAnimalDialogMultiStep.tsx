@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUpdateAnimal, useAnimals } from "@/lib/api/queries/animals";
 import { useBreedPreferences } from "@/lib/api/queries/breed-preferences";
 import { useBreeds } from "@/lib/api/queries/breeds";
+import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,15 +48,16 @@ interface AnimalFormData {
   // Step 3: Registration & Parentage
   microchipId: string;
   registrationNumber: string;
+  dndProfileNumber: string;
   
   // Breeder information
-  breederMode: 'self' | 'select' | 'manual';
+  breederMode: 'self' | 'manual';
   breederId: string;
   breederName: string;
   breederRegistrationNumber: string;
   
   // Owner information
-  ownerMode: 'self' | 'select' | 'manual';
+  ownerMode: 'self' | 'manual';
   ownerId: string;
   ownerName: string;
   ownerRegistrationNumber: string;
@@ -89,6 +91,9 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
   const [showAllBreeds, setShowAllBreeds] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   
+  // Get regional settings for location pre-population
+  const { settings: regionalSettings } = useRegionalSettings();
+  
   // Form data state - must be declared before useMemo hooks that depend on it
   const [formData, setFormData] = useState<AnimalFormData>({
     profilePhotoUrl: null,
@@ -102,6 +107,7 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
     weight: "",
     microchipId: "",
     registrationNumber: "",
+    dndProfileNumber: "",
     breederMode: "self",
     breederId: "",
     breederName: "",
@@ -127,9 +133,13 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
   // Pre-fill form data when dialog opens with existing animal data
   useEffect(() => {
     if (open && animalData) {
+      console.log('📝 Pre-filling edit form with animal data:', animalData);
+      
       // Find manual pedigree entries for sire and dam
       const manualSire = animalData.manualPedigreeEntries?.find((entry: any) => entry.position === 'sire');
       const manualDam = animalData.manualPedigreeEntries?.find((entry: any) => entry.position === 'dam');
+      
+      console.log('🔍 Manual pedigree entries:', { manualSire, manualDam });
       
       // Determine sire mode and data
       let sireMode: 'select' | 'manual' = 'manual';
@@ -141,11 +151,15 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         sireMode = 'select';
         sireRegNumber = animalData.sire.registrationNumber || "";
         sireRegName = animalData.sire.registeredName || animalData.sire.name || "";
+        console.log('✅ Sire from system:', { sireMode, sireId: animalData.sireId, sireRegName, sireRegNumber });
       } else if (manualSire) {
         // Sire is manual entry
         sireMode = 'manual';
         sireRegNumber = manualSire.registrationNumber || "";
         sireRegName = manualSire.registeredName || manualSire.name || "";
+        console.log('✅ Sire manual entry:', { sireMode, sireRegName, sireRegNumber });
+      } else {
+        console.log('⚠️ No sire data found');
       }
       
       // Determine dam mode and data
@@ -158,18 +172,22 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         damMode = 'select';
         damRegNumber = animalData.dam.registrationNumber || "";
         damRegName = animalData.dam.registeredName || animalData.dam.name || "";
+        console.log('✅ Dam from system:', { damMode, damId: animalData.damId, damRegName, damRegNumber });
       } else if (manualDam) {
         // Dam is manual entry
         damMode = 'manual';
         damRegNumber = manualDam.registrationNumber || "";
         damRegName = manualDam.registeredName || manualDam.name || "";
+        console.log('✅ Dam manual entry:', { damMode, damRegName, damRegNumber });
+      } else {
+        console.log('⚠️ No dam data found');
       }
       
-      setFormData({
+      const newFormData: AnimalFormData = {
         profilePhotoUrl: animalData.profileImageUrl || null,
         name: animalData.name || "",
         registeredName: animalData.registeredName || "",
-        type: animalData.sex === 'male' ? 'dog' : 'bitch',
+        type: (animalData.sex === 'male' ? 'dog' : 'bitch') as 'dog' | 'bitch',
         breed: animalData.breed?.name || "",
         dateOfBirth: animalData.dateOfBirth ? new Date(animalData.dateOfBirth) : undefined,
         color: animalData.color || "",
@@ -177,11 +195,12 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         weight: animalData.weight?.toString() || "",
         microchipId: animalData.microchipNumber || "",
         registrationNumber: animalData.registrationNumber || "",
-        breederMode: animalData.breederId ? 'self' : animalData.breederName ? 'manual' : 'self',
+        dndProfileNumber: animalData.dndProfileNumber || "",
+        breederMode: (animalData.breederId ? 'self' : animalData.breederName ? 'manual' : 'self') as 'self' | 'manual',
         breederId: animalData.breederId || "",
         breederName: animalData.breederName || "",
         breederRegistrationNumber: animalData.breederRegistrationNumber || "",
-        ownerMode: animalData.ownerId ? 'self' : animalData.ownerName ? 'manual' : 'self',
+        ownerMode: (animalData.ownerId ? 'self' : animalData.ownerName ? 'manual' : 'self') as 'self' | 'manual',
         ownerId: animalData.ownerId || "",
         ownerName: animalData.ownerName || "",
         ownerRegistrationNumber: animalData.ownerRegistrationNumber || "",
@@ -197,12 +216,25 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         damRegisteredName: damRegName,
         // Additional info
         description: animalData.bio || "",
-        location: animalData.location || ""
-      });
+        location: animalData.location || (() => {
+          // Build location string from regional settings if animal has no location
+          const locationParts = [];
+          if (regionalSettings.city) locationParts.push(regionalSettings.city);
+          if (regionalSettings.region) locationParts.push(regionalSettings.region);
+          if (regionalSettings.country) locationParts.push(regionalSettings.country);
+          return locationParts.join(', ');
+        })()
+      };
+      
+      console.log('✅ Setting form data:', newFormData);
+      if (!animalData.location && newFormData.location) {
+        console.log('📍 Pre-populated location from regional settings:', newFormData.location);
+      }
+      setFormData(newFormData);
     }
-  }, [open, animalData]);
+  }, [open, animalData, regionalSettings]);
 
-  const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined) => {
+  const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -366,7 +398,6 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         // Breeder information - send based on mode
         // Note: breederId will be set to current user ID on backend if mode is 'self'
         breederMode: formData.breederMode,
-        breederId: formData.breederMode === 'select' ? formData.breederId || undefined : undefined,
         breederName: formData.breederMode === 'manual' ? formData.breederName || undefined : undefined,
         breederRegistrationNumber: formData.breederMode === 'manual' ? formData.breederRegistrationNumber || undefined : undefined,
         
@@ -374,7 +405,6 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         // Note: ownerId will be set to current user ID on backend if mode is 'self'
         // When animal is sold, backend will update ownerId and create ownership history entry
         ownerMode: formData.ownerMode,
-        ownerId: formData.ownerMode === 'select' ? formData.ownerId || undefined : undefined,
         ownerName: formData.ownerMode === 'manual' ? formData.ownerName || undefined : undefined,
         ownerRegistrationNumber: formData.ownerMode === 'manual' ? formData.ownerRegistrationNumber || undefined : undefined,
         
@@ -420,6 +450,7 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
         weight: "",
         microchipId: "",
         registrationNumber: "",
+        dndProfileNumber: "",
         breederMode: "self",
         breederId: "",
         breederName: "",
@@ -758,7 +789,7 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
                 <p className="text-sm text-muted-foreground">Official registration and parent information</p>
               </div>
 
-              {/* Registration Numbers - Side by Side */}
+              {/* Registration Numbers - Grid Layout */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="microchipId">Microchip ID</Label>
@@ -781,6 +812,17 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
                     className="bg-background border-primary/20"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dndProfileNumber">DND Profile No.</Label>
+                  <Input
+                    id="dndProfileNumber"
+                    value={formData.dndProfileNumber}
+                    onChange={(e) => updateFormData("dndProfileNumber", e.target.value)}
+                    placeholder="DND profile number"
+                    className="bg-background border-primary/20"
+                  />
+                </div>
               </div>
 
               {/* Breeder Information - Fieldset */}
@@ -790,15 +832,12 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
                 {/* Mode Selection */}
                 <RadioGroup 
                   value={formData.breederMode} 
-                  onValueChange={(value: 'self' | 'select' | 'manual') => {
+                  onValueChange={(value: 'self' | 'manual') => {
                     updateFormData("breederMode", value);
                     // Clear fields when switching modes
-                    if (value === 'self' || value === 'select') {
+                    if (value === 'self') {
                       updateFormData("breederName", "");
                       updateFormData("breederRegistrationNumber", "");
-                    }
-                    if (value === 'self' || value === 'manual') {
-                      updateFormData("breederId", "");
                     }
                   }}
                   className="mb-4"
@@ -808,12 +847,6 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
                       <RadioGroupItem value="self" id="breeder-self" />
                       <Label htmlFor="breeder-self" className="font-normal cursor-pointer">
                         I am the breeder
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="select" id="breeder-select" />
-                      <Label htmlFor="breeder-select" className="font-normal cursor-pointer">
-                        Select from system
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -851,15 +884,6 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
                   </div>
                 )}
 
-                {/* Select from System - Placeholder for future */}
-                {formData.breederMode === 'select' && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Breeder selection from system will be available soon.
-                    </p>
-                  </div>
-                )}
-
                 {/* Self Mode - Show confirmation */}
                 {formData.breederMode === 'self' && (
                   <div className="space-y-2">
@@ -877,10 +901,10 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
                 {/* Mode Selection */}
                 <RadioGroup 
                   value={formData.ownerMode} 
-                  onValueChange={(value: 'self' | 'select' | 'manual') => {
+                  onValueChange={(value: 'self' | 'manual') => {
                     updateFormData("ownerMode", value);
                     // Clear fields when switching modes
-                    if (value === 'self' || value === 'select') {
+                    if (value === 'self') {
                       updateFormData("ownerName", "");
                       updateFormData("ownerRegistrationNumber", "");
                     }
@@ -895,12 +919,6 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
                       <RadioGroupItem value="self" id="owner-self" />
                       <Label htmlFor="owner-self" className="font-normal cursor-pointer">
                         I am the owner
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="select" id="owner-select" />
-                      <Label htmlFor="owner-select" className="font-normal cursor-pointer">
-                        Select from system
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -935,15 +953,6 @@ export function EditAnimalDialogMultiStep({ open, onOpenChange, animalId, animal
                         className="bg-background border-primary/20"
                       />
                     </div>
-                  </div>
-                )}
-
-                {/* Select from System - Placeholder for future */}
-                {formData.ownerMode === 'select' && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Owner selection from system will be available soon.
-                    </p>
                   </div>
                 )}
 

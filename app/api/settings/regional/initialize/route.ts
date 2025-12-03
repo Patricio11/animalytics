@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
-import { detectAndGetRegionalPreferences, getClientIp } from '@/lib/utils/location';
+import { detectUserLocation, getRegionalPreferencesFromLocation, getClientIp } from '@/lib/utils/location';
 
 /**
  * POST /api/settings/regional/initialize
@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
 
     // Detect location and get regional preferences
     console.log('🔍 Detecting location...');
-    const regionalPreferences = await detectAndGetRegionalPreferences(clientIp);
+    const locationData = await detectUserLocation(clientIp);
+    const regionalPreferences = getRegionalPreferencesFromLocation(locationData);
+    console.log('📍 Location data:', locationData);
     console.log('📍 Regional preferences:', regionalPreferences);
 
     // Fetch current user to preserve other preferences
@@ -64,6 +66,11 @@ export async function POST(request: NextRequest) {
       timeFormat: regionalPreferences.timeFormat,
       measurementUnit: regionalPreferences.measurementUnit,
       firstDayOfWeek: regionalPreferences.firstDayOfWeek,
+      // Save location data from IP detection
+      country: locationData?.country,
+      countryCode: locationData?.countryCode,
+      city: locationData?.city,
+      region: locationData?.region,
     };
 
     // Update user preferences

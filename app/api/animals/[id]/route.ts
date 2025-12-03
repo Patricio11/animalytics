@@ -23,6 +23,7 @@ const updateAnimalSchema = z.object({
   dateOfBirth: z.string().optional(),
   microchipNumber: z.string().optional(),
   registrationNumber: z.string().optional(),
+  dndProfileNumber: z.string().optional(),
   weight: z.number().positive().optional(),
   height: z.number().positive().optional(),
   color: z.string().optional(),
@@ -208,6 +209,7 @@ export async function PATCH(
     if (validatedData.dateOfBirth !== undefined) updateData.dateOfBirth = validatedData.dateOfBirth;
     if (validatedData.microchipNumber !== undefined) updateData.microchipNumber = validatedData.microchipNumber;
     if (validatedData.registrationNumber !== undefined) updateData.registrationNumber = validatedData.registrationNumber;
+    if (validatedData.dndProfileNumber !== undefined) updateData.dndProfileNumber = validatedData.dndProfileNumber;
     if (validatedData.color !== undefined) updateData.color = validatedData.color;
     if (validatedData.markings !== undefined) updateData.markings = validatedData.markings;
     if (validatedData.profileImageUrl !== undefined) updateData.profileImageUrl = validatedData.profileImageUrl;
