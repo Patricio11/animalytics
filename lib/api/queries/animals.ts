@@ -163,6 +163,7 @@ export function useUpdateAnimal() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['animals'] });
       queryClient.invalidateQueries({ queryKey: ['animals', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['pedigree', variables.id] }); // Invalidate pedigree when parents change
       queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate all dashboard queries
     },
   });
