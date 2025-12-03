@@ -78,8 +78,8 @@ export default function Animals() {
             : animal.isActive
             ? ("available" as const)
             : ("retired" as const),
-          ownerName: animal.owner?.name,
-          breederName: animal.breeder?.name,
+          ownerName: animal.ownerName || animal.owner?.name,
+          breederName: animal.breederName || animal.breeder?.name,
         };
       });
   }, [animals, searchQuery, breedFilter, genderFilter, statusFilter]);

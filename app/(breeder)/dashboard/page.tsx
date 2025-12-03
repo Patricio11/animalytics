@@ -72,8 +72,13 @@ export default function Dashboard() {
     
     // Show "You" if the owner/breeder is the current user
     const currentUserId = stats?.currentUserId;
-    const ownerName = animal.owner?.id === currentUserId ? "You" : animal.owner?.name;
-    const breederName = animal.breeder?.id === currentUserId ? "You" : animal.breeder?.name;
+    // Check manual entry first, then system owner
+    const ownerName = animal.owner?.id === currentUserId 
+      ? "You" 
+      : animal.ownerName || animal.owner?.name;
+    const breederName = animal.breeder?.id === currentUserId 
+      ? "You" 
+      : animal.breederName || animal.breeder?.name;
     
     return {
       id: animal.id,

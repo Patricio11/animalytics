@@ -53,6 +53,9 @@ export interface APIAnimal {
     id: string;
     name: string;
   } | null;
+  // Manual entry fields (when not in system)
+  ownerName?: string | null;
+  breederName?: string | null;
 }
 
 export interface APIMating {
