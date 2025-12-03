@@ -25,12 +25,6 @@ const categories: { value: ListingCategory; label: string; icon: string; descrip
     description: 'List available puppies from your litters',
   },
   {
-    value: 'reproductive-services',
-    label: 'Reproductive Services',
-    icon: '💉',
-    description: 'Offer AI services with fresh or chilled semen',
-  },
-  {
     value: 'frozen-semen',
     label: 'Frozen Semen for Sale',
     icon: '❄️',
@@ -41,6 +35,12 @@ const categories: { value: ListingCategory; label: string; icon: string; descrip
     label: 'Stud Dog',
     icon: '👑',
     description: 'Offer stud services for breeding',
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    icon: '🛍️',
+    description: 'Food, toys, accessories, and other animal products',
   },
 ];
 

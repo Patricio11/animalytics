@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,12 +64,41 @@ export function CreateListingWizard() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Debug: Log category changes
+  useEffect(() => {
+    console.log('🔍 Category state updated:', formData.category);
+  }, [formData.category]);
+
+  // Auto-fill location from regional settings when moving to step 2
+  useEffect(() => {
+    if (currentStep === 2 && !formData.contactLocation && settings) {
+      const locationParts = [];
+      if (settings.city) locationParts.push(settings.city);
+      if (settings.region) locationParts.push(settings.region);
+      if (settings.country) locationParts.push(settings.country);
+      
+      const locationString = locationParts.join(', ');
+      if (locationString) {
+        updateFormData('contactLocation', locationString);
+        console.log('📍 Auto-filled location from regional settings:', locationString);
+      }
+    }
+  }, [currentStep, settings, formData.contactLocation]);
+
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
+        // Category is always required
+        if (!formData.category) return false;
+        // For frozen-semen, require semen ID
         if (formData.category === 'frozen-semen') {
           return !!formData.frozenSemenId;
         }
+        // For 'other' category, animal selection is optional
+        if (formData.category === 'other') {
+          return true;
+        }
+        // For all other categories, require animal selection
         return !!formData.animalId;
       case 2:
         return !!(
@@ -174,6 +203,7 @@ export function CreateListingWizard() {
             <ListingCategorySelector
               value={formData.category}
               onChange={(category) => {
+                console.log('📦 Category changed to:', category);
                 updateFormData('category', category);
                 // Reset animal/semen selection when category changes
                 updateFormData('animalId', undefined);
@@ -181,37 +211,40 @@ export function CreateListingWizard() {
               }}
             />
 
-            {/* Animal Selection */}
-            <div className="space-y-3">
-              <Label htmlFor="animal" className="text-sm font-medium">
-                {formData.category === 'frozen-semen' ? 'Frozen Semen ID' : 'Select Animal'} *
-              </Label>
-              {formData.category === 'frozen-semen' ? (
-                <Input
-                  id="frozen-semen"
-                  placeholder="Enter frozen semen ID"
-                  value={formData.frozenSemenId || ''}
-                  onChange={(e) => updateFormData('frozenSemenId', e.target.value)}
-                  className="bg-background border-primary/20 focus:border-primary"
-                />
-              ) : (
-                <Select
-                  value={formData.animalId}
-                  onValueChange={(value) => updateFormData('animalId', value)}
-                >
-                  <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
-                    <SelectValue placeholder="Choose an animal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockAnimals.map((animal) => (
-                      <SelectItem key={animal.id} value={animal.id}>
-                        {animal.name} - {animal.breed} ({animal.type === 'bitch' ? 'Female' : 'Male'})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+            {/* Animal Selection - Only show for categories that need it */}
+            {/* Debug: category={formData.category}, showAnimalSelector={formData.category !== 'other'} */}
+            {formData.category !== 'other' && (
+              <div className="space-y-3">
+                <Label htmlFor="animal" className="text-sm font-medium">
+                  {formData.category === 'frozen-semen' ? 'Frozen Semen ID *' : 'Select Animal *'}
+                </Label>
+                {formData.category === 'frozen-semen' ? (
+                  <Input
+                    id="frozen-semen"
+                    placeholder="Enter frozen semen ID"
+                    value={formData.frozenSemenId || ''}
+                    onChange={(e) => updateFormData('frozenSemenId', e.target.value)}
+                    className="bg-background border-primary/20 focus:border-primary"
+                  />
+                ) : (
+                  <Select
+                    value={formData.animalId}
+                    onValueChange={(value) => updateFormData('animalId', value)}
+                  >
+                    <SelectTrigger className="bg-background border-primary/20 focus:border-primary">
+                      <SelectValue placeholder="Choose an animal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockAnimals.map((animal) => (
+                        <SelectItem key={animal.id} value={animal.id}>
+                          {animal.name} - {animal.breed} ({animal.type === 'bitch' ? 'Female' : 'Male'})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
 
             {/* Selected Animal Preview */}
             {selectedAnimal && (
@@ -232,7 +265,11 @@ export function CreateListingWizard() {
               <Alert className="border-destructive/50 bg-destructive/10">
                 <AlertCircle className="h-4 w-4 text-destructive" />
                 <AlertDescription className="ml-2 text-sm text-foreground">
-                  Please select both a category and an animal/semen ID to continue
+                  {formData.category === 'frozen-semen' 
+                    ? 'Please enter a frozen semen ID to continue'
+                    : formData.category === 'other'
+                    ? 'Please select a category to continue'
+                    : 'Please select an animal to continue'}
                 </AlertDescription>
               </Alert>
             )}

@@ -11,9 +11,9 @@ import type { Sex } from '../animal/types';
 export type ListingCategory =
   | 'dog-for-sale'
   | 'pups-for-sale'
-  | 'reproductive-services'
   | 'frozen-semen'
-  | 'stud-dog';
+  | 'stud-dog'
+  | 'other';
 
 export type ListingStatus = 'active' | 'pending' | 'sold' | 'expired';
 
