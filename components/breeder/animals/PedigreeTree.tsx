@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { PedigreeAnimalModal } from "@/components/breeder/animals/PedigreeAnimalModal";
 
 type PedigreeNode = {
   id: string;
@@ -27,6 +28,16 @@ interface PedigreeTreeProps {
 }
 
 export function PedigreeTree({ node, generations = 4, isOwner = true }: PedigreeTreeProps) {
+  const [viewingAnimal, setViewingAnimal] = useState<PedigreeNode | null>(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+
+  const handleCardClick = (animal: PedigreeNode | null) => {
+    if (animal) {
+      setViewingAnimal(animal);
+      setViewModalOpen(true);
+    }
+  };
+
   // Build rows for each generation
   const buildGenerationRows = (root: PedigreeNode, maxGens: number) => {
     const rows: (PedigreeNode | null)[][] = [];
@@ -58,8 +69,9 @@ export function PedigreeTree({ node, generations = 4, isOwner = true }: Pedigree
   const rows = buildGenerationRows(node, generations);
 
   return (
-    <div className="space-y-6">
-      {rows.map((row, genIndex) => (
+    <>
+      <div className="space-y-6">
+        {rows.map((row, genIndex) => (
         <div key={genIndex} className="space-y-2">
           {/* Generation Label */}
           <div className="flex items-center gap-2">
@@ -87,12 +99,23 @@ export function PedigreeTree({ node, generations = 4, isOwner = true }: Pedigree
                 key={`${genIndex}-${nodeIndex}`}
                 animal={animal}
                 generation={genIndex}
+                onCardClick={handleCardClick}
               />
             ))}
           </div>
         </div>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      {/* Animal Profile Modal */}
+      <PedigreeAnimalModal
+        animal={viewingAnimal}
+        open={viewModalOpen}
+        onOpenChange={setViewModalOpen}
+        isOwner={isOwner}
+        onEdit={undefined}
+      />
+    </>
   );
 }
 
@@ -103,9 +126,10 @@ export function PedigreeTree({ node, generations = 4, isOwner = true }: Pedigree
 interface AnimalNodeProps {
   animal: PedigreeNode | null;
   generation: number;
+  onCardClick?: (animal: PedigreeNode | null) => void;
 }
 
-function AnimalNode({ animal, generation }: AnimalNodeProps) {
+function AnimalNode({ animal, generation, onCardClick }: AnimalNodeProps) {
   if (!animal) {
     return (
       <Card className="p-3 bg-muted/30 border-dashed border-muted-foreground/20 min-h-[100px] flex items-center justify-center">
@@ -131,6 +155,7 @@ function AnimalNode({ animal, generation }: AnimalNodeProps) {
         generation === 0 && "border-2 border-primary shadow-card",
         animal.isManualEntry && "border-dashed border-amber-500/40 bg-amber-50/5"
       )}
+      onClick={() => onCardClick?.(animal)}
     >
       <div className="space-y-2">
         {/* Manual Entry Indicator */}
