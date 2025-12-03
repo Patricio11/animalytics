@@ -11,6 +11,7 @@ export interface APIAnimal {
   dateOfBirth: string | null;
   microchipNumber: string | null;
   registrationNumber: string | null;
+  dndProfileNumber: string | null;
   weight: string | null; // Decimal from database
   height: string | null; // Decimal from database
   color: string | null;

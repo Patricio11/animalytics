@@ -524,6 +524,12 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                         <div className="font-medium text-foreground">{animal.registrationNumber}</div>
                       </div>
                     )}
+                    {animal.dndProfileNumber && (
+                      <div className="col-span-2">
+                        <div className="text-sm text-muted-foreground">DND Profile No.</div>
+                        <div className="font-medium text-foreground">{animal.dndProfileNumber}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
