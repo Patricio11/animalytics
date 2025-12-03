@@ -5,7 +5,7 @@ import { breederBreedPreferences } from '@/lib/db/schema/user-breed-preferences'
 import { breederProfiles } from '@/lib/db/schema/profiles';
 import { buyerProfiles } from '@/lib/db/schema/buyer-profiles';
 import { eq } from 'drizzle-orm';
-import { detectAndGetRegionalPreferences, getClientIp } from '@/lib/utils/location';
+import { detectUserLocation, getRegionalPreferencesFromLocation, getClientIp } from '@/lib/utils/location';
 
 /**
  * POST /api/auth/save-signup-preferences
@@ -47,7 +47,10 @@ export async function POST(request: NextRequest) {
       const clientIp = getClientIp(request.headers);
       console.log('🌐 Client IP:', clientIp || 'not detected');
 
-      const regionalPreferences = await detectAndGetRegionalPreferences(clientIp);
+      // Detect location from IP
+      const locationData = await detectUserLocation(clientIp);
+      const regionalPreferences = getRegionalPreferencesFromLocation(locationData);
+      console.log('📍 Location data:', locationData);
       console.log('📍 Regional preferences:', regionalPreferences);
 
       // Merge with existing preferences (if any)
@@ -63,6 +66,11 @@ export async function POST(request: NextRequest) {
         timeFormat: regionalPreferences.timeFormat,
         measurementUnit: regionalPreferences.measurementUnit,
         firstDayOfWeek: regionalPreferences.firstDayOfWeek,
+        // Save location data from IP detection
+        country: locationData?.country,
+        countryCode: locationData?.countryCode,
+        city: locationData?.city,
+        region: locationData?.region,
       };
 
       // Update user preferences

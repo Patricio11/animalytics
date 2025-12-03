@@ -135,12 +135,15 @@ location: animalData.location || (() => {
 
 ### **Registration Flow:**
 ```
-1. User signs up
-2. IP address detected
-3. Location API called (ipapi.co)
-4. Returns: country, countryCode, city, region, timezone
-5. Saved to user.preferences in database
-6. User logs in → Regional settings loaded
+1. User signs up → Account created
+2. Better Auth sends verification email
+3. /api/auth/save-signup-preferences called:
+   - IP address detected
+   - Location API called (ipapi.co)
+   - Returns: country, countryCode, city, region, timezone
+   - Saved to user.preferences in database
+4. User verifies email and logs in
+5. Regional settings loaded (includes location)
 ```
 
 ### **Add Animal Flow:**
@@ -239,10 +242,13 @@ location: animalData.location || (() => {
 | File | Changes |
 |------|---------|
 | `lib/db/schema/users.ts` | ✅ Added location fields to preferences |
-| `app/api/settings/regional/initialize/route.ts` | ✅ Save location data during registration |
+| `app/api/auth/save-signup-preferences/route.ts` | ✅ Save location data during signup |
+| `app/api/settings/regional/initialize/route.ts` | ✅ Save location data when initializing settings |
 | `lib/contexts/regional-settings-context.tsx` | ✅ Added location to interface & loading |
 | `components/breeder/animals/AddAnimalDialog.tsx` | ✅ Use regional settings for location |
 | `components/breeder/animals/EditAnimalDialogMultiStep.tsx` | ✅ Use regional settings for location |
+| `components/breeder/settings/ProfileSettings.tsx` | ✅ Allow editing location in Profile settings |
+| `app/api/settings/regional/route.ts` | ✅ Allow updating location fields |
 
 ---
 
