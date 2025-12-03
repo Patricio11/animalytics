@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Calendar, Trophy, DollarSign, Plus, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useDashboardStats } from "@/lib/api/queries/dashboard";
-import { useCreateTask, useUpdateTask } from "@/lib/api/queries/tasks";
+import { useCreateTask, useUpdateTask, useCompleteTask } from "@/lib/api/queries/tasks";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APIAnimal, APITask } from "@/lib/api/types";
 
@@ -33,6 +33,7 @@ export default function Dashboard() {
   // Task mutations
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
+  const completeTaskMutation = useCompleteTask();
 
   // Transform stats for display
   const dashboardStats = stats ? [
@@ -353,6 +354,9 @@ export default function Dashboard() {
                         onEdit={() => {
                           setSelectedTask(task);
                           setShowTaskEdit(true);
+                        }}
+                        onToggleComplete={() => {
+                          completeTaskMutation.mutate(task.id);
                         }}
                       />
                     ))}

@@ -140,6 +140,18 @@ export function TaskCard({
           </div>
 
           <div className="flex gap-2">
+            {!completed && onToggleComplete && (
+              <Button
+                size="sm"
+                variant="default"
+                onClick={onToggleComplete}
+                data-testid={`button-complete-task-${id}`}
+                className="bg-chart-3 hover:bg-chart-3/90 text-white transition-all duration-300"
+                title="Mark as complete"
+              >
+                <CheckCircle className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               size="sm"
               variant="ghost"

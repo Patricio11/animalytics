@@ -251,47 +251,51 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete, onView }: T
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant={task.completed ? "outline" : "default"}
+                  size="default"
                   className={cn(
-                    "hover:bg-chart-3/10 hover:text-chart-3",
-                    task.completed && "text-chart-3"
+                    "hover:bg-chart-3 hover:text-white transition-all",
+                    task.completed ? "bg-chart-3/10 text-chart-3 border-chart-3" : "bg-chart-3 text-white"
                   )}
                   onClick={() => onToggleComplete(task.id)}
                   title={task.completed ? "Mark as incomplete" : "Mark as complete"}
                 >
-                  <Check className="w-4 h-4" />
+                  <Check className="w-4 h-4 mr-2" />
+                  {task.completed ? "Completed" : "Complete"}
                 </Button>
                 {onView && (
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    className="hover:bg-primary/10 hover:text-primary"
+                    variant="outline"
+                    size="default"
+                    className="hover:bg-primary/10 hover:text-primary hover:border-primary"
                     onClick={() => onView(task)}
                     title="View details"
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-4 h-4 mr-2" />
+                    View
                   </Button>
                 )}
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hover:bg-primary/10 hover:text-primary"
+                  variant="outline"
+                  size="default"
+                  className="hover:bg-primary/10 hover:text-primary hover:border-primary"
                   onClick={() => onEdit(task)}
                   title="Edit task"
                 >
-                  <Pencil className="w-4 h-4" />
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hover:bg-destructive/10 hover:text-destructive"
+                  variant="outline"
+                  size="default"
+                  className="hover:bg-destructive hover:text-white hover:border-destructive"
                   onClick={() => onDelete(task.id)}
                   title="Delete task"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
                 </Button>
               </div>
             </div>
