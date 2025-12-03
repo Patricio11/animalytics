@@ -79,6 +79,10 @@ export async function PATCH(request: NextRequest) {
       'timeFormat',
       'measurementUnit',
       'firstDayOfWeek',
+      'city',
+      'region',
+      'country',
+      'countryCode',
     ];
 
     const updates: Record<string, any> = {};

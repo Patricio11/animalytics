@@ -1,22 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Camera } from "lucide-react";
+import { User, Camera, MapPin } from "lucide-react";
 import { useAuth } from "@/lib/auth/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 
 interface ProfileData {
   name: string;
   email: string;
   phone: string;
   kennel: string;
-  location: string;
+  city: string;
+  region: string;
+  country: string;
   bio: string;
   website: string;
 }
@@ -24,16 +27,31 @@ interface ProfileData {
 export function ProfileSettings() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { settings: regionalSettings, refreshSettings } = useRegionalSettings();
 
   const [profile, setProfile] = useState<ProfileData>({
-    name: user?.name || "John Breeder",
-    email: user?.email || "john@example.com",
-    phone: "+27 12 345 6789",
-    kennel: "Premium Kennels",
-    location: "Johannesburg, South Africa",
-    bio: "Professional dog breeder with 15 years of experience specializing in Golden Retrievers and Labradors.",
-    website: "https://premiumkennels.co.za"
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: "",
+    kennel: "",
+    city: regionalSettings.city || "",
+    region: regionalSettings.region || "",
+    country: regionalSettings.country || "",
+    bio: "",
+    website: ""
   });
+
+  // Load location from regional settings
+  useEffect(() => {
+    if (regionalSettings) {
+      setProfile(prev => ({
+        ...prev,
+        city: regionalSettings.city || "",
+        region: regionalSettings.region || "",
+        country: regionalSettings.country || "",
+      }));
+    }
+  }, [regionalSettings]);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -45,19 +63,28 @@ export function ProfileSettings() {
     setIsSaving(true);
     
     try {
-      // TODO: Implement API call to save profile
-      // await fetch('/api/user/profile', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(profile),
-      // });
+      // Save location to regional settings
+      const response = await fetch('/api/settings/regional', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          city: profile.city,
+          region: profile.region,
+          country: profile.country,
+        }),
+      });
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!response.ok) {
+        throw new Error('Failed to save location');
+      }
+
+      // Refresh regional settings to get updated data
+      await refreshSettings();
 
       toast({
         title: "Profile Updated",
-        description: "Your profile information has been saved successfully.",
+        description: "Your location has been saved successfully.",
       });
     } catch (error) {
       toast({
@@ -71,16 +98,13 @@ export function ProfileSettings() {
   };
 
   const handleCancel = () => {
-    // Reset to initial values or refetch from server
-    setProfile({
-      name: user?.name || "John Breeder",
-      email: user?.email || "john@example.com",
-      phone: "+27 12 345 6789",
-      kennel: "Premium Kennels",
-      location: "Johannesburg, South Africa",
-      bio: "Professional dog breeder with 15 years of experience specializing in Golden Retrievers and Labradors.",
-      website: "https://premiumkennels.co.za"
-    });
+    // Reset to values from regional settings
+    setProfile(prev => ({
+      ...prev,
+      city: regionalSettings.city || "",
+      region: regionalSettings.region || "",
+      country: regionalSettings.country || "",
+    }));
   };
 
   return (
@@ -155,16 +179,6 @@ export function ProfileSettings() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              value={profile.location}
-              onChange={(e) => handleChange('location', e.target.value)}
-              className="bg-background border-primary/20 focus:border-primary"
-              data-testid="input-profile-location"
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="website">Website</Label>
             <Input
               id="website"
@@ -173,6 +187,52 @@ export function ProfileSettings() {
               className="bg-background border-primary/20 focus:border-primary"
               data-testid="input-profile-website"
             />
+          </div>
+        </div>
+
+        {/* Location Section */}
+        <div className="space-y-4 pt-4 border-t border-primary/10">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold">Location Information</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            This location will be used to pre-fill animal profiles and is visible to potential buyers.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                value={profile.city}
+                onChange={(e) => handleChange('city', e.target.value)}
+                placeholder="e.g., Johannesburg"
+                className="bg-background border-primary/20 focus:border-primary"
+                data-testid="input-profile-city"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="region">State/Province</Label>
+              <Input
+                id="region"
+                value={profile.region}
+                onChange={(e) => handleChange('region', e.target.value)}
+                placeholder="e.g., Gauteng"
+                className="bg-background border-primary/20 focus:border-primary"
+                data-testid="input-profile-region"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
+                value={profile.country}
+                onChange={(e) => handleChange('country', e.target.value)}
+                placeholder="e.g., South Africa"
+                className="bg-background border-primary/20 focus:border-primary"
+                data-testid="input-profile-country"
+              />
+            </div>
           </div>
         </div>
 
