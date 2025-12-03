@@ -128,20 +128,35 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
   const availableAnimals = allAnimals.filter((animal: any) => !listedAnimalIds.has(animal.id));
   const animals = availableAnimals;
 
-  // Pre-fill contact details from breeder profile
+  // Pre-fill contact details from breeder profile or regional settings
   useEffect(() => {
-    if (profile && open) {
-      setFormData(prev => ({
-        ...prev,
-        contactName: profile.displayName || prev.contactName,
-        contactEmail: profile.publicEmail || prev.contactEmail,
-        contactPhone: profile.publicPhone || prev.contactPhone,
-        contactLocation: profile.location ? 
-          `${profile.location.city || ''}, ${profile.location.state || ''}, ${profile.location.country || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',') 
-          : prev.contactLocation,
-      }));
+    if (open) {
+      setFormData(prev => {
+        let contactLocation = prev.contactLocation;
+        
+        // Try profile location first
+        if (profile?.location) {
+          contactLocation = `${profile.location.city || ''}, ${profile.location.state || ''}, ${profile.location.country || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',');
+        }
+        // Fallback to regional settings if no profile location
+        else if (settings && !contactLocation) {
+          const locationParts = [];
+          if (settings.city) locationParts.push(settings.city);
+          if (settings.region) locationParts.push(settings.region);
+          if (settings.country) locationParts.push(settings.country);
+          contactLocation = locationParts.join(', ');
+        }
+        
+        return {
+          ...prev,
+          contactName: profile?.displayName || prev.contactName,
+          contactEmail: profile?.publicEmail || prev.contactEmail,
+          contactPhone: profile?.publicPhone || prev.contactPhone,
+          contactLocation,
+        };
+      });
     }
-  }, [profile, open]);
+  }, [profile, settings, open]);
 
   const updateFormData = (field: keyof ListingFormData, value: string | number | string[] | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -150,9 +165,17 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
+        // Category is always required
+        if (!formData.category) return false;
+        // For frozen-semen, require semen ID
         if (formData.category === 'frozen-semen') {
           return !!formData.frozenSemenId;
         }
+        // For 'other' category, animal selection is optional
+        if (formData.category === 'other') {
+          return true;
+        }
+        // For all other categories, require animal selection
         return !!formData.animalId;
       case 2:
         return !!(
@@ -235,9 +258,9 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
       const categoryMap: Record<string, string> = {
         'dog-for-sale': 'dog_for_sale',
         'pups-for-sale': 'pups_for_sale',
-        'reproductive-services': 'reproductive_services',
         'frozen-semen': 'frozen_semen',
         'stud-dog': 'stud_dog',
+        'other': 'other',
       };
 
       const submissionData = {
@@ -393,12 +416,13 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                 }}
               />
 
-              {/* Animal Selection */}
-              <div className="space-y-3">
-                <Label htmlFor="animal" className="text-sm font-medium">
-                  {formData.category === 'frozen-semen' ? 'Frozen Semen ID' : 'Select Animal'} *
-                </Label>
-                {formData.category === 'frozen-semen' ? (
+              {/* Animal Selection - Only show for categories that need it */}
+              {formData.category !== 'other' && (
+                <div className="space-y-3">
+                  <Label htmlFor="animal" className="text-sm font-medium">
+                    {formData.category === 'frozen-semen' ? 'Frozen Semen ID *' : 'Select Animal *'}
+                  </Label>
+                  {formData.category === 'frozen-semen' ? (
                   <Input
                     id="frozen-semen"
                     placeholder="Enter frozen semen ID"
@@ -438,8 +462,9 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                       </Alert>
                     )}
                   </>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Selected Animal Preview */}
               {selectedAnimal && (
@@ -471,7 +496,11 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                 <Alert className="border-destructive/50 bg-destructive/10">
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <AlertDescription className="ml-2 text-sm text-foreground">
-                    Please select both a category and an animal/semen ID to continue
+                    {formData.category === 'frozen-semen' 
+                      ? 'Please enter a frozen semen ID to continue'
+                      : formData.category === 'other'
+                      ? 'Please select a category to continue'
+                      : 'Please select an animal to continue'}
                   </AlertDescription>
                 </Alert>
               )}

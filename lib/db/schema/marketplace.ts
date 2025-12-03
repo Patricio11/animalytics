@@ -9,9 +9,9 @@ import { users } from './users';
 export const listingCategoryEnum = pgEnum('listing_category', [
   'dog_for_sale',
   'pups_for_sale',
-  'reproductive_services',
   'frozen_semen',
-  'stud_dog'
+  'stud_dog',
+  'other'
 ]);
 
 export const listingStatusEnum = pgEnum('listing_status', [
