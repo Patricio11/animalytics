@@ -40,6 +40,7 @@ interface PageProps {
 
 export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const resolvedParams = use(params);
   const resolvedSearchParams = use(searchParams || Promise.resolve({})) as { tab?: string };
 
@@ -187,6 +188,15 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
   if (isError || !animal) {
     notFound();
   }
+
+  // Debug logging
+  console.log('🐕 Animal data:', {
+    id: animal.id,
+    name: animal.name,
+    userId: animal.userId,
+    currentUser: user?.id,
+    isOwner: user?.id === animal.userId,
+  });
 
   // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string | Date) => {
@@ -369,11 +379,17 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   </TabsContent>
 
                   <TabsContent value="pedigree" className="mt-0">
-                    <PedigreeTab 
-                      animalId={animal.id} 
-                      animalName={animal.name}
-                      animalUserId={animal.userId}
-                    />
+                    {animal.userId ? (
+                      <PedigreeTab 
+                        animalId={animal.id} 
+                        animalName={animal.name}
+                        animalUserId={animal.userId}
+                      />
+                    ) : (
+                      <div className="p-6 text-center text-muted-foreground">
+                        Loading pedigree data...
+                      </div>
+                    )}
                   </TabsContent>
 
                   <TabsContent value="photos-docs" className="mt-0">

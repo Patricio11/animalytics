@@ -2,6 +2,7 @@ import { UserRole } from '@/lib/constants/roles';
 
 export interface Animal {
   id: string;
+  userId: string; // Owner's user ID
   name: string;
   type: 'dog' | 'bitch';
   breed: string;

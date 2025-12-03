@@ -258,7 +258,7 @@ export function ProfileTab({ animal, animalId, onEdit }: ProfileTabProps) {
 
       {/* Full Pedigree Section */}
       <div className="border-t border-primary/10 pt-6">
-        <PedigreeTab animalId={animalId} animalName={animal.name} />
+        <PedigreeTab animalId={animalId} animalName={animal.name} animalUserId={animal.userId} />
       </div>
 
       {/* Litters Information - Only for females */}

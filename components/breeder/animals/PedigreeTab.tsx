@@ -45,6 +45,24 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
   const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('horizontal');
   const [activeSubTab, setActiveSubTab] = useState('certificate');
 
+  // Debug logging - check all props
+  console.log('🔍 PedigreeTab received props:', {
+    animalId,
+    animalName,
+    animalUserId,
+    animalUserIdType: typeof animalUserId,
+  });
+  
+  console.log('🔍 PedigreeTab ownership check:', {
+    userId: user?.id,
+    userIdType: typeof user?.id,
+    animalUserId,
+    animalUserIdType: typeof animalUserId,
+    isOwner,
+    match: user?.id === animalUserId,
+    strictMatch: user?.id === animalUserId,
+  });
+
   // Fetch pedigree data
   const { data, isLoading, error } = useQuery({
     queryKey: ["pedigree", animalId, generations],
