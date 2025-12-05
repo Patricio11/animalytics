@@ -15,8 +15,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnimalCombobox } from "@/components/ui/animal-combobox";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAnimals } from "@/lib/api/queries/animals";
-import { Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon, Loader2, CheckCircle } from "lucide-react";
 import { Task, TaskType } from "@/lib/types/task";
 import { format } from "date-fns";
 
@@ -363,7 +366,7 @@ export function TaskDialog({
 
           {/* Animal Selection (for most task types) */}
           {(needsAnimal || (taskType === 'event' && animalId)) && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="animal">
                 Animal {needsAnimal && <span className="text-destructive">*</span>}
               </Label>
@@ -376,6 +379,52 @@ export function TaskDialog({
                 allowClear={taskType === 'event'}
               />
               {errors.animalId && <p className="text-sm text-destructive">{errors.animalId}</p>}
+              
+              {/* Selected Animal Preview */}
+              {animalId && (() => {
+                const selectedAnimal = animals.find((a: any) => a.id === animalId);
+                if (!selectedAnimal) return null;
+                
+                // Get profile photo from animal_photos table (category='profile') or fallback
+                const profilePhoto = selectedAnimal.photos?.find((p: any) => p.category === 'profile');
+                const imageUrl = profilePhoto?.fileUrl || 
+                                 selectedAnimal.photos?.[0]?.fileUrl || 
+                                 selectedAnimal.profileImageUrl;
+                
+                return (
+                  <Alert className="border-chart-3/50 bg-chart-3/10">
+                    <CheckCircle className="h-4 w-4 text-chart-3" />
+                    <AlertDescription className="ml-2">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12 border-2 border-chart-3/30">
+                          <AvatarImage 
+                            src={imageUrl} 
+                            alt={selectedAnimal.name} 
+                          />
+                          <AvatarFallback className="bg-chart-3/20 text-chart-3 font-semibold">
+                            {selectedAnimal.name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-semibold text-foreground">{selectedAnimal.name}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {selectedAnimal.breed && (
+                              <Badge variant="outline" className="text-xs">
+                                {selectedAnimal.breed}
+                              </Badge>
+                            )}
+                            {selectedAnimal.sex && (
+                              <Badge variant="outline" className="text-xs capitalize">
+                                {selectedAnimal.sex}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                );
+              })()}
             </div>
           )}
 
