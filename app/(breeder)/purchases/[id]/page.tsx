@@ -99,6 +99,49 @@ export default function PurchaseDetailPage() {
     }
   }, [purchaseId, router]);
 
+  // Handle payment
+  async function handlePayment() {
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`/api/purchases/${purchaseId}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod: 'stripe' }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Open Stripe checkout in new window
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        } else {
+          toast({
+            title: "Error",
+            description: "Payment link not available",
+            variant: "destructive",
+          });
+        }
+      } else {
+        const error = await res.json();
+        toast({
+          title: "Error",
+          description: error.error || "Failed to initiate payment",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
   // Handle actions
   async function handleAction(action: string, reason?: string) {
     setIsProcessing(true);
@@ -250,6 +293,15 @@ export default function PurchaseDetailPage() {
                   </p>
                 </div>
               </div>
+              {/* Make Payment Button */}
+              {(purchase.purchase.status === 'pending' || purchase.purchase.status === 'payment_pending') && 
+               purchase.purchase.paymentStatus !== 'completed' && (
+                <Button onClick={handlePayment} disabled={isProcessing} className="bg-primary">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  {isProcessing ? 'Processing...' : 'Make Payment'}
+                </Button>
+              )}
+              {/* Confirm Receipt Button */}
               {purchase.purchase.status === 'ready_for_pickup' && (
                 <Button onClick={() => handleAction('complete')}>
                   <CheckCircle2 className="h-4 w-4 mr-2" />

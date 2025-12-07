@@ -96,19 +96,27 @@ export async function POST(
       name: buyer.name || undefined,
     });
 
-    // Create payment intent
-    const paymentIntent = await provider.createPaymentIntent({
+    // Determine redirect path based on user role
+    const userRole = (buyer as any).role || 'buyer';
+    const purchasePath = userRole === 'buyer' 
+      ? `/buyer/purchases/${purchase.id}` 
+      : `/purchases/${purchase.id}`;
+
+    // Create Stripe Checkout Session (payment link)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const checkoutSession = await (provider as any).createCheckoutSession({
       amount: purchase.totalAmount,
       currency: purchase.currency.toLowerCase(),
-      customerId: customer.id,
       customerEmail: buyer.email,
-      description: `Purchase ${purchase.id}`,
+      description: `Purchase #${purchase.id.substring(0, 8)}`,
       metadata: {
         purchaseId: purchase.id,
         buyerId: purchase.buyerId,
         sellerId: purchase.sellerId,
         listingId: purchase.listingId,
       },
+      successUrl: `${baseUrl}${purchasePath}?payment=success`,
+      cancelUrl: `${baseUrl}${purchasePath}?payment=cancelled`,
     });
 
     // Update purchase with payment info
@@ -117,7 +125,7 @@ export async function POST(
       .set({
         status: 'payment_pending',
         paymentStatus: 'processing',
-        paymentIntentId: paymentIntent.id,
+        paymentIntentId: checkoutSession.id,
         updatedAt: new Date(),
       })
       .where(eq(purchases.id, id));
@@ -151,10 +159,10 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      clientSecret: paymentIntent.clientSecret,
-      paymentIntentId: paymentIntent.id,
-      amount: paymentIntent.amount,
-      currency: paymentIntent.currency,
+      checkoutUrl: checkoutSession.url,
+      sessionId: checkoutSession.id,
+      amount: purchase.totalAmount,
+      currency: purchase.currency,
     });
   } catch (error) {
     console.error('Error processing payment:', error);

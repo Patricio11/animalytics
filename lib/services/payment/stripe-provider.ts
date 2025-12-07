@@ -196,6 +196,44 @@ export class StripeProvider implements PaymentProvider {
     };
   }
 
+  async createCheckoutSession(params: {
+    amount: number;
+    currency: string;
+    customerEmail: string;
+    description?: string;
+    metadata?: Record<string, string>;
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<{ id: string; url: string | null }> {
+    const stripe = await this.getStripeClient();
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: params.currency.toLowerCase(),
+            product_data: {
+              name: params.description || 'Purchase',
+            },
+            unit_amount: params.amount,
+          },
+          quantity: 1,
+        },
+      ],
+      customer_email: params.customerEmail,
+      metadata: params.metadata || {},
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+    });
+
+    return {
+      id: session.id,
+      url: session.url,
+    };
+  }
+
   async confirmPayment(paymentIntentId: string): Promise<PaymentConfirmResult> {
     try {
       const stripe = await this.getStripeClient();
