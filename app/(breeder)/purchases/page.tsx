@@ -110,7 +110,7 @@ const statusConfig: Record<string, {
   },
 };
 
-export default function BuyerPurchasesPage() {
+export default function BreederPurchasesPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("active");
@@ -119,7 +119,7 @@ export default function BuyerPurchasesPage() {
   useEffect(() => {
     async function fetchPurchases() {
       try {
-        const res = await fetch('/api/purchases?role=buyer');
+        const res = await fetch('/api/purchases?role=seller');
         if (res.ok) {
           const data = await res.json();
           setPurchases(data.purchases || []);
