@@ -119,7 +119,7 @@ export default function BreederPurchasesPage() {
   useEffect(() => {
     async function fetchPurchases() {
       try {
-        const res = await fetch('/api/purchases?role=seller');
+        const res = await fetch('/api/purchases');
         if (res.ok) {
           const data = await res.json();
           setPurchases(data.purchases || []);
