@@ -72,7 +72,7 @@ export async function GET(
         id: users.id,
         name: users.name,
         email: users.email,
-        image: users.image,
+        avatar: users.avatar,
       })
       .from(users)
       .where(eq(users.id, purchase.buyerId))
@@ -84,7 +84,7 @@ export async function GET(
         id: users.id,
         name: users.name,
         email: users.email,
-        image: users.image,
+        avatar: users.avatar,
       })
       .from(users)
       .where(eq(users.id, purchase.sellerId))

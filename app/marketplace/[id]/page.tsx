@@ -290,8 +290,10 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
       setPurchaseNotes("");
       setDeliveryMethod("pickup");
 
-      // Navigate to the purchase detail
-      router.push(`/buyer/purchases/${data.purchase.id}`);
+      // Navigate to the purchase detail based on user role
+      const userRole = (session?.user as any)?.role || 'buyer';
+      const basePath = userRole === 'buyer' ? '/buyer' : '/breeder';
+      router.push(`${basePath}/purchases/${data.purchase.id}`);
     } catch (error) {
       console.error('Error initiating purchase:', error);
       toast({
