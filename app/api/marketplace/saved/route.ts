@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { savedListings, listings } from '@/lib/db/schema/marketplace';
-import { animals } from '@/lib/db/schema/animals';
-import { breeds } from '@/lib/db/schema/breeds';
+import { animals, breeds } from '@/lib/db/schema/animals';
 import { eq, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
