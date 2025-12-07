@@ -258,16 +258,20 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
   const handleInitiatePurchase = async () => {
     setIsInitiatingPurchase(true);
     try {
+      const requestBody = {
+        listingId: id,
+        animalId: listing?.animalId,
+        paymentMethod: 'stripe', // Default to Stripe as per requirements
+        deliveryMethod: deliveryMethod,
+        buyerNotes: purchaseNotes.trim() || undefined,
+      };
+
+      console.log('🚀 Sending purchase request:', requestBody);
+
       const response = await fetch('/api/purchases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          listingId: id,
-          animalId: listing?.animalId,
-          paymentMethod: 'stripe', // Default to Stripe as per requirements
-          deliveryMethod: deliveryMethod,
-          buyerNotes: purchaseNotes.trim() || undefined,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

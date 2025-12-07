@@ -64,8 +64,7 @@ export async function GET(request: NextRequest) {
         animal: {
           id: animals.id,
           name: animals.name,
-          breed: animals.breed,
-          primaryPhotoUrl: animals.primaryPhotoUrl,
+          breedId: animals.breedId,
         },
       })
       .from(purchases)
@@ -87,7 +86,7 @@ export async function GET(request: NextRequest) {
           .select({
             id: users.id,
             name: users.name,
-            image: users.image,
+            avatar: users.avatar,
           })
           .from(users)
           .where(eq(users.id, otherUserId))
@@ -113,7 +112,7 @@ export async function GET(request: NextRequest) {
           otherParty: otherUser || {
             id: otherUserId,
             name: 'Unknown User',
-            image: null,
+            avatar: null,
           },
           listing: (listing && listing.id) ? {
             id: listing.id,
@@ -123,8 +122,7 @@ export async function GET(request: NextRequest) {
           animal: (animal && animal.id) ? {
             id: animal.id,
             name: animal.name,
-            breed: animal.breed,
-            photo: animal.primaryPhotoUrl,
+            breedId: animal.breedId,
           } : null,
         };
       })
@@ -164,6 +162,9 @@ export async function POST(request: NextRequest) {
     const buyerId = session.user.id;
     const body = await request.json();
 
+    // Debug logging
+    console.log('📦 Purchase request body:', JSON.stringify(body, null, 2));
+
     const {
       listingId,
       paymentMethod,
@@ -179,17 +180,23 @@ export async function POST(request: NextRequest) {
       buyerNotes,
     } = body;
 
+    // Default to stripe if paymentMethod not provided
+    const finalPaymentMethod = paymentMethod || 'stripe';
+
+    // Debug logging
+    console.log('🔍 Extracted fields:', {
+      listingId,
+      paymentMethod: finalPaymentMethod,
+      originalPaymentMethod: paymentMethod,
+      deliveryMethod,
+      buyerNotes,
+    });
+
     // Validate required fields
     if (!listingId) {
+      console.error('❌ Missing listingId');
       return NextResponse.json(
         { error: 'Listing ID is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!paymentMethod) {
-      return NextResponse.json(
-        { error: 'Payment method is required' },
         { status: 400 }
       );
     }
@@ -248,7 +255,7 @@ export async function POST(request: NextRequest) {
         currency: listing.currency || 'USD',
         platformFee,
         totalAmount,
-        paymentMethod,
+        paymentMethod: finalPaymentMethod,
         deliveryMethod,
         deliveryAddress,
         deliveryCity,
