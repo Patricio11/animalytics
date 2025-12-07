@@ -42,7 +42,24 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Found user:', user.id);
 
-    // 1. Initialize regional settings based on location
+    // 1. Update user role in the database
+    if (role) {
+      try {
+        console.log('👤 Updating user role to:', role);
+        await db
+          .update(users)
+          .set({
+            role: role as 'breeder' | 'veterinarian' | 'admin' | 'event_organizer' | 'buyer',
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, user.id));
+        console.log('✅ User role updated');
+      } catch (roleError) {
+        console.error('Failed to update user role:', roleError);
+      }
+    }
+
+    // 2. Initialize regional settings based on location
     try {
       const clientIp = getClientIp(request.headers);
       console.log('🌐 Client IP:', clientIp || 'not detected');
@@ -88,7 +105,7 @@ export async function POST(request: NextRequest) {
       // Don't fail the whole request if regional settings fail
     }
 
-    // 2. Save breed preferences if user is a breeder and selected breeds
+    // 3. Save breed preferences if user is a breeder and selected breeds
     if (role === 'breeder' && breedIds && Array.isArray(breedIds) && breedIds.length > 0) {
       try {
         console.log('🐕 Saving breed preferences:', breedIds);
@@ -142,7 +159,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Create buyer profile if user is a buyer
+    // 4. Create buyer profile if user is a buyer
     if (role === 'buyer') {
       try {
         console.log('🛒 Creating buyer profile...');

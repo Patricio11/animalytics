@@ -264,8 +264,9 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
         body: JSON.stringify({
           listingId: id,
           animalId: listing?.animalId,
+          paymentMethod: 'stripe', // Default to Stripe as per requirements
           deliveryMethod: deliveryMethod,
-          notes: purchaseNotes.trim() || undefined,
+          buyerNotes: purchaseNotes.trim() || undefined,
         }),
       });
 

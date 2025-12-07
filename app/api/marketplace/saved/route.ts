@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { savedListings, listings } from '@/lib/db/schema/marketplace';
+import { animals } from '@/lib/db/schema/animals';
+import { breeds } from '@/lib/db/schema/breeds';
 import { eq, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
@@ -24,14 +26,18 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // Get saved listings with full listing details
+    // Get saved listings with full listing details including animal and breed
     const saved = await db
       .select({
         savedListing: savedListings,
         listing: listings,
+        animal: animals,
+        breed: breeds,
       })
       .from(savedListings)
       .innerJoin(listings, eq(savedListings.listingId, listings.id))
+      .leftJoin(animals, eq(listings.animalId, animals.id))
+      .leftJoin(breeds, eq(animals.breedId, breeds.id))
       .where(eq(savedListings.userId, userId))
       .orderBy(desc(savedListings.savedAt));
 
@@ -39,7 +45,13 @@ export async function GET() {
       success: true,
       saved: saved.map(s => ({
         ...s.savedListing,
-        listing: s.listing,
+        listing: {
+          ...s.listing,
+          animal: s.animal ? {
+            ...s.animal,
+            breed: s.breed,
+          } : null,
+        },
       })),
     });
   } catch (error) {
