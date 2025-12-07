@@ -132,7 +132,10 @@ export function SeasonCard({ season, onEdit, onDelete }: SeasonCardProps) {
         {/* Progesterone Chart (when expanded) */}
         {hasProgesterone && showChart && (
           <div className="pt-4 border-t border-primary/10">
-            <SeasonProgesteroneChart readings={season.progesteroneReadings!} />
+            <SeasonProgesteroneChart 
+              readings={season.progesteroneReadings!} 
+              matingDate={season.matingDate}
+            />
           </div>
         )}
 

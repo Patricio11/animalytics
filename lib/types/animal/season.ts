@@ -12,6 +12,7 @@ export interface ProgesteroneReading {
   date: string;
   value: number;
   unit: ProgesteroneUnit;
+  completed?: boolean; // Track if test is completed
 }
 
 export interface Season {
@@ -20,4 +21,5 @@ export interface Season {
   endDate?: string;
   notes?: string;
   progesteroneReadings?: ProgesteroneReading[];
+  matingDate?: string; // First mating date for pregnancy calculations
 }
