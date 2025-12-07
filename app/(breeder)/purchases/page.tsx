@@ -167,7 +167,7 @@ export default function BuyerPurchasesPage() {
     const status = statusConfig[purchase.status] || statusConfig.pending;
 
     return (
-      <Link href={`/buyer/purchases/${purchase.id}`}>
+      <Link href={`/purchases/${purchase.id}`}>
         <Card className="shadow-card hover:shadow-lg transition-all cursor-pointer">
           <CardContent className="p-4">
             <div className="flex gap-4">
@@ -252,7 +252,7 @@ export default function BuyerPurchasesPage() {
         <p className="font-medium text-muted-foreground">{msg.title}</p>
         <p className="text-sm text-muted-foreground mt-1">{msg.description}</p>
         {msg.action && (
-          <Button variant="link" asChild className="mt-2">
+          <Button variant="ghost" asChild className="mt-2">
             <Link href={msg.href!}>{msg.action}</Link>
           </Button>
         )}

@@ -331,7 +331,7 @@ export default function SellerSalesPage() {
                   size="sm"
                   asChild
                 >
-                  <Link href={`/buyer/purchases/${sale.id}`}>
+                  <Link href={`/purchases/${sale.id}`}>
                     View Details
                   </Link>
                 </Button>

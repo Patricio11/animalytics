@@ -292,8 +292,8 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
 
       // Navigate to the purchase detail based on user role
       const userRole = (session?.user as any)?.role || 'buyer';
-      const basePath = userRole === 'buyer' ? '/buyer' : '/breeder';
-      router.push(`${basePath}/purchases/${data.purchase.id}`);
+      const purchasePath = userRole === 'buyer' ? `/buyer/purchases/${data.purchase.id}` : `/purchases/${data.purchase.id}`;
+      router.push(purchasePath);
     } catch (error) {
       console.error('Error initiating purchase:', error);
       toast({
