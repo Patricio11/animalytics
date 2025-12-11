@@ -626,14 +626,27 @@ export default function CycleDetailPage({ params }: PageProps) {
                   progesteroneLevel: data.level,
                   unit: 'nanograms',
                   laboratory: data.laboratory || 'VIDAS',
+                  markAsMating: data.markAsMating,
+                  markAsLastMating: data.markAsLastMating,
                 }),
               });
               
               if (response.ok) {
+                const result = await response.json();
+                
+                // Show success message with mating info
+                if (result.isLastMating) {
+                  alert(`✅ Reading saved and marked as LAST MATING!\n\n${result.pregnancyTasksGenerated ? '🎯 Pregnancy screening tasks have been generated!' : ''}\n\nCheck the Breeding Records tab for details.`);
+                } else if (result.breedingRecordCreated) {
+                  alert('✅ Reading saved and marked as mating!\n\nCheck the Breeding Records tab for details.');
+                }
+                
                 // Refetch the cycle data to show new reading
                 await refetch();
                 // Also invalidate the heat cycles list query
                 queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+                queryClient.invalidateQueries({ queryKey: ['breeding-records'] });
+                queryClient.invalidateQueries({ queryKey: ['tasks'] });
                 setShowAddReadingForm(false);
               } else {
                 const errorData = await response.json();

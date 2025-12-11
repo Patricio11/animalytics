@@ -19,7 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Activity, AlertCircle, Loader2, TrendingUp, Calendar } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Activity, AlertCircle, Loader2, TrendingUp, Calendar, Heart, Sparkles } from 'lucide-react';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { getPhaseInfo } from '@/lib/utils/progesterone';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -30,7 +31,13 @@ interface AddReadingModalProps {
   cycleDay: number;
   bitchName: string;
   startDate: string;
-  onSubmit: (data: { testDate: Date; level: number; laboratory?: string }) => Promise<void>;
+  onSubmit: (data: { 
+    testDate: Date; 
+    level: number; 
+    laboratory?: string;
+    markAsMating?: boolean;
+    markAsLastMating?: boolean;
+  }) => Promise<void>;
   isSubmitting?: boolean;
 }
 
@@ -48,6 +55,8 @@ export function AddReadingModal({
   );
   const [progesteroneLevel, setProgesteroneLevel] = useState<string>('');
   const [laboratory, setLaboratory] = useState<string>('VIDAS');
+  const [markAsMating, setMarkAsMating] = useState<boolean>(false);
+  const [markAsLastMating, setMarkAsLastMating] = useState<boolean>(false);
 
   // Calculate which day this test date represents
   const calculatedDay = testDate
@@ -56,6 +65,9 @@ export function AddReadingModal({
 
   const level = parseFloat(progesteroneLevel);
   const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay, testDate) : null;
+  
+  // Check if in breeding window (P4: 15-35 ng/mL)
+  const isInBreedingWindow = !isNaN(level) && level >= 15 && level <= 35;
 
   const handleSubmit = async () => {
     if (testDate && progesteroneLevel) {
@@ -63,11 +75,15 @@ export function AddReadingModal({
         testDate: testDate,
         level: parseFloat(progesteroneLevel),
         laboratory,
+        markAsMating,
+        markAsLastMating,
       });
       // Reset form
       setTestDate(addDays(new Date(startDate), cycleDay - 1));
       setProgesteroneLevel('');
       setLaboratory('VIDAS');
+      setMarkAsMating(false);
+      setMarkAsLastMating(false);
     }
   };
 
@@ -137,6 +153,87 @@ export function AddReadingModal({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Mating Markers - Only show in breeding window */}
+          {isInBreedingWindow && (
+            <div className="space-y-4 p-4 bg-green-50 dark:bg-green-950/20 border-2 border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Heart className="h-5 w-5 text-green-600" />
+                <Label className="text-base font-semibold text-green-900 dark:text-green-100">
+                  Breeding Window Detected (P4: {progesteroneLevel} ng/mL)
+                </Label>
+              </div>
+              <p className="text-sm text-green-700 dark:text-green-300 mb-3">
+                Mark this reading if a mating occurred on this date
+              </p>
+
+              {/* Mark as Mating */}
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="markAsMating"
+                  checked={markAsMating}
+                  onCheckedChange={(checked) => {
+                    setMarkAsMating(checked as boolean);
+                    if (checked) setMarkAsLastMating(false); // Can't be both
+                  }}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <label
+                    htmlFor="markAsMating"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    <Heart className="h-4 w-4 inline mr-1 text-blue-600" />
+                    Mark as Mating
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    A breeding occurred on this date (will show as M1, M2, etc. on chart)
+                  </p>
+                </div>
+              </div>
+
+              {/* Mark as Last Mating */}
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="markAsLastMating"
+                  checked={markAsLastMating}
+                  onCheckedChange={(checked) => {
+                    setMarkAsLastMating(checked as boolean);
+                    if (checked) setMarkAsMating(false); // Can't be both
+                  }}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <label
+                    htmlFor="markAsLastMating"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    <Sparkles className="h-4 w-4 inline mr-1 text-red-600" />
+                    Mark as LAST Mating
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    This was the final breeding in the fertility window
+                  </p>
+                </div>
+              </div>
+
+              {/* Last Mating Info */}
+              {markAsLastMating && (
+                <Alert className="border-red-500 bg-red-50 dark:bg-red-950/20">
+                  <Sparkles className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-sm text-red-900 dark:text-red-100">
+                    <strong>🎯 Last Mating Countdown Starts!</strong>
+                    <p className="mt-1">
+                      Pregnancy screening tasks will be auto-generated:
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs">
+                      <li>• Day 28: Ultrasound + Blood test</li>
+                      <li>• Day 30: Progesterone plateau check</li>
+                      <li>• Day 45, 50, 55: Pregnancy monitoring</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
 
           {/* Phase Preview */}
           {phaseInfo && (

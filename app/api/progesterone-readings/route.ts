@@ -4,6 +4,7 @@ import {
   heatCycles, 
   heatCycleProgesteroneReadings, 
   heatCycleReminders,
+  breedingRecords,
   animals
 } from '@/lib/db/schema';
 import { tasks } from '@/lib/db/schema/tasks';
@@ -48,6 +49,8 @@ const createReadingSchema = z.object({
   unit: z.enum(['nanograms', 'nanomoles']).optional(),
   laboratory: z.enum(['VIDAS', 'IDEXX', 'IMMULITE', 'RIA', 'ELISA', 'OTHER']).optional(),
   notes: z.string().optional(),
+  markAsMating: z.boolean().optional(),
+  markAsLastMating: z.boolean().optional(),
 });
 
 /**
@@ -77,7 +80,9 @@ export async function POST(request: NextRequest) {
       progesteroneLevel,
       unit = 'nanograms',
       laboratory = 'VIDAS',
-      notes
+      notes,
+      markAsMating = false,
+      markAsLastMating = false,
     } = validation.data;
 
     // Verify the heat cycle belongs to the breeder
@@ -159,6 +164,49 @@ export async function POST(request: NextRequest) {
         notes,
       })
       .returning();
+
+    // Create breeding record if marked as mating
+    let breedingRecordId: string | null = null;
+    if (markAsMating || markAsLastMating) {
+      try {
+        const [breedingRecord] = await db
+          .insert(breedingRecords)
+          .values({
+            heatCycleId,
+            breederId: session.user.id,
+            breedingDate: testDate,
+            breedingDay: calculatedDay,
+            breedingMethod: 'natural', // Default, can be updated later
+            progesteroneLevelAtBreeding: progesteroneLevel.toString(),
+            isLastMating: markAsLastMating,
+            notes: markAsLastMating 
+              ? 'Last mating - pregnancy screening tasks will be generated' 
+              : 'Mating recorded from progesterone reading',
+          })
+          .returning();
+        
+        breedingRecordId = breedingRecord.id;
+
+        // If marked as last mating, auto-generate pregnancy screening tasks
+        if (markAsLastMating) {
+          try {
+            const { generatePregnancyScreeningTasks } = await import('@/lib/services/pregnancy-screening-tasks');
+            const result = await generatePregnancyScreeningTasks(breedingRecord.id, session.user.id);
+            
+            if (result.success) {
+              console.log(`✅ Generated ${result.tasksCreated} pregnancy screening tasks for breeding ${breedingRecord.id}`);
+            } else {
+              console.error('❌ Failed to generate pregnancy screening tasks:', result.error);
+            }
+          } catch (taskGenError) {
+            console.error('Error generating pregnancy screening tasks:', taskGenError);
+          }
+        }
+      } catch (breedingError) {
+        console.error('Error creating breeding record:', breedingError);
+        // Don't fail the whole request if breeding record fails
+      }
+    }
 
     // Get all readings for this cycle (including the new one)
     const allReadings = await db
@@ -332,6 +380,10 @@ export async function POST(request: NextRequest) {
       },
       nextTestRecommendation: nextTest,
       breedingWindowOpen,
+      breedingRecordCreated: breedingRecordId !== null,
+      breedingRecordId: breedingRecordId || undefined,
+      isLastMating: markAsLastMating,
+      pregnancyTasksGenerated: markAsLastMating, // Tasks are generated if marked as last mating
       updatedCycle: {
         id: updatedCycle.id,
         breederId: updatedCycle.breederId,
