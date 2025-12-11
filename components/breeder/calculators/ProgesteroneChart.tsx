@@ -36,7 +36,7 @@ export interface ProgesteroneChartProps {
   bitchName?: string;
   startDate?: Date | string;
   estimatedOvulationDay?: number;
-  breedingDates?: Array<{ date: string; method: string }>;
+  breedingDates?: Array<{ date: string; method: string; isLastMating?: boolean; day?: number }>;
   showPhaseColors?: boolean;
   showBreedingWindow?: boolean;
   height?: number;
@@ -345,19 +345,25 @@ export function ProgesteroneChart({
 
             {/* Breeding dates markers */}
             {breedingDates.map((breeding, index) => {
-              const breedingDay = chartData.find(d => d.date === breeding.date)?.day;
+              const breedingDay = breeding.day || chartData.find(d => d.date === breeding.date)?.day;
               if (!breedingDay) return null;
+
+              const isLast = breeding.isLastMating;
+              const matingNumber = index + 1;
 
               return (
                 <ReferenceLine
                   key={index}
                   x={breedingDay}
-                  stroke="#10b981"
-                  strokeWidth={2}
+                  stroke={isLast ? '#ef4444' : '#10b981'}
+                  strokeWidth={isLast ? 3 : 2}
+                  strokeDasharray={isLast ? '5 5' : undefined}
                   label={{
-                    value: '🎯',
+                    value: isLast ? `🎯 LAST` : `M${matingNumber}`,
                     position: 'top',
-                    fontSize: 16,
+                    fontSize: isLast ? 14 : 12,
+                    fontWeight: isLast ? 'bold' : 'normal',
+                    fill: isLast ? '#ef4444' : '#10b981',
                   }}
                 />
               );
@@ -420,12 +426,19 @@ export function ProgesteroneChart({
         {breedingDates.length > 0 && (
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-              Breeding Dates
+              Breeding Records
             </p>
             <div className="flex flex-wrap gap-2">
               {breedingDates.map((breeding, index) => (
-                <Badge key={index} variant="secondary" className="bg-green-100 text-green-800">
-                  🎯 {breeding.date} ({breeding.method})
+                <Badge 
+                  key={index} 
+                  variant="secondary" 
+                  className={breeding.isLastMating 
+                    ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200 border-2 border-red-500" 
+                    : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200"
+                  }
+                >
+                  {breeding.isLastMating ? '🎯 LAST MATING' : `M${index + 1}`} - {breeding.date} ({breeding.method})
                 </Badge>
               ))}
             </div>
