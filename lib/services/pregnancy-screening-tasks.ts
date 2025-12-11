@@ -1,0 +1,382 @@
+/**
+ * Pregnancy Screening Task Generator Service
+ * 
+ * Automatically generates pregnancy screening tasks after the last mating in a breeding window.
+ * 
+ * Timeline:
+ * - Day 21-28: Ultrasound screening (optimal: day 25-28)
+ * - Day 25-30: Blood test for relaxin hormone
+ * - Day 45+: X-ray for puppy count (optional, closer to whelping)
+ * - Day 30, 45, 55: General pregnancy checkups
+ */
+
+import { db } from '@/lib/db';
+import { tasks, breedingRecords, heatCycles, animals } from '@/lib/db/schema';
+import { eq, and, desc } from 'drizzle-orm';
+import { addDays, format } from 'date-fns';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface PregnancyScreeningTask {
+  type: 'ultrasound' | 'blood_test' | 'xray' | 'checkup';
+  title: string;
+  description: string;
+  daysPostMating: number;
+  priority: 'low' | 'medium' | 'high';
+  eventType: 'pregnancy_ultrasound' | 'pregnancy_blood_test' | 'pregnancy_xray' | 'pregnancy_checkup';
+}
+
+export interface TaskGenerationResult {
+  success: boolean;
+  tasksCreated: number;
+  tasks: Array<{
+    id: string;
+    title: string;
+    dueDate: string;
+    type: string;
+  }>;
+  error?: string;
+}
+
+// ============================================================================
+// PREGNANCY SCREENING TIMELINE
+// ============================================================================
+
+const PREGNANCY_SCREENING_TIMELINE: PregnancyScreeningTask[] = [
+  {
+    type: 'ultrasound',
+    title: 'Day 28: Scan & Bloods',
+    description: 'CRITICAL: Ultrasound scan to confirm pregnancy and blood test for relaxin hormone. This is the primary pregnancy confirmation at 28 days post-last mating.',
+    daysPostMating: 28, // Day 28 - SCAN + BLOODS (combined)
+    priority: 'high',
+    eventType: 'pregnancy_ultrasound',
+  },
+  {
+    type: 'blood_test',
+    title: 'Day 28: Relaxin Blood Test',
+    description: 'Blood test for relaxin hormone (done same day as ultrasound). Confirms pregnancy hormonally.',
+    daysPostMating: 28, // Day 28 - BLOODS (same as scan)
+    priority: 'high',
+    eventType: 'pregnancy_blood_test',
+  },
+  {
+    type: 'checkup',
+    title: 'Day 30: Progesterone Check',
+    description: 'Progesterone test to check for plateau. If P4 plateaus at 21-28 ng/mL = PREGNANT. If P4 drops = NOT PREGNANT.',
+    daysPostMating: 30, // Day 30 - PROG test to check plateau
+    priority: 'high',
+    eventType: 'pregnancy_checkup',
+  },
+  {
+    type: 'checkup',
+    title: 'Mid-Pregnancy Checkup',
+    description: 'Mid-pregnancy veterinary checkup. Monitor bitch health and fetal development.',
+    daysPostMating: 45, // Day 45 checkup
+    priority: 'medium',
+    eventType: 'pregnancy_checkup',
+  },
+  {
+    type: 'xray',
+    title: 'X-Ray for Puppy Count',
+    description: 'X-ray to count puppies and assess skeletal development. Best done after day 45 when bones are calcified.',
+    daysPostMating: 50, // Day 50 for x-ray
+    priority: 'medium',
+    eventType: 'pregnancy_xray',
+  },
+  {
+    type: 'checkup',
+    title: 'Pre-Whelping Checkup',
+    description: 'Final checkup before whelping. Prepare for delivery and assess readiness. Expected whelping: ~63 days from ovulation.',
+    daysPostMating: 55, // Day 55, about 1 week before whelping
+    priority: 'high',
+    eventType: 'pregnancy_checkup',
+  },
+];
+
+// ============================================================================
+// MAIN SERVICE FUNCTIONS
+// ============================================================================
+
+/**
+ * Generate pregnancy screening tasks for a breeding record marked as last mating
+ */
+export async function generatePregnancyScreeningTasks(
+  breedingRecordId: string,
+  userId: string
+): Promise<TaskGenerationResult> {
+  try {
+    // 1. Get the breeding record
+    const [breedingRecord] = await db
+      .select()
+      .from(breedingRecords)
+      .where(
+        and(
+          eq(breedingRecords.id, breedingRecordId),
+          eq(breedingRecords.breederId, userId)
+        )
+      );
+
+    if (!breedingRecord) {
+      return {
+        success: false,
+        tasksCreated: 0,
+        tasks: [],
+        error: 'Breeding record not found',
+      };
+    }
+
+    // 2. Check if tasks already generated
+    if (breedingRecord.pregnancyScreeningTasksGenerated) {
+      return {
+        success: false,
+        tasksCreated: 0,
+        tasks: [],
+        error: 'Pregnancy screening tasks already generated for this breeding',
+      };
+    }
+
+    // 3. Get heat cycle and bitch information
+    const [heatCycle] = await db
+      .select()
+      .from(heatCycles)
+      .where(eq(heatCycles.id, breedingRecord.heatCycleId));
+
+    if (!heatCycle) {
+      return {
+        success: false,
+        tasksCreated: 0,
+        tasks: [],
+        error: 'Heat cycle not found',
+      };
+    }
+
+    const [bitch] = await db
+      .select({
+        id: animals.id,
+        name: animals.name,
+        registrationNumber: animals.registrationNumber,
+      })
+      .from(animals)
+      .where(eq(animals.id, heatCycle.bitchId));
+
+    if (!bitch) {
+      return {
+        success: false,
+        tasksCreated: 0,
+        tasks: [],
+        error: 'Bitch not found',
+      };
+    }
+
+    // 4. Generate tasks based on timeline
+    const lastMatingDate = new Date(breedingRecord.breedingDate);
+    const createdTasks: Array<{
+      id: string;
+      title: string;
+      dueDate: string;
+      type: string;
+    }> = [];
+
+    for (const screeningTask of PREGNANCY_SCREENING_TIMELINE) {
+      const dueDate = addDays(lastMatingDate, screeningTask.daysPostMating);
+      
+      const [newTask] = await db
+        .insert(tasks)
+        .values({
+          userId,
+          animalId: bitch.id,
+          type: 'event',
+          title: `${screeningTask.title} - ${bitch.name}`,
+          description: `${screeningTask.description}\n\nDays post-mating: ${screeningTask.daysPostMating}\nLast mating date: ${format(lastMatingDate, 'MMM dd, yyyy')}`,
+          dueDate: format(dueDate, 'yyyy-MM-dd'),
+          dueTime: '09:00', // Default to 9 AM
+          priority: screeningTask.priority,
+          status: 'pending',
+          isAutoGenerated: true,
+          generatedBy: 'pregnancy_screening_generator',
+          generationBatchId: `pregnancy_${breedingRecordId}`,
+          taskData: {
+            eventType: screeningTask.eventType,
+            pregnancyScreeningData: {
+              heatCycleId: heatCycle.id,
+              breedingRecordId: breedingRecord.id,
+              lastMatingDate: breedingRecord.breedingDate,
+              daysPostMating: screeningTask.daysPostMating,
+              screeningType: screeningTask.type,
+              autoGenerated: true,
+              generatedDate: new Date().toISOString(),
+            },
+          },
+          notes: `Auto-generated pregnancy screening task. Breeding record ID: ${breedingRecordId}`,
+        })
+        .returning();
+
+      createdTasks.push({
+        id: newTask.id,
+        title: newTask.title,
+        dueDate: format(dueDate, 'yyyy-MM-dd'),
+        type: screeningTask.type,
+      });
+    }
+
+    // 5. Mark breeding record as tasks generated
+    await db
+      .update(breedingRecords)
+      .set({
+        pregnancyScreeningTasksGenerated: true,
+        pregnancyScreeningTasksGeneratedAt: new Date(),
+      })
+      .where(eq(breedingRecords.id, breedingRecordId));
+
+    return {
+      success: true,
+      tasksCreated: createdTasks.length,
+      tasks: createdTasks,
+    };
+  } catch (error) {
+    console.error('Error generating pregnancy screening tasks:', error);
+    return {
+      success: false,
+      tasksCreated: 0,
+      tasks: [],
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Detect if a breeding record is the last mating in the breeding window
+ * and automatically generate pregnancy screening tasks
+ */
+export async function checkAndGenerateTasksForLastMating(
+  heatCycleId: string,
+  userId: string
+): Promise<TaskGenerationResult> {
+  try {
+    // 1. Get all breeding records for this heat cycle, ordered by date
+    const breedingRecordsForCycle = await db
+      .select()
+      .from(breedingRecords)
+      .where(
+        and(
+          eq(breedingRecords.heatCycleId, heatCycleId),
+          eq(breedingRecords.breederId, userId)
+        )
+      )
+      .orderBy(desc(breedingRecords.breedingDate));
+
+    if (breedingRecordsForCycle.length === 0) {
+      return {
+        success: false,
+        tasksCreated: 0,
+        tasks: [],
+        error: 'No breeding records found for this heat cycle',
+      };
+    }
+
+    // 2. Get the most recent breeding record (last mating)
+    const lastBreedingRecord = breedingRecordsForCycle[0];
+
+    // 3. Check if it's been at least 2 days since last mating
+    // (to ensure it's truly the last one in the breeding window)
+    const daysSinceLastMating = Math.floor(
+      (new Date().getTime() - new Date(lastBreedingRecord.breedingDate).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    if (daysSinceLastMating < 2) {
+      return {
+        success: false,
+        tasksCreated: 0,
+        tasks: [],
+        error: 'Too soon to determine if this is the last mating. Wait at least 2 days.',
+      };
+    }
+
+    // 4. Mark as last mating if not already marked
+    if (!lastBreedingRecord.isLastMating) {
+      await db
+        .update(breedingRecords)
+        .set({ isLastMating: true })
+        .where(eq(breedingRecords.id, lastBreedingRecord.id));
+    }
+
+    // 5. Generate pregnancy screening tasks
+    return await generatePregnancyScreeningTasks(lastBreedingRecord.id, userId);
+  } catch (error) {
+    console.error('Error checking and generating tasks for last mating:', error);
+    return {
+      success: false,
+      tasksCreated: 0,
+      tasks: [],
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Manually mark a breeding record as the last mating and generate tasks
+ */
+export async function markAsLastMatingAndGenerateTasks(
+  breedingRecordId: string,
+  userId: string
+): Promise<TaskGenerationResult> {
+  try {
+    // 1. Update the breeding record
+    await db
+      .update(breedingRecords)
+      .set({ isLastMating: true })
+      .where(
+        and(
+          eq(breedingRecords.id, breedingRecordId),
+          eq(breedingRecords.breederId, userId)
+        )
+      );
+
+    // 2. Generate tasks
+    return await generatePregnancyScreeningTasks(breedingRecordId, userId);
+  } catch (error) {
+    console.error('Error marking as last mating and generating tasks:', error);
+    return {
+      success: false,
+      tasksCreated: 0,
+      tasks: [],
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Get pregnancy screening tasks for a breeding record
+ */
+export async function getPregnancyScreeningTasks(
+  breedingRecordId: string,
+  userId: string
+) {
+  try {
+    const screeningTasks = await db
+      .select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          eq(tasks.generationBatchId, `pregnancy_${breedingRecordId}`)
+        )
+      )
+      .orderBy(tasks.dueDate);
+
+    return {
+      success: true,
+      tasks: screeningTasks,
+    };
+  } catch (error) {
+    console.error('Error fetching pregnancy screening tasks:', error);
+    return {
+      success: false,
+      tasks: [],
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}

@@ -165,6 +165,11 @@ export const breedingRecords = pgTable('breeding_records', {
   // Progesterone at time of breeding
   progesteroneLevelAtBreeding: decimal('progesterone_level_at_breeding', { precision: 5, scale: 2 }),
   
+  // Last Mating Tracking
+  isLastMating: boolean('is_last_mating').default(false), // Mark as last mating in breeding window
+  pregnancyScreeningTasksGenerated: boolean('pregnancy_screening_tasks_generated').default(false),
+  pregnancyScreeningTasksGeneratedAt: timestamp('pregnancy_screening_tasks_generated_at'),
+  
   // Metadata
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
