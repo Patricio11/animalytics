@@ -13,6 +13,7 @@ import { LitterDetailsTab } from "@/components/breeder/animals/LitterDetailsTab"
 import { RemindersTab } from "@/components/breeder/animals/RemindersTab";
 import { PedigreeTab } from "@/components/breeder/animals/PedigreeTab";
 import { HealthTab } from "@/components/breeder/animals/HealthTab";
+import { ProgesteroneTab } from "@/components/breeder/animals/ProgesteroneTab";
 import { EditAnimalDialogMultiStep } from "@/components/breeder/animals/EditAnimalDialogMultiStep";
 import { ProfilePhotoEditor } from "@/components/breeder/animals/ProfilePhotoEditor";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
   ArrowLeft, Share2, Edit, Heart, Award, Shield, Calendar,
-  Weight, Activity, Ruler, MapPin, Phone, Mail, Eye
+  Weight, Activity, Ruler, MapPin, Phone, Mail, Eye, TrendingUp
 } from "lucide-react";
 import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -249,6 +250,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
       { value: 'semen', label: 'Semen', icon: Shield },
     ] : []),
     ...(animal.sex === 'female' ? [
+      { value: 'progesterone', label: 'Progesterone', icon: TrendingUp },
       { value: 'seasons', label: 'Cycle History', icon: Heart },
       { value: 'litters', label: 'Litter Details', icon: Activity },
     ] : []),
@@ -391,6 +393,15 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                       </div>
                     )}
                   </TabsContent>
+
+                  {animal.sex === 'female' && (
+                    <TabsContent value="progesterone" className="mt-0">
+                      <ProgesteroneTab 
+                        animalId={animal.id} 
+                        animalName={animal.name}
+                      />
+                    </TabsContent>
+                  )}
 
                   <TabsContent value="photos-docs" className="mt-0">
                     <PhotosDocsTab animalId={animal.id} />
