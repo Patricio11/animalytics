@@ -635,10 +635,43 @@ export default function CycleDetailPage({ params }: PageProps) {
                 const result = await response.json();
                 
                 // Show success message with mating info
-                if (result.isLastMating) {
-                  alert(`✅ Reading saved and marked as LAST MATING!\n\n${result.pregnancyTasksGenerated ? '🎯 Pregnancy screening tasks have been generated!' : ''}\n\nCheck the Breeding Records tab for details.`);
+                if (result.isLastMating && result.pregnancyTasksGenerated) {
+                  // Show detailed success message for last mating with tasks
+                  const tasksList = result.pregnancyTasks?.map((task: any) => 
+                    `• ${task.title} - ${new Date(task.dueDate).toLocaleDateString()}`
+                  ).join('\n') || '';
+                  
+                  toast({
+                    title: "🎯 Last Mating Recorded!",
+                    description: (
+                      <div className="space-y-2">
+                        <p className="font-semibold">✅ Reading saved successfully</p>
+                        <p className="text-sm">📋 {result.pregnancyTasksCount} pregnancy screening tasks created:</p>
+                        <ul className="text-xs space-y-1 pl-4">
+                          {result.pregnancyTasks?.map((task: any, idx: number) => (
+                            <li key={idx}>• {task.title} - {new Date(task.dueDate).toLocaleDateString()}</li>
+                          ))}
+                        </ul>
+                        <p className="text-xs text-muted-foreground mt-2">Check your Upcoming Tasks to view all pregnancy screening appointments.</p>
+                      </div>
+                    ),
+                    duration: 10000,
+                  });
+                } else if (result.isLastMating) {
+                  toast({
+                    title: "🎯 Last Mating Recorded",
+                    description: "Reading saved and marked as last mating. Check the Breeding Records tab for details.",
+                  });
                 } else if (result.breedingRecordCreated) {
-                  alert('✅ Reading saved and marked as mating!\n\nCheck the Breeding Records tab for details.');
+                  toast({
+                    title: "✅ Mating Recorded",
+                    description: "Reading saved and marked as mating. Check the Breeding Records tab for details.",
+                  });
+                } else {
+                  toast({
+                    title: "✅ Reading Saved",
+                    description: "Progesterone reading has been recorded successfully.",
+                  });
                 }
                 
                 // Refetch the cycle data to show new reading

@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
 
     // Create breeding record if marked as mating
     let breedingRecordId: string | null = null;
+    let pregnancyTasksResult: any = null;
     if (markAsMating || markAsLastMating) {
       try {
         const [breedingRecord] = await db
@@ -192,6 +193,7 @@ export async function POST(request: NextRequest) {
           try {
             const { generatePregnancyScreeningTasks } = await import('@/lib/services/pregnancy-screening-tasks');
             const result = await generatePregnancyScreeningTasks(breedingRecord.id, session.user.id);
+            pregnancyTasksResult = result;
             
             if (result.success) {
               console.log(`✅ Generated ${result.tasksCreated} pregnancy screening tasks for breeding ${breedingRecord.id}`);
@@ -383,7 +385,9 @@ export async function POST(request: NextRequest) {
       breedingRecordCreated: breedingRecordId !== null,
       breedingRecordId: breedingRecordId || undefined,
       isLastMating: markAsLastMating,
-      pregnancyTasksGenerated: markAsLastMating, // Tasks are generated if marked as last mating
+      pregnancyTasksGenerated: pregnancyTasksResult?.success || false,
+      pregnancyTasksCount: pregnancyTasksResult?.tasksCreated || 0,
+      pregnancyTasks: pregnancyTasksResult?.tasks || [],
       updatedCycle: {
         id: updatedCycle.id,
         breederId: updatedCycle.breederId,
