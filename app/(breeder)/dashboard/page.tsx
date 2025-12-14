@@ -19,8 +19,10 @@ import { useDashboardStats } from "@/lib/api/queries/dashboard";
 import { useCreateTask, useUpdateTask, useCompleteTask } from "@/lib/api/queries/tasks";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APIAnimal, APITask } from "@/lib/api/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
+  const { toast } = useToast();
   const [showAddAnimal, setShowAddAnimal] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
@@ -356,7 +358,21 @@ export default function Dashboard() {
                           setShowTaskEdit(true);
                         }}
                         onToggleComplete={() => {
-                          completeTaskMutation.mutate(task.id);
+                          completeTaskMutation.mutate(task.id, {
+                            onSuccess: () => {
+                              toast({
+                                title: "✅ Task Completed",
+                                description: `"${task.title}" has been marked as complete.`,
+                              });
+                            },
+                            onError: (error) => {
+                              toast({
+                                title: "Error",
+                                description: `Failed to complete task: ${error.message}`,
+                                variant: "destructive",
+                              });
+                            },
+                          });
                         }}
                       />
                     ))}

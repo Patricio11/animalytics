@@ -181,6 +181,7 @@ export function useCompleteTask() {
     onSuccess: (_, taskId) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
   });
 }
