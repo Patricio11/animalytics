@@ -35,6 +35,16 @@ import {
   Heart,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { exportProgesteronePDF } from '@/lib/utils/pdf-export';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +66,8 @@ export default function CycleDetailPage({ params }: PageProps) {
   const [showAddBreedingForm, setShowAddBreedingForm] = useState(false);
   const [selectedReading, setSelectedReading] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [readingToDelete, setReadingToDelete] = useState<string | null>(null);
   
   // Filter for male animals (studs)
   const maleAnimals = animalsData?.filter((animal: any) => animal.sex === 'male') || [];
@@ -408,12 +420,9 @@ export default function CycleDetailPage({ params }: PageProps) {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       className="text-destructive"
-                                      onClick={async () => {
-                                        if (confirm('Are you sure you want to delete this reading? This will recalculate ovulation estimates.')) {
-                                          await deleteReading.mutateAsync(reading.id);
-                                          await refetch();
-                                          queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
-                                        }
+                                      onClick={() => {
+                                        setReadingToDelete(reading.id);
+                                        setShowDeleteDialog(true);
                                       }}
                                     >
                                       <Trash2 className="w-4 h-4 mr-2" />
@@ -761,6 +770,48 @@ export default function CycleDetailPage({ params }: PageProps) {
             setShowAddBreedingForm(false);
           }}
         />
+
+        {/* Delete Reading Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Progesterone Reading?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this reading? This action cannot be undone and will recalculate ovulation estimates for the heat cycle.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => {
+                  if (readingToDelete) {
+                    try {
+                      await deleteReading.mutateAsync(readingToDelete);
+                      await refetch();
+                      queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+                      toast({
+                        title: "Reading Deleted",
+                        description: "Progesterone reading has been deleted successfully.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to delete reading. Please try again.",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setReadingToDelete(null);
+                      setShowDeleteDialog(false);
+                    }
+                  }
+                }}
+              >
+                Delete Reading
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
