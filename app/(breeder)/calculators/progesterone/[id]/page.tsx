@@ -37,6 +37,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { exportProgesteronePDF } from '@/lib/utils/pdf-export';
+import { useToast } from '@/hooks/use-toast';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -45,6 +46,7 @@ interface PageProps {
 export default function CycleDetailPage({ params }: PageProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { id } = use(params);
   const { data: cycle, isLoading, error, refetch } = useHeatCycle(id);
   const { data: breedingRecords } = useBreedingRecords(id);
@@ -655,7 +657,6 @@ export default function CycleDetailPage({ params }: PageProps) {
                         <p className="text-xs text-muted-foreground mt-2">Check your Upcoming Tasks to view all pregnancy screening appointments.</p>
                       </div>
                     ),
-                    duration: 10000,
                   });
                 } else if (result.isLastMating) {
                   toast({
@@ -684,11 +685,19 @@ export default function CycleDetailPage({ params }: PageProps) {
               } else {
                 const errorData = await response.json();
                 console.error('Failed to add reading:', response.status, errorData);
-                alert(`Failed to add reading: ${errorData.message || 'Unknown error'}`);
+                toast({
+                  title: "Error",
+                  description: `Failed to add reading: ${errorData.message || 'Unknown error'}`,
+                  variant: "destructive",
+                });
               }
             } catch (error) {
               console.error('Error adding reading:', error);
-              alert(`Error adding reading: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              toast({
+                title: "Error",
+                description: `Error adding reading: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                variant: "destructive",
+              });
             } finally {
               setIsSubmitting(false);
             }
