@@ -52,7 +52,7 @@ export function ProgesteroneTab({ animalId, animalName }: ProgesteroneTabProps) 
   const router = useRouter();
 
   // Fetch heat cycles for this animal
-  const { data: cycles, isLoading } = useQuery<HeatCycle[]>({
+  const { data, isLoading } = useQuery({
     queryKey: ['heat-cycles', animalId],
     queryFn: async () => {
       const response = await fetch(`/api/heat-cycles?bitchId=${animalId}`);
@@ -61,14 +61,15 @@ export function ProgesteroneTab({ animalId, animalName }: ProgesteroneTabProps) 
     },
   });
 
-  const activeCycle = cycles?.find(c => c.status === 'active');
-  const completedCycles = cycles?.filter(c => c.status !== 'active') || [];
+  const cycles: HeatCycle[] = data?.cycles || [];
+  const activeCycle = cycles.find((c: HeatCycle) => c.status === 'active');
+  const completedCycles = cycles.filter((c: HeatCycle) => c.status !== 'active');
 
   // Calculate stats
-  const totalCycles = cycles?.length || 0;
-  const totalReadings = cycles?.reduce((sum, cycle) => sum + (cycle.readings?.length || 0), 0) || 0;
-  const lastCycleDate = cycles && cycles.length > 0 
-    ? cycles.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0].startDate
+  const totalCycles = cycles.length || 0;
+  const totalReadings = cycles.reduce((sum: number, cycle: HeatCycle) => sum + (cycle.readings?.length || 0), 0) || 0;
+  const lastCycleDate = cycles.length > 0 
+    ? [...cycles].sort((a: HeatCycle, b: HeatCycle) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0].startDate
     : null;
 
   const handleStartCycle = () => {

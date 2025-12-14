@@ -48,7 +48,7 @@ export function ProgesteroneHealthCard({ animalId, animalName }: ProgesteroneHea
   const router = useRouter();
 
   // Fetch heat cycles for this animal
-  const { data: cycles, isLoading } = useQuery<HeatCycle[]>({
+  const { data, isLoading } = useQuery({
     queryKey: ['heat-cycles', animalId],
     queryFn: async () => {
       const response = await fetch(`/api/heat-cycles?bitchId=${animalId}`);
@@ -56,6 +56,8 @@ export function ProgesteroneHealthCard({ animalId, animalName }: ProgesteroneHea
       return response.json();
     },
   });
+
+  const cycles: HeatCycle[] = data?.cycles || [];
 
   if (isLoading) {
     return (
@@ -76,9 +78,9 @@ export function ProgesteroneHealthCard({ animalId, animalName }: ProgesteroneHea
     );
   }
 
-  const activeCycle = cycles?.find(c => c.status === 'active');
-  const lastCycle = cycles && cycles.length > 0 
-    ? cycles.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0]
+  const activeCycle = cycles.find((c: HeatCycle) => c.status === 'active');
+  const lastCycle = cycles.length > 0 
+    ? [...cycles].sort((a: HeatCycle, b: HeatCycle) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0]
     : null;
 
   // Get relevant cycle data
