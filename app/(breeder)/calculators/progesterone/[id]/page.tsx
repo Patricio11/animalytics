@@ -144,9 +144,17 @@ export default function CycleDetailPage({ params }: PageProps) {
 
     try {
       await exportProgesteronePDF(reportData);
+      toast({
+        title: "PDF Exported",
+        description: "Progesterone report has been downloaded successfully.",
+      });
     } catch (error) {
       console.error('Failed to export PDF:', error);
-      alert('Failed to export PDF. Please try again.');
+      toast({
+        title: "Export Failed",
+        description: "Failed to export PDF. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
