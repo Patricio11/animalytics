@@ -89,8 +89,8 @@ export function AddReadingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <div className="w-10 h-10 rounded-full bg-gradient-brand flex items-center justify-center">
               <Activity className="w-5 h-5 text-white" />
@@ -102,7 +102,7 @@ export function AddReadingModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 overflow-y-auto flex-1 pr-2">
           {/* Test Date */}
           <div className="space-y-2">
             <Label htmlFor="testDate">Test Date *</Label>
@@ -269,7 +269,7 @@ export function AddReadingModal({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t flex-shrink-0">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
