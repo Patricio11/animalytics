@@ -108,9 +108,9 @@ export default function Dashboard() {
     }
   };
 
-  // Transform upcoming tasks - exclude progesterone tasks (they have their own widget), limit to 4
+  // Transform upcoming tasks - exclude progesterone tasks (they have their own widget), exclude completed, limit to 4
   const upcomingTasks = stats?.upcomingTasks
-    .filter((task: APITask) => !isProgesteroneTask(task))
+    .filter((task: APITask) => !isProgesteroneTask(task) && !task.completedAt)
     .slice(0, 4)
     .map((task: APITask) => ({
       ...task, // Keep all original task data
