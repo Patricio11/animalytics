@@ -30,6 +30,7 @@ import { format, formatDistanceToNow, isBefore, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { AddHealthRecordDialog } from "@/components/breeder/animals/AddHealthRecordDialog";
+import { ProgesteroneHealthCard } from "@/components/breeder/animals/ProgesteroneHealthCard";
 import { cn } from "@/lib/utils";
 
 interface HealthTabProps {
@@ -250,6 +251,14 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
+          {/* Progesterone Tracking Card - Female Animals Only */}
+          {animalSex === 'female' && (
+            <ProgesteroneHealthCard 
+              animalId={animalId}
+              animalName={animalName}
+            />
+          )}
+
           <Card className="shadow-card border-primary/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
