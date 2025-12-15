@@ -37,7 +37,15 @@ const getEmailConfig = (): EmailConfig => {
       },
     };
   } else {
-    // Production SMTP (e.g., SendGrid, AWS SES, etc.)
+    // Production SMTP (e.g., Resend, SendGrid, AWS SES, etc.)
+    console.log('📧 Email Config (Production):');
+    console.log('  Host:', process.env.SMTP_HOST || '✗ Missing');
+    console.log('  Port:', process.env.SMTP_PORT || '587');
+    console.log('  Secure:', process.env.SMTP_SECURE === 'true');
+    console.log('  User:', process.env.SMTP_USER ? '✓ Set' : '✗ Missing');
+    console.log('  Pass:', process.env.SMTP_PASS ? '✓ Set' : '✗ Missing');
+    console.log('  From:', process.env.SMTP_FROM || 'noreply@animalytics.co');
+    
     return {
       host: process.env.SMTP_HOST || '',
       port: parseInt(process.env.SMTP_PORT || '587'),
