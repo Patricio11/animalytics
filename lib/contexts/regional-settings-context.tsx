@@ -74,12 +74,18 @@ export function RegionalSettingsProvider({ children }: { children: React.ReactNo
           console.log('✅ Settings loaded:', newSettings);
           setSettings(newSettings);
         }
+      } else if (response.status === 401) {
+        // User not authenticated - use default settings (e.g., during signup)
+        console.log('ℹ️ User not authenticated, using default regional settings');
+        setSettings(defaultSettings);
       } else {
         console.warn('⚠️ Regional settings API returned non-OK status:', response.status);
+        setSettings(defaultSettings);
       }
     } catch (error) {
       console.error('❌ Error fetching regional settings:', error);
       // Keep default settings on error
+      setSettings(defaultSettings);
     } finally {
       setIsLoading(false);
     }
