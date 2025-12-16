@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
 import { getUnreadCount, hasConversations as checkHasConversations } from '@/lib/services/messaging-service';
+import { subscribeToMessageUpdates } from '@/lib/services/realtime-messaging';
 
 /**
  * GET /api/conversations/events
@@ -65,12 +66,15 @@ export async function GET(request: NextRequest) {
       // Send initial update immediately
       await sendUpdate();
 
-      // Poll database every 5 seconds for changes
-      // This is more efficient than client-side polling because:
-      // 1. Only one connection per client instead of repeated HTTP requests
-      // 2. Server controls the update frequency
-      // 3. Client receives updates as soon as they're available
-      const interval = setInterval(sendUpdate, 5000);
+      // Subscribe to real-time updates for this user
+      // This is event-driven: only updates when messages actually change
+      const unsubscribe = subscribeToMessageUpdates(userId, async () => {
+        await sendUpdate();
+      });
+
+      // Fallback: Poll every 60 seconds as backup (much less frequent)
+      // This catches any edge cases where notifications might be missed
+      const fallbackInterval = setInterval(sendUpdate, 60000);
 
       // Send heartbeat every 30 seconds to keep connection alive
       const heartbeat = setInterval(() => {
@@ -79,7 +83,8 @@ export async function GET(request: NextRequest) {
 
       // Cleanup on connection close
       request.signal.addEventListener('abort', () => {
-        clearInterval(interval);
+        unsubscribe();
+        clearInterval(fallbackInterval);
         clearInterval(heartbeat);
         controller.close();
       });

@@ -4,6 +4,7 @@ import { conversations, messages } from '@/lib/db/schema/conversations';
 import { eq, and, desc, gt, lt, ne } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
+import { triggerMessageNotification } from '@/lib/services/realtime-messaging';
 
 /**
  * GET /api/conversations/[id]/messages
@@ -274,6 +275,10 @@ export async function POST(
       .update(conversations)
       .set(updateData)
       .where(eq(conversations.id, conversationId));
+
+    // Trigger real-time notification for both participants
+    // This notifies their SSE connections to fetch updated unread counts
+    triggerMessageNotification([conversation.buyerId, conversation.sellerId]);
 
     return NextResponse.json({
       success: true,
