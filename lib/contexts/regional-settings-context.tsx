@@ -44,6 +44,7 @@ const RegionalSettingsContext = createContext<RegionalSettingsContextType>({
 export function RegionalSettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<RegionalSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   const fetchSettings = async () => {
     try {
@@ -92,8 +93,14 @@ export function RegionalSettingsProvider({ children }: { children: React.ReactNo
   };
 
   useEffect(() => {
-    fetchSettings();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      fetchSettings();
+    }
+  }, [mounted]);
 
   const refreshSettings = async () => {
     setIsLoading(true);
