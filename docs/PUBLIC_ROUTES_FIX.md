@@ -121,7 +121,7 @@ Status: ✅ WORKING (as intended)
 ### **Share Button URLs**
 When breeders share their profile, the link is:
 ```
-https://animalytics.com/breeders/[slug]
+https://animalytics.co/breeders/[slug]
 ```
 
 This link now:

@@ -242,7 +242,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     });
     
     const mailOptions = {
-      from: options.from || process.env.EMAIL_FROM || 'Animalytics <noreply@animalytics.com>',
+      from: options.from || process.env.EMAIL_FROM || 'Animalytics <noreply@animalytics.co>',
       to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
       subject: options.subject,
       html: options.html,

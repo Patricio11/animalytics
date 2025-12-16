@@ -24,7 +24,7 @@ This document provides the essential URLs and information needed for submitting 
 
 ### App Information
 - **App Name:** Animalytics
-- **User Support Email:** support@animalytics.com
+- **User Support Email:** support@animalytics.co
 - **Developer Contact Email:** Your email address
 
 ### Scopes Required
@@ -163,14 +163,14 @@ Prepare the following screenshots (1280x720 or 1920x1080):
 ## Contact Information
 
 ### Support
-- **Email:** support@animalytics.com
+- **Email:** support@animalytics.co
 - **Response Time:** Within 48 hours
 
 ### Privacy Inquiries
-- **Email:** privacy@animalytics.com
+- **Email:** privacy@animalytics.co
 
 ### Legal
-- **Email:** legal@animalytics.com
+- **Email:** legal@animalytics.co
 
 ---
 

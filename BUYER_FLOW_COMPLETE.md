@@ -566,7 +566,7 @@ purchaseTimeline {
 
 ### **Contact Support**
 - In-app messaging
-- Email: support@animalytics.com
+- Email: support@animalytics.co
 - Help center: /help
 - Live chat (business hours)
 

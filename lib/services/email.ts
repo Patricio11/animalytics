@@ -103,7 +103,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     const transport = getTransporter();
     
     const mailOptions = {
-      from: options.from || process.env.EMAIL_FROM || 'Animalytics <noreply@animalytics.com>',
+      from: options.from || process.env.EMAIL_FROM || 'Animalytics <noreply@animalytics.co>',
       to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
       subject: options.subject,
       html: options.html,
@@ -721,7 +721,7 @@ function generateVerificationEmailHTML(data: {
     
     <div class="footer">
       <p>This verification email was sent from your Animalytics account.</p>
-      <p>If you didn't sign up, please <a href="mailto:support@animalytics.com">contact support</a>.</p>
+      <p>If you didn't sign up, please <a href="mailto:support@animalytics.co">contact support</a>.</p>
       <p style="margin-top: 16px;">© ${new Date().getFullYear()} Animalytics. All rights reserved.</p>
     </div>
   </div>
@@ -878,7 +878,7 @@ function generatePasswordResetEmailHTML(data: {
     
     <div class="footer">
       <p>This password reset was requested from your Animalytics account.</p>
-      <p>If you didn't make this request, please <a href="mailto:support@animalytics.com">contact support</a> immediately.</p>
+      <p>If you didn't make this request, please <a href="mailto:support@animalytics.co">contact support</a> immediately.</p>
       <p style="margin-top: 16px;">© ${new Date().getFullYear()} Animalytics. All rights reserved.</p>
     </div>
   </div>

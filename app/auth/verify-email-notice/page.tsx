@@ -198,7 +198,7 @@ function VerifyEmailNoticeContent() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Need help?{" "}
-              <a href="mailto:support@animalytics.com" className="text-primary hover:underline">
+              <a href="mailto:support@animalytics.co" className="text-primary hover:underline">
                 Contact Support
               </a>
             </p>

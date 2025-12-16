@@ -344,7 +344,7 @@ export default function TermsOfService() {
 
             <h3 className="text-xl font-semibold mb-3">14.1 Informal Resolution</h3>
             <p className="mb-4">
-              Before filing a claim, please contact us at support@animalytics.com to resolve the issue informally. We commit to working in good faith to reach a resolution.
+              Before filing a claim, please contact us at support@animalytics.co to resolve the issue informally. We commit to working in good faith to reach a resolution.
             </p>
 
             <h3 className="text-xl font-semibold mb-3">14.2 Arbitration</h3>
@@ -408,8 +408,8 @@ export default function TermsOfService() {
               For questions about these Terms, please contact us:
             </p>
             <div className="bg-surface p-6 rounded-lg border">
-              <p className="mb-2"><strong>Email:</strong> legal@animalytics.com</p>
-              <p className="mb-2"><strong>Support:</strong> support@animalytics.com</p>
+              <p className="mb-2"><strong>Email:</strong> legal@animalytics.co</p>
+              <p className="mb-2"><strong>Support:</strong> support@animalytics.co</p>
               <p className="mb-0"><strong>Response Time:</strong> We aim to respond within 48 hours</p>
             </div>
           </section>

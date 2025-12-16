@@ -162,7 +162,7 @@ Share Button → Copy Link → Paste anywhere
 
 **Link format:**
 ```
-https://animalytics.com/breeders/your-kennel-name-ABC123
+https://animalytics.co/breeders/your-kennel-name-ABC123
 ```
 
 **Anyone can:**

@@ -266,7 +266,7 @@ export default function LandingPage() {
               <Link href="/terms" className="hover:text-foreground transition-colors">
                 Terms of Service
               </Link>
-              <a href="mailto:support@animalytics.com" className="hover:text-foreground transition-colors">
+              <a href="mailto:support@animalytics.co" className="hover:text-foreground transition-colors">
                 Support
               </a>
             </div>

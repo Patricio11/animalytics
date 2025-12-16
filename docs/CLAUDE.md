@@ -1421,7 +1421,7 @@ npm run db:seed:creds
 - Statistics (sales, earnings, animals, litters, reviews)
 - Reputation metrics (average rating, response rate/time)
 - SEO fields (meta title, description, keywords)
-- Public URL: `animalytics.com/breeders/{slug}`
+- Public URL: `animalytics.co/breeders/{slug}`
 
 **Seeder Integration**:
 - All test users get wallets (initialized with $0)

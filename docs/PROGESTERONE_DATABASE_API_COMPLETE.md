@@ -449,7 +449,7 @@ export async function sendTestReminder(data: {
   dueDate: Date;
 }) {
   await transporter.sendMail({
-    from: '"Animalytics" <noreply@animalytics.com>',
+    from: '"Animalytics" <noreply@animalytics.co>',
     to: data.email,
     subject: `🔔 Progesterone Test Due - ${data.bitchName} (Day ${data.day})`,
     html: `

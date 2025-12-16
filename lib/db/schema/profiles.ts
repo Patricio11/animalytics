@@ -12,7 +12,7 @@ export const breederProfiles = pgTable('breeder_profiles', {
 
   // Professional branding
   displayName: text('display_name').notNull(),
-  slug: text('slug').unique().notNull(), // URL-friendly: animalytics.com/breeders/john-smith-kennels
+  slug: text('slug').unique().notNull(), // URL-friendly: animalytics.co/breeders/john-smith-kennels
   tagline: text('tagline'), // Short catchphrase
   bio: text('bio'), // Detailed biography
   logoUrl: text('logo_url'),

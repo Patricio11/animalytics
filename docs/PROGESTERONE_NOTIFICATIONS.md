@@ -72,7 +72,7 @@ MAILTRAP_PASS=your_mailtrap_password
 # SMTP_PASS=your_sendgrid_api_key
 
 # Email From Address
-EMAIL_FROM=Animalytics <noreply@animalytics.com>
+EMAIL_FROM=Animalytics <noreply@animalytics.co>
 
 # ============================================================================
 # SMS CONFIGURATION (BulkSMS)

@@ -151,7 +151,7 @@ export default function PrivacyPolicy() {
               <li><strong>Object:</strong> Object to certain processing of your data</li>
             </ul>
             <p className="mb-4">
-              To exercise these rights, contact us at privacy@animalytics.com or through your account settings.
+              To exercise these rights, contact us at privacy@animalytics.co or through your account settings.
             </p>
           </section>
 
@@ -219,8 +219,8 @@ export default function PrivacyPolicy() {
               If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:
             </p>
             <div className="bg-surface p-6 rounded-lg border">
-              <p className="mb-2"><strong>Email:</strong> privacy@animalytics.com</p>
-              <p className="mb-2"><strong>Support:</strong> support@animalytics.com</p>
+              <p className="mb-2"><strong>Email:</strong> privacy@animalytics.co</p>
+              <p className="mb-2"><strong>Support:</strong> support@animalytics.co</p>
               <p className="mb-0"><strong>Response Time:</strong> We aim to respond within 48 hours</p>
             </div>
           </section>

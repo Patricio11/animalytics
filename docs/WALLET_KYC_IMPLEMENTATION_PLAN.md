@@ -405,7 +405,7 @@ export const breederReviews = pgTable('breeder_reviews', {
 - **Expiry reminders** - Renew documents before expiry
 
 ### Breeder Profile Features
-- **Custom URL**: animalytics.com/breeders/john-smith-kennels
+- **Custom URL**: animalytics.co/breeders/john-smith-kennels
 - **Verification badges**: KYC ✓, Health Certified ✓, Background Check ✓
 - **Reputation score**: 5-star rating, response time, success rate
 - **Portfolio showcase**: Champion dogs, genetic testing, awards

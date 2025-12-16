@@ -76,7 +76,7 @@ All schemas are pushed to the database and integrated with the test user seeder.
 - SEO fields (meta title, description, keywords)
 - Activity tracking (last active, profile views)
 
-**Public URL Structure:** `animalytics.com/breeders/{slug}`
+**Public URL Structure:** `animalytics.co/breeders/{slug}`
 
 ---
 

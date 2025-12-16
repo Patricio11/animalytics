@@ -27,7 +27,7 @@ SMTP_USER=your_smtp_user
 SMTP_PASS=your_smtp_password
 
 # Email sender
-EMAIL_FROM=Animalytics <noreply@animalytics.com>
+EMAIL_FROM=Animalytics <noreply@animalytics.co>
 
 # Better Auth
 BETTER_AUTH_URL=http://localhost:3000
