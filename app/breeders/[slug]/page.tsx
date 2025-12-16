@@ -27,6 +27,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -86,10 +89,42 @@ export default function BreederProfilePage({
   const { data: profile, isLoading, error } = usePublicBreederProfile(slug);
   const { data: animals, isLoading: animalsLoading } = useBreederAnimals(slug);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [customMessage, setCustomMessage] = useState('');
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
+  // Message templates
+  const messageTemplates = [
+    {
+      id: 'breeding',
+      label: 'General Inquiry',
+      message: `Hi! I'm interested in learning more about your breeding program.`,
+    },
+    {
+      id: 'puppy',
+      label: 'Puppy Availability',
+      message: `Hello! Do you have any puppies available or upcoming litters?`,
+    },
+    {
+      id: 'stud',
+      label: 'Stud Service',
+      message: `Hi! I'm interested in your stud services. Could you provide more information?`,
+    },
+    {
+      id: 'visit',
+      label: 'Schedule Visit',
+      message: `Hello! I'd like to schedule a visit to meet your dogs. When would be a good time?`,
+    },
+    {
+      id: 'custom',
+      label: 'Write Custom Message',
+      message: '',
+    },
+  ];
+
   // Handle contact breeder button click
-  const handleContactBreeder = async () => {
+  const handleContactBreeder = () => {
     // Check if user is authenticated
     if (!session) {
       setShowAuthDialog(true);
@@ -102,6 +137,21 @@ export default function BreederProfilePage({
       return;
     }
 
+    // Show message template dialog
+    setShowMessageDialog(true);
+  };
+
+  // Handle sending the message
+  const handleSendMessage = async () => {
+    const messageToSend = selectedTemplate === 'custom' 
+      ? customMessage 
+      : messageTemplates.find(t => t.id === selectedTemplate)?.message || '';
+
+    if (!messageToSend.trim()) {
+      alert('Please select a template or write a message');
+      return;
+    }
+
     // Create or get existing conversation
     setIsCreatingConversation(true);
     try {
@@ -111,7 +161,7 @@ export default function BreederProfilePage({
         body: JSON.stringify({
           sellerId: profile.userId,
           subject: `Inquiry about ${profile.displayName}`,
-          initialMessage: `Hi! I'm interested in learning more about your breeding program.`,
+          initialMessage: messageToSend,
         }),
       });
 
@@ -122,8 +172,12 @@ export default function BreederProfilePage({
       }
 
       const data = await response.json();
-      // Redirect to messages page with this conversation
-      router.push(`/buyer/messages?conversation=${data.conversationId}`);
+      
+      // Close dialog
+      setShowMessageDialog(false);
+      
+      // Redirect directly to the conversation (not just messages list)
+      router.push(`/buyer/messages/${data.conversationId}`);
     } catch (error) {
       console.error('Error creating conversation:', error);
       alert(`Failed to start conversation: ${(error as Error).message}`);
@@ -260,6 +314,81 @@ export default function BreederProfilePage({
             >
               <UserPlus className="w-4 h-4 mr-2" />
               Create Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Message Template Dialog */}
+      <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-primary" />
+              Send Message to {profile.displayName}
+            </DialogTitle>
+            <DialogDescription>
+              Choose a message template or write your own message to start the conversation.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <RadioGroup value={selectedTemplate} onValueChange={setSelectedTemplate}>
+              <div className="space-y-3">
+                {messageTemplates.map((template) => (
+                  <div key={template.id} className="flex items-start space-x-3">
+                    <RadioGroupItem value={template.id} id={template.id} className="mt-1" />
+                    <Label 
+                      htmlFor={template.id} 
+                      className="flex-1 cursor-pointer"
+                    >
+                      <div className="font-medium">{template.label}</div>
+                      {template.message && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {template.message}
+                        </div>
+                      )}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </RadioGroup>
+
+            {/* Custom message textarea */}
+            {selectedTemplate === 'custom' && (
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="custom-message">Your Message</Label>
+                <Textarea
+                  id="custom-message"
+                  placeholder="Type your message here..."
+                  value={customMessage}
+                  onChange={(e) => setCustomMessage(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Be polite and professional. This is your first impression!
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowMessageDialog(false)}
+              disabled={isCreatingConversation}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendMessage}
+              disabled={isCreatingConversation || !selectedTemplate}
+              className="w-full sm:w-auto bg-gradient-brand hover:opacity-90"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              {isCreatingConversation ? 'Sending...' : 'Send Message'}
             </Button>
           </DialogFooter>
         </DialogContent>
