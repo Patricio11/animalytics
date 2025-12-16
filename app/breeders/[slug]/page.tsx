@@ -4,6 +4,8 @@ import { use, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
+import { getConversationUrl, type UserRole } from "@/lib/utils/routing";
+import type { ExtendedUser } from "@/lib/auth/types";
 import {
   Star,
   Award,
@@ -143,6 +145,12 @@ export default function BreederProfilePage({
 
   // Handle sending the message
   const handleSendMessage = async () => {
+    // Double-check session exists (should always be true here)
+    if (!session) {
+      alert('Please sign in to send a message');
+      return;
+    }
+
     const messageToSend = selectedTemplate === 'custom' 
       ? customMessage 
       : messageTemplates.find(t => t.id === selectedTemplate)?.message || '';
@@ -176,8 +184,13 @@ export default function BreederProfilePage({
       // Close dialog
       setShowMessageDialog(false);
       
-      // Redirect directly to the conversation (not just messages list)
-      router.push(`/buyer/messages/${data.conversationId}`);
+      // Redirect directly to the conversation using role-based routing utility
+      const user = session.user as ExtendedUser;
+      const conversationUrl = getConversationUrl(
+        (user.role || 'breeder') as UserRole,
+        data.conversationId
+      );
+      router.push(conversationUrl);
     } catch (error) {
       console.error('Error creating conversation:', error);
       alert(`Failed to start conversation: ${(error as Error).message}`);
