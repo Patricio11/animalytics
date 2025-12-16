@@ -1,7 +1,9 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth/client";
 import {
   Star,
   Award,
@@ -15,6 +17,8 @@ import {
   CheckCircle2,
   RefreshCw,
   ArrowLeft,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +27,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ProfileBanner } from "@/components/breeder/profile/ProfileBanner";
 import { ProfileHeader } from "@/components/breeder/profile/ProfileHeader";
 import { ProfileStats } from "@/components/breeder/profile/ProfileStats";
@@ -69,8 +81,53 @@ export default function BreederProfilePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
   const { data: profile, isLoading, error } = usePublicBreederProfile(slug);
   const { data: animals, isLoading: animalsLoading } = useBreederAnimals(slug);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+
+  // Handle contact breeder button click
+  const handleContactBreeder = async () => {
+    // Check if user is authenticated
+    if (!session) {
+      setShowAuthDialog(true);
+      return;
+    }
+
+    // Check if user is trying to message themselves
+    if (session.user.id === profile.userId) {
+      alert("You cannot message yourself!");
+      return;
+    }
+
+    // Create or get existing conversation
+    setIsCreatingConversation(true);
+    try {
+      const response = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sellerId: profile.userId,
+          subject: `Inquiry about ${profile.displayName}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create conversation');
+      }
+
+      const data = await response.json();
+      // Redirect to messages page with this conversation
+      router.push(`/buyer/messages?conversation=${data.conversation.id}`);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      alert('Failed to start conversation. Please try again.');
+    } finally {
+      setIsCreatingConversation(false);
+    }
+  };
 
   // Loading state
   if (isLoading) {
@@ -143,12 +200,67 @@ export default function BreederProfilePage({
             title={profile.displayName}
             description={profile.tagline || `Check out ${profile.displayName} on Animalytics`}
           />
-          <Button className="bg-gradient-brand hover:opacity-90">
+          <Button 
+            className="bg-gradient-brand hover:opacity-90"
+            onClick={handleContactBreeder}
+            disabled={isCreatingConversation}
+          >
             <MessageCircle className="w-4 h-4 mr-2" />
-            Contact Breeder
+            {isCreatingConversation ? 'Starting conversation...' : 'Contact Breeder'}
           </Button>
         </div>
       </div>
+
+      {/* Authentication Required Dialog */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-primary" />
+              Sign in to Contact Breeder
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              You need to be signed in to message breeders. Create an account or sign in to start a conversation with {profile.displayName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Alert>
+              <AlertDescription>
+                <strong>Why sign in?</strong>
+                <ul className="mt-2 space-y-1 text-sm">
+                  <li>• Send messages to breeders</li>
+                  <li>• Track your conversations</li>
+                  <li>• Get notified of replies</li>
+                  <li>• Build your profile</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAuthDialog(false);
+                router.push('/auth/signin');
+              }}
+              className="w-full sm:w-auto"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign In
+            </Button>
+            <Button
+              onClick={() => {
+                setShowAuthDialog(false);
+                router.push('/auth/signup');
+              }}
+              className="w-full sm:w-auto bg-gradient-brand hover:opacity-90"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Create Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Stats Cards */}
       <ProfileStats
