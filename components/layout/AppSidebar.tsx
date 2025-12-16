@@ -77,26 +77,29 @@ const menuItems = [
 ];
 
 const secondaryItems = [
-  {
-    title: "Wallet",
-    url: "/wallet",
-    icon: Wallet,
-  },
-  {
-    title: "Verification",
-    url: "/verification",
-    icon: BadgeCheck,
-  },
+  // TODO: Implement Wallet feature
+  // {
+  //   title: "Wallet",
+  //   url: "/wallet",
+  //   icon: Wallet,
+  // },
+  // TODO: Implement Verification feature
+  // {
+  //   title: "Verification",
+  //   url: "/verification",
+  //   icon: BadgeCheck,
+  // },
   {
     title: "Breeders",
     url: "/breeders",
     icon: Users,
   },
-  {
-    title: "Documents",
-    url: "/documents",
-    icon: FileText,
-  },
+  // TODO: Implement Documents feature
+  // {
+  //   title: "Documents",
+  //   url: "/documents",
+  //   icon: FileText,
+  // },
   {
     title: "Settings",
     url: "/settings",

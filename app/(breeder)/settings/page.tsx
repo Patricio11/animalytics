@@ -39,7 +39,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className={`grid w-full grid-cols-2 gap-1 bg-surface shadow-card ${isAdmin ? 'sm:grid-cols-8' : 'sm:grid-cols-7'}`}>
+          <TabsList className={`grid w-full grid-cols-2 gap-1 bg-surface shadow-card ${isAdmin ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
             <TabsTrigger value="profile" data-testid="tab-profile" className="text-xs sm:text-sm">
               <User className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Profile</span>
@@ -60,14 +60,16 @@ export default function Settings() {
               <Shield className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Privacy</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance" data-testid="tab-appearance" className="text-xs sm:text-sm">
+            {/* TODO: Implement Theme/Appearance Settings */}
+            {/* <TabsTrigger value="appearance" data-testid="tab-appearance" className="text-xs sm:text-sm">
               <Palette className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Theme</span>
-            </TabsTrigger>
-            <TabsTrigger value="data" data-testid="tab-data" className="text-xs sm:text-sm">
+            </TabsTrigger> */}
+            {/* TODO: Implement Data Management Settings */}
+            {/* <TabsTrigger value="data" data-testid="tab-data" className="text-xs sm:text-sm">
               <Database className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Data</span>
-            </TabsTrigger>
+            </TabsTrigger> */}
             {isAdmin && (
               <TabsTrigger value="payments" data-testid="tab-payments" className="text-xs sm:text-sm">
                 <CreditCard className="w-4 h-4 sm:mr-2" />
@@ -101,15 +103,15 @@ export default function Settings() {
             <PrivacySettings />
           </TabsContent>
 
-          {/* Appearance Settings */}
-          <TabsContent value="appearance" className="space-y-6">
+          {/* TODO: Implement Appearance Settings */}
+          {/* <TabsContent value="appearance" className="space-y-6">
             <AppearanceSettings />
-          </TabsContent>
+          </TabsContent> */}
 
-          {/* Data Settings */}
-          <TabsContent value="data" className="space-y-6">
+          {/* TODO: Implement Data Settings */}
+          {/* <TabsContent value="data" className="space-y-6">
             <DataSettings />
-          </TabsContent>
+          </TabsContent> */}
 
           {/* Payment Settings (Admin Only) */}
           {isAdmin && (
