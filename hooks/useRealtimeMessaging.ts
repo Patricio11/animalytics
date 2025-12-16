@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { authClient } from '@/lib/auth/client';
 
 export interface MessagingData {
   unreadCount: number;
@@ -77,8 +78,16 @@ export function useRealtimeMessaging(
   const [data, setData] = useState<MessagingData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [hasError, setHasError] = useState(false);
+  
+  // Check authentication status
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    // Don't connect if not authenticated or still loading
+    if (!session || isPending) {
+      return;
+    }
+
     let eventSource: EventSource | null = null;
     let reconnectTimeout: NodeJS.Timeout;
 
@@ -174,7 +183,7 @@ export function useRealtimeMessaging(
         clearTimeout(reconnectTimeout);
       }
     };
-  }, [onUpdate, onError]);
+  }, [session, isPending, onUpdate, onError]);
 
   // Calculate unread count based on options
   let unreadCount = 0;
