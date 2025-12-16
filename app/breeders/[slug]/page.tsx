@@ -111,19 +111,22 @@ export default function BreederProfilePage({
         body: JSON.stringify({
           sellerId: profile.userId,
           subject: `Inquiry about ${profile.displayName}`,
+          initialMessage: `Hi! I'm interested in learning more about your breeding program.`,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create conversation');
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to create conversation');
       }
 
       const data = await response.json();
       // Redirect to messages page with this conversation
-      router.push(`/buyer/messages?conversation=${data.conversation.id}`);
+      router.push(`/buyer/messages?conversation=${data.conversationId}`);
     } catch (error) {
       console.error('Error creating conversation:', error);
-      alert('Failed to start conversation. Please try again.');
+      alert(`Failed to start conversation: ${(error as Error).message}`);
     } finally {
       setIsCreatingConversation(false);
     }
