@@ -59,19 +59,10 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '50');
     const direction = searchParams.get('direction') || 'older'; // 'older' or 'newer'
 
-    // Build query
-    let query = db
-      .select()
-      .from(messages)
-      .where(
-        and(
-          eq(messages.conversationId, conversationId),
-          eq(messages.isDeleted, false)
-        )
-      )
-      .limit(limit + 1); // Get one extra to check if there are more
-
-    // Apply cursor pagination
+    // Build query based on cursor pagination
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let allMessages: any[] = [];
+    
     if (cursor) {
       // Get the cursor message's timestamp
       const [cursorMessage] = await db
@@ -82,7 +73,7 @@ export async function GET(
 
       if (cursorMessage) {
         if (direction === 'older') {
-          query = db
+          allMessages = await db
             .select()
             .from(messages)
             .where(
@@ -95,7 +86,7 @@ export async function GET(
             .orderBy(desc(messages.createdAt))
             .limit(limit + 1);
         } else {
-          query = db
+          allMessages = await db
             .select()
             .from(messages)
             .where(
@@ -108,10 +99,13 @@ export async function GET(
             .orderBy(messages.createdAt)
             .limit(limit + 1);
         }
+      } else {
+        // Cursor not found, return empty
+        allMessages = [];
       }
     } else {
       // No cursor - get most recent messages
-      query = db
+      allMessages = await db
         .select()
         .from(messages)
         .where(
@@ -124,13 +118,9 @@ export async function GET(
         .limit(limit + 1);
     }
 
-    const fetchedMessages = await query;
-
     // Check if there are more messages
-    const hasMore = fetchedMessages.length > limit;
-    if (hasMore) {
-      fetchedMessages.pop(); // Remove the extra message
-    }
+    const hasMore = allMessages.length > limit;
+    const fetchedMessages = hasMore ? allMessages.slice(0, limit) : allMessages;
 
     // For display, reverse to show oldest first
     const sortedMessages = direction === 'newer'
