@@ -209,11 +209,11 @@ export function ProgesteroneTestForm({
               id="level"
               type="number"
               step="0.1"
-              min="0"
-              max="50"
+              min="0.5"
+              max="100"
               value={level}
               onChange={(e) => setLevel(e.target.value)}
-              placeholder="0.0"
+              placeholder="0.5"
               className={cn(
                 "bg-background pr-16 transition-colors",
                 error && "border-destructive",
@@ -232,7 +232,7 @@ export function ProgesteroneTestForm({
           )}
           {!error && (
             <p className="text-xs text-muted-foreground">
-              Valid range: 0-50 ng/mL
+              Valid range: 0.5-100 ng/mL (values below 0.5 are typically measurement errors)
             </p>
           )}
         </div>

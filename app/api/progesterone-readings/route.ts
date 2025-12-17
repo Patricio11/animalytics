@@ -45,7 +45,9 @@ const createReadingSchema = z.object({
   heatCycleId: z.string().uuid('Invalid heat cycle ID'),
   day: z.number().int().min(1).max(30).optional(), // Optional - will be auto-calculated if not provided
   testDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
-  progesteroneLevel: z.number().min(0).max(50),
+  progesteroneLevel: z.number()
+    .min(0.5, 'Progesterone level must be at least 0.5 ng/mL. Values below this are typically measurement errors.')
+    .max(100, 'Progesterone level cannot exceed 100 ng/mL. Please verify your reading.'),
   unit: z.enum(['nanograms', 'nanomoles']).optional(),
   laboratory: z.enum(['VIDAS', 'IDEXX', 'IMMULITE', 'RIA', 'ELISA', 'OTHER']).optional(),
   notes: z.string().optional(),
@@ -101,8 +103,12 @@ export async function POST(request: NextRequest) {
       return errorResponse('Heat cycle not found or does not belong to you', 404);
     }
 
+    // Block adding readings to completed or cancelled cycles
     if (heatCycle.status !== 'active') {
-      return errorResponse('Cannot add readings to inactive heat cycle', 400);
+      const statusMessage = heatCycle.status === 'completed' 
+        ? 'This heat cycle has been completed. You cannot add new progesterone readings to a completed cycle.'
+        : 'This heat cycle has been cancelled. You cannot add new progesterone readings to a cancelled cycle.';
+      return errorResponse(statusMessage, 400);
     }
 
     // Auto-calculate day if not provided

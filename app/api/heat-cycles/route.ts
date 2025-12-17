@@ -165,7 +165,11 @@ export async function POST(request: NextRequest) {
 
     // Check for existing active cycle for this bitch
     const [existingCycle] = await db
-      .select({ id: heatCycles.id })
+      .select({ 
+        id: heatCycles.id,
+        startDate: heatCycles.startDate,
+        currentDay: heatCycles.currentDay
+      })
       .from(heatCycles)
       .where(
         and(
@@ -176,7 +180,10 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingCycle) {
-      return errorResponse('This bitch already has an active heat cycle', 409);
+      return errorResponse(
+        `Cannot create a new heat cycle. This bitch already has an active heat cycle (started ${existingCycle.startDate}, currently on Day ${existingCycle.currentDay}). Please complete or cancel the existing cycle before starting a new one.`,
+        409
+      );
     }
 
     // Create heat cycle
