@@ -209,7 +209,7 @@ export async function generatePregnancyScreeningTasks(
               generatedDate: new Date().toISOString(),
             },
           },
-          notes: `Auto-generated pregnancy screening task. Breeding record ID: ${breedingRecordId}`,
+          notes: `Auto-generated pregnancy screening task for ${bitch.name}. Last mating: ${format(lastMatingDate, 'MMM dd, yyyy')}`,
         })
         .returning();
 
