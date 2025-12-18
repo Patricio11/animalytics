@@ -33,6 +33,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth/client";
+import { CheckoutDialog } from "@/components/marketplace/CheckoutDialog";
+import type { UserRole } from "@/lib/utils/routing";
 
 interface Message {
   id: string;
@@ -79,6 +81,7 @@ export default function ConversationPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -400,7 +403,7 @@ export default function ConversationPage() {
                   <div className="flex gap-2">
                     <Button 
                       className="flex-1 bg-gradient-brand hover:opacity-90"
-                      onClick={() => alert('Checkout dialog will open here. Implementation in progress.')}
+                      onClick={() => setCheckoutOpen(true)}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       Buy Now
@@ -538,6 +541,24 @@ export default function ConversationPage() {
           )}
         </div>
       </div>
+
+      {/* Checkout Dialog */}
+      {conversation?.listing && (
+        <CheckoutDialog
+          open={checkoutOpen}
+          onOpenChange={setCheckoutOpen}
+          listing={{
+            id: conversation.listing.id,
+            title: conversation.listing.title,
+            category: conversation.listing.category,
+            price: conversation.listing.price || 0,
+            currency: conversation.listing.currency || 'USD',
+            additionalImages: conversation.listing.additionalImages,
+          }}
+          conversationId={conversationId}
+          userRole="buyer"
+        />
+      )}
     </div>
   );
 }

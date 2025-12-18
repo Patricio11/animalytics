@@ -8,6 +8,7 @@ import { conversations } from '@/lib/db/schema/conversations';
 import { eq, or, desc, and } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
+import { settingsService } from '@/lib/services/payment/settings-service';
 
 /**
  * GET /api/purchases
@@ -238,9 +239,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate amounts
+    // Get seller info to check if premium
+    const [seller] = await db
+      .select({
+        id: users.id,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, listing.userId))
+      .limit(1);
+
+    // Calculate platform fee using database settings
     const purchasePrice = listing.price || 0;
-    const platformFee = 0; // TODO: Calculate platform fee
+    const isPremiumSeller = false; // TODO: Check if seller has premium subscription
+    const platformFee = await settingsService.calculateFee(purchasePrice, isPremiumSeller);
     const totalAmount = purchasePrice + platformFee;
 
     // Create purchase
