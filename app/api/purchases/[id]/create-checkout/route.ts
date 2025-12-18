@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { purchases } from '@/lib/db/schema/purchases';
 import { listings } from '@/lib/db/schema/marketplace';
+import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
 import { stripeProvider } from '@/lib/services/payment/stripe-provider';
+import type { UserRole } from '@/lib/utils/routing';
 
 /**
  * POST /api/purchases/[id]/create-checkout
@@ -85,6 +87,19 @@ export async function POST(
       );
     }
 
+    // Get buyer's role to determine correct redirect URL
+    const [buyer] = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, purchase.buyerId))
+      .limit(1);
+
+    const buyerRole = (buyer?.role || 'buyer') as UserRole;
+    
+    // Determine purchase path based on user role
+    // Breeders use /purchases, buyers use /buyer/purchases
+    const purchasePath = buyerRole === 'buyer' ? '/buyer/purchases' : '/purchases';
+
     // Create Stripe checkout session
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const checkoutSession = await stripeProvider.createCheckoutSession({
@@ -98,8 +113,8 @@ export async function POST(
         buyerId: purchase.buyerId,
         sellerId: purchase.sellerId,
       },
-      successUrl: `${baseUrl}/buyer/purchases/${purchase.id}?payment=success`,
-      cancelUrl: `${baseUrl}/buyer/purchases/${purchase.id}?payment=cancelled`,
+      successUrl: `${baseUrl}${purchasePath}/${purchase.id}?payment=success`,
+      cancelUrl: `${baseUrl}${purchasePath}/${purchase.id}?payment=cancelled`,
     });
 
     // Update purchase with payment intent ID
