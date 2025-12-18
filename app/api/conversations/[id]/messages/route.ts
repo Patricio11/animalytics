@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { conversations, messages } from '@/lib/db/schema/conversations';
+import { users } from '@/lib/db/schema/users';
 import { eq, and, desc, gt, lt, ne } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
 import { triggerMessageNotification } from '@/lib/services/realtime-messaging';
+import { createMessageReceivedNotification } from '@/lib/services/notification-creator';
 
 /**
  * GET /api/conversations/[id]/messages
@@ -269,6 +271,32 @@ export async function POST(
     // Trigger real-time notification for both participants
     // This notifies their SSE connections to fetch updated unread counts
     triggerMessageNotification([conversation.buyerId, conversation.sellerId]);
+
+    // Create in-app notification for the recipient
+    try {
+      // Get sender's name
+      const [sender] = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      const senderName = sender?.name || 'Someone';
+      const recipientId = userRole === 'buyer' ? conversation.sellerId : conversation.buyerId;
+      const recipientRole = userRole === 'buyer' ? 'seller' : 'buyer';
+
+      // Create notification for recipient
+      await createMessageReceivedNotification({
+        userId: recipientId,
+        senderName,
+        messagePreview: message.trim().substring(0, 100),
+        conversationId,
+        userRole: recipientRole,
+      });
+    } catch (notifError) {
+      // Don't fail the message send if notification creation fails
+      console.error('Failed to create message notification:', notifError);
+    }
 
     return NextResponse.json({
       success: true,

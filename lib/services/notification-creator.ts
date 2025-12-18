@@ -231,6 +231,36 @@ export async function createVaccinationDueNotification(params: {
 }
 
 // ============================================================================
+// MESSAGING NOTIFICATION CREATORS
+// ============================================================================
+
+/**
+ * Create message received notification
+ */
+export async function createMessageReceivedNotification(params: {
+  userId: string;
+  senderName: string;
+  messagePreview: string;
+  conversationId: string;
+  userRole: 'buyer' | 'seller';
+}) {
+  return createNotification({
+    userId: params.userId,
+    type: 'message_received',
+    title: `New Message from ${params.senderName}`,
+    message: params.messagePreview,
+    actionUrl: params.userRole === 'buyer' ? '/buyer/messages' : '/breeder/messages',
+    actionLabel: 'Read Message',
+    relatedEntityType: 'conversation',
+    relatedEntityId: params.conversationId,
+    metadata: {
+      senderName: params.senderName,
+      conversationId: params.conversationId,
+    },
+  });
+}
+
+// ============================================================================
 // MARKETPLACE NOTIFICATION CREATORS
 // ============================================================================
 
