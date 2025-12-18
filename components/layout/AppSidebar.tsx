@@ -110,6 +110,7 @@ const secondaryItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const [hasPurchases, setHasPurchases] = useState(false);
+  const [hasSales, setHasSales] = useState(false);
   const [hasSavedListings, setHasSavedListings] = useState(false);
 
   // Real-time messaging updates using SSE
@@ -119,15 +120,22 @@ export function AppSidebar() {
     showOnlyAsBuyer: true, // Breeders only see messages where they're the buyer
   });
 
-  // Check if user has purchases or saved listings
+  // Check if user has purchases, sales, or saved listings
   useEffect(() => {
     async function checkUserData() {
       try {
-        // Check for purchases
-        const purchasesRes = await fetch('/api/purchases');
+        // Check for purchases (as buyer)
+        const purchasesRes = await fetch('/api/purchases?role=buyer');
         if (purchasesRes.ok) {
           const purchasesData = await purchasesRes.json();
           setHasPurchases(purchasesData.purchases?.length > 0);
+        }
+
+        // Check for sales (as seller)
+        const salesRes = await fetch('/api/purchases?role=seller');
+        if (salesRes.ok) {
+          const salesData = await salesRes.json();
+          setHasSales(salesData.purchases?.length > 0);
         }
 
         // Check for saved listings
@@ -150,7 +158,10 @@ export function AppSidebar() {
       return hasConversations; // Only show if breeder has conversations
     }
     if (item.title === 'My Purchases') {
-      return hasPurchases; // Only show if breeder has purchases
+      return hasPurchases; // Only show if breeder has purchases (as buyer)
+    }
+    if (item.title === 'My Sales') {
+      return hasSales; // Only show if breeder has sales (as seller)
     }
     if (item.title === 'Saved Listings') {
       return hasSavedListings; // Only show if breeder has saved listings

@@ -23,6 +23,7 @@ import {
   Info,
   Check,
   CheckCheck,
+  ShoppingCart,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -32,6 +33,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth/client";
+import { CheckoutDialog } from "@/components/marketplace/CheckoutDialog";
+import type { UserRole } from "@/lib/utils/routing";
 
 interface Message {
   id: string;
@@ -78,6 +81,7 @@ export default function ConversationPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -366,10 +370,10 @@ export default function ConversationPage() {
           {/* Listing card if exists */}
           {conversation.listing && (
             <div className="flex justify-center">
-              <Link href={`/marketplace/${conversation.listing.id}`}>
-                <Card className="max-w-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <div className="h-16 w-16 bg-muted rounded overflow-hidden flex-shrink-0">
+              <Card className="max-w-md w-full shadow-card">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="h-20 w-20 bg-muted rounded overflow-hidden flex-shrink-0">
                       {conversation.listing.additionalImages && conversation.listing.additionalImages.length > 0 ? (
                         <img
                           src={conversation.listing.additionalImages[0]}
@@ -383,18 +387,38 @@ export default function ConversationPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
+                      <p className="font-semibold text-sm mb-1 line-clamp-2">
                         {conversation.listing.title}
                       </p>
+                      <Badge variant="outline" className="text-xs mb-2">
+                        {conversation.listing.category}
+                      </Badge>
                       {conversation.listing.price && (
-                        <p className="text-sm text-primary font-semibold">
-                          ${(conversation.listing.price / 100).toLocaleString()}
+                        <p className="text-lg text-primary font-bold">
+                          {conversation.listing.currency || 'USD'} ${(conversation.listing.price / 100).toLocaleString()}
                         </p>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                  </div>
+                  <div className="flex gap-2">
+                    {/* Show Buy Now button only if breeder is the buyer in this conversation */}
+                    {conversation.userRole === 'buyer' && (
+                      <Button 
+                        className="flex-1 bg-gradient-brand hover:opacity-90"
+                        onClick={() => setCheckoutOpen(true)}
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Buy Now
+                      </Button>
+                    )}
+                    <Button variant="outline" asChild className={conversation.userRole === 'buyer' ? '' : 'flex-1'}>
+                      <Link href={`/marketplace/${conversation.listing.id}`}>
+                        View Listing
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
@@ -520,6 +544,24 @@ export default function ConversationPage() {
           )}
         </div>
       </div>
+
+      {/* Checkout Dialog */}
+      {conversation?.listing && conversation.userRole === 'buyer' && (
+        <CheckoutDialog
+          open={checkoutOpen}
+          onOpenChange={setCheckoutOpen}
+          listing={{
+            id: conversation.listing.id,
+            title: conversation.listing.title,
+            category: conversation.listing.category,
+            price: conversation.listing.price || 0,
+            currency: conversation.listing.currency || 'USD',
+            additionalImages: conversation.listing.additionalImages,
+          }}
+          conversationId={conversationId}
+          userRole="breeder"
+        />
+      )}
     </div>
   );
 }
