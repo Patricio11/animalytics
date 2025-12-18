@@ -23,6 +23,7 @@ import {
   Info,
   Check,
   CheckCheck,
+  ShoppingCart,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -366,10 +367,10 @@ export default function ConversationPage() {
           {/* Listing card if exists */}
           {conversation.listing && (
             <div className="flex justify-center">
-              <Link href={`/marketplace/${conversation.listing.id}`}>
-                <Card className="max-w-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <div className="h-16 w-16 bg-muted rounded overflow-hidden flex-shrink-0">
+              <Card className="max-w-md w-full shadow-card">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="h-20 w-20 bg-muted rounded overflow-hidden flex-shrink-0">
                       {conversation.listing.additionalImages && conversation.listing.additionalImages.length > 0 ? (
                         <img
                           src={conversation.listing.additionalImages[0]}
@@ -383,18 +384,35 @@ export default function ConversationPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
+                      <p className="font-semibold text-sm mb-1 line-clamp-2">
                         {conversation.listing.title}
                       </p>
+                      <Badge variant="outline" className="text-xs mb-2">
+                        {conversation.listing.category}
+                      </Badge>
                       {conversation.listing.price && (
-                        <p className="text-sm text-primary font-semibold">
-                          ${(conversation.listing.price / 100).toLocaleString()}
+                        <p className="text-lg text-primary font-bold">
+                          {conversation.listing.currency || 'USD'} ${(conversation.listing.price / 100).toLocaleString()}
                         </p>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      className="flex-1 bg-gradient-brand hover:opacity-90"
+                      onClick={() => alert('Checkout dialog will open here. Implementation in progress.')}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Buy Now
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/marketplace/${conversation.listing.id}`}>
+                        View Listing
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
