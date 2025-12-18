@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/utils/currency";
+import { getConversationUrl, type UserRole } from "@/lib/utils/routing";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -240,8 +241,11 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
       setContactDialogOpen(false);
       setMessageText("");
 
-      // Navigate to the conversation
-      router.push(`/buyer/messages/${data.conversationId}`);
+      // Navigate to the conversation using role-based routing
+      // Get user's actual role (breeder/buyer) to route correctly
+      const userRole = (session?.user as any)?.role || 'buyer';
+      const conversationUrl = getConversationUrl(userRole as UserRole, data.conversationId);
+      router.push(conversationUrl);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({

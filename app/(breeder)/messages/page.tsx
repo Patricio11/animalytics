@@ -285,7 +285,7 @@ export default function BreederMessagesPage() {
             ) : filteredSellingConversations.length > 0 ? (
               <div className="space-y-4">
                 {filteredSellingConversations.map((conversation) => (
-                  <Link key={conversation.id} href={`/sales/messages/${conversation.id}`}>
+                  <Link key={conversation.id} href={`/messages/${conversation.id}`}>
                     <Card className="shadow-card hover:shadow-lg transition-shadow cursor-pointer">
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
