@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { NOTIFICATION_CONFIGS } from '@/lib/types/notification';
 import type { NotificationType, NotificationCategory, NotificationPriority } from '@/lib/types/notification';
+import { getMessagesPath, type UserRole } from '@/lib/utils/routing';
 
 // ============================================================================
 // NOTIFICATION CREATOR SERVICE
@@ -236,20 +237,23 @@ export async function createVaccinationDueNotification(params: {
 
 /**
  * Create message received notification
+ * NOTE: recipientUserRole is the actual user role (breeder/buyer), NOT conversation role (buyer/seller)
+ * - Breeders use /messages (can buy AND sell)
+ * - Buyers use /buyer/messages (can only buy)
  */
 export async function createMessageReceivedNotification(params: {
   userId: string;
   senderName: string;
   messagePreview: string;
   conversationId: string;
-  userRole: 'buyer' | 'seller';
+  recipientUserRole: UserRole;
 }) {
   return createNotification({
     userId: params.userId,
     type: 'message_received',
     title: `New Message from ${params.senderName}`,
     message: params.messagePreview,
-    actionUrl: params.userRole === 'buyer' ? '/buyer/messages' : '/breeder/messages',
+    actionUrl: getMessagesPath(params.recipientUserRole),
     actionLabel: 'Read Message',
     relatedEntityType: 'conversation',
     relatedEntityId: params.conversationId,

@@ -274,16 +274,27 @@ export async function POST(
 
     // Create in-app notification for the recipient
     try {
-      // Get sender's name
+      // Determine recipient ID based on conversation role
+      const recipientId = userRole === 'buyer' ? conversation.sellerId : conversation.buyerId;
+
+      // Get sender's name and recipient's actual user role from database
       const [sender] = await db
         .select({ name: users.name })
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
 
+      const [recipient] = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, recipientId))
+        .limit(1);
+
       const senderName = sender?.name || 'Someone';
-      const recipientId = userRole === 'buyer' ? conversation.sellerId : conversation.buyerId;
-      const recipientRole = userRole === 'buyer' ? 'seller' : 'buyer';
+      // Use actual user role (breeder/buyer), NOT conversation role (buyer/seller)
+      // Breeders can buy AND sell, so they always use /messages
+      // Buyers can only buy, so they use /buyer/messages
+      const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'buyer' | 'vet' | 'event_organizer' | 'admin';
 
       // Create notification for recipient
       await createMessageReceivedNotification({
@@ -291,7 +302,7 @@ export async function POST(
         senderName,
         messagePreview: message.trim().substring(0, 100),
         conversationId,
-        userRole: recipientRole,
+        recipientUserRole,
       });
     } catch (notifError) {
       // Don't fail the message send if notification creation fails
