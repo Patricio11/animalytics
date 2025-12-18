@@ -47,24 +47,16 @@ export interface TaskGenerationResult {
 const PREGNANCY_SCREENING_TIMELINE: PregnancyScreeningTask[] = [
   {
     type: 'ultrasound',
-    title: 'Day 28: Scan & Bloods',
-    description: 'CRITICAL: Ultrasound scan to confirm pregnancy and blood test for relaxin hormone. This is the primary pregnancy confirmation at 28 days post-last mating.',
-    daysPostMating: 28, // Day 28 - SCAN + BLOODS (combined)
+    title: 'Day 28: Pregnancy Confirmation',
+    description: 'CRITICAL: Comprehensive pregnancy confirmation visit. Includes: (1) Ultrasound scan to visualize pregnancy, (2) Hematology blood work, (3) Progesterone test. This is the primary pregnancy confirmation at 28 days post-last mating.',
+    daysPostMating: 28, // Day 28 - Ultrasound + Hematology + Progesterone
     priority: 'high',
     eventType: 'pregnancy_ultrasound',
   },
   {
-    type: 'blood_test',
-    title: 'Day 28: Relaxin Blood Test',
-    description: 'Blood test for relaxin hormone (done same day as ultrasound). Confirms pregnancy hormonally.',
-    daysPostMating: 28, // Day 28 - BLOODS (same as scan)
-    priority: 'high',
-    eventType: 'pregnancy_blood_test',
-  },
-  {
     type: 'checkup',
-    title: 'Day 30: Progesterone Check',
-    description: 'Progesterone test to check for plateau. If P4 plateaus at 21-28 ng/mL = PREGNANT. If P4 drops = NOT PREGNANT.',
+    title: 'Day 30: Progesterone Plateau Check',
+    description: 'Follow-up progesterone test to confirm plateau. If P4 plateaus at 21-28 ng/mL = PREGNANT (hormone sustaining pregnancy). If P4 drops below 5 ng/mL = NOT PREGNANT (no implantation). This verifies the Day 28 results.',
     daysPostMating: 30, // Day 30 - PROG test to check plateau
     priority: 'high',
     eventType: 'pregnancy_checkup',
