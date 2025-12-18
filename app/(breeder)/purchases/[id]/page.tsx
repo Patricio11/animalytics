@@ -293,9 +293,10 @@ export default function PurchaseDetailPage() {
                   </p>
                 </div>
               </div>
-              {/* Make Payment Button */}
-              {(purchase.purchase.status === 'pending' || purchase.purchase.status === 'payment_pending') && 
-               purchase.purchase.paymentStatus !== 'completed' && (
+              {/* Make Payment Button - Only show if payment not completed */}
+              {purchase.purchase.paymentStatus !== 'completed' && 
+               purchase.purchase.paymentStatus !== 'processing' &&
+               (purchase.purchase.status === 'pending' || purchase.purchase.status === 'payment_pending') && (
                 <Button onClick={handlePayment} disabled={isProcessing} className="bg-primary">
                   <DollarSign className="h-4 w-4 mr-2" />
                   {isProcessing ? 'Processing...' : 'Make Payment'}
@@ -320,11 +321,11 @@ export default function PurchaseDetailPage() {
             <Card className="shadow-card">
               <CardContent className="p-6">
                 <div className="flex gap-4">
-                  <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    {purchase.animal?.primaryPhotoUrl ? (
+                  <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                    {(purchase.animal?.primaryPhotoUrl || purchase.listing?.additionalImages?.[0]) ? (
                       <img
-                        src={purchase.animal.primaryPhotoUrl}
-                        alt={purchase.animal.name}
+                        src={purchase.animal?.primaryPhotoUrl || purchase.listing?.additionalImages?.[0]}
+                        alt={purchase.animal?.name || purchase.listing?.title}
                         className="h-full w-full object-cover rounded-lg"
                       />
                     ) : (
