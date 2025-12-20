@@ -126,6 +126,7 @@ export async function GET(
         purchasePrice: purchase.purchasePrice,
         currency: purchase.currency,
         platformFee: purchase.platformFee,
+        deliveryFee: purchase.deliveryFee,
         totalAmount: purchase.totalAmount,
         paymentMethod: purchase.paymentMethod,
         paymentStatus: purchase.paymentStatus,

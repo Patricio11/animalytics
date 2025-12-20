@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { purchases, purchaseTimeline } from '@/lib/db/schema/purchases';
 import { listings } from '@/lib/db/schema/marketplace';
-import { animals } from '@/lib/db/schema/animals';
 import { users } from '@/lib/db/schema/users';
-import { conversations } from '@/lib/db/schema/conversations';
-import { eq, or, desc, and } from 'drizzle-orm';
+import { conversations } from '@/lib/db/schema/messaging';
+import { breederDeliverySettings, listingDeliveryOverrides } from '@/lib/db/schema/breeder-settings';
+import { eq, and, or, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
 import { settingsService } from '@/lib/services/payment/settings-service';
@@ -253,7 +253,55 @@ export async function POST(request: NextRequest) {
     const purchasePrice = listing.price || 0;
     const isPremiumSeller = false; // TODO: Check if seller has premium subscription
     const platformFee = await settingsService.calculateFee(purchasePrice, isPremiumSeller);
-    const totalAmount = purchasePrice + platformFee;
+    
+    // Calculate delivery fee based on breeder settings and delivery method
+    let deliveryFee = 0;
+    
+    if (deliveryMethod !== 'pickup') {
+      // Get breeder's delivery settings
+      const [deliverySettings] = await db
+        .select()
+        .from(breederDeliverySettings)
+        .where(eq(breederDeliverySettings.breederId, listing.userId))
+        .limit(1);
+      
+      // Get listing-specific overrides
+      const [deliveryOverride] = await db
+        .select()
+        .from(listingDeliveryOverrides)
+        .where(eq(listingDeliveryOverrides.listingId, listingId))
+        .limit(1);
+      
+      // Calculate fee based on delivery method
+      if (deliveryMethod === 'delivery') {
+        if (deliveryOverride?.deliveryIncluded) {
+          deliveryFee = 0; // Free delivery for this listing
+        } else if (deliveryOverride?.customLocalDeliveryFee !== null && deliveryOverride?.customLocalDeliveryFee !== undefined) {
+          deliveryFee = deliveryOverride.customLocalDeliveryFee;
+        } else if (deliverySettings) {
+          deliveryFee = deliverySettings.localDeliveryFee || 0;
+        }
+      } else if (deliveryMethod === 'shipping') {
+        // Check if international (simple check - can be enhanced)
+        const isInternational = deliveryCountry && deliveryCountry !== 'USA' && deliveryCountry !== 'US';
+        
+        if (deliveryOverride?.shippingIncluded) {
+          deliveryFee = 0; // Free shipping for this listing
+        } else if (isInternational && deliveryOverride?.customShippingFeeInternational !== null && deliveryOverride?.customShippingFeeInternational !== undefined) {
+          deliveryFee = deliveryOverride.customShippingFeeInternational;
+        } else if (deliveryOverride?.customShippingFee !== null && deliveryOverride?.customShippingFee !== undefined) {
+          deliveryFee = deliveryOverride.customShippingFee;
+        } else if (deliverySettings) {
+          if (isInternational && deliverySettings.shippingFeeInternational) {
+            deliveryFee = deliverySettings.shippingFeeInternational;
+          } else {
+            deliveryFee = deliverySettings.shippingFee || 0;
+          }
+        }
+      }
+    }
+    
+    const totalAmount = purchasePrice + platformFee + deliveryFee;
 
     // Create purchase
     const [newPurchase] = await db
@@ -266,6 +314,7 @@ export async function POST(request: NextRequest) {
         purchasePrice,
         currency: listing.currency || 'USD',
         platformFee,
+        deliveryFee,
         totalAmount,
         paymentMethod: finalPaymentMethod,
         deliveryMethod,

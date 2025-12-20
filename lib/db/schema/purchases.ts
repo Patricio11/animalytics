@@ -63,7 +63,8 @@ export const purchases = pgTable('purchases', {
   purchasePrice: integer('purchase_price').notNull(), // in cents
   currency: text('currency').default('USD').notNull(),
   platformFee: integer('platform_fee').default(0), // in cents
-  totalAmount: integer('total_amount').notNull(), // purchase_price + platform_fee
+  deliveryFee: integer('delivery_fee').default(0), // in cents - NEW
+  totalAmount: integer('total_amount').notNull(), // purchase_price + platform_fee + deliveryFee
 
   // Payment Information
   paymentMethod: paymentMethodEnum('payment_method').notNull(),
