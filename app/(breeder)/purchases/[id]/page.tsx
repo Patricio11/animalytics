@@ -341,15 +341,21 @@ export default function PurchaseDetailPage() {
                         {purchase.animal.breed} • {purchase.animal.sex}
                       </p>
                     )}
-                    <div className="mt-3">
+                    <div className="text-right">
                       <p className="text-2xl font-bold">
                         {formatPrice(purchase.purchase.totalAmount, purchase.purchase.currency)}
                       </p>
-                      {purchase.purchase.platformFee > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          Includes {formatPrice(purchase.purchase.platformFee, purchase.purchase.currency)} platform fee
-                        </p>
-                      )}
+                      <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+                        {purchase.purchase.platformFee > 0 && (
+                          <p>Platform fee: {formatPrice(purchase.purchase.platformFee, purchase.purchase.currency)}</p>
+                        )}
+                        {purchase.purchase.deliveryFee !== undefined && purchase.purchase.deliveryFee > 0 && (
+                          <p>Delivery fee: {formatPrice(purchase.purchase.deliveryFee, purchase.purchase.currency)}</p>
+                        )}
+                        {purchase.purchase.deliveryFee === 0 && purchase.purchase.deliveryMethod !== 'pickup' && (
+                          <p className="text-green-600">Free delivery</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -405,6 +411,42 @@ export default function PurchaseDetailPage() {
               <TabsContent value="details" className="mt-4">
                 <Card className="shadow-card">
                   <CardContent className="p-6 space-y-4">
+                    {/* Price Breakdown */}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Price Breakdown</p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Item Price</span>
+                          <span className="font-medium">
+                            {formatPrice(purchase.purchase.purchasePrice, purchase.purchase.currency)}
+                          </span>
+                        </div>
+                        {purchase.purchase.platformFee > 0 && (
+                          <div className="flex justify-between">
+                            <span>Platform Fee</span>
+                            <span className="font-medium">
+                              {formatPrice(purchase.purchase.platformFee, purchase.purchase.currency)}
+                            </span>
+                          </div>
+                        )}
+                        {purchase.purchase.deliveryFee !== undefined && (
+                          <div className="flex justify-between">
+                            <span>Delivery Fee</span>
+                            <span className={`font-medium ${purchase.purchase.deliveryFee === 0 ? 'text-green-600' : ''}`}>
+                              {purchase.purchase.deliveryFee === 0 ? 'FREE' : formatPrice(purchase.purchase.deliveryFee, purchase.purchase.currency)}
+                            </span>
+                          </div>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between font-bold text-base">
+                          <span>Total</span>
+                          <span className="text-primary">
+                            {formatPrice(purchase.purchase.totalAmount, purchase.purchase.currency)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Separator />
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Payment Method</p>
                       <p className="capitalize">{purchase.purchase.paymentMethod?.replace('_', ' ')}</p>
