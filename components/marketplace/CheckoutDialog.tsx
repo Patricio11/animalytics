@@ -61,6 +61,17 @@ interface Listing {
   additionalImages?: string[];
 }
 
+interface DeliveryOption {
+  method: 'pickup' | 'delivery' | 'shipping';
+  available: boolean;
+  fee: number;
+  feeInternational?: number;
+  label: string;
+  description: string;
+  estimatedDays: number;
+  notes?: string | null;
+}
+
 interface CheckoutDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -100,6 +111,9 @@ export function CheckoutDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [platformFee, setPlatformFee] = useState(0);
   const [isLoadingFee, setIsLoadingFee] = useState(true);
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
+  const [isLoadingDeliveryOptions, setIsLoadingDeliveryOptions] = useState(true);
+  const [deliveryFee, setDeliveryFee] = useState(0);
 
   // Fetch platform fee
   useEffect(() => {
@@ -125,7 +139,58 @@ export function CheckoutDialog({
     }
   }, [open, listing.price]);
 
-  const totalAmount = listing.price + platformFee;
+  // Fetch delivery options
+  useEffect(() => {
+    async function fetchDeliveryOptions() {
+      try {
+        setIsLoadingDeliveryOptions(true);
+        const response = await fetch(`/api/listings/${listing.id}/delivery-options`);
+        if (response.ok) {
+          const data = await response.json();
+          setDeliveryOptions(data.options || []);
+          // Set default delivery method to first available option
+          if (data.options && data.options.length > 0) {
+            setDeliveryMethod(data.options[0].method);
+            setDeliveryFee(data.options[0].fee || 0);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching delivery options:", error);
+        // Fallback to pickup only
+        setDeliveryOptions([{
+          method: 'pickup',
+          available: true,
+          fee: 0,
+          label: 'Pickup',
+          description: 'Pick up from breeder\'s location',
+          estimatedDays: 0,
+        }]);
+        setDeliveryMethod('pickup');
+        setDeliveryFee(0);
+      } finally {
+        setIsLoadingDeliveryOptions(false);
+      }
+    }
+
+    if (open && listing.id) {
+      fetchDeliveryOptions();
+    }
+  }, [open, listing.id]);
+
+  // Update delivery fee when delivery method or country changes
+  useEffect(() => {
+    const selectedOption = deliveryOptions.find(opt => opt.method === deliveryMethod);
+    if (selectedOption) {
+      // Check if international shipping
+      const isInternational = deliveryMethod === 'shipping' && deliveryCountry && deliveryCountry !== 'USA' && deliveryCountry !== 'US';
+      const fee = isInternational && selectedOption.feeInternational !== undefined
+        ? selectedOption.feeInternational
+        : selectedOption.fee;
+      setDeliveryFee(fee);
+    }
+  }, [deliveryMethod, deliveryCountry, deliveryOptions]);
+
+  const totalAmount = listing.price + platformFee + deliveryFee;
 
   const handleSubmit = async () => {
     // Validation
@@ -293,6 +358,18 @@ export function CheckoutDialog({
                   )}
                 </span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Delivery Fee</span>
+                <span className="font-medium">
+                  {isLoadingDeliveryOptions ? (
+                    <Loader2 className="h-4 w-4 animate-spin inline" />
+                  ) : deliveryFee === 0 ? (
+                    <span className="text-green-600">FREE</span>
+                  ) : (
+                    `${listing.currency} $${(deliveryFee / 100).toLocaleString()}`
+                  )}
+                </span>
+              </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
@@ -357,40 +434,53 @@ export function CheckoutDialog({
           {/* Delivery Method */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">Delivery Method</Label>
-            <RadioGroup value={deliveryMethod} onValueChange={(value) => setDeliveryMethod(value as DeliveryMethod)}>
-              <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
-                <RadioGroupItem value="pickup" id="pickup" />
-                <Label htmlFor="pickup" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <div>
-                    <div className="font-medium">Pickup</div>
-                    <div className="text-xs text-muted-foreground">Pick up from seller's location</div>
-                  </div>
-                </Label>
+            {isLoadingDeliveryOptions ? (
+              <div className="flex items-center justify-center p-8 border rounded-lg">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Loading delivery options...</span>
               </div>
-
-              <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
-                <RadioGroupItem value="delivery" id="delivery" />
-                <Label htmlFor="delivery" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <Truck className="h-5 w-5 text-primary" />
-                  <div>
-                    <div className="font-medium">Delivery</div>
-                    <div className="text-xs text-muted-foreground">Seller delivers to your address</div>
-                  </div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
-                <RadioGroupItem value="shipping" id="shipping" />
-                <Label htmlFor="shipping" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <Package className="h-5 w-5 text-primary" />
-                  <div>
-                    <div className="font-medium">Shipping</div>
-                    <div className="text-xs text-muted-foreground">Shipped via courier</div>
-                  </div>
-                </Label>
-              </div>
-            </RadioGroup>
+            ) : (
+              <RadioGroup value={deliveryMethod} onValueChange={(value) => setDeliveryMethod(value as DeliveryMethod)}>
+                {deliveryOptions.map((option) => {
+                  const Icon = option.method === 'pickup' ? MapPin : option.method === 'delivery' ? Truck : Package;
+                  const isInternational = option.method === 'shipping' && deliveryCountry && deliveryCountry !== 'USA' && deliveryCountry !== 'US';
+                  const displayFee = isInternational && option.feeInternational !== undefined ? option.feeInternational : option.fee;
+                  
+                  return (
+                    <div key={option.method} className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
+                      <RadioGroupItem value={option.method} id={option.method} />
+                      <Label htmlFor={option.method} className="cursor-pointer flex-1">
+                        <div className="flex items-start gap-3">
+                          <Icon className="h-5 w-5 text-primary mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div className="font-medium">{option.label}</div>
+                              {displayFee === 0 ? (
+                                <Badge variant="secondary" className="bg-green-100 text-green-700">FREE</Badge>
+                              ) : (
+                                <span className="text-sm font-semibold">${(displayFee / 100).toFixed(2)}</span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">{option.description}</div>
+                            {option.estimatedDays > 0 && (
+                              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Est. {option.estimatedDays} {option.estimatedDays === 1 ? 'day' : 'days'}
+                              </div>
+                            )}
+                            {option.notes && (
+                              <div className="text-xs text-muted-foreground mt-1 italic">
+                                {option.notes}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  );
+                })}
+              </RadioGroup>
+            )}
           </div>
 
           {/* Delivery Address (if not pickup) */}
