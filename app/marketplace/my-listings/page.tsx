@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
 import { CreateListingDialog } from "@/components/breeder/marketplace/CreateListingDialog";
+import { DeliverySettingsPrompt } from "@/components/marketplace/DeliverySettingsPrompt";
 import { 
   ArrowLeft, 
   Plus, 
@@ -158,6 +159,13 @@ export default function MyListingsPage() {
             Create Listing
           </Button>
         </div>
+
+        {/* Delivery Settings Prompt */}
+        {allListings.length > 0 && (
+          <div className="mb-6">
+            <DeliverySettingsPrompt compact />
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
