@@ -395,7 +395,10 @@ export default function ConversationPage() {
                       </Badge>
                       {conversation.listing.price && (
                         <p className="text-lg text-primary font-bold">
-                          {conversation.listing.currency || 'USD'} ${(conversation.listing.price / 100).toLocaleString()}
+                          {new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: conversation.listing.currency || 'USD',
+                          }).format(conversation.listing.price / 100)}
                         </p>
                       )}
                     </div>
