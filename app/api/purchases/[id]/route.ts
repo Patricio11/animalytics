@@ -315,28 +315,37 @@ export async function PATCH(
         eventDescription = 'Animal is ready for pickup/delivery';
         break;
 
+      case 'dispatch':
       case 'in_transit':
-        // Mark as in transit (for delivery)
+        // Mark as dispatched/in transit (seller marks as shipped)
         if (userRole !== 'seller') {
           return NextResponse.json(
-            { error: 'Only seller can mark as in transit' },
+            { error: 'Only seller can mark as dispatched' },
             { status: 403 }
           );
         }
-        if (purchase.status !== 'ready_for_pickup') {
+        // Allow dispatch from payment_completed, confirmed, preparing, or ready_for_pickup
+        if (!['payment_completed', 'confirmed', 'preparing', 'ready_for_pickup'].includes(purchase.status)) {
           return NextResponse.json(
-            { error: 'Purchase must be ready for pickup' },
+            { error: 'Purchase cannot be dispatched in current status' },
             { status: 400 }
           );
         }
         newStatus = 'in_transit';
         updateData.status = newStatus;
-        eventTitle = 'In Transit';
-        eventDescription = 'Animal is being delivered';
+        updateData.readyAt = new Date(); // Mark as ready when dispatched
+        eventTitle = 'Dispatched';
+        eventDescription = 'Seller has dispatched the item';
         break;
 
       case 'complete':
-        // Either party can complete (buyer confirms receipt or seller confirms handover)
+        // Only BUYER can complete (confirm receipt)
+        if (userRole !== 'buyer') {
+          return NextResponse.json(
+            { error: 'Only buyer can confirm receipt and complete purchase' },
+            { status: 403 }
+          );
+        }
         if (purchase.status !== 'ready_for_pickup' && purchase.status !== 'in_transit') {
           return NextResponse.json(
             { error: 'Purchase cannot be completed in current status' },
@@ -350,9 +359,7 @@ export async function PATCH(
         updateData.ownershipTransferred = true;
         updateData.transferredAt = new Date();
         eventTitle = 'Purchase Completed';
-        eventDescription = userRole === 'buyer'
-          ? 'Buyer confirmed receipt of animal'
-          : 'Seller confirmed handover';
+        eventDescription = 'Buyer confirmed receipt of item';
 
         // Update listing status to sold
         if (purchase.listingId) {

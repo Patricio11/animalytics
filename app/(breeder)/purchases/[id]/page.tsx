@@ -293,8 +293,9 @@ export default function PurchaseDetailPage() {
                   </p>
                 </div>
               </div>
-              {/* Make Payment Button - Only show if payment not completed */}
-              {purchase.purchase.paymentStatus !== 'completed' && 
+              {/* Make Payment Button - Only show for BUYER if payment not completed */}
+              {purchase.userRole === 'buyer' &&
+               purchase.purchase.paymentStatus !== 'completed' && 
                purchase.purchase.paymentStatus !== 'processing' &&
                (purchase.purchase.status === 'pending' || purchase.purchase.status === 'payment_pending') && (
                 <Button onClick={handlePayment} disabled={isProcessing} className="bg-primary">
@@ -302,11 +303,23 @@ export default function PurchaseDetailPage() {
                   {isProcessing ? 'Processing...' : 'Make Payment'}
                 </Button>
               )}
-              {/* Confirm Receipt Button */}
-              {purchase.purchase.status === 'ready_for_pickup' && (
-                <Button onClick={() => handleAction('complete')}>
+              
+              {/* Mark as Dispatched Button - Only show for SELLER after payment */}
+              {purchase.userRole === 'seller' &&
+               purchase.purchase.paymentStatus === 'completed' &&
+               (purchase.purchase.status === 'payment_completed' || purchase.purchase.status === 'confirmed') && (
+                <Button onClick={() => handleAction('dispatch')} disabled={isProcessing} className="bg-primary">
+                  <Truck className="h-4 w-4 mr-2" />
+                  {isProcessing ? 'Processing...' : 'Mark as Dispatched'}
+                </Button>
+              )}
+              
+              {/* Confirm Receipt Button - Only show for BUYER when item is ready/in transit */}
+              {purchase.userRole === 'buyer' &&
+               (purchase.purchase.status === 'ready_for_pickup' || purchase.purchase.status === 'in_transit') && (
+                <Button onClick={() => handleAction('complete')} disabled={isProcessing} className="bg-green-600 hover:bg-green-700">
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Confirm Receipt
+                  {isProcessing ? 'Processing...' : 'Confirm Receipt'}
                 </Button>
               )}
             </div>
