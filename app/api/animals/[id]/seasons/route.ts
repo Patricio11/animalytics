@@ -14,10 +14,10 @@ import { addDays, format as formatDate, differenceInDays, parseISO } from 'date-
 
 const createSeasonSchema = z.object({
   startDate: z.string(), // ISO date string
-  endDate: z.string().optional(),
+  endDate: z.string().optional().nullable(),
   status: z.enum(['active', 'completed']).optional().default('active'),
-  durationDays: z.number().optional(),
-  notes: z.string().optional(),
+  durationDays: z.number().optional().nullable(),
+  notes: z.string().optional().nullable(),
   createReminder: z.boolean().optional().default(true),
 });
 
@@ -108,9 +108,12 @@ export async function POST(
     const { id: animalId } = await params;
     const body = await request.json();
 
+    console.log('📝 Season creation request:', { animalId, body });
+
     // Validate request body
     const validation = createSeasonSchema.safeParse(body);
     if (!validation.success) {
+      console.error('❌ Validation failed:', validation.error.issues);
       return NextResponse.json(
         {
           error: 'Validation failed',

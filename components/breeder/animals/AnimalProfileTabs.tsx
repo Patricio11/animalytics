@@ -35,7 +35,9 @@ const bitchTabs: Tab[] = [
 ];
 
 export function AnimalProfileTabs({ animal, activeTab, onTabChange }: AnimalProfileTabsProps) {
-  const tabs = animal.type === 'bitch' ? bitchTabs : dogTabs;
+  // Check both sex and type fields for compatibility (database uses sex, frontend uses type)
+  const isFemale = (animal as any).sex === 'female' || animal.type === 'bitch';
+  const tabs = isFemale ? bitchTabs : dogTabs;
 
   return (
     <div className="border-b border-primary/10 bg-surface">

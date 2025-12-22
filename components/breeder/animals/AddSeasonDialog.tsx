@@ -88,7 +88,8 @@ export function AddSeasonDialog({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to save season');
+        console.error('Season save error:', error);
+        throw new Error(error.error || error.message || 'Failed to save season');
       }
 
       return response.json();
