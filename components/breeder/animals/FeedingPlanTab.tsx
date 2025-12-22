@@ -51,7 +51,7 @@ export function FeedingPlanTab({ animalId, animalName, feedingPlans: initialPlan
       if (!response.ok) throw new Error('Failed to fetch feeding plans');
       return response.json();
     },
-    initialData: { success: true, data: initialPlans },
+    placeholderData: { success: true, data: initialPlans },
   });
 
   const feedingPlans = plansData?.data || [];

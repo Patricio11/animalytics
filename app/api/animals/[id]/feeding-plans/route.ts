@@ -103,9 +103,12 @@ export async function POST(
     const { id: animalId } = await params;
     const body = await request.json();
 
+    console.log('📝 Feeding plan creation request:', { animalId, body });
+
     // Validate request body
     const validation = createFeedingPlanSchema.safeParse(body);
     if (!validation.success) {
+      console.error('❌ Validation failed:', validation.error.issues);
       return NextResponse.json(
         {
           error: 'Validation failed',
@@ -126,8 +129,11 @@ export async function POST(
       .limit(1);
 
     if (!animal) {
+      console.error('❌ Animal not found:', animalId);
       return NextResponse.json({ error: 'Animal not found' }, { status: 404 });
     }
+
+    console.log('🐕 Animal found:', { id: animal.id, name: animal.name });
 
     const validatedData = validation.data;
 
@@ -222,6 +228,8 @@ export async function POST(
         }
       }
     }
+
+    console.log(`✅ Feeding plan created successfully. Tasks created: ${tasksCreated}`);
 
     return NextResponse.json({
       success: true,
