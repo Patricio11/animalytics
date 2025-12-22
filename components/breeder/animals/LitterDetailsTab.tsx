@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { LitterDialog } from "./LitterDialog";
 import { LitterCard } from "./LitterCard";
 import { PregnancyTracker } from "./PregnancyTracker";
-import { mockAnimals } from "@/data/mockData";
 
 interface LitterDetailsTabProps {
   animalId: string;
@@ -40,6 +39,16 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
   });
 
   const litters = littersData?.data || [];
+
+  // Fetch available sires (male dogs) from API
+  const { data: animalsData } = useQuery({
+    queryKey: ['animals'],
+    queryFn: async () => {
+      const response = await fetch('/api/animals');
+      if (!response.ok) throw new Error('Failed to fetch animals');
+      return response.json();
+    },
+  });
 
   // Create mutation
   const createMutation = useMutation({
@@ -134,13 +143,14 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
     }
   };
 
-  // Get available sires (all male dogs)
-  const availableSires = mockAnimals
-    .filter(a => a.type === 'dog')
-    .map(a => ({ id: a.id, name: a.name }));
+  // Get available sires (all male dogs from real API data)
+  const animals = animalsData?.animals || [];
+  const availableSires = animals
+    .filter((a: any) => a.sex === 'male' || a.type === 'dog')
+    .map((a: any) => ({ id: a.id, name: a.name }));
 
   // Get bitch name for pregnancy tracker
-  const bitch = mockAnimals.find(a => a.id === animalId);
+  const bitch = animals.find((a: any) => a.id === animalId);
   const bitchName = bitch?.name || 'Unknown';
 
   const expectedLitters = litters.filter((l: Litter) => l.status === 'expected');

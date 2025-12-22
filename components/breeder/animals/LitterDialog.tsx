@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Baby, AlertCircle, Calendar } from "lucide-react";
 import type { Litter } from "@/lib/types/animal";
 import { format, addDays, differenceInDays } from "date-fns";
@@ -38,8 +39,11 @@ export function LitterDialog({
   availableSires,
 }: LitterDialogProps) {
   const [matingDate, setMatingDate] = useState<Date | undefined>(new Date());
+  const [sireMode, setSireMode] = useState<'select' | 'manual'>('select');
   const [sireId, setSireId] = useState('');
   const [sireName, setSireName] = useState('');
+  const [sireRegistrationNumber, setSireRegistrationNumber] = useState('');
+  const [sireRegisteredName, setSireRegisteredName] = useState('');
   const [actualWhelpingDate, setActualWhelpingDate] = useState<Date | undefined>();
   const [puppyCount, setPuppyCount] = useState('');
   const [survivingPuppies, setSurvivingPuppies] = useState('');
@@ -52,8 +56,16 @@ export function LitterDialog({
   useEffect(() => {
     if (existingLitter && mode === 'edit') {
       setMatingDate(existingLitter.matingDate ? new Date(existingLitter.matingDate) : undefined);
-      setSireId(existingLitter.sireId);
-      setSireName(existingLitter.sireName);
+      // Determine mode based on whether sireId exists
+      if (existingLitter.sireId && existingLitter.sireId !== 'manual') {
+        setSireMode('select');
+        setSireId(existingLitter.sireId);
+        setSireName(existingLitter.sireName);
+      } else {
+        setSireMode('manual');
+        setSireRegistrationNumber(existingLitter.sireId || '');
+        setSireRegisteredName(existingLitter.sireName || '');
+      }
       setActualWhelpingDate(existingLitter.whelpingDate ? new Date(existingLitter.whelpingDate) : undefined);
       setPuppyCount(existingLitter.puppyCount?.toString() || '');
       setSurvivingPuppies(existingLitter.survivingPuppies?.toString() || '');
@@ -74,8 +86,11 @@ export function LitterDialog({
 
   const resetForm = () => {
     setMatingDate(new Date());
+    setSireMode('select');
     setSireId('');
     setSireName('');
+    setSireRegistrationNumber('');
+    setSireRegisteredName('');
     setActualWhelpingDate(undefined);
     setPuppyCount('');
     setSurvivingPuppies('');
@@ -105,16 +120,24 @@ export function LitterDialog({
     return differenceInDays(new Date(expectedDate), new Date());
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    // Required fields
     if (!matingDate) {
       newErrors.matingDate = 'Mating date is required';
     }
 
-    if (!sireId) {
-      newErrors.sireId = 'Sire selection is required';
+    if (sireMode === 'select') {
+      if (!sireId) {
+        newErrors.sireId = 'Sire selection is required';
+      }
+    } else {
+      if (!sireRegistrationNumber) {
+        newErrors.sireRegistrationNumber = 'Sire registration number is required';
+      }
+      if (!sireRegisteredName) {
+        newErrors.sireRegisteredName = 'Sire registered name is required';
+      }
     }
 
     // Mating date shouldn't be in the future
@@ -166,8 +189,8 @@ export function LitterDialog({
 
     const litter: Omit<Litter, 'id'> = {
       matingDate: matingDate?.toISOString(),
-      sireId,
-      sireName,
+      sireId: sireMode === 'select' ? sireId : sireRegistrationNumber,
+      sireName: sireMode === 'select' ? sireName : sireRegisteredName,
       expectedWhelpingDate,
       whelpingDate: actualWhelpingDate?.toISOString() || undefined,
       puppyCount: puppyCount ? parseInt(puppyCount) : undefined,
@@ -205,29 +228,82 @@ export function LitterDialog({
 
         <div className="space-y-6">
           {/* Sire Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="sire">
-              Sire <span className="text-destructive">*</span>
-            </Label>
-            <Select value={sireId} onValueChange={handleSireChange}>
-              <SelectTrigger id="sire" className="bg-background border-primary/20">
-                <SelectValue placeholder="Select sire..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableSires.map((sire) => (
-                  <SelectItem key={sire.id} value={sire.id}>
-                    {sire.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value="frozen">Frozen Semen (Specify in notes)</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.sireId && (
-              <p className="text-sm text-destructive">{errors.sireId}</p>
+          <div className="space-y-4">
+            <div>
+              <Label>Sire <span className="text-destructive">*</span></Label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Select the father of this litter
+              </p>
+            </div>
+
+            <RadioGroup value={sireMode} onValueChange={(value) => setSireMode(value as 'select' | 'manual')}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="select" id="sire-select" />
+                <Label htmlFor="sire-select" className="font-normal cursor-pointer">
+                  Select from my dogs
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="manual" id="sire-manual" />
+                <Label htmlFor="sire-manual" className="font-normal cursor-pointer">
+                  Enter manually (not in system)
+                </Label>
+              </div>
+            </RadioGroup>
+
+            {sireMode === 'select' ? (
+              <div className="space-y-2">
+                <Select value={sireId} onValueChange={handleSireChange}>
+                  <SelectTrigger className="bg-background border-primary/20">
+                    <SelectValue placeholder="Select sire..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSires.map((sire) => (
+                      <SelectItem key={sire.id} value={sire.id}>
+                        {sire.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="frozen">Frozen Semen (Specify in notes)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.sireId && (
+                  <p className="text-sm text-destructive">{errors.sireId}</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sire-reg-number">
+                    Sire Registration Number <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="sire-reg-number"
+                    value={sireRegistrationNumber}
+                    onChange={(e) => setSireRegistrationNumber(e.target.value)}
+                    placeholder="e.g., ZA001234B21"
+                    className="bg-background border-primary/20"
+                  />
+                  {errors.sireRegistrationNumber && (
+                    <p className="text-sm text-destructive">{errors.sireRegistrationNumber}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sire-reg-name">
+                    Sire Registered Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="sire-reg-name"
+                    value={sireRegisteredName}
+                    onChange={(e) => setSireRegisteredName(e.target.value)}
+                    placeholder="e.g., CH Silverbrook's Thunder King"
+                    className="bg-background border-primary/20"
+                  />
+                  {errors.sireRegisteredName && (
+                    <p className="text-sm text-destructive">{errors.sireRegisteredName}</p>
+                  )}
+                </div>
+              </div>
             )}
-            <p className="text-xs text-muted-foreground">
-              Select the father of this litter from your dogs or frozen semen
-            </p>
           </div>
 
           {/* Mating Date */}
