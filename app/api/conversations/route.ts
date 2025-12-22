@@ -6,6 +6,8 @@ import { users } from '@/lib/db/schema/users';
 import { eq, or, and, desc, ne } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
+import { triggerMessageNotification } from '@/lib/services/realtime-messaging';
+import { createMessageReceivedNotification } from '@/lib/services/notification-creator';
 
 /**
  * GET /api/conversations
@@ -262,6 +264,37 @@ export async function POST(request: NextRequest) {
         })
         .where(eq(conversations.id, existingConversation.id));
 
+      // Trigger real-time notification
+      triggerMessageNotification([userId, sellerId]);
+
+      // Create in-app notification for seller
+      try {
+        const [sender] = await db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+
+        const [recipient] = await db
+          .select({ role: users.role })
+          .from(users)
+          .where(eq(users.id, sellerId))
+          .limit(1);
+
+        const senderName = sender?.name || 'Someone';
+        const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'buyer' | 'vet' | 'event_organizer' | 'admin';
+
+        await createMessageReceivedNotification({
+          userId: sellerId,
+          senderName,
+          messagePreview: initialMessage.trim().substring(0, 100),
+          conversationId: existingConversation.id,
+          recipientUserRole,
+        });
+      } catch (notifError) {
+        console.error('Failed to create message notification:', notifError);
+      }
+
       return NextResponse.json({
         success: true,
         conversationId: existingConversation.id,
@@ -294,6 +327,37 @@ export async function POST(request: NextRequest) {
         messageType: 'text',
       })
       .returning();
+
+    // Trigger real-time notification
+    triggerMessageNotification([userId, sellerId]);
+
+    // Create in-app notification for seller
+    try {
+      const [sender] = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      const [recipient] = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, sellerId))
+        .limit(1);
+
+      const senderName = sender?.name || 'Someone';
+      const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'buyer' | 'vet' | 'event_organizer' | 'admin';
+
+      await createMessageReceivedNotification({
+        userId: sellerId,
+        senderName,
+        messagePreview: initialMessage.trim().substring(0, 100),
+        conversationId: newConversation.id,
+        recipientUserRole,
+      });
+    } catch (notifError) {
+      console.error('Failed to create message notification:', notifError);
+    }
 
     return NextResponse.json({
       success: true,

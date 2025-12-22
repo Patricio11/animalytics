@@ -750,7 +750,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                     {/* Show Buy Now for purchasable categories */}
                     {['dog_for_sale', 'pups_for_sale', 'frozen_semen'].includes(listing.category) && listing.price && (
                       <Button
-                        className="w-full bg-green-600 hover:bg-green-700 text-white shadow-card"
+                        className="w-full bg-gradient-brand hover:opacity-90 text-white shadow-card"
                         onClick={() => setPurchaseDialogOpen(true)}
                       >
                         <ShoppingCart className="w-4 h-4 mr-2" />

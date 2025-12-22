@@ -288,9 +288,18 @@ export default function AdminMarketplacePage() {
     }
   };
 
-  const formatCurrency = (cents: number | null) => {
+  const formatCurrency = (cents: number | null, currency: string | null = 'USD') => {
     if (!cents) return 'N/A';
-    return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    const amount = cents / 100;
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency || 'USD',
+      }).format(amount);
+    } catch (error) {
+      // Fallback if currency code is invalid
+      return `${currency || 'USD'} ${amount.toFixed(2)}`;
+    }
   };
 
   const formatDate = (dateString: string | null) => {
@@ -482,7 +491,7 @@ export default function AdminMarketplacePage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Price:</span>
                       <span className="font-semibold text-primary">
-                        {formatCurrency(listing.price)}
+                        {formatCurrency(listing.price, listing.currency)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
@@ -625,7 +634,7 @@ export default function AdminMarketplacePage() {
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Price</Label>
-                    <p className="font-medium text-primary">{formatCurrency(selectedListing.price)}</p>
+                    <p className="font-medium text-primary">{formatCurrency(selectedListing.price, selectedListing.currency)}</p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Category</Label>
