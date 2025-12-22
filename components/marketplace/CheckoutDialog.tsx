@@ -19,12 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -345,7 +340,10 @@ export function CheckoutDialog({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Item Price</span>
                 <span className="font-medium">
-                  {listing.currency} ${(listing.price / 100).toLocaleString()}
+                  {new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: listing.currency || 'USD',
+                  }).format(listing.price / 100)}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -354,7 +352,10 @@ export function CheckoutDialog({
                   {isLoadingFee ? (
                     <Loader2 className="h-4 w-4 animate-spin inline" />
                   ) : (
-                    `${listing.currency} $${(platformFee / 100).toLocaleString()}`
+                    new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: listing.currency || 'USD',
+                    }).format(platformFee / 100)
                   )}
                 </span>
               </div>
@@ -366,7 +367,10 @@ export function CheckoutDialog({
                   ) : deliveryFee === 0 ? (
                     <span className="text-green-600">FREE</span>
                   ) : (
-                    `${listing.currency} $${(deliveryFee / 100).toLocaleString()}`
+                    new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: listing.currency || 'USD',
+                    }).format(deliveryFee / 100)
                   )}
                 </span>
               </div>
@@ -374,7 +378,10 @@ export function CheckoutDialog({
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
                 <span className="text-primary">
-                  {listing.currency} ${(totalAmount / 100).toLocaleString()}
+                  {new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: listing.currency || 'USD',
+                  }).format(totalAmount / 100)}
                 </span>
               </div>
             </div>
@@ -393,10 +400,10 @@ export function CheckoutDialog({
                     <div className="text-xs text-muted-foreground">Secure payment via Stripe</div>
                   </div>
                 </Label>
-                <Badge variant="secondary">Recommended</Badge>
               </div>
 
-              <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
+              {/* TODO: Enable additional payment methods in future */}
+              {/* <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
                 <RadioGroupItem value="wallet" id="wallet" />
                 <Label htmlFor="wallet" className="flex items-center gap-2 cursor-pointer flex-1">
                   <Wallet className="h-5 w-5 text-primary" />
@@ -427,7 +434,7 @@ export function CheckoutDialog({
                     <div className="text-xs text-muted-foreground">Pay when you receive</div>
                   </div>
                 </Label>
-              </div>
+              </div> */}
             </RadioGroup>
           </div>
 
@@ -567,30 +574,12 @@ export function CheckoutDialog({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="date">Date (Optional)</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="date"
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !scheduledDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {scheduledDate ? format(scheduledDate, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={scheduledDate}
-                      onSelect={setScheduledDate}
-                      initialFocus
-                      disabled={(date) => date < new Date()}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePicker
+                  date={scheduledDate}
+                  onDateChange={setScheduledDate}
+                  placeholder="Pick a date"
+                  minDate={new Date()}
+                />
               </div>
               <div>
                 <Label htmlFor="time">Time (Optional)</Label>
