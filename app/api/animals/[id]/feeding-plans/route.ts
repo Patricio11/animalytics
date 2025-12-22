@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { feedingPlans, animals } from '@/lib/db/schema/animals';
+import { tasks } from '@/lib/db/schema/tasks';
 import { auth } from '@/lib/auth/config';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { createId } from '@paralleldrive/cuid2';
+import { format } from 'date-fns';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -30,6 +32,7 @@ const createFeedingPlanSchema = z.object({
   calorieTarget: z.number().int().positive().optional(),
   specialNotes: z.string().optional(),
   isActive: z.boolean().optional().default(true),
+  createTasks: z.boolean().optional().default(false), // Create tasks for today
 });
 
 const updateFeedingPlanSchema = createFeedingPlanSchema.partial();
@@ -159,10 +162,47 @@ export async function POST(
       })
       .returning();
 
+    // Create feeding tasks for today if requested
+    let tasksCreated = 0;
+    if (validatedData.createTasks && validatedData.mealTimes && validatedData.mealTimes.length > 0) {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      
+      for (const meal of validatedData.mealTimes) {
+        try {
+          await db.insert(tasks).values({
+            id: createId(),
+            userId: session.user.id,
+            animalId,
+            type: 'feeding',
+            title: `Feed ${animal.name}`,
+            description: `${meal.amount} ${meal.unit} of ${validatedData.foodType || 'food'}`,
+            dueDate: today,
+            dueTime: meal.time,
+            status: 'pending',
+            priority: 'medium',
+            taskData: {
+              foodType: validatedData.foodType,
+              amount: parseFloat(meal.amount) || 0,
+              unit: meal.unit,
+            },
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+          tasksCreated++;
+        } catch (taskError) {
+          console.error('Failed to create feeding task:', taskError);
+          // Continue creating other tasks even if one fails
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: plan,
-      message: 'Feeding plan created successfully',
+      tasksCreated,
+      message: tasksCreated > 0 
+        ? `Feeding plan created with ${tasksCreated} task(s)`
+        : 'Feeding plan created successfully',
     });
   } catch (error) {
     console.error('Error creating feeding plan:', error);
