@@ -7,6 +7,10 @@ import { users } from '@/lib/db/schema/users';
 import { eq, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
+import { 
+  createItemDispatchedNotification, 
+  createPurchaseCompletedNotification 
+} from '@/lib/services/notification-creator';
 
 /**
  * GET /api/purchases/[id]
@@ -469,6 +473,51 @@ export async function PATCH(
       actorId: userId,
       actorRole: userRole,
     });
+
+    // Send notifications for key actions
+    try {
+      if (action === 'dispatch' || action === 'in_transit') {
+        // Notify buyer when seller dispatches
+        const [listing] = await db
+          .select({ title: listings.title })
+          .from(listings)
+          .where(eq(listings.id, purchase.listingId!))
+          .limit(1);
+
+        if (listing) {
+          await createItemDispatchedNotification({
+            buyerId: purchase.buyerId,
+            listingTitle: listing.title,
+            purchaseId,
+          });
+        }
+      } else if (action === 'complete') {
+        // Notify seller when buyer confirms receipt
+        const [listing] = await db
+          .select({ title: listings.title })
+          .from(listings)
+          .where(eq(listings.id, purchase.listingId!))
+          .limit(1);
+
+        const [buyer] = await db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, purchase.buyerId))
+          .limit(1);
+
+        if (listing && buyer) {
+          await createPurchaseCompletedNotification({
+            sellerId: purchase.sellerId,
+            buyerName: buyer.name || 'The buyer',
+            listingTitle: listing.title,
+            purchaseId,
+          });
+        }
+      }
+    } catch (notifError) {
+      console.error('Failed to send purchase notification:', notifError);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json({
       success: true,

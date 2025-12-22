@@ -359,3 +359,87 @@ export async function createBulkNotifications(
 
   return { successful, failed };
 }
+
+// ============================================================================
+// PURCHASE NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Notify seller when payment is completed
+ */
+export async function createPaymentCompletedNotification(params: {
+  sellerId: string;
+  buyerName: string;
+  listingTitle: string;
+  amount: number;
+  currency: string;
+  purchaseId: string;
+}) {
+  return createNotification({
+    userId: params.sellerId,
+    type: 'system',
+    title: '💰 Payment Received!',
+    message: `${params.buyerName} has paid ${new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: params.currency,
+    }).format(params.amount / 100)} for "${params.listingTitle}". Please prepare the item for dispatch.`,
+    actionUrl: `/purchases/${params.purchaseId}`,
+    actionLabel: 'View Purchase',
+    relatedEntityType: 'purchase',
+    relatedEntityId: params.purchaseId,
+    metadata: {
+      purchaseId: params.purchaseId,
+      amount: params.amount,
+      currency: params.currency,
+      buyerName: params.buyerName,
+    },
+  });
+}
+
+/**
+ * Notify buyer when seller dispatches item
+ */
+export async function createItemDispatchedNotification(params: {
+  buyerId: string;
+  listingTitle: string;
+  purchaseId: string;
+}) {
+  return createNotification({
+    userId: params.buyerId,
+    type: 'system',
+    title: '📦 Item Dispatched!',
+    message: `Your purchase "${params.listingTitle}" has been dispatched and is on its way.`,
+    actionUrl: `/purchases/${params.purchaseId}`,
+    actionLabel: 'Track Purchase',
+    relatedEntityType: 'purchase',
+    relatedEntityId: params.purchaseId,
+    metadata: {
+      purchaseId: params.purchaseId,
+    },
+  });
+}
+
+/**
+ * Notify seller when buyer confirms receipt
+ */
+export async function createPurchaseCompletedNotification(params: {
+  sellerId: string;
+  buyerName: string;
+  listingTitle: string;
+  purchaseId: string;
+}) {
+  return createNotification({
+    userId: params.sellerId,
+    type: 'system',
+    title: '✅ Purchase Completed!',
+    message: `${params.buyerName} has confirmed receipt of "${params.listingTitle}". Funds will be released from escrow.`,
+    actionUrl: `/purchases/${params.purchaseId}`,
+    actionLabel: 'View Purchase',
+    relatedEntityType: 'purchase',
+    relatedEntityId: params.purchaseId,
+    metadata: {
+      purchaseId: params.purchaseId,
+      buyerName: params.buyerName,
+    },
+  });
+}
