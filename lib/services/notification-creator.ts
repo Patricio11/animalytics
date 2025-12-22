@@ -258,8 +258,8 @@ export async function createMessageReceivedNotification(params: {
     relatedEntityType: 'conversation',
     relatedEntityId: params.conversationId,
     metadata: {
-      senderName: params.senderName,
-      conversationId: params.conversationId,
+      from: params.senderName,
+      messageType: 'Direct Message',
     },
   });
 }
