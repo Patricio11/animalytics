@@ -410,6 +410,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   <TabsContent value="feeding" className="mt-0">
                     <FeedingPlanTab
                       animalId={animal.id}
+                      animalName={animal.name}
                       feedingPlans={animal.feedingPlans || []}
                     />
                   </TabsContent>

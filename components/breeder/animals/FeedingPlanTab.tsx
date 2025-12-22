@@ -19,7 +19,7 @@ interface FeedingPlan {
     amount: string;
     unit: string;
   }>;
-  specialInstructions?: string;
+  specialNotes?: string;
   isActive: boolean;
 }
 
@@ -167,12 +167,12 @@ export function FeedingPlanTab({ animalId, animalName, feedingPlans: initialPlan
       time: meal.time,
       foodType: activePlan.foodType,
       amount: `${meal.amount} ${meal.unit}`,
-      notes: index === 0 ? activePlan.specialInstructions : undefined,
+      notes: index === 0 ? activePlan.specialNotes : undefined,
     }));
   }, [feedingPlans]);
   
   const activePlan = feedingPlans.find((p: FeedingPlan) => p.isActive);
-  const specialDietaryNotes = activePlan?.specialInstructions;
+  const specialDietaryNotes = activePlan?.specialNotes;
   const sortedSchedule = [...schedule].sort((a, b) => a.time.localeCompare(b.time));
 
   if (isLoading) {
