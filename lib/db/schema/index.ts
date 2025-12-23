@@ -19,3 +19,6 @@ export * from './user-breed-preferences';
 export * from './notifications';
 export * from './relations';
 export * from './clinics';
+export * from './official-clinics';
+export * from './clinic-staff';
+export * from './vet-invitations';
