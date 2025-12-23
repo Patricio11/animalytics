@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { AddHealthRecordDialog } from "@/components/breeder/animals/AddHealthRecordDialog";
 import { UploadCertificateDialog } from "@/components/breeder/animals/UploadCertificateDialog";
+import { AppointmentDialog } from "@/components/breeder/animals/AppointmentDialog";
 import { ProgesteroneHealthCard } from "@/components/breeder/animals/ProgesteroneHealthCard";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
   const { settings } = useRegionalSettings();
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [showCertificateDialog, setShowCertificateDialog] = useState(false);
+  const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [defaultRecordType, setDefaultRecordType] = useState<string | undefined>(undefined);
 
@@ -58,11 +60,16 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
       return;
     }
 
+    // For appointments tab, show appointment scheduling dialog
+    if (activeTab === "appointments") {
+      setShowAppointmentDialog(true);
+      return;
+    }
+
     // For other tabs, show standard health record dialog with pre-selected type
     const typeMap: Record<string, string> = {
       vaccinations: "vaccination",
       medications: "medication",
-      appointments: "checkup",
     };
     setDefaultRecordType(typeMap[activeTab]);
     setShowAddRecord(true);
@@ -74,6 +81,16 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
     queryFn: async () => {
       const response = await fetch(`/api/animals/${animalId}/health`);
       if (!response.ok) throw new Error("Failed to fetch health records");
+      return response.json();
+    },
+  });
+
+  // Fetch appointments
+  const { data: appointmentsData, isLoading: appointmentsLoading } = useQuery({
+    queryKey: ["appointments", animalId],
+    queryFn: async () => {
+      const response = await fetch(`/api/animals/${animalId}/appointments`);
+      if (!response.ok) throw new Error("Failed to fetch appointments");
       return response.json();
     },
   });
@@ -611,17 +628,84 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-500" />
-                Upcoming Appointments
+                Appointments
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12">
-                <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-2">Appointment scheduling coming soon!</p>
-                <p className="text-sm text-muted-foreground">
-                  You'll be able to schedule and manage veterinary appointments here.
-                </p>
-              </div>
+              {appointmentsLoading ? (
+                <div className="text-center py-12">
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : (appointmentsData?.appointments || []).length === 0 ? (
+                <div className="text-center py-12">
+                  <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-2">No appointments scheduled</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Schedule veterinary appointments and get reminders
+                  </p>
+                  <Button onClick={() => setShowAppointmentDialog(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Schedule Appointment
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {(appointmentsData?.appointments || []).map((appointment: any) => {
+                    const appointmentDate = new Date(`${appointment.dueDate}T${appointment.dueTime || '00:00'}`);
+                    const isPast = isBefore(appointmentDate, new Date());
+                    
+                    return (
+                      <div
+                        key={appointment.id}
+                        className={cn(
+                          "flex items-start gap-4 p-4 rounded-lg border transition-colors",
+                          isPast ? "border-muted bg-muted/20" : "border-primary/10 hover:bg-primary/5"
+                        )}
+                      >
+                        <div className={cn(
+                          "p-3 rounded-full",
+                          isPast ? "bg-muted" : "bg-blue-500/10"
+                        )}>
+                          <Calendar className={cn(
+                            "w-5 h-5",
+                            isPast ? "text-muted-foreground" : "text-blue-500"
+                          )} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className={cn(
+                                "font-semibold",
+                                isPast && "text-muted-foreground"
+                              )}>
+                                {appointment.title}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {format(appointmentDate, "MMM dd, yyyy 'at' h:mm a")}
+                              </p>
+                            </div>
+                            <Badge variant={isPast ? "outline" : "default"}>
+                              {appointment.status === 'completed' ? 'Completed' : isPast ? 'Past' : 'Upcoming'}
+                            </Badge>
+                          </div>
+                          
+                          {appointment.description && (
+                            <p className="text-sm text-muted-foreground whitespace-pre-line">
+                              {appointment.description}
+                            </p>
+                          )}
+                          
+                          {!isPast && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {formatDistanceToNow(appointmentDate, { addSuffix: true })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -663,6 +747,14 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
       <UploadCertificateDialog
         open={showCertificateDialog}
         onOpenChange={setShowCertificateDialog}
+        animalId={animalId}
+        animalName={animalName}
+      />
+
+      {/* Appointment Dialog */}
+      <AppointmentDialog
+        open={showAppointmentDialog}
+        onOpenChange={setShowAppointmentDialog}
         animalId={animalId}
         animalName={animalName}
       />
