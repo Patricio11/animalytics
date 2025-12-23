@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -80,6 +81,8 @@ export function AddHealthRecordDialog({
     cost: "",
     notes: "",
     certificateUrl: "",
+    createReminders: false,
+    reminderTimes: "" as string,
   });
 
   const createMutation = useMutation({
@@ -97,11 +100,18 @@ export function AddHealthRecordDialog({
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["health-records", animalId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      
+      let description = `Health record for ${animalName} has been added successfully`;
+      if (data.tasksCreated && data.tasksCreated > 0) {
+        description += `. ${data.tasksCreated} medication reminder(s) created.`;
+      }
+      
       toast({
         title: "Health Record Added",
-        description: `Health record for ${animalName} has been added successfully`,
+        description,
       });
       onOpenChange(false);
       resetForm();
@@ -135,6 +145,8 @@ export function AddHealthRecordDialog({
       cost: "",
       notes: "",
       certificateUrl: "",
+      createReminders: false,
+      reminderTimes: "",
     });
   };
 
@@ -169,6 +181,12 @@ export function AddHealthRecordDialog({
         submitData.frequency = formData.frequency || undefined;
         submitData.startDate = formData.startDate ? format(formData.startDate, 'yyyy-MM-dd') : undefined;
         submitData.endDate = formData.endDate ? format(formData.endDate, 'yyyy-MM-dd') : undefined;
+        
+        // Include reminder creation data
+        if (formData.createReminders && formData.reminderTimes) {
+          submitData.createReminders = true;
+          submitData.reminderTimes = formData.reminderTimes;
+        }
       }
 
       await createMutation.mutateAsync(submitData);
@@ -431,6 +449,37 @@ export function AddHealthRecordDialog({
                     minDate={formData.startDate}
                   />
                 </div>
+              </div>
+
+              {/* Medication Reminders */}
+              <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-primary/5">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="createReminders"
+                    checked={formData.createReminders}
+                    onCheckedChange={(checked) => updateField("createReminders", checked)}
+                  />
+                  <Label htmlFor="createReminders" className="text-sm font-medium cursor-pointer">
+                    Create medication reminders
+                  </Label>
+                </div>
+                
+                {formData.createReminders && (
+                  <div className="space-y-2 pl-6">
+                    <Label htmlFor="reminderTimes" className="text-sm">
+                      Reminder Times (e.g., 08:00, 20:00)
+                    </Label>
+                    <Input
+                      id="reminderTimes"
+                      value={formData.reminderTimes}
+                      onChange={(e) => updateField("reminderTimes", e.target.value)}
+                      placeholder="08:00, 14:00, 20:00"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter times in 24-hour format, separated by commas. Tasks and notifications will be created for each dose.
+                    </p>
+                  </div>
+                )}
               </div>
             </>
           )}
