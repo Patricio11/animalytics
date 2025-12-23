@@ -32,6 +32,7 @@ import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { AddHealthRecordDialog } from "@/components/breeder/animals/AddHealthRecordDialog";
 import { UploadCertificateDialog } from "@/components/breeder/animals/UploadCertificateDialog";
 import { AppointmentDialog } from "@/components/breeder/animals/AppointmentDialog";
+import { VeterinaryClinicDialog } from "@/components/breeder/animals/VeterinaryClinicDialog";
 import { ProgesteroneHealthCard } from "@/components/breeder/animals/ProgesteroneHealthCard";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,8 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [showCertificateDialog, setShowCertificateDialog] = useState(false);
   const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
+  const [showClinicDialog, setShowClinicDialog] = useState(false);
+  const [editingClinic, setEditingClinic] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [defaultRecordType, setDefaultRecordType] = useState<string | undefined>(undefined);
 
@@ -95,11 +98,56 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
     },
   });
 
+  // Fetch clinics
+  const { data: clinicsData, isLoading: clinicsLoading } = useQuery({
+    queryKey: ["clinics"],
+    queryFn: async () => {
+      const response = await fetch(`/api/clinics`);
+      if (!response.ok) throw new Error("Failed to fetch clinics");
+      return response.json();
+    },
+  });
+
   const records = healthData?.records || [];
   const vaccinations = records.filter((r: any) => r.recordType === "vaccination");
   const medications = records.filter((r: any) => r.recordType === "medication");
   const checkups = records.filter((r: any) => r.recordType === "checkup");
   const certificates = records.filter((r: any) => r.certificateUrl);
+
+  // Delete clinic mutation
+  const deleteClinicMutation = useMutation({
+    mutationFn: async (clinicId: string) => {
+      const response = await fetch(`/api/clinics/${clinicId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete clinic");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clinics"] });
+      toast({
+        title: "Clinic Deleted",
+        description: "Clinic has been removed successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete clinic",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditClinic = (clinic: any) => {
+    setEditingClinic(clinic);
+    setShowClinicDialog(true);
+  };
+
+  const handleAddClinic = () => {
+    setEditingClinic(null);
+    setShowClinicDialog(true);
+  };
 
   // Calculate health stats
   const upcomingVaccinations = vaccinations.filter((v: any) => 
@@ -714,19 +762,111 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
         <TabsContent value="veterinary" className="space-y-6">
           <Card className="shadow-card border-primary/10">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-primary" />
-                Veterinary Clinics & Contacts
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-primary" />
+                  Veterinary Clinics & Contacts
+                </CardTitle>
+                <Button onClick={handleAddClinic} size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Clinic
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12">
-                <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-2">Veterinary management coming soon!</p>
-                <p className="text-sm text-muted-foreground">
-                  Save your preferred veterinary clinics and contacts for quick access.
-                </p>
-              </div>
+              {clinicsLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                </div>
+              ) : (clinicsData?.clinics || []).length === 0 ? (
+                <div className="text-center py-12">
+                  <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-2">No clinics saved yet</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Save your preferred veterinary clinics for quick access
+                  </p>
+                  <Button onClick={handleAddClinic}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add First Clinic
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(clinicsData?.clinics || []).map((clinic: any) => (
+                    <Card key={clinic.id} className="border-primary/10 hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold">{clinic.clinicName}</h4>
+                              {clinic.isPrimary && (
+                                <Badge variant="default" className="text-xs">Primary</Badge>
+                              )}
+                              {clinic.isFavorite && (
+                                <span className="text-yellow-500">⭐</span>
+                              )}
+                            </div>
+                            {clinic.veterinarianName && (
+                              <p className="text-sm text-muted-foreground">
+                                Dr. {clinic.veterinarianName}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                          {clinic.email && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <span className="text-xs">📧</span>
+                              <span>{clinic.email}</span>
+                            </div>
+                          )}
+                          {clinic.phone && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <span className="text-xs">📞</span>
+                              <span>{clinic.phone}</span>
+                            </div>
+                          )}
+                          {clinic.address && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <span className="text-xs">📍</span>
+                              <span className="line-clamp-1">
+                                {clinic.address}
+                                {clinic.city && `, ${clinic.city}`}
+                              </span>
+                            </div>
+                          )}
+                          {clinic.emergencyAvailable && (
+                            <div className="flex items-center gap-2 text-green-600 font-medium">
+                              <span className="text-xs">🚨</span>
+                              <span>24/7 Emergency Available</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2 mt-4 pt-3 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleEditClinic(clinic)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteClinicMutation.mutate(clinic.id)}
+                          >
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -757,6 +897,16 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
         onOpenChange={setShowAppointmentDialog}
         animalId={animalId}
         animalName={animalName}
+      />
+
+      {/* Veterinary Clinic Dialog */}
+      <VeterinaryClinicDialog
+        open={showClinicDialog}
+        onOpenChange={(open) => {
+          setShowClinicDialog(open);
+          if (!open) setEditingClinic(null);
+        }}
+        clinic={editingClinic}
       />
     </div>
   );

@@ -18,3 +18,4 @@ export * from './payment-settings';
 export * from './user-breed-preferences';
 export * from './notifications';
 export * from './relations';
+export * from './clinics';
