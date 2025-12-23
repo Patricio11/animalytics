@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { heatCycles, heatCycleReminders, animals, heatCycleProgesteroneReadings } from '@/lib/db/schema';
+import { heatCycles, heatCycleReminders, animals, heatCycleProgesteroneReadings, breedingRecords } from '@/lib/db/schema';
 import { tasks } from '@/lib/db/schema/tasks';
 import { auth } from '@/lib/auth/config';
 import { addDays, format, differenceInDays } from 'date-fns';
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    // Fetch readings for each cycle
+    // Fetch readings and breeding records for each cycle
     const cyclesWithReadings = await Promise.all(
       cycles.map(async (cycle) => {
         const readings = await db
@@ -92,9 +92,16 @@ export async function GET(request: NextRequest) {
           .where(eq(heatCycleProgesteroneReadings.heatCycleId, cycle.id))
           .orderBy(desc(heatCycleProgesteroneReadings.day));
 
+        const breedings = await db
+          .select()
+          .from(breedingRecords)
+          .where(eq(breedingRecords.heatCycleId, cycle.id))
+          .orderBy(desc(breedingRecords.breedingDate));
+
         return {
           ...cycle,
           readings,
+          breedingRecords: breedings,
         };
       })
     );
