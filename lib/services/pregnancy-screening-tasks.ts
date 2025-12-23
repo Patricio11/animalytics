@@ -1,13 +1,14 @@
 /**
  * Pregnancy Screening Task Generator Service
  * 
- * Automatically generates pregnancy screening tasks after the last mating in a breeding window.
+ * Automatically generates pregnancy screening tasks after the LAST MATING ONLY.
  * 
  * Timeline:
- * - Day 21-28: Ultrasound screening (optimal: day 25-28)
- * - Day 25-30: Blood test for relaxin hormone
- * - Day 45+: X-ray for puppy count (optional, closer to whelping)
- * - Day 30, 45, 55: General pregnancy checkups
+ * - Day 28: Ultrasound + Blood Test (Hematology) + Progesterone
+ * - Day 30: Progesterone plateau check
+ * - Day 45: Mid-pregnancy checkup
+ * - Day 50: X-ray for puppy count
+ * - Day 55: Pre-whelping checkup
  */
 
 import { db } from '@/lib/db';
@@ -48,8 +49,8 @@ const PREGNANCY_SCREENING_TIMELINE: PregnancyScreeningTask[] = [
   {
     type: 'ultrasound',
     title: 'Day 28: Pregnancy Confirmation',
-    description: 'CRITICAL: Comprehensive pregnancy confirmation visit. Includes: (1) Ultrasound scan to visualize pregnancy, (2) Hematology blood work, (3) Progesterone test. This is the primary pregnancy confirmation at 28 days post-last mating.',
-    daysPostMating: 28, // Day 28 - Ultrasound + Hematology + Progesterone
+    description: 'CRITICAL: Comprehensive pregnancy confirmation visit. Includes: (1) Ultrasound scan to visualize pregnancy, (2) Blood Test (Hematology), (3) Progesterone test. This is the primary pregnancy confirmation at 28 days post-LAST MATING.',
+    daysPostMating: 28, // Day 28 - Ultrasound + Blood Test + Progesterone
     priority: 'high',
     eventType: 'pregnancy_ultrasound',
   },
@@ -162,7 +163,35 @@ export async function generatePregnancyScreeningTasks(
       };
     }
 
-    // 4. Generate tasks based on timeline
+    // 4. DELETE any existing pregnancy screening tasks for this heat cycle
+    // This prevents duplicates if user marks different breedings as "last mating"
+    await db
+      .delete(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          eq(tasks.generatedBy, 'pregnancy_screening_generator')
+        )
+      );
+
+    // Also delete tasks from any other breeding records in this heat cycle
+    const allBreedingsInCycle = await db
+      .select({ id: breedingRecords.id })
+      .from(breedingRecords)
+      .where(eq(breedingRecords.heatCycleId, breedingRecord.heatCycleId));
+
+    for (const breeding of allBreedingsInCycle) {
+      await db
+        .delete(tasks)
+        .where(
+          and(
+            eq(tasks.userId, userId),
+            eq(tasks.generationBatchId, `pregnancy_${breeding.id}`)
+          )
+        );
+    }
+
+    // 5. Generate tasks based on timeline (ONLY for LAST MATING)
     const lastMatingDate = new Date(breedingRecord.breedingDate);
     const createdTasks: Array<{
       id: string;
@@ -213,7 +242,7 @@ export async function generatePregnancyScreeningTasks(
       });
     }
 
-    // 5. Mark breeding record as tasks generated
+    // 6. Mark breeding record as tasks generated
     await db
       .update(breedingRecords)
       .set({
@@ -310,16 +339,17 @@ export async function checkAndGenerateTasksForLastMating(
 
 /**
  * Manually mark a breeding record as the last mating and generate tasks
+ * IMPORTANT: Only ONE breeding per heat cycle should be marked as "last mating"
  */
 export async function markAsLastMatingAndGenerateTasks(
   breedingRecordId: string,
   userId: string
 ): Promise<TaskGenerationResult> {
   try {
-    // 1. Update the breeding record
-    await db
-      .update(breedingRecords)
-      .set({ isLastMating: true })
+    // 1. Get the breeding record to find its heat cycle
+    const [breedingRecord] = await db
+      .select()
+      .from(breedingRecords)
       .where(
         and(
           eq(breedingRecords.id, breedingRecordId),
@@ -327,7 +357,33 @@ export async function markAsLastMatingAndGenerateTasks(
         )
       );
 
-    // 2. Generate tasks
+    if (!breedingRecord) {
+      return {
+        success: false,
+        tasksCreated: 0,
+        tasks: [],
+        error: 'Breeding record not found',
+      };
+    }
+
+    // 2. UNMARK all other breeding records in this heat cycle as "last mating"
+    await db
+      .update(breedingRecords)
+      .set({ isLastMating: false })
+      .where(
+        and(
+          eq(breedingRecords.heatCycleId, breedingRecord.heatCycleId),
+          eq(breedingRecords.breederId, userId)
+        )
+      );
+
+    // 3. Mark THIS breeding record as the last mating
+    await db
+      .update(breedingRecords)
+      .set({ isLastMating: true })
+      .where(eq(breedingRecords.id, breedingRecordId));
+
+    // 4. Generate tasks (this will also delete old tasks)
     return await generatePregnancyScreeningTasks(breedingRecordId, userId);
   } catch (error) {
     console.error('Error marking as last mating and generating tasks:', error);
