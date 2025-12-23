@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -37,6 +37,7 @@ interface AddHealthRecordDialogProps {
   animalName: string;
   animalSex?: 'male' | 'female';
   animalDateOfBirth?: Date | string;
+  defaultRecordType?: string;
 }
 
 export function AddHealthRecordDialog({
@@ -46,14 +47,22 @@ export function AddHealthRecordDialog({
   animalName,
   animalSex,
   animalDateOfBirth,
+  defaultRecordType,
 }: AddHealthRecordDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { settings } = useRegionalSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Update recordType when defaultRecordType changes (when dialog opens from different tabs)
+  useEffect(() => {
+    if (open && defaultRecordType) {
+      setFormData(prev => ({ ...prev, recordType: defaultRecordType }));
+    }
+  }, [open, defaultRecordType]);
+
   const [formData, setFormData] = useState({
-    recordType: "vaccination",
+    recordType: defaultRecordType || "vaccination",
     recordDate: new Date(),
     veterinarianName: "",
     veterinarianEmail: "",

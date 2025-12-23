@@ -46,6 +46,19 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
   const { settings } = useRegionalSettings();
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [defaultRecordType, setDefaultRecordType] = useState<string | undefined>(undefined);
+
+  // Helper to open Add Record dialog with context-aware default type
+  const handleAddRecord = () => {
+    const typeMap: Record<string, string> = {
+      vaccinations: "vaccination",
+      medications: "medication",
+      certificates: "vaccination", // Default to vaccination for certificates
+      appointments: "checkup",
+    };
+    setDefaultRecordType(typeMap[activeTab]);
+    setShowAddRecord(true);
+  };
 
   // Fetch health records
   const { data: healthData, isLoading } = useQuery({
@@ -243,7 +256,7 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
             </TabsTrigger>
           </TabsList>
           
-          <Button onClick={() => setShowAddRecord(true)} className="ml-4">
+          <Button onClick={handleAddRecord} className="ml-4">
             <Plus className="w-4 h-4 mr-2" />
             Add Record
           </Button>
@@ -635,6 +648,7 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
         animalName={animalName}
         animalSex={animalSex}
         animalDateOfBirth={animalDateOfBirth}
+        defaultRecordType={defaultRecordType}
       />
     </div>
   );
