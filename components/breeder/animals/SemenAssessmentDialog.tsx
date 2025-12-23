@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,7 @@ interface SemenAssessmentDialogProps {
   mode?: 'create' | 'edit';
 }
 
-type AssessmentType = 'visual' | 'full';
+type AssessmentType = 'visual' | 'full_lab';
 type QualityRating = 'poor' | 'fair' | 'good' | 'excellent';
 
 export function SemenAssessmentDialog({
@@ -38,22 +39,47 @@ export function SemenAssessmentDialog({
   existingAssessment,
   mode = 'create',
 }: SemenAssessmentDialogProps) {
-  const [assessmentType, setAssessmentType] = useState<AssessmentType>('full');
+  const [assessmentType, setAssessmentType] = useState<AssessmentType>('full_lab');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [quality, setQuality] = useState<QualityRating>('good');
   const [volume, setVolume] = useState('');
   const [concentration, setConcentration] = useState('');
   const [motility, setMotility] = useState('');
+  const [progressiveMotility, setProgressiveMotility] = useState('');
   const [morphology, setMorphology] = useState('');
+  const [totalSpermCount, setTotalSpermCount] = useState('');
   const [notes, setNotes] = useState('');
   const [technician, setTechnician] = useState('');
+  const [clinicId, setClinicId] = useState('');
+  const [visualNotes, setVisualNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Fetch clinics
+  const { data: clinicsData } = useQuery({
+    queryKey: ["clinics"],
+    queryFn: async () => {
+      const response = await fetch(`/api/clinics`);
+      if (!response.ok) throw new Error("Failed to fetch clinics");
+      return response.json();
+    },
+  });
+
+  const clinics = clinicsData?.clinics || [];
+  const primaryClinic = clinics.find((c: any) => c.isPrimary);
+
+  // Set primary clinic as default
+  useEffect(() => {
+    if (primaryClinic && !clinicId) {
+      setClinicId(primaryClinic.id);
+      setTechnician(primaryClinic.veterinarianName || '');
+    }
+  }, [primaryClinic]);
 
   // Load existing assessment data when editing
   useEffect(() => {
     if (existingAssessment && mode === 'edit') {
       setDate(existingAssessment.date);
-      setAssessmentType(existingAssessment.volume ? 'full' : 'visual');
+      setAssessmentType(existingAssessment.volume ? 'full_lab' : 'visual');
       setQuality(existingAssessment.quality);
       setVolume(existingAssessment.volume?.toString() || '');
       setConcentration(existingAssessment.concentration?.toString() || '');
@@ -74,15 +100,19 @@ export function SemenAssessmentDialog({
   }, [open]);
 
   const resetForm = () => {
-    setAssessmentType('full');
+    setAssessmentType('full_lab');
     setDate(format(new Date(), 'yyyy-MM-dd'));
     setQuality('good');
     setVolume('');
     setConcentration('');
     setMotility('');
+    setProgressiveMotility('');
     setMorphology('');
+    setTotalSpermCount('');
     setNotes('');
+    setVisualNotes('');
     setTechnician('');
+    setClinicId(primaryClinic?.id || '');
     setErrors({});
   };
 
@@ -94,7 +124,7 @@ export function SemenAssessmentDialog({
       newErrors.date = 'Assessment date is required';
     }
 
-    if (assessmentType === 'full') {
+    if (assessmentType === 'full_lab') {
       if (!volume || parseFloat(volume) <= 0) {
         newErrors.volume = 'Volume must be greater than 0';
       }
@@ -154,22 +184,34 @@ export function SemenAssessmentDialog({
       return;
     }
 
-    const calculatedQuality = assessmentType === 'full'
-      ? calculateQualityFromLab()
-      : quality;
+    // Get selected clinic info
+    const selectedClinic = clinics.find((c: any) => c.id === clinicId);
 
-    const assessment: Omit<SemenAssessment, 'id'> = {
-      date,
-      volume: assessmentType === 'full' ? parseFloat(volume) : 0,
-      concentration: assessmentType === 'full' ? parseFloat(concentration) : 0,
-      motility: assessmentType === 'full' ? parseFloat(motility) : 0,
-      morphology: assessmentType === 'full' ? parseFloat(morphology) : 0,
-      quality: calculatedQuality,
-      notes,
-      technician: technician || undefined,
+    // Build API payload
+    const payload: any = {
+      assessmentDate: date,
+      assessmentType,
+      technicianName: technician || selectedClinic?.veterinarianName || null,
+      clinic: selectedClinic?.clinicName || null,
+      notes: notes || null,
     };
 
-    onSave(assessment);
+    if (assessmentType === 'visual') {
+      payload.visualQuality = quality;
+      payload.visualNotes = visualNotes || null;
+    } else {
+      // full_lab
+      payload.volume = parseFloat(volume);
+      payload.concentration = parseInt(concentration);
+      payload.motility = parseFloat(motility);
+      payload.progressiveMotility = progressiveMotility ? parseFloat(progressiveMotility) : parseFloat(motility);
+      payload.morphology = parseFloat(morphology);
+      if (totalSpermCount) {
+        payload.totalSpermCount = parseInt(totalSpermCount);
+      }
+    }
+
+    onSave(payload);
     onOpenChange(false);
   };
 
@@ -182,7 +224,7 @@ export function SemenAssessmentDialog({
             {mode === 'edit' ? 'Edit Semen Assessment' : 'New Semen Assessment'}
           </DialogTitle>
           <DialogDescription>
-            {assessmentType === 'full'
+            {assessmentType === 'full_lab'
               ? 'Record detailed laboratory analysis results'
               : 'Record basic visual assessment'}
           </DialogDescription>
@@ -214,7 +256,7 @@ export function SemenAssessmentDialog({
             </Label>
             <RadioGroup value={assessmentType} onValueChange={(value: AssessmentType) => setAssessmentType(value)}>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-primary/10 bg-background">
-                <RadioGroupItem value="full" id="type-full" />
+                <RadioGroupItem value="full_lab" id="type-full" />
                 <Label htmlFor="type-full" className="flex-1 cursor-pointer font-medium">
                   Full Laboratory Analysis
                   <span className="block text-xs text-muted-foreground font-normal">
@@ -256,7 +298,7 @@ export function SemenAssessmentDialog({
           )}
 
           {/* Full Assessment Fields */}
-          {assessmentType === 'full' && (
+          {assessmentType === 'full_lab' && (
             <div className="space-y-4 p-4 rounded-lg bg-surface-secondary border border-primary/10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -353,6 +395,39 @@ export function SemenAssessmentDialog({
               )}
             </div>
           )}
+
+          {/* Clinic Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="clinic">Veterinary Clinic</Label>
+            <Select 
+              value={clinicId} 
+              onValueChange={(value) => {
+                setClinicId(value);
+                const clinic = clinics.find((c: any) => c.id === value);
+                if (clinic?.veterinarianName) {
+                  setTechnician(clinic.veterinarianName);
+                }
+              }}
+            >
+              <SelectTrigger id="clinic" className="bg-background border-primary/20">
+                <SelectValue placeholder="Select a clinic" />
+              </SelectTrigger>
+              <SelectContent>
+                {clinics.length === 0 ? (
+                  <SelectItem value="none" disabled>No clinics saved</SelectItem>
+                ) : (
+                  clinics.map((clinic: any) => (
+                    <SelectItem key={clinic.id} value={clinic.id}>
+                      {clinic.clinicName} {clinic.isPrimary && '(Primary)'}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Select from your saved clinics or enter manually below
+            </p>
+          </div>
 
           {/* Technician (optional) */}
           <div className="space-y-2">
