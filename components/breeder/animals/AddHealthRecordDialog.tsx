@@ -56,6 +56,8 @@ export function AddHealthRecordDialog({
     recordType: "vaccination",
     recordDate: new Date(),
     veterinarianName: "",
+    veterinarianEmail: "",
+    veterinarianPhone: "",
     clinicName: "",
     vaccinationType: "",
     nextDueDate: undefined as Date | undefined,
@@ -109,6 +111,8 @@ export function AddHealthRecordDialog({
       recordType: "vaccination",
       recordDate: new Date(),
       veterinarianName: "",
+      veterinarianEmail: "",
+      veterinarianPhone: "",
       clinicName: "",
       vaccinationType: "",
       nextDueDate: undefined,
@@ -239,36 +243,36 @@ export function AddHealthRecordDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Record Type */}
-          <div className="space-y-2">
-            <Label htmlFor="recordType">Record Type *</Label>
-            <Select
-              value={formData.recordType}
-              onValueChange={(value) => updateField("recordType", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="vaccination">Vaccination</SelectItem>
-                <SelectItem value="checkup">Checkup</SelectItem>
-                <SelectItem value="medication">Medication</SelectItem>
-                <SelectItem value="illness">Illness</SelectItem>
-                <SelectItem value="injury">Injury</SelectItem>
-                <SelectItem value="surgery">Surgery</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Record Date */}
-          <div className="space-y-2">
-            <Label htmlFor="recordDate">Date *</Label>
-            <DatePicker
-              date={formData.recordDate}
-              onDateChange={handleRecordDateChange}
-              placeholder="Select record date"
-              maxDate={new Date()}
-            />
+          {/* Record Type & Date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="recordType">Record Type *</Label>
+              <Select
+                value={formData.recordType}
+                onValueChange={(value) => updateField("recordType", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vaccination">Vaccination</SelectItem>
+                  <SelectItem value="checkup">Checkup</SelectItem>
+                  <SelectItem value="medication">Medication</SelectItem>
+                  <SelectItem value="illness">Illness</SelectItem>
+                  <SelectItem value="injury">Injury</SelectItem>
+                  <SelectItem value="surgery">Surgery</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="recordDate">Date *</Label>
+              <DatePicker
+                date={formData.recordDate}
+                onDateChange={handleRecordDateChange}
+                placeholder="Select record date"
+                maxDate={new Date()}
+              />
+            </div>
           </div>
 
           {/* Veterinarian & Clinic */}
@@ -293,49 +297,76 @@ export function AddHealthRecordDialog({
             </div>
           </div>
 
+          {/* Veterinarian Contact */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="veterinarianEmail">Veterinarian Email *</Label>
+              <Input
+                id="veterinarianEmail"
+                type="email"
+                value={formData.veterinarianEmail}
+                onChange={(e) => updateField("veterinarianEmail", e.target.value)}
+                placeholder="vet@clinic.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="veterinarianPhone">Phone Number</Label>
+              <Input
+                id="veterinarianPhone"
+                type="tel"
+                value={formData.veterinarianPhone}
+                onChange={(e) => updateField("veterinarianPhone", e.target.value)}
+                placeholder="+27 12 345 6789"
+              />
+            </div>
+          </div>
+
           {/* Vaccination-specific fields */}
           {formData.recordType === "vaccination" && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="vaccinationType">Vaccination Type *</Label>
-                <Select
-                  value={formData.vaccinationType}
-                  onValueChange={handleVaccinationTypeChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select vaccination type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Rabies">Rabies</SelectItem>
-                    <SelectItem value="DHPP">DHPP (Distemper, Hepatitis, Parvovirus, Parainfluenza)</SelectItem>
-                    <SelectItem value="CPV">CPV (Canine Parvovirus)</SelectItem>
-                    <SelectItem value="CDV">CDV (Canine Distemper)</SelectItem>
-                    <SelectItem value="CAV-2">CAV-2 (Canine Adenovirus)</SelectItem>
-                    <SelectItem value="Bordetella">Bordetella (Kennel Cough)</SelectItem>
-                    <SelectItem value="Leptospirosis">Leptospirosis</SelectItem>
-                    <SelectItem value="Parainfluenza">Parainfluenza</SelectItem>
-                    <SelectItem value="Canine Herpes">Canine Herpes (Breeding)</SelectItem>
-                    <SelectItem value="FVRCP">FVRCP (Feline Viral Rhinotracheitis, Calicivirus, Panleukopenia)</SelectItem>
-                    <SelectItem value="FeLV">FeLV (Feline Leukemia)</SelectItem>
-                    <SelectItem value="Chlamydia">Chlamydia felis</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  <Info className="w-3 h-3 inline mr-1" />
-                  Next due date will be auto-calculated based on SA guidelines
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nextDueDate">Next Due Date</Label>
-                <DatePicker
-                  date={formData.nextDueDate}
-                  onDateChange={(date) => updateField("nextDueDate", date)}
-                  placeholder="Select next due date"
-                  minDate={formData.recordDate}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Auto-calculated based on vaccination type and animal age
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vaccinationType">Vaccination Type *</Label>
+                  <Select
+                    value={formData.vaccinationType}
+                    onValueChange={handleVaccinationTypeChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select vaccination type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Rabies">Rabies</SelectItem>
+                      <SelectItem value="DHPP">DHPP (Distemper, Hepatitis, Parvovirus, Parainfluenza)</SelectItem>
+                      <SelectItem value="CPV">CPV (Canine Parvovirus)</SelectItem>
+                      <SelectItem value="CDV">CDV (Canine Distemper)</SelectItem>
+                      <SelectItem value="CAV-2">CAV-2 (Canine Adenovirus)</SelectItem>
+                      <SelectItem value="Bordetella">Bordetella (Kennel Cough)</SelectItem>
+                      <SelectItem value="Leptospirosis">Leptospirosis</SelectItem>
+                      <SelectItem value="Parainfluenza">Parainfluenza</SelectItem>
+                      <SelectItem value="Canine Herpes">Canine Herpes (Breeding)</SelectItem>
+                      <SelectItem value="FVRCP">FVRCP (Feline Viral Rhinotracheitis, Calicivirus, Panleukopenia)</SelectItem>
+                      <SelectItem value="FeLV">FeLV (Feline Leukemia)</SelectItem>
+                      <SelectItem value="Chlamydia">Chlamydia felis</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    <Info className="w-3 h-3 inline mr-1" />
+                    Next due date will be auto-calculated based on SA guidelines
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nextDueDate">Next Due Date</Label>
+                  <DatePicker
+                    date={formData.nextDueDate}
+                    onDateChange={(date) => updateField("nextDueDate", date)}
+                    placeholder="Select next due date"
+                    minDate={formData.recordDate}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Auto-calculated based on vaccination type and animal age
+                  </p>
+                </div>
               </div>
             </>
           )}

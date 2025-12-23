@@ -491,6 +491,8 @@ export const healthRecords = pgTable('health_records', {
 
   recordDate: date('record_date').notNull(),
   veterinarianName: text('veterinarian_name'),
+  veterinarianEmail: text('veterinarian_email'),
+  veterinarianPhone: text('veterinarian_phone'),
   clinicName: text('clinic_name'),
 
   // Vaccination specific

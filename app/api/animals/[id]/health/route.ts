@@ -55,6 +55,8 @@ export async function POST(
         recordType: body.recordType,
         recordDate: body.recordDate,
         veterinarianName: body.veterinarianName,
+        veterinarianEmail: body.veterinarianEmail,
+        veterinarianPhone: body.veterinarianPhone,
         clinicName: body.clinicName,
         vaccinationType: body.vaccinationType,
         nextDueDate: body.nextDueDate,

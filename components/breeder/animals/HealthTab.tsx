@@ -306,10 +306,18 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                           </div>
                           
                           {record.veterinarianName && (
-                            <p className="text-sm text-muted-foreground">
-                              Dr. {record.veterinarianName}
-                              {record.clinicName && ` • ${record.clinicName}`}
-                            </p>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <p>
+                                Dr. {record.veterinarianName}
+                                {record.clinicName && ` • ${record.clinicName}`}
+                              </p>
+                              {record.veterinarianEmail && (
+                                <p className="text-xs">
+                                  📧 {record.veterinarianEmail}
+                                  {record.veterinarianPhone && ` • 📞 ${record.veterinarianPhone}`}
+                                </p>
+                              )}
+                            </div>
                           )}
                           
                           {record.diagnosis && (
@@ -528,10 +536,18 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                           </div>
 
                           {cert.veterinarianName && (
-                            <p className="text-xs text-muted-foreground mb-2">
-                              Dr. {cert.veterinarianName}
-                              {cert.clinicName && ` • ${cert.clinicName}`}
-                            </p>
+                            <div className="text-xs text-muted-foreground mb-2 space-y-1">
+                              <p>
+                                Dr. {cert.veterinarianName}
+                                {cert.clinicName && ` • ${cert.clinicName}`}
+                              </p>
+                              {cert.veterinarianEmail && (
+                                <p className="text-xs">
+                                  📧 {cert.veterinarianEmail}
+                                  {cert.veterinarianPhone && ` • 📞 ${cert.veterinarianPhone}`}
+                                </p>
+                              )}
+                            </div>
                           )}
 
                           {cert.cost && (
