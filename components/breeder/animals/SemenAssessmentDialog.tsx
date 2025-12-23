@@ -54,11 +54,11 @@ export function SemenAssessmentDialog({
   const [visualNotes, setVisualNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch clinics
+  // Fetch both personal and official verified clinics
   const { data: clinicsData } = useQuery({
-    queryKey: ["clinics"],
+    queryKey: ["all-clinics"],
     queryFn: async () => {
-      const response = await fetch(`/api/clinics`);
+      const response = await fetch(`/api/clinics/all`);
       if (!response.ok) throw new Error("Failed to fetch clinics");
       return response.json();
     },
@@ -66,6 +66,8 @@ export function SemenAssessmentDialog({
 
   const clinics = clinicsData?.clinics || [];
   const primaryClinic = clinics.find((c: any) => c.isPrimary);
+  const personalClinics = clinics.filter((c: any) => c.isPersonal);
+  const officialClinics = clinics.filter((c: any) => c.isOfficial);
 
   // Set primary clinic as default
   useEffect(() => {
@@ -414,18 +416,53 @@ export function SemenAssessmentDialog({
               </SelectTrigger>
               <SelectContent>
                 {clinics.length === 0 ? (
-                  <SelectItem value="none" disabled>No clinics saved</SelectItem>
+                  <SelectItem value="none" disabled>No clinics available</SelectItem>
                 ) : (
-                  clinics.map((clinic: any) => (
-                    <SelectItem key={clinic.id} value={clinic.id}>
-                      {clinic.clinicName} {clinic.isPrimary && '(Primary)'}
-                    </SelectItem>
-                  ))
+                  <>
+                    {/* Personal Clinics Section */}
+                    {personalClinics.length > 0 && (
+                      <>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          My Saved Clinics
+                        </div>
+                        {personalClinics.map((clinic: any) => (
+                          <SelectItem key={clinic.id} value={clinic.id}>
+                            {clinic.clinicName} {clinic.isPrimary && '(Primary)'}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Official Verified Clinics Section */}
+                    {officialClinics.length > 0 && (
+                      <>
+                        {personalClinics.length > 0 && (
+                          <div className="my-1 border-t" />
+                        )}
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          Verified Clinics
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-green-100 text-green-700">
+                            ✓ Verified
+                          </span>
+                        </div>
+                        {officialClinics.map((clinic: any) => (
+                          <SelectItem key={clinic.id} value={clinic.id}>
+                            {clinic.clinicName}
+                            {clinic.city && clinic.state && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                • {clinic.city}, {clinic.state}
+                              </span>
+                            )}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                  </>
                 )}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Select from your saved clinics or enter manually below
+              Choose from your saved clinics or verified official clinics
             </p>
           </div>
 
