@@ -63,7 +63,8 @@ export function ProgesteroneTab({ animalId, animalName }: ProgesteroneTabProps) 
 
   const cycles: HeatCycle[] = data?.cycles || [];
   const activeCycle = cycles.find((c: HeatCycle) => c.status === 'active');
-  const completedCycles = cycles.filter((c: HeatCycle) => c.status !== 'active');
+  // Show all cycles in history (not just completed)
+  const historyCycles = cycles;
 
   // Calculate stats
   const totalCycles = cycles.length || 0;
@@ -242,14 +243,14 @@ export function ProgesteroneTab({ animalId, animalName }: ProgesteroneTabProps) 
         <CardHeader>
           <CardTitle>Heat Cycle History</CardTitle>
           <CardDescription>
-            {completedCycles.length === 0 
-              ? 'No completed cycles yet' 
-              : `${completedCycles.length} completed cycle${completedCycles.length !== 1 ? 's' : ''}`
+            {historyCycles.length === 0 
+              ? 'No heat cycles recorded yet' 
+              : `${historyCycles.length} cycle${historyCycles.length !== 1 ? 's' : ''} tracked`
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {completedCycles.length === 0 ? (
+          {historyCycles.length === 0 ? (
             <div className="text-center py-12">
               <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">No heat cycle history yet</p>
@@ -260,13 +261,39 @@ export function ProgesteroneTab({ animalId, animalName }: ProgesteroneTabProps) 
             </div>
           ) : (
             <div className="space-y-4">
-              {completedCycles.map((cycle) => {
+              {historyCycles.map((cycle) => {
                 const daysSinceStart = cycle.endDate 
                   ? differenceInDays(new Date(cycle.endDate), new Date(cycle.startDate))
-                  : null;
+                  : cycle.currentDay || differenceInDays(new Date(), new Date(cycle.startDate));
                 const lastReading = cycle.readings && cycle.readings.length > 0 
                   ? cycle.readings[0] 
                   : null;
+
+                // Status badge styling
+                const getStatusBadge = (status: string) => {
+                  switch(status) {
+                    case 'active':
+                      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 border-green-500';
+                    case 'completed':
+                      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200';
+                    case 'pregnant':
+                      return 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-200 border-pink-500';
+                    case 'cancelled':
+                      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200';
+                    default:
+                      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200';
+                  }
+                };
+
+                const getStatusLabel = (status: string) => {
+                  switch(status) {
+                    case 'active': return '🔥 Active';
+                    case 'completed': return '✅ Completed';
+                    case 'pregnant': return '🤰 Pregnant';
+                    case 'cancelled': return '❌ Cancelled';
+                    default: return status;
+                  }
+                };
 
                 return (
                   <Card key={cycle.id} className="border hover:border-primary/50 transition-colors">
@@ -274,20 +301,26 @@ export function ProgesteroneTab({ animalId, animalName }: ProgesteroneTabProps) 
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200">
-                              {cycle.status === 'completed' ? 'Completed' : cycle.status === 'pregnant' ? 'Pregnant' : 'Ended'}
+                            <Badge variant="secondary" className={getStatusBadge(cycle.status)}>
+                              {getStatusLabel(cycle.status)}
                             </Badge>
                             <span className="text-sm text-muted-foreground">
                               {format(new Date(cycle.startDate), 'MMM dd, yyyy')}
                               {cycle.endDate && ` - ${format(new Date(cycle.endDate), 'MMM dd, yyyy')}`}
+                              {cycle.status === 'active' && ` (Day ${cycle.currentDay || daysSinceStart})`}
                             </span>
                           </div>
                           
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                             <div>
-                              <p className="text-xs text-muted-foreground">Duration</p>
+                              <p className="text-xs text-muted-foreground">
+                                {cycle.status === 'active' ? 'Current Day' : 'Duration'}
+                              </p>
                               <p className="text-sm font-semibold">
-                                {daysSinceStart ? `${daysSinceStart} days` : 'N/A'}
+                                {cycle.status === 'active' 
+                                  ? `Day ${cycle.currentDay || daysSinceStart}`
+                                  : `${daysSinceStart} days`
+                                }
                               </p>
                             </div>
                             <div>
@@ -296,7 +329,9 @@ export function ProgesteroneTab({ animalId, animalName }: ProgesteroneTabProps) 
                             </div>
                             {lastReading && (
                               <div>
-                                <p className="text-xs text-muted-foreground">Peak P4</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {cycle.status === 'active' ? 'Last P4' : 'Peak P4'}
+                                </p>
                                 <p className="text-sm font-semibold text-purple-600">
                                   {parseFloat(lastReading.progesteroneLevel).toFixed(1)} ng/mL
                                 </p>
