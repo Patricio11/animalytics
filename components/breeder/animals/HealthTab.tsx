@@ -30,6 +30,7 @@ import { format, formatDistanceToNow, isBefore, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
 import { AddHealthRecordDialog } from "@/components/breeder/animals/AddHealthRecordDialog";
+import { UploadCertificateDialog } from "@/components/breeder/animals/UploadCertificateDialog";
 import { ProgesteroneHealthCard } from "@/components/breeder/animals/ProgesteroneHealthCard";
 import { cn } from "@/lib/utils";
 
@@ -45,15 +46,22 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
   const queryClient = useQueryClient();
   const { settings } = useRegionalSettings();
   const [showAddRecord, setShowAddRecord] = useState(false);
+  const [showCertificateDialog, setShowCertificateDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [defaultRecordType, setDefaultRecordType] = useState<string | undefined>(undefined);
 
   // Helper to open Add Record dialog with context-aware default type
   const handleAddRecord = () => {
+    // For certificates tab, show specialized upload dialog
+    if (activeTab === "certificates") {
+      setShowCertificateDialog(true);
+      return;
+    }
+
+    // For other tabs, show standard health record dialog with pre-selected type
     const typeMap: Record<string, string> = {
       vaccinations: "vaccination",
       medications: "medication",
-      certificates: "vaccination", // Default to vaccination for certificates
       appointments: "checkup",
     };
     setDefaultRecordType(typeMap[activeTab]);
@@ -518,9 +526,9 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                   <p className="text-sm text-muted-foreground mb-4">
                     Upload vaccination certificates, lab results, or medical documents
                   </p>
-                  <Button onClick={() => setShowAddRecord(true)}>
+                  <Button onClick={() => setShowCertificateDialog(true)}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Health Record with Certificate
+                    Upload Health Certificate
                   </Button>
                 </div>
               ) : (
@@ -649,6 +657,14 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
         animalSex={animalSex}
         animalDateOfBirth={animalDateOfBirth}
         defaultRecordType={defaultRecordType}
+      />
+
+      {/* Upload Certificate Dialog */}
+      <UploadCertificateDialog
+        open={showCertificateDialog}
+        onOpenChange={setShowCertificateDialog}
+        animalId={animalId}
+        animalName={animalName}
       />
     </div>
   );
