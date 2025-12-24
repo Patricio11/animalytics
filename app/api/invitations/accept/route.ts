@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { vetInvitations, officialClinics, clinicStaff, users } from '@/lib/db/schema';
+import { vetInvitations, officialClinics, clinicStaff, users, accounts } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { hash } from 'bcryptjs';
+import { hash } from 'bcrypt';
 import { sendVetWelcomeEmail } from '@/lib/email/send-vet-invitation';
+import { createId } from '@paralleldrive/cuid2';
 
 /**
  * POST /api/invitations/accept
@@ -83,19 +84,37 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hash(password, 10);
 
-    // Create user account
+    // Generate IDs
+    const userId = createId();
+    const accountId = createId();
+
+    // Create user record (Better Auth manages users table)
     const [newUser] = await db
       .insert(users)
       .values({
+        id: userId,
         email: invitation.email,
         name: name,
-        password: hashedPassword,
-        role: 'veterinary',
-        emailVerified: new Date(), // Auto-verify since they came from invitation
+        role: 'veterinarian',
+        emailVerified: true, // Auto-verify since they came from invitation
+        isVerified: true,
       })
       .returning();
 
     console.log('User created:', newUser.id);
+
+    // Create account record with password (Better Auth stores passwords here)
+    await db
+      .insert(accounts)
+      .values({
+        id: accountId,
+        accountId: userId, // Link to user
+        providerId: 'credential', // Email/password provider
+        userId: userId,
+        password: hashedPassword,
+      });
+
+    console.log('Account created with password');
 
     // Check if this is the first vet for the clinic (should be main admin)
     const existingStaff = await db
