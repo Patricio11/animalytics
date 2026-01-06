@@ -495,8 +495,21 @@ export default function AdminMarketplacePage() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Seller:</span>
-                      <span className="font-medium">{listing.userName}</span>
+                      <span className="text-muted-foreground">Owner:</span>
+                      <Link 
+                        href={`/breeder/profile/${listing.userId}`}
+                        target="_blank"
+                        className="font-medium text-primary hover:underline flex items-center gap-1"
+                      >
+                        {listing.userName}
+                        <Eye className="w-3 h-3" />
+                      </Link>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Email:</span>
+                      <span className="text-xs text-muted-foreground truncate max-w-[150px]" title={listing.userEmail}>
+                        {listing.userEmail}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Category:</span>
@@ -651,15 +664,36 @@ export default function AdminMarketplacePage() {
                   <p className="text-sm">{selectedListing.description || 'No description'}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">Seller</Label>
-                    <p className="font-medium">{selectedListing.userName}</p>
-                    <p className="text-sm text-muted-foreground">{selectedListing.userEmail}</p>
+                {/* Breeder/Owner Information - Prominent Section */}
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wide">Breeder / Owner</Label>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-lg">{selectedListing.userName}</p>
+                      <p className="text-sm text-muted-foreground">{selectedListing.userEmail}</p>
+                    </div>
+                    <Link 
+                      href={`/breeder/profile/${selectedListing.userId}`}
+                      target="_blank"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View Profile
+                    </Link>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Click to verify breeder profile and credentials before approval
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-muted-foreground">Created</Label>
                     <p className="text-sm">{formatDate(selectedListing.createdAt)}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Views / Inquiries</Label>
+                    <p className="text-sm">{selectedListing.viewCount} / {selectedListing.inquiryCount}</p>
                   </div>
                 </div>
 
