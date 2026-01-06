@@ -209,9 +209,10 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
 
       {/* Horizontal Tree Layout */}
       <div className="relative min-w-[900px]">
-        <div className="grid grid-cols-4 gap-4">
-          {/* Generation 0 - Subject (Left) */}
-          <div className="col-span-1 flex items-center">
+        {/* Pedigree Tree Grid */}
+        <div className="grid grid-cols-4 gap-8 items-center">
+          {/* Generation 0 - Subject */}
+          <div className="col-span-1 flex items-center justify-center relative">
             <PedigreeCard 
               animal={node} 
               generation={0} 
@@ -224,81 +225,140 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
               onCardClick={handleCardClick}
               subjectId={node.id}
             />
+            {/* Horizontal line from Subject to vertical connector */}
+            <div className="absolute left-full top-1/2 w-8 h-px bg-border" />
           </div>
 
           {/* Generation 1 - Parents */}
-          <div className="col-span-1 flex flex-col justify-center gap-8">
+          <div className="col-span-1 flex flex-col justify-center gap-8 relative">
+            {/* Vertical connector with branches to SIRE and DAM */}
+            <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+            <div className="absolute right-full top-0 bottom-0 left-[-32px] w-px bg-border" />
             <div className="relative">
+              {/* Horizontal branch from vertical to SIRE */}
+              <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
               <PedigreeCard animal={node.sire} generation={1} position="sire" label="SIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              {/* Connecting line to subject */}
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+              {/* Horizontal line from SIRE to its vertical connector */}
+              <div className="absolute left-full top-1/2 w-8 h-px bg-border" />
             </div>
             <div className="relative">
+              {/* Horizontal branch from vertical to DAM */}
+              <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
               <PedigreeCard animal={node.dam} generation={1} position="dam" label="DAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              {/* Connecting line to subject */}
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+              {/* Horizontal line from DAM to its vertical connector */}
+              <div className="absolute left-full top-1/2 w-8 h-px bg-border" />
             </div>
           </div>
 
           {/* Generation 2 - Grandparents */}
-          <div className="col-span-1 flex flex-col justify-center gap-4">
-            {/* Sire's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.sire?.sire} generation={2} position="sire.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+          <div className="col-span-1 flex flex-col justify-center gap-2">
+            {/* Sire's parents - aligned with Sire */}
+            <div className="flex flex-col gap-2 mb-4 relative">
+              {/* Vertical connector for Sire's children */}
+              <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+              <div className="absolute right-full top-0 bottom-0 left-[-32px] w-px bg-border" />
+              <div className="relative">
+                {/* Horizontal branch from vertical to GRANDSIRE */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.sire?.sire} generation={2} position="sire.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                {/* Horizontal line from GRANDSIRE to Gen 3 */}
+                <div className="absolute left-full top-1/2 w-8 h-px bg-border" />
+              </div>
+              <div className="relative">
+                {/* Horizontal branch from vertical to GRANDDAM */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.sire?.dam} generation={2} position="sire.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                {/* Horizontal line from GRANDDAM to Gen 3 */}
+                <div className="absolute left-full top-1/2 w-8 h-px bg-border" />
+              </div>
             </div>
-            <div className="relative">
-              <PedigreeCard animal={node.sire?.dam} generation={2} position="sire.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            {/* Dam's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.sire} generation={2} position="dam.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.dam} generation={2} position="dam.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            {/* Dam's parents - aligned with Dam */}
+            <div className="flex flex-col gap-2 relative">
+              {/* Vertical connector for Dam's children */}
+              <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+              <div className="absolute right-full top-0 bottom-0 left-[-32px] w-px bg-border" />
+              <div className="relative">
+                {/* Horizontal branch from vertical to GRANDSIRE */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.dam?.sire} generation={2} position="dam.sire" label="GRANDSIRE" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                {/* Horizontal line from GRANDSIRE to Gen 3 */}
+                <div className="absolute left-full top-1/2 w-8 h-px bg-border" />
+              </div>
+              <div className="relative">
+                {/* Horizontal branch from vertical to GRANDDAM */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.dam?.dam} generation={2} position="dam.dam" label="GRANDDAM" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                {/* Horizontal line from GRANDDAM to Gen 3 */}
+                <div className="absolute left-full top-1/2 w-8 h-px bg-border" />
+              </div>
             </div>
           </div>
 
           {/* Generation 3 - Great Grandparents */}
           <div className="col-span-1 flex flex-col justify-center gap-2">
-            {/* Sire's Sire's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            {/* Sire's Sire's parents - aligned with Sire's Sire */}
+            <div className="flex flex-col gap-1 relative">
+              {/* Vertical connector for Sire's Sire's children */}
+              <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+              <div className="absolute right-full top-0 bottom-0 left-[-32px] w-px bg-border" />
+              <div className="relative">
+                {/* Horizontal branch from vertical to card */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+              </div>
+              <div className="relative">
+                {/* Horizontal branch from vertical to card */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="sire.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+              </div>
             </div>
-            <div className="relative">
-              <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="sire.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            {/* Sire's Dam's parents - aligned with Sire's Dam */}
+            <div className="flex flex-col gap-1 mb-4 relative">
+              {/* Vertical connector for Sire's Dam's children */}
+              <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+              <div className="absolute right-full top-0 bottom-0 left-[-32px] w-px bg-border" />
+              <div className="relative">
+                {/* Horizontal branch from vertical to card */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+              </div>
+              <div className="relative">
+                {/* Horizontal branch from vertical to card */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+              </div>
             </div>
-            {/* Sire's Dam's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            {/* Dam's Sire's parents - aligned with Dam's Sire */}
+            <div className="flex flex-col gap-1 relative">
+              {/* Vertical connector for Dam's Sire's children */}
+              <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+              <div className="absolute right-full top-0 bottom-0 left-[-32px] w-px bg-border" />
+              <div className="relative">
+                {/* Horizontal branch from vertical to card */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+              </div>
+              <div className="relative">
+                {/* Horizontal branch from vertical to card */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+              </div>
             </div>
-            <div className="relative">
-              <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            {/* Dam's Sire's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            {/* Dam's Dam's parents */}
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
-            </div>
-            <div className="relative">
-              <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
-              <div className="absolute right-full top-1/2 w-4 h-px bg-border" />
+            {/* Dam's Dam's parents - aligned with Dam's Dam */}
+            <div className="flex flex-col gap-1 relative">
+              {/* Vertical connector for Dam's Dam's children */}
+              <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+              <div className="absolute right-full top-0 bottom-0 left-[-32px] w-px bg-border" />
+              <div className="relative">
+                {/* Horizontal branch from vertical to card */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+              </div>
+              <div className="relative">
+                {/* Horizontal branch from vertical to card */}
+                <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
+                <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+              </div>
             </div>
           </div>
         </div>
