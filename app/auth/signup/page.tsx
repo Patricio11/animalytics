@@ -27,7 +27,7 @@ export default function SignUp() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "breeder" as "breeder" | "veterinarian" | "admin" | "event_organizer" | "buyer",
+    role: "breeder" as "breeder" | "veterinarian" | "admin" | "event_organizer" | "pet_owner",
   });
   const [selectedBreedIds, setSelectedBreedIds] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -53,8 +53,8 @@ export default function SignUp() {
 
       if (userRole === "admin") {
         redirectUrl = "/admin/dashboard";
-      } else if (userRole === "buyer") {
-        redirectUrl = "/buyer/dashboard";
+      } else if (userRole === "pet_owner") {
+        redirectUrl = "/pet-owner/dashboard";
       }
 
       router.replace(redirectUrl);
@@ -269,10 +269,10 @@ export default function SignUp() {
                           Breeder
                         </div>
                       </SelectItem>
-                      <SelectItem value="buyer">
+                      <SelectItem value="pet_owner">
                         <div className="flex items-center">
                           <ShoppingCart className="mr-2 h-4 w-4" />
-                          Buyer / Pet Owner
+                          Pet Owner
                         </div>
                       </SelectItem>
                       <SelectItem value="veterinarian">

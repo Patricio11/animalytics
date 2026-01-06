@@ -43,10 +43,10 @@ export async function POST(
       );
     }
 
-    // Verify user is the buyer
-    if (purchase.buyerId !== session.user.id) {
+    // Verify user is the pet owner
+    if (purchase.petOwnerId !== session.user.id) {
       return NextResponse.json(
-        { error: 'Only the buyer can make payment' },
+        { error: 'Only the pet owner can make payment' },
         { status: 403 }
       );
     }
@@ -67,15 +67,15 @@ export async function POST(
       );
     }
 
-    // Get buyer info for Stripe customer
-    const [buyer] = await db
+    // Get pet owner info for Stripe customer
+    const [petOwner] = await db
       .select()
       .from(users)
       .where(eq(users.id, session.user.id));
 
-    if (!buyer) {
+    if (!petOwner) {
       return NextResponse.json(
-        { error: 'Buyer not found' },
+        { error: 'Pet owner not found' },
         { status: 404 }
       );
     }
@@ -92,14 +92,14 @@ export async function POST(
 
     // Create or get Stripe customer
     const customer = await provider.createCustomer({
-      email: buyer.email,
-      name: buyer.name || undefined,
+      email: petOwner.email,
+      name: petOwner.name || undefined,
     });
 
     // Determine redirect path based on user role
-    const userRole = (buyer as any).role || 'buyer';
-    const purchasePath = userRole === 'buyer' 
-      ? `/buyer/purchases/${purchase.id}` 
+    const userRole = (petOwner as any).role || 'pet_owner';
+    const purchasePath = userRole === 'pet_owner' 
+      ? `/pet-owner/purchases/${purchase.id}` 
       : `/purchases/${purchase.id}`;
 
     // Create Stripe Checkout Session (payment link)
@@ -107,11 +107,11 @@ export async function POST(
     const checkoutSession = await (provider as any).createCheckoutSession({
       amount: purchase.totalAmount,
       currency: purchase.currency.toLowerCase(),
-      customerEmail: buyer.email,
+      customerEmail: petOwner.email,
       description: `Purchase #${purchase.id.substring(0, 8)}`,
       metadata: {
         purchaseId: purchase.id,
-        buyerId: purchase.buyerId,
+        petOwnerId: purchase.petOwnerId,
         sellerId: purchase.sellerId,
         listingId: purchase.listingId,
       },
@@ -139,8 +139,8 @@ export async function POST(
       oldStatus: purchase.status,
       newStatus: 'payment_pending',
       actorId: session.user.id,
-      actorRole: 'buyer',
-      visibleToBuyer: true,
+      actorRole: 'pet_owner',
+      visibleToPetOwner: true,
       visibleToSeller: false,
     });
 
@@ -149,7 +149,7 @@ export async function POST(
       await escrowService.create({
         purchaseId: purchase.id,
         listingId: purchase.listingId,
-        buyerId: purchase.buyerId,
+        petOwnerId: purchase.petOwnerId,
         sellerId: purchase.sellerId,
         amount: purchase.totalAmount,
         currency: purchase.currency,
@@ -204,8 +204,8 @@ export async function GET(
       );
     }
 
-    // Verify user is buyer or seller
-    if (purchase.buyerId !== session.user.id && purchase.sellerId !== session.user.id) {
+    // Verify user is pet owner or seller
+    if (purchase.petOwnerId !== session.user.id && purchase.sellerId !== session.user.id) {
       return NextResponse.json(
         { error: 'Not authorized to view payment status' },
         { status: 403 }

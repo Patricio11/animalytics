@@ -11,7 +11,7 @@ import { db } from '@/lib/db';
 import { purchases, purchaseTimeline } from '@/lib/db/schema/purchases';
 import { eq } from 'drizzle-orm';
 
-// Auto-release after 7 days if buyer doesn't confirm
+// Auto-release after 7 days if pet owner doesn't confirm
 const AUTO_RELEASE_DAYS = 7;
 
 export async function POST(
@@ -91,10 +91,10 @@ export async function POST(
       purchaseId: id,
       eventType: 'seller_confirmed_handover',
       eventTitle: 'Seller Confirmed Handover',
-      eventDescription: notes || `Animal/item has been handed over to buyer. Auto-release in ${AUTO_RELEASE_DAYS} days if buyer doesn't confirm.`,
+      eventDescription: notes || `Animal/item has been handed over to pet owner. Auto-release in ${AUTO_RELEASE_DAYS} days if pet owner doesn't confirm.`,
       actorId: session.user.id,
       actorRole: 'seller',
-      visibleToBuyer: true,
+      visibleToPetOwner: true,
       visibleToSeller: true,
       metadata: JSON.stringify({
         autoReleaseDate: autoReleaseDate.toISOString(),
@@ -104,7 +104,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: `Handover confirmed. Payment will auto-release in ${AUTO_RELEASE_DAYS} days if buyer doesn't confirm receipt.`,
+      message: `Handover confirmed. Payment will auto-release in ${AUTO_RELEASE_DAYS} days if pet owner doesn't confirm receipt.`,
       purchase: {
         id,
         sellerConfirmedHandover: true,

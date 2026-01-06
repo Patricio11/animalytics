@@ -1,7 +1,7 @@
 /**
  * Messaging Service
  * Centralized service for managing conversations across all user roles
- * Supports: Buyer, Breeder, Veterinarian, Event Organizer
+ * Supports: Pet Owner, Breeder, Veterinarian, Event Organizer
  * Future-proof design for multi-participant conversations
  */
 
@@ -10,12 +10,12 @@ import { conversations, messages, conversationParticipants } from '@/lib/db/sche
 import { users } from '@/lib/db/schema/users';
 import { eq, or, and, sum, desc } from 'drizzle-orm';
 
-export type UserRole = 'buyer' | 'breeder' | 'veterinarian' | 'event_organizer' | 'admin';
+export type UserRole = 'pet_owner' | 'breeder' | 'veterinarian' | 'event_organizer' | 'admin';
 
 export interface UnreadCountResult {
   total: number;
   breakdown: {
-    asBuyer: number;
+    asPetOwner: number;
     asSeller: number;
   };
 }
@@ -27,17 +27,17 @@ export interface ConversationContext {
 
 /**
  * Get unread message count for a user
- * Works for all user roles (buyer, breeder, vet, event organizer)
+ * Works for all user roles (pet_owner, breeder, vet, event organizer)
  */
 export async function getUnreadCount(userId: string): Promise<UnreadCountResult> {
   try {
-    // Get unread count as buyer with timeout protection
-    const buyerUnreadPromise = db
+    // Get unread count as pet owner with timeout protection
+    const petOwnerUnreadPromise = db
       .select({
-        total: sum(conversations.unreadCountBuyer),
+        total: sum(conversations.unreadCountPetOwner),
       })
       .from(conversations)
-      .where(eq(conversations.buyerId, userId));
+      .where(eq(conversations.petOwnerId, userId));
 
     // Get unread count as seller (applies to breeders, vets, event organizers)
     const sellerUnreadPromise = db
@@ -48,18 +48,18 @@ export async function getUnreadCount(userId: string): Promise<UnreadCountResult>
       .where(eq(conversations.sellerId, userId));
 
     // Execute both queries in parallel with timeout
-    const [buyerResult, sellerResult] = await Promise.all([
-      buyerUnreadPromise,
+    const [petOwnerResult, sellerResult] = await Promise.all([
+      petOwnerUnreadPromise,
       sellerUnreadPromise,
     ]);
 
-    const asBuyerCount = Number(buyerResult[0]?.total) || 0;
+    const asPetOwnerCount = Number(petOwnerResult[0]?.total) || 0;
     const asSellerCount = Number(sellerResult[0]?.total) || 0;
 
     return {
-      total: asBuyerCount + asSellerCount,
+      total: asPetOwnerCount + asSellerCount,
       breakdown: {
-        asBuyer: asBuyerCount,
+        asPetOwner: asPetOwnerCount,
         asSeller: asSellerCount,
       },
     };
@@ -68,7 +68,7 @@ export async function getUnreadCount(userId: string): Promise<UnreadCountResult>
     return {
       total: 0,
       breakdown: {
-        asBuyer: 0,
+        asPetOwner: 0,
         asSeller: 0,
       },
     };
@@ -86,7 +86,7 @@ export async function hasConversations(userId: string): Promise<boolean> {
       .from(conversations)
       .where(
         or(
-          eq(conversations.buyerId, userId),
+          eq(conversations.petOwnerId, userId),
           eq(conversations.sellerId, userId)
         )
       )
@@ -118,8 +118,8 @@ export async function getUserConversations(
     // Get archived conversations
     whereClause = or(
       and(
-        eq(conversations.buyerId, userId),
-        eq(conversations.archivedByBuyer, true)
+        eq(conversations.petOwnerId, userId),
+        eq(conversations.archivedByPetOwner, true)
       ),
       and(
         eq(conversations.sellerId, userId),
@@ -130,8 +130,8 @@ export async function getUserConversations(
     // Get active conversations (not archived by this user)
     whereClause = or(
       and(
-        eq(conversations.buyerId, userId),
-        eq(conversations.archivedByBuyer, false)
+        eq(conversations.petOwnerId, userId),
+        eq(conversations.archivedByPetOwner, false)
       ),
       and(
         eq(conversations.sellerId, userId),
@@ -153,8 +153,8 @@ export async function getUserConversations(
 export function getUserRoleInConversation(
   conversation: typeof conversations.$inferSelect,
   userId: string
-): 'buyer' | 'seller' | null {
-  if (conversation.buyerId === userId) return 'buyer';
+): 'pet_owner' | 'seller' | null {
+  if (conversation.petOwnerId === userId) return 'pet_owner';
   if (conversation.sellerId === userId) return 'seller';
   return null;
 }
@@ -167,7 +167,7 @@ export function getUnreadCountForRole(
   userId: string
 ): number {
   const role = getUserRoleInConversation(conversation, userId);
-  if (role === 'buyer') return conversation.unreadCountBuyer;
+  if (role === 'pet_owner') return conversation.unreadCountPetOwner;
   if (role === 'seller') return conversation.unreadCountSeller;
   return 0;
 }
@@ -180,7 +180,7 @@ export function isArchivedByUser(
   userId: string
 ): boolean {
   const role = getUserRoleInConversation(conversation, userId);
-  if (role === 'buyer') return conversation.archivedByBuyer ?? false;
+  if (role === 'pet_owner') return conversation.archivedByPetOwner ?? false;
   if (role === 'seller') return conversation.archivedBySeller ?? false;
   return false;
 }
@@ -193,7 +193,7 @@ export function isBlockedByUser(
   userId: string
 ): boolean {
   const role = getUserRoleInConversation(conversation, userId);
-  if (role === 'buyer') return conversation.blockedByBuyer ?? false;
+  if (role === 'pet_owner') return conversation.blockedByPetOwner ?? false;
   if (role === 'seller') return conversation.blockedBySeller ?? false;
   return false;
 }
@@ -201,7 +201,7 @@ export function isBlockedByUser(
 /**
  * Future-proof: Support for multi-participant conversations
  * This can be extended to support:
- * - Group chats (Buyer + Breeder + Vet)
+ * - Group chats (Pet Owner + Breeder + Vet)
  * - Event organizer conversations with multiple participants
  * - Admin moderation conversations
  */
@@ -223,7 +223,7 @@ export async function getConversationParticipants(conversationId: string) {
 
 /**
  * Future-proof: Check if user can access conversation
- * Currently supports buyer-seller model
+ * Currently supports pet_owner-seller model
  * Can be extended to support multi-participant conversations
  */
 export async function canUserAccessConversation(
@@ -238,8 +238,8 @@ export async function canUserAccessConversation(
 
   if (!conversation) return false;
 
-  // Check if user is buyer or seller
-  if (conversation.buyerId === userId || conversation.sellerId === userId) {
+  // Check if user is pet owner or seller
+  if (conversation.petOwnerId === userId || conversation.sellerId === userId) {
     return true;
   }
 

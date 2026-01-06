@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
       // Get archived conversations
       whereClause = or(
         and(
-          eq(conversations.buyerId, userId),
-          eq(conversations.archivedByBuyer, true)
+          eq(conversations.petOwnerId, userId),
+          eq(conversations.archivedByPetOwner, true)
         ),
         and(
           eq(conversations.sellerId, userId),
@@ -55,11 +55,11 @@ export async function GET(request: NextRequest) {
       );
     } else {
       // Get active conversations (not archived by this user)
-      // User is buyer and hasn't archived OR user is seller and hasn't archived
+      // User is pet owner and hasn't archived OR user is seller and hasn't archived
       whereClause = or(
         and(
-          eq(conversations.buyerId, userId),
-          eq(conversations.archivedByBuyer, false)
+          eq(conversations.petOwnerId, userId),
+          eq(conversations.archivedByPetOwner, false)
         ),
         and(
           eq(conversations.sellerId, userId),
@@ -94,9 +94,9 @@ export async function GET(request: NextRequest) {
         console.log(`🔍 [Conversations List] Processing conversation ${index + 1}/${userConversations.length}`);
         console.log(`📊 [Conversations List] Listing for conversation ${index + 1}:`, listing ? 'Has data' : 'Null', listing?.id || 'no ID');
         // Determine the other participant
-        const otherUserId = conversation.buyerId === userId
+        const otherUserId = conversation.petOwnerId === userId
           ? conversation.sellerId
-          : conversation.buyerId;
+          : conversation.petOwnerId;
 
         // Get other user's details
         const [otherUser] = await db
@@ -110,12 +110,12 @@ export async function GET(request: NextRequest) {
           .limit(1);
 
         // Determine unread count for current user
-        const unreadCount = conversation.buyerId === userId
-          ? conversation.unreadCountBuyer
+        const unreadCount = conversation.petOwnerId === userId
+          ? conversation.unreadCountPetOwner
           : conversation.unreadCountSeller;
 
-        // Determine if current user is buyer or seller
-        const userRole = conversation.buyerId === userId ? 'buyer' : 'seller';
+        // Determine if current user is pet owner or seller
+        const userRole = conversation.petOwnerId === userId ? 'pet_owner' : 'seller';
 
         return {
           id: conversation.id,
@@ -138,12 +138,12 @@ export async function GET(request: NextRequest) {
             price: listing.price,
             currency: listing.currency,
           } : null,
-          isArchived: userRole === 'buyer'
-            ? conversation.archivedByBuyer
+          isArchived: userRole === 'pet_owner'
+            ? conversation.archivedByPetOwner
             : conversation.archivedBySeller,
-          isBlocked: userRole === 'buyer'
+          isBlocked: userRole === 'pet_owner'
             ? conversation.blockedBySeller
-            : conversation.blockedByBuyer,
+            : conversation.blockedByPetOwner,
         };
       })
     );
@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
         .from(conversations)
         .where(
           and(
-            eq(conversations.buyerId, userId),
+            eq(conversations.petOwnerId, userId),
             eq(conversations.sellerId, sellerId),
             eq(conversations.listingId, listingId)
           )
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
         .from(conversations)
         .where(
           and(
-            eq(conversations.buyerId, userId),
+            eq(conversations.petOwnerId, userId),
             eq(conversations.sellerId, sellerId)
           )
         )
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
           lastMessagePreview: initialMessage.trim().substring(0, 100),
           unreadCountSeller: existingConversation.unreadCountSeller + 1,
           // Unarchive if it was archived
-          archivedByBuyer: false,
+          archivedByPetOwner: false,
           archivedBySeller: false,
           updatedAt: new Date(),
         })
@@ -282,7 +282,7 @@ export async function POST(request: NextRequest) {
           .limit(1);
 
         const senderName = sender?.name || 'Someone';
-        const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'buyer' | 'vet' | 'event_organizer' | 'admin';
+        const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'pet_owner' | 'vet' | 'event_organizer' | 'admin';
 
         await createMessageReceivedNotification({
           userId: sellerId,
@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
     const [newConversation] = await db
       .insert(conversations)
       .values({
-        buyerId: userId,
+        petOwnerId: userId,
         sellerId,
         listingId: listingId || null,
         subject: subject || null,

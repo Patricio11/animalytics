@@ -45,7 +45,7 @@ export async function POST(
     }
 
     // Check if user is part of the conversation
-    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+    if (conversation.petOwnerId !== userId && conversation.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // Determine user role
-    const userRole = conversation.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = conversation.petOwnerId === userId ? 'pet_owner' : 'seller';
 
     // Mark messages as read (messages not sent by current user)
     await db
@@ -70,11 +70,11 @@ export async function POST(
       );
 
     // Reset unread count for current user
-    if (userRole === 'buyer') {
+    if (userRole === 'pet_owner') {
       await db
         .update(conversations)
         .set({
-          unreadCountBuyer: 0,
+          unreadCountPetOwner: 0,
           updatedAt: new Date(),
         })
         .where(eq(conversations.id, conversationId));

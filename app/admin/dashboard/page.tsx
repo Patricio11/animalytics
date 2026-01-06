@@ -25,7 +25,7 @@ interface DashboardStats {
   users: {
     total: number;
     breeders: number;
-    buyers: number;
+    petOwners: number;
     veterinarians: number;
     admins: number;
     verified: number;
@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
     const variants: Record<string, string> = {
       admin: 'destructive',
       breeder: 'default',
-      buyer: 'secondary',
+      pet_owner: 'secondary',
       veterinarian: 'outline',
     };
     return variants[role] || 'default';
@@ -203,8 +203,8 @@ export default function AdminDashboardPage() {
                     <span className="font-medium">{stats.users.breeders}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Buyers:</span>
-                    <span className="font-medium">{stats.users.buyers}</span>
+                    <span>Pet Owners:</span>
+                    <span className="font-medium">{stats.users.petOwners}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Verified:</span>

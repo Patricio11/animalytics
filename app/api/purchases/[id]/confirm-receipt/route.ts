@@ -1,6 +1,6 @@
 /**
  * Confirm Receipt API
- * POST - Buyer confirms receipt of animal/item
+ * POST - Pet owner confirms receipt of animal/item
  * This triggers escrow release to seller
  */
 
@@ -42,16 +42,16 @@ export async function POST(
       );
     }
 
-    // Verify user is the buyer
-    if (purchase.buyerId !== session.user.id) {
+    // Verify user is the pet owner
+    if (purchase.petOwnerId !== session.user.id) {
       return NextResponse.json(
-        { error: 'Only the buyer can confirm receipt' },
+        { error: 'Only the pet owner can confirm receipt' },
         { status: 403 }
       );
     }
 
     // Check if already confirmed
-    if (purchase.buyerConfirmedReceipt) {
+    if (purchase.petOwnerConfirmedReceipt) {
       return NextResponse.json(
         { error: 'Receipt already confirmed' },
         { status: 400 }
@@ -67,13 +67,13 @@ export async function POST(
       );
     }
 
-    // Update purchase with buyer confirmation
+    // Update purchase with pet owner confirmation
     await db
       .update(purchases)
       .set({
-        buyerConfirmedReceipt: true,
-        buyerConfirmedAt: new Date(),
-        buyerNotes: notes || purchase.buyerNotes,
+        petOwnerConfirmedReceipt: true,
+        petOwnerConfirmedAt: new Date(),
+        petOwnerNotes: notes || purchase.petOwnerNotes,
         status: 'completed',
         completedAt: new Date(),
         ownershipTransferred: true,
@@ -85,14 +85,14 @@ export async function POST(
     // Add timeline event
     await db.insert(purchaseTimeline).values({
       purchaseId: id,
-      eventType: 'buyer_confirmed',
-      eventTitle: 'Buyer Confirmed Receipt',
-      eventDescription: notes || 'Buyer has confirmed receipt of the animal/item',
+      eventType: 'pet_owner_confirmed',
+      eventTitle: 'Pet Owner Confirmed Receipt',
+      eventDescription: notes || 'Pet owner has confirmed receipt of the animal/item',
       oldStatus: purchase.status,
       newStatus: 'completed',
       actorId: session.user.id,
-      actorRole: 'buyer',
-      visibleToBuyer: true,
+      actorRole: 'pet_owner',
+      visibleToPetOwner: true,
       visibleToSeller: true,
     });
 
@@ -116,7 +116,7 @@ export async function POST(
           eventDescription: 'Funds have been released to the seller\'s wallet',
           actorId: session.user.id,
           actorRole: 'system',
-          visibleToBuyer: true,
+          visibleToPetOwner: true,
           visibleToSeller: true,
         });
       }
@@ -128,8 +128,8 @@ export async function POST(
       purchase: {
         id,
         status: 'completed',
-        buyerConfirmedReceipt: true,
-        buyerConfirmedAt: new Date(),
+        petOwnerConfirmedReceipt: true,
+        petOwnerConfirmedAt: new Date(),
       },
     });
   } catch (error) {

@@ -44,7 +44,7 @@ export async function GET(
 
     console.log('📊 [Conversation Detail] Conversation found:', conversation ? 'Yes' : 'No');
     if (conversation) {
-      console.log('📊 [Conversation Detail] Buyer ID:', conversation.buyerId);
+      console.log('📊 [Conversation Detail] Pet Owner ID:', conversation.petOwnerId);
       console.log('📊 [Conversation Detail] Seller ID:', conversation.sellerId);
       console.log('📊 [Conversation Detail] Listing ID:', conversation.listingId);
     }
@@ -58,7 +58,7 @@ export async function GET(
     }
 
     // Check if user is part of the conversation
-    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+    if (conversation.petOwnerId !== userId && conversation.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -66,10 +66,10 @@ export async function GET(
     }
 
     // Determine user role
-    const userRole = conversation.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = conversation.petOwnerId === userId ? 'pet_owner' : 'seller';
 
     // Mark messages as read and reset unread count
-    if (userRole === 'buyer' && conversation.unreadCountBuyer > 0) {
+    if (userRole === 'pet_owner' && conversation.unreadCountPetOwner > 0) {
       // Mark all messages as read
       await db
         .update(messages)
@@ -88,7 +88,7 @@ export async function GET(
       await db
         .update(conversations)
         .set({
-          unreadCountBuyer: 0,
+          unreadCountPetOwner: 0,
           updatedAt: new Date(),
         })
         .where(eq(conversations.id, conversationId));
@@ -140,9 +140,9 @@ export async function GET(
     }
 
     // Get other participant details
-    const otherUserId = userRole === 'buyer'
+    const otherUserId = userRole === 'pet_owner'
       ? conversation.sellerId
-      : conversation.buyerId;
+      : conversation.petOwnerId;
 
     console.log('🔍 [Conversation Detail] Fetching other user:', otherUserId);
     const [otherUser] = await db
@@ -187,14 +187,14 @@ export async function GET(
           email: null,
         },
         listing,
-        isArchived: userRole === 'buyer'
-          ? conversation.archivedByBuyer
+        isArchived: userRole === 'pet_owner'
+          ? conversation.archivedByPetOwner
           : conversation.archivedBySeller,
-        isBlocked: userRole === 'buyer'
+        isBlocked: userRole === 'pet_owner'
           ? conversation.blockedBySeller
-          : conversation.blockedByBuyer,
-        blockedByMe: userRole === 'buyer'
-          ? conversation.blockedByBuyer
+          : conversation.blockedByPetOwner,
+        blockedByMe: userRole === 'pet_owner'
+          ? conversation.blockedByPetOwner
           : conversation.blockedBySeller,
       },
       messages: conversationMessages.reverse(), // Oldest first for display
@@ -250,7 +250,7 @@ export async function PATCH(
     }
 
     // Check if user is part of the conversation
-    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+    if (conversation.petOwnerId !== userId && conversation.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -258,7 +258,7 @@ export async function PATCH(
     }
 
     // Determine user role
-    const userRole = conversation.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = conversation.petOwnerId === userId ? 'pet_owner' : 'seller';
 
     // Build update object based on action
     const updateData: Record<string, unknown> = {
@@ -267,9 +267,9 @@ export async function PATCH(
 
     // Handle archive action
     if (body.action === 'archive') {
-      if (userRole === 'buyer') {
-        updateData.archivedByBuyer = true;
-        updateData.archivedByBuyerAt = new Date();
+      if (userRole === 'pet_owner') {
+        updateData.archivedByPetOwner = true;
+        updateData.archivedByPetOwnerAt = new Date();
       } else {
         updateData.archivedBySeller = true;
         updateData.archivedBySellerAt = new Date();
@@ -278,9 +278,9 @@ export async function PATCH(
 
     // Handle unarchive action
     if (body.action === 'unarchive') {
-      if (userRole === 'buyer') {
-        updateData.archivedByBuyer = false;
-        updateData.archivedByBuyerAt = null;
+      if (userRole === 'pet_owner') {
+        updateData.archivedByPetOwner = false;
+        updateData.archivedByPetOwnerAt = null;
       } else {
         updateData.archivedBySeller = false;
         updateData.archivedBySellerAt = null;
@@ -289,8 +289,8 @@ export async function PATCH(
 
     // Handle block action
     if (body.action === 'block') {
-      if (userRole === 'buyer') {
-        updateData.blockedByBuyer = true;
+      if (userRole === 'pet_owner') {
+        updateData.blockedByPetOwner = true;
       } else {
         updateData.blockedBySeller = true;
       }
@@ -299,15 +299,15 @@ export async function PATCH(
 
     // Handle unblock action
     if (body.action === 'unblock') {
-      if (userRole === 'buyer') {
-        updateData.blockedByBuyer = false;
+      if (userRole === 'pet_owner') {
+        updateData.blockedByPetOwner = false;
       } else {
         updateData.blockedBySeller = false;
       }
       // Only set status back to active if neither user has blocked
-      const otherBlocked = userRole === 'buyer'
+      const otherBlocked = userRole === 'pet_owner'
         ? conversation.blockedBySeller
-        : conversation.blockedByBuyer;
+        : conversation.blockedByPetOwner;
       if (!otherBlocked) {
         updateData.status = 'active';
       }
@@ -378,7 +378,7 @@ export async function DELETE(
     }
 
     // Check if user is part of the conversation
-    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+    if (conversation.petOwnerId !== userId && conversation.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }

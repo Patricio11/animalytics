@@ -327,9 +327,9 @@ export const puppies = pgTable('puppies', {
   statusDate: date('status_date'),
 
   // Sale information
-  buyerName: text('buyer_name'),
-  buyerEmail: text('buyer_email'),
-  buyerPhone: text('buyer_phone'),
+  petOwnerName: text('pet_owner_name'),
+  petOwnerEmail: text('pet_owner_email'),
+  petOwnerPhone: text('pet_owner_phone'),
   salePrice: integer('sale_price'), // in cents
   saleCurrency: text('sale_currency').default('USD'),
   saleDate: date('sale_date'),

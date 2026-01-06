@@ -164,7 +164,7 @@ export default function DeliverySettingsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Delivery & Shipping Settings</h1>
         <p className="text-muted-foreground mt-2">
-          Configure how buyers can receive animals from your listings
+          Configure how pet owners can receive animals from your listings
         </p>
       </div>
 
@@ -185,7 +185,7 @@ export default function DeliverySettingsPage() {
               <div className="space-y-0.5">
                 <Label htmlFor="offersPickup">Offer Pickup</Label>
                 <p className="text-sm text-muted-foreground">
-                  Buyers can pick up from your location (always free)
+                  Pet owners can pick up from your location (always free)
                 </p>
               </div>
               <Switch
@@ -201,7 +201,7 @@ export default function DeliverySettingsPage() {
               <div className="space-y-0.5">
                 <Label htmlFor="offersLocalDelivery">Offer Local Delivery</Label>
                 <p className="text-sm text-muted-foreground">
-                  You deliver to buyer's location
+                  You deliver to pet owner's location
                 </p>
               </div>
               <Switch
@@ -217,7 +217,7 @@ export default function DeliverySettingsPage() {
               <div className="space-y-0.5">
                 <Label htmlFor="offersShipping">Offer Shipping</Label>
                 <p className="text-sm text-muted-foreground">
-                  Ship to buyer's address
+                  Ship to pet owner's address
                 </p>
               </div>
               <Switch
@@ -251,7 +251,7 @@ export default function DeliverySettingsPage() {
                   onChange={(e) => setSettings({ ...settings, pickupLocation: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Address or description of where buyers can pick up
+                  Address or description of where pet owners can pick up
                 </p>
               </div>
 
@@ -440,7 +440,7 @@ export default function DeliverySettingsPage() {
           <CardContent>
             <Textarea
               id="deliveryPolicy"
-              placeholder="e.g., All animals must be picked up/delivered within 7 days of purchase. Health certificate provided. Buyer responsible for any additional shipping requirements."
+              placeholder="e.g., All animals must be picked up/delivered within 7 days of purchase. Health certificate provided. Pet owner responsible for any additional shipping requirements."
               value={settings.deliveryPolicy}
               onChange={(e) => setSettings({ ...settings, deliveryPolicy: e.target.value })}
               rows={5}

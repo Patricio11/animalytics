@@ -298,7 +298,7 @@ export default function AdminUsersPage() {
     const variants: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
       admin: 'destructive',
       breeder: 'default',
-      buyer: 'secondary',
+      pet_owner: 'secondary',
       veterinarian: 'outline',
     };
     return variants[role] || 'default';
@@ -357,7 +357,7 @@ export default function AdminUsersPage() {
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="breeder">Breeder</SelectItem>
-                  <SelectItem value="buyer">Buyer</SelectItem>
+                  <SelectItem value="pet_owner">Pet Owner</SelectItem>
                   <SelectItem value="veterinarian">Veterinarian</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
@@ -664,7 +664,7 @@ export default function AdminUsersPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="breeder">Breeder</SelectItem>
-                        <SelectItem value="buyer">Buyer</SelectItem>
+                        <SelectItem value="pet_owner">Pet Owner</SelectItem>
                         <SelectItem value="veterinarian">Veterinarian</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
@@ -760,7 +760,7 @@ export default function AdminUsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="breeder">Breeder</SelectItem>
-                      <SelectItem value="buyer">Buyer</SelectItem>
+                      <SelectItem value="pet_owner">Pet Owner</SelectItem>
                       <SelectItem value="veterinarian">Veterinarian</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>

@@ -13,7 +13,7 @@ import { settingsService } from '@/lib/services/payment/settings-service';
 
 /**
  * GET /api/purchases
- * Get all purchases for the current user (as buyer or seller)
+ * Get all purchases for the current user (as pet owner or seller)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -33,18 +33,18 @@ export async function GET(request: NextRequest) {
 
     // Get query params
     const { searchParams } = new URL(request.url);
-    const role = searchParams.get('role'); // 'buyer', 'seller', or null for both
+    const role = searchParams.get('role'); // 'pet_owner', 'seller', or null for both
     const status = searchParams.get('status'); // Filter by status
 
     // Build where clause
     let whereClause;
-    if (role === 'buyer') {
-      whereClause = eq(purchases.buyerId, userId);
+    if (role === 'pet_owner') {
+      whereClause = eq(purchases.petOwnerId, userId);
     } else if (role === 'seller') {
       whereClause = eq(purchases.sellerId, userId);
     } else {
       whereClause = or(
-        eq(purchases.buyerId, userId),
+        eq(purchases.petOwnerId, userId),
         eq(purchases.sellerId, userId)
       );
     }
@@ -79,9 +79,9 @@ export async function GET(request: NextRequest) {
     const purchasesWithDetails = await Promise.all(
       userPurchases.map(async ({ purchase, listing, animal }) => {
         // Determine the other party
-        const otherUserId = purchase.buyerId === userId
+        const otherUserId = purchase.petOwnerId === userId
           ? purchase.sellerId
-          : purchase.buyerId;
+          : purchase.petOwnerId;
 
         // Get other user's details
         const [otherUser] = await db
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
           .limit(1);
 
         // Determine user's role in this purchase
-        const userRole = purchase.buyerId === userId ? 'buyer' : 'seller';
+        const userRole = purchase.petOwnerId === userId ? 'pet_owner' : 'seller';
 
         return {
           id: purchase.id,
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const buyerId = session.user.id;
+    const petOwnerId = session.user.id;
     const body = await request.json();
 
     // Debug logging
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
       deliveryNotes,
       scheduledDate,
       scheduledTime,
-      buyerNotes,
+      petOwnerNotes,
     } = body;
 
     // Default to stripe if paymentMethod not provided
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
       paymentMethod: finalPaymentMethod,
       originalPaymentMethod: paymentMethod,
       deliveryMethod,
-      buyerNotes,
+      petOwnerNotes,
     });
 
     // Validate required fields
@@ -232,10 +232,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prevent buying own listing
-    if (listing.userId === buyerId) {
+    // Prevent pet owner from purchasing their own listing
+    if (listing.userId === petOwnerId) {
       return NextResponse.json(
-        { error: 'You cannot purchase your own listing' },
+        { error: 'Cannot purchase your own listing' },
         { status: 400 }
       );
     }
@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
       .values({
         listingId,
         animalId: listing.animalId,
-        buyerId,
+        buyerId: petOwnerId,
         sellerId: listing.userId,
         purchasePrice,
         currency: listing.currency || 'USD',
@@ -327,7 +327,7 @@ export async function POST(request: NextRequest) {
         deliveryNotes,
         scheduledDate,
         scheduledTime,
-        buyerNotes,
+        petOwnerNotes: petOwnerNotes || null,
         status: 'pending',
         initiatedAt: new Date(),
       })
@@ -338,11 +338,11 @@ export async function POST(request: NextRequest) {
       purchaseId: newPurchase.id,
       eventType: 'status_change',
       eventTitle: 'Purchase Initiated',
-      eventDescription: 'Purchase request submitted by buyer',
+      eventDescription: 'Purchase request submitted by pet owner',
       oldStatus: null,
       newStatus: 'pending',
-      actorId: buyerId,
-      actorRole: 'buyer',
+      actorId: petOwnerId,
+      actorRole: 'pet_owner',
     });
 
     // Update listing status to pending
@@ -360,7 +360,7 @@ export async function POST(request: NextRequest) {
       .from(conversations)
       .where(
         and(
-          eq(conversations.buyerId, buyerId),
+          eq(conversations.petOwnerId, petOwnerId),
           eq(conversations.sellerId, listing.userId),
           eq(conversations.listingId, listingId)
         )
@@ -372,7 +372,7 @@ export async function POST(request: NextRequest) {
       [existingConversation] = await db
         .insert(conversations)
         .values({
-          buyerId,
+          petOwnerId,
           sellerId: listing.userId,
           listingId,
           subject: `Purchase: ${listing.title}`,

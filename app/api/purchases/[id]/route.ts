@@ -60,7 +60,7 @@ export async function GET(
     const { purchase, listing, animal } = purchaseData;
 
     // Check if user is part of the purchase
-    if (purchase.buyerId !== userId && purchase.sellerId !== userId) {
+    if (purchase.petOwnerId !== userId && purchase.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -68,10 +68,10 @@ export async function GET(
     }
 
     // Determine user's role
-    const userRole = purchase.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = purchase.petOwnerId === userId ? 'pet_owner' : 'seller';
 
-    // Get buyer details
-    const [buyer] = await db
+    // Get pet owner details
+    const [petOwner] = await db
       .select({
         id: users.id,
         name: users.name,
@@ -79,7 +79,7 @@ export async function GET(
         avatar: users.avatar,
       })
       .from(users)
-      .where(eq(users.id, purchase.buyerId))
+      .where(eq(users.id, purchase.petOwnerId))
       .limit(1);
 
     // Get seller details
@@ -101,8 +101,8 @@ export async function GET(
       .where(
         and(
           eq(purchaseTimeline.purchaseId, purchaseId),
-          userRole === 'buyer'
-            ? eq(purchaseTimeline.visibleToBuyer, true)
+          userRole === 'pet_owner'
+            ? eq(purchaseTimeline.visibleToPetOwner, true)
             : eq(purchaseTimeline.visibleToSeller, true)
         )
       )
@@ -115,8 +115,8 @@ export async function GET(
       .where(
         and(
           eq(purchaseDocuments.purchaseId, purchaseId),
-          userRole === 'buyer'
-            ? eq(purchaseDocuments.accessibleToBuyer, true)
+          userRole === 'pet_owner'
+            ? eq(purchaseDocuments.accessibleToPetOwner, true)
             : eq(purchaseDocuments.accessibleToSeller, true)
         )
       )
@@ -149,7 +149,7 @@ export async function GET(
         transferredAt: purchase.transferredAt,
         isDisputed: purchase.isDisputed,
         disputeReason: purchase.disputeReason,
-        buyerNotes: purchase.buyerNotes,
+        petOwnerNotes: purchase.petOwnerNotes,
         sellerNotes: userRole === 'seller' ? purchase.sellerNotes : undefined,
         initiatedAt: purchase.initiatedAt,
         confirmedAt: purchase.confirmedAt,
@@ -159,7 +159,7 @@ export async function GET(
         createdAt: purchase.createdAt,
         userRole,
       },
-      buyer,
+      petOwner,
       seller,
       listing: listing ? {
         id: listing.id,
@@ -235,14 +235,14 @@ export async function PATCH(
     }
 
     // Check if user is part of the purchase
-    if (purchase.buyerId !== userId && purchase.sellerId !== userId) {
+    if (purchase.petOwnerId !== userId && purchase.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
       );
     }
 
-    const userRole = purchase.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = purchase.petOwnerId === userId ? 'pet_owner' : 'seller';
     const { action } = body;
 
     const updateData: Record<string, unknown> = {
@@ -343,10 +343,10 @@ export async function PATCH(
         break;
 
       case 'complete':
-        // Only BUYER can complete (confirm receipt)
-        if (userRole !== 'buyer') {
+        // Only PET OWNER can complete (confirm receipt)
+        if (userRole !== 'pet_owner') {
           return NextResponse.json(
-            { error: 'Only buyer can confirm receipt and complete purchase' },
+            { error: 'Only pet owner can confirm receipt and complete purchase' },
             { status: 403 }
           );
         }
@@ -392,7 +392,7 @@ export async function PATCH(
         updateData.cancelledBy = userRole;
         updateData.cancelReason = body.reason || 'No reason provided';
         eventTitle = 'Purchase Cancelled';
-        eventDescription = `${userRole === 'buyer' ? 'Buyer' : 'Seller'} cancelled the purchase: ${body.reason || 'No reason provided'}`;
+        eventDescription = `${userRole === 'pet_owner' ? 'Pet Owner' : 'Seller'} cancelled the purchase: ${body.reason || 'No reason provided'}`;
 
         // Reactivate listing
         if (purchase.listingId) {
@@ -407,10 +407,10 @@ export async function PATCH(
         break;
 
       case 'dispute':
-        // Buyer can open a dispute
-        if (userRole !== 'buyer') {
+        // Pet owner can open a dispute
+        if (userRole !== 'pet_owner') {
           return NextResponse.json(
-            { error: 'Only buyer can open a dispute' },
+            { error: 'Only pet owner can open a dispute' },
             { status: 403 }
           );
         }
@@ -426,18 +426,18 @@ export async function PATCH(
         updateData.disputeReason = body.reason || 'No reason provided';
         updateData.disputeOpenedAt = new Date();
         eventTitle = 'Dispute Opened';
-        eventDescription = `Buyer opened a dispute: ${body.reason || 'No reason provided'}`;
+        eventDescription = `Pet owner opened a dispute: ${body.reason || 'No reason provided'}`;
         break;
 
       case 'update_notes':
         // Update notes
-        if (userRole === 'buyer') {
-          updateData.buyerNotes = body.notes;
+        if (userRole === 'pet_owner') {
+          updateData.petOwnerNotes = body.notes;
         } else {
           updateData.sellerNotes = body.notes;
         }
         eventTitle = 'Notes Updated';
-        eventDescription = `${userRole === 'buyer' ? 'Buyer' : 'Seller'} updated notes`;
+        eventDescription = `${userRole === 'pet_owner' ? 'Pet Owner' : 'Seller'} updated notes`;
         break;
 
       case 'update_schedule':
@@ -445,7 +445,7 @@ export async function PATCH(
         if (body.scheduledDate) updateData.scheduledDate = body.scheduledDate;
         if (body.scheduledTime) updateData.scheduledTime = body.scheduledTime;
         eventTitle = 'Schedule Updated';
-        eventDescription = `${userRole === 'buyer' ? 'Buyer' : 'Seller'} updated pickup/delivery schedule`;
+        eventDescription = `${userRole === 'pet_owner' ? 'Pet Owner' : 'Seller'} updated pickup/delivery schedule`;
         break;
 
       default:
@@ -477,7 +477,7 @@ export async function PATCH(
     // Send notifications for key actions
     try {
       if (action === 'dispatch' || action === 'in_transit') {
-        // Notify buyer when seller dispatches
+        // Notify pet owner when seller dispatches
         const [listing] = await db
           .select({ title: listings.title })
           .from(listings)
@@ -486,29 +486,29 @@ export async function PATCH(
 
         if (listing) {
           await createItemDispatchedNotification({
-            buyerId: purchase.buyerId,
+            buyerId: purchase.petOwnerId,
             listingTitle: listing.title,
             purchaseId,
           });
         }
       } else if (action === 'complete') {
-        // Notify seller when buyer confirms receipt
+        // Notify seller when pet owner confirms receipt
         const [listing] = await db
           .select({ title: listings.title })
           .from(listings)
           .where(eq(listings.id, purchase.listingId!))
           .limit(1);
 
-        const [buyer] = await db
+        const [petOwner] = await db
           .select({ name: users.name })
           .from(users)
-          .where(eq(users.id, purchase.buyerId))
+          .where(eq(users.id, purchase.petOwnerId))
           .limit(1);
 
-        if (listing && buyer) {
+        if (listing && petOwner) {
           await createPurchaseCompletedNotification({
             sellerId: purchase.sellerId,
-            buyerName: buyer.name || 'The buyer',
+            buyerName: petOwner.name || 'The pet owner',
             listingTitle: listing.title,
             purchaseId,
           });

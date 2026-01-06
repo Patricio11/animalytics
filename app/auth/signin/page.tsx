@@ -39,8 +39,8 @@ export default function SignIn() {
 
       if (userRole === "admin") {
         redirectUrl = "/admin/dashboard";
-      } else if (userRole === "buyer") {
-        redirectUrl = "/buyer/dashboard";
+      } else if (userRole === "pet_owner") {
+        redirectUrl = "/pet-owner/dashboard";
       }
 
       router.replace(redirectUrl);
@@ -72,8 +72,8 @@ export default function SignIn() {
 
           if (userRole === "admin") {
             redirectUrl = "/admin/dashboard";
-          } else if (userRole === "buyer") {
-            redirectUrl = "/buyer/dashboard";
+          } else if (userRole === "pet_owner") {
+            redirectUrl = "/pet-owner/dashboard";
           }
 
           // Force redirect to role-specific dashboard

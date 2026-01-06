@@ -9,7 +9,7 @@ import { subscribeToMessageUpdates } from '@/lib/services/realtime-messaging';
  * Server-Sent Events endpoint for real-time conversation updates
  * Streams updates when unread counts or conversation status changes
  *
- * Supports all user roles: Buyer, Breeder, Veterinarian, Event Organizer
+ * Supports all user roles: Pet Owner, Breeder, Veterinarian, Event Organizer
  * Future-proof design for multi-participant conversations
  */
 export async function GET(request: NextRequest) {

@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
         id: purchases.id,
         amount: purchases.totalAmount,
         status: purchases.status,
-        buyerId: purchases.buyerId,
+        petOwnerId: purchases.petOwnerId,
         sellerId: purchases.sellerId,
         createdAt: purchases.createdAt,
       })

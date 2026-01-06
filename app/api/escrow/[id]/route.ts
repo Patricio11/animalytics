@@ -38,8 +38,8 @@ export async function GET(
       );
     }
 
-    // Verify user is buyer or seller
-    if (escrow.buyerId !== session.user.id && escrow.sellerId !== session.user.id) {
+    // Verify user is pet owner or seller
+    if (escrow.petOwnerId !== session.user.id && escrow.sellerId !== session.user.id) {
       return NextResponse.json(
         { error: 'Not authorized to view this escrow' },
         { status: 403 }
@@ -52,7 +52,7 @@ export async function GET(
         id: escrow.id,
         orderId: escrow.orderId,
         listingId: escrow.listingId,
-        buyerId: escrow.buyerId,
+        petOwnerId: escrow.petOwnerId,
         sellerId: escrow.sellerId,
         amount: escrow.amount,
         currency: escrow.currency,
@@ -101,11 +101,11 @@ export async function POST(
       );
     }
 
-    // Verify user is buyer or seller
-    const isBuyer = escrow.buyerId === session.user.id;
+    // Verify user is pet owner or seller
+    const isPetOwner = escrow.petOwnerId === session.user.id;
     const isSeller = escrow.sellerId === session.user.id;
 
-    if (!isBuyer && !isSeller) {
+    if (!isPetOwner && !isSeller) {
       return NextResponse.json(
         { error: 'Not authorized to manage this escrow' },
         { status: 403 }
@@ -116,11 +116,11 @@ export async function POST(
 
     switch (action) {
       case 'release':
-        // Only buyer can release (by confirming receipt)
+        // Only pet owner can release (by confirming receipt)
         // Or system auto-release
-        if (!isBuyer) {
+        if (!isPetOwner) {
           return NextResponse.json(
-            { error: 'Only buyer can release escrow by confirming receipt' },
+            { error: 'Only pet owner can release escrow by confirming receipt' },
             { status: 403 }
           );
         }
@@ -132,7 +132,7 @@ export async function POST(
         break;
 
       case 'refund':
-        // Seller can refund, or buyer can request refund
+        // Seller can refund, or pet owner can request refund
         if (!isSeller) {
           return NextResponse.json(
             { error: 'Only seller can initiate refund' },

@@ -84,7 +84,7 @@ const statusConfig: Record<string, {
     label: "Payment Pending",
     color: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
     icon: <AlertCircle className="h-4 w-4" />,
-    description: "Waiting for buyer payment",
+    description: "Waiting for pet owner payment",
   },
   confirmed: {
     label: "Confirmed",
@@ -293,7 +293,7 @@ export default function SellerSalesPage() {
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm text-muted-foreground">
-                      {sale.otherParty?.name || 'Buyer'}
+                      {sale.otherParty?.name || 'Pet Owner'}
                     </span>
                   </div>
                 </div>
@@ -555,7 +555,7 @@ export default function SellerSalesPage() {
                     {selectedSale.listing?.title || selectedSale.animal?.name}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Buyer: {selectedSale.otherParty?.name}
+                    Pet Owner: {selectedSale.otherParty?.name}
                   </p>
                   <p className="text-sm font-semibold mt-1">
                     {formatPrice(selectedSale.totalAmount, selectedSale.currency)}

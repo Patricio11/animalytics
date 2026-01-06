@@ -45,14 +45,14 @@ export async function GET(
     }
 
     // Check if user is part of the purchase
-    if (purchase.buyerId !== userId && purchase.sellerId !== userId) {
+    if (purchase.petOwnerId !== userId && purchase.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
       );
     }
 
-    const userRole = purchase.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = purchase.petOwnerId === userId ? 'pet_owner' : 'seller';
 
     // Get documents accessible to this user
     const documents = await db
@@ -61,8 +61,8 @@ export async function GET(
       .where(
         and(
           eq(purchaseDocuments.purchaseId, purchaseId),
-          userRole === 'buyer'
-            ? eq(purchaseDocuments.accessibleToBuyer, true)
+          userRole === 'pet_owner'
+            ? eq(purchaseDocuments.accessibleToPetOwner, true)
             : eq(purchaseDocuments.accessibleToSeller, true)
         )
       )
@@ -122,14 +122,14 @@ export async function POST(
     }
 
     // Check if user is part of the purchase
-    if (purchase.buyerId !== userId && purchase.sellerId !== userId) {
+    if (purchase.petOwnerId !== userId && purchase.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
       );
     }
 
-    const userRole = purchase.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = purchase.petOwnerId === userId ? 'pet_owner' : 'seller';
 
     const {
       documentType,
@@ -160,7 +160,7 @@ export async function POST(
         mimeType,
         description,
         uploadedBy: userId,
-        accessibleToBuyer: userRole === 'buyer' || accessibleToOther,
+        accessibleToPetOwner: userRole === 'pet_owner' || accessibleToOther,
         accessibleToSeller: userRole === 'seller' || accessibleToOther,
       })
       .returning();
@@ -170,10 +170,10 @@ export async function POST(
       purchaseId,
       eventType: 'document',
       eventTitle: 'Document Uploaded',
-      eventDescription: `${userRole === 'buyer' ? 'Buyer' : 'Seller'} uploaded: ${documentName}`,
+      eventDescription: `${userRole === 'pet_owner' ? 'Pet Owner' : 'Seller'} uploaded: ${documentName}`,
       actorId: userId,
       actorRole: userRole,
-      visibleToBuyer: userRole === 'buyer' || accessibleToOther,
+      visibleToPetOwner: userRole === 'pet_owner' || accessibleToOther,
       visibleToSeller: userRole === 'seller' || accessibleToOther,
     });
 

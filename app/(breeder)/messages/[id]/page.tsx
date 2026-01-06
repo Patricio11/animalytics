@@ -404,8 +404,8 @@ export default function ConversationPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    {/* Show Buy Now button only if breeder is the buyer in this conversation */}
-                    {conversation.userRole === 'buyer' && (
+                    {/* Show Buy Now button only if breeder is the pet owner in this conversation */}
+                    {conversation.userRole === 'pet_owner' && (
                       <Button 
                         className="flex-1 bg-gradient-brand hover:opacity-90"
                         onClick={() => setCheckoutOpen(true)}
@@ -414,7 +414,7 @@ export default function ConversationPage() {
                         Buy Now
                       </Button>
                     )}
-                    <Button variant="outline" asChild className={conversation.userRole === 'buyer' ? '' : 'flex-1'}>
+                    <Button variant="outline" asChild className={conversation.userRole === 'pet_owner' ? '' : 'flex-1'}>
                       <Link href={`/marketplace/${conversation.listing.id}`}>
                         View Listing
                       </Link>
@@ -549,7 +549,7 @@ export default function ConversationPage() {
       </div>
 
       {/* Checkout Dialog */}
-      {conversation?.listing && conversation.userRole === 'buyer' && (
+      {conversation?.listing && conversation.userRole === 'pet_owner' && (
         <CheckoutDialog
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}

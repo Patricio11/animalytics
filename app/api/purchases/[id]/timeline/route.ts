@@ -46,14 +46,14 @@ export async function GET(
     }
 
     // Check if user is part of the purchase
-    if (purchase.buyerId !== userId && purchase.sellerId !== userId) {
+    if (purchase.petOwnerId !== userId && purchase.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
       );
     }
 
-    const userRole = purchase.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = purchase.petOwnerId === userId ? 'pet_owner' : 'seller';
 
     // Get timeline events visible to this user
     const timeline = await db
@@ -62,8 +62,8 @@ export async function GET(
       .where(
         and(
           eq(purchaseTimeline.purchaseId, purchaseId),
-          userRole === 'buyer'
-            ? eq(purchaseTimeline.visibleToBuyer, true)
+          userRole === 'pet_owner'
+            ? eq(purchaseTimeline.visibleToPetOwner, true)
             : eq(purchaseTimeline.visibleToSeller, true)
         )
       )
@@ -155,14 +155,14 @@ export async function POST(
     }
 
     // Check if user is part of the purchase
-    if (purchase.buyerId !== userId && purchase.sellerId !== userId) {
+    if (purchase.petOwnerId !== userId && purchase.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
       );
     }
 
-    const userRole = purchase.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = purchase.petOwnerId === userId ? 'pet_owner' : 'seller';
 
     const { eventType, eventTitle, eventDescription, metadata, visibleToOther = true } = body;
 
@@ -184,7 +184,7 @@ export async function POST(
         actorId: userId,
         actorRole: userRole,
         metadata: metadata ? JSON.stringify(metadata) : null,
-        visibleToBuyer: userRole === 'buyer' || visibleToOther,
+        visibleToPetOwner: userRole === 'pet_owner' || visibleToOther,
         visibleToSeller: userRole === 'seller' || visibleToOther,
       })
       .returning();

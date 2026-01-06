@@ -140,7 +140,7 @@ export const escrows = pgTable('escrows', {
   listingId: text('listing_id').notNull(),
 
   // Parties
-  buyerId: text('buyer_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  petOwnerId: text('pet_owner_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   sellerId: text('seller_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   // Amount (in cents)

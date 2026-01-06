@@ -26,7 +26,7 @@ export const messageTypeEnum = pgEnum('message_type', [
 
 /**
  * Conversations Table
- * Tracks message threads between buyers and sellers
+ * Tracks message threads between pet owners and sellers
  */
 export const conversations = pgTable('conversations', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -35,7 +35,7 @@ export const conversations = pgTable('conversations', {
   listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'set null' }),
 
   // Participants
-  buyerId: text('buyer_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  petOwnerId: text('pet_owner_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   sellerId: text('seller_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   // Conversation Details
@@ -43,7 +43,7 @@ export const conversations = pgTable('conversations', {
   status: conversationStatusEnum('status').default('active').notNull(),
 
   // Unread Tracking
-  unreadCountBuyer: integer('unread_count_buyer').default(0).notNull(),
+  unreadCountPetOwner: integer('unread_count_pet_owner').default(0).notNull(),
   unreadCountSeller: integer('unread_count_seller').default(0).notNull(),
 
   // Last Activity
@@ -51,13 +51,13 @@ export const conversations = pgTable('conversations', {
   lastMessagePreview: text('last_message_preview'), // For quick display
 
   // Archival
-  archivedByBuyer: boolean('archived_by_buyer').default(false),
+  archivedByPetOwner: boolean('archived_by_pet_owner').default(false),
   archivedBySeller: boolean('archived_by_seller').default(false),
-  archivedByBuyerAt: timestamp('archived_by_buyer_at'),
+  archivedByPetOwnerAt: timestamp('archived_by_pet_owner_at'),
   archivedBySellerAt: timestamp('archived_by_seller_at'),
 
   // Blocking
-  blockedByBuyer: boolean('blocked_by_buyer').default(false),
+  blockedByPetOwner: boolean('blocked_by_pet_owner').default(false),
   blockedBySeller: boolean('blocked_by_seller').default(false),
 
   // Metadata
@@ -110,7 +110,7 @@ export const conversationParticipants = pgTable('conversation_participants', {
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   // Participant Role
-  role: text('role').notNull(), // 'buyer', 'seller', 'admin'
+  role: text('role').notNull(), // 'pet_owner', 'seller', 'admin'
 
   // Notifications
   mutedUntil: timestamp('muted_until'),

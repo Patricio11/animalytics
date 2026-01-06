@@ -31,7 +31,7 @@ interface Conversation {
   lastMessageAt: string;
   lastMessagePreview: string;
   unreadCount: number;
-  userRole: 'buyer' | 'seller';
+  userRole: 'pet_owner' | 'seller';
   otherParticipant: {
     id: string;
     name: string;
@@ -100,7 +100,7 @@ export default function BreederMessagesPage() {
   }
 
   // Separate conversations by role
-  const buyingConversations = conversations.filter(conv => conv.userRole === 'buyer');
+  const buyingConversations = conversations.filter(conv => conv.userRole === 'pet_owner');
   const sellingConversations = conversations.filter(conv => conv.userRole === 'seller');
 
   // Filter conversations by search
@@ -124,7 +124,7 @@ export default function BreederMessagesPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Messages</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Manage your conversations with buyers and sellers
+            Manage your conversations with pet owners and sellers
           </p>
         </div>
 
@@ -353,7 +353,7 @@ export default function BreederMessagesPage() {
                   <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="font-semibold text-foreground mb-2">No selling conversations</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Conversations with potential buyers will appear here
+                    Conversations with potential pet owners will appear here
                   </p>
                   <Link href="/marketplace/create">
                     <Button className="bg-gradient-brand hover:opacity-90">

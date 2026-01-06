@@ -31,7 +31,7 @@ export async function requireAuth() {
  * Require specific role - redirects to unauthorized if role doesn't match
  * Use this in Server Components that require specific roles
  */
-type UserRole = "breeder" | "veterinarian" | "admin" | "event_organizer" | "buyer";
+type UserRole = "breeder" | "veterinarian" | "admin" | "event_organizer" | "pet_owner";
 
 export async function requireRole(
   allowedRoles: Array<UserRole>

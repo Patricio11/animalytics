@@ -242,8 +242,8 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
       setMessageText("");
 
       // Navigate to the conversation using role-based routing
-      // Get user's actual role (breeder/buyer) to route correctly
-      const userRole = (session?.user as any)?.role || 'buyer';
+      // Get user's actual role (breeder/pet_owner) to route correctly
+      const userRole = (session?.user as any)?.role || 'pet_owner';
       const conversationUrl = getConversationUrl(userRole as UserRole, data.conversationId);
       router.push(conversationUrl);
     } catch (error) {
@@ -267,7 +267,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
         animalId: listing?.animalId,
         paymentMethod: 'stripe', // Default to Stripe as per requirements
         deliveryMethod: deliveryMethod,
-        buyerNotes: purchaseNotes.trim() || undefined,
+        petOwnerNotes: purchaseNotes.trim() || undefined,
       };
 
       console.log('🚀 Sending purchase request:', requestBody);
@@ -295,8 +295,8 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
       setDeliveryMethod("pickup");
 
       // Navigate to the purchase detail based on user role
-      const userRole = (session?.user as any)?.role || 'buyer';
-      const purchasePath = userRole === 'buyer' ? `/buyer/purchases/${data.purchase.id}` : `/purchases/${data.purchase.id}`;
+      const userRole = (session?.user as any)?.role || 'pet_owner';
+      const purchasePath = userRole === 'pet_owner' ? `/pet-owner/purchases/${data.purchase.id}` : `/purchases/${data.purchase.id}`;
       router.push(purchasePath);
     } catch (error) {
       console.error('Error initiating purchase:', error);

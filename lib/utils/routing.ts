@@ -3,7 +3,7 @@
  * Future-proof for all user roles in the system
  */
 
-export type UserRole = 'buyer' | 'breeder' | 'vet' | 'event_organizer' | 'admin';
+export type UserRole = 'pet_owner' | 'breeder' | 'vet' | 'event_organizer' | 'admin';
 
 /**
  * Get the messages route path for a specific user role
@@ -12,8 +12,8 @@ export type UserRole = 'buyer' | 'breeder' | 'vet' | 'event_organizer' | 'admin'
  */
 export function getMessagesPath(role: UserRole): string {
   switch (role) {
-    case 'buyer':
-      return '/buyer/messages';
+    case 'pet_owner':
+      return '/pet-owner/messages';
     case 'breeder':
       return '/messages';
     case 'vet':
@@ -45,8 +45,8 @@ export function getConversationUrl(role: UserRole, conversationId: string): stri
  */
 export function getDashboardPath(role: UserRole): string {
   switch (role) {
-    case 'buyer':
-      return '/buyer/dashboard';
+    case 'pet_owner':
+      return '/pet-owner/dashboard';
     case 'breeder':
       return '/dashboard';
     case 'vet':
@@ -67,8 +67,8 @@ export function getDashboardPath(role: UserRole): string {
  */
 export function getProfilePath(role: UserRole): string {
   switch (role) {
-    case 'buyer':
-      return '/buyer/profile';
+    case 'pet_owner':
+      return '/pet-owner/profile';
     case 'breeder':
       return '/profile';
     case 'vet':
@@ -93,7 +93,7 @@ export function hasFeatureAccess(
   feature: 'messaging' | 'marketplace' | 'breeding' | 'events' | 'admin'
 ): boolean {
   const accessMap: Record<UserRole, string[]> = {
-    buyer: ['messaging', 'marketplace'],
+    pet_owner: ['messaging', 'marketplace'],
     breeder: ['messaging', 'marketplace', 'breeding'],
     vet: ['messaging', 'marketplace'],
     event_organizer: ['messaging', 'events'],

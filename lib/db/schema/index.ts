@@ -3,7 +3,7 @@ export * from './permissions';
 export * from './wallet';
 export * from './kyc';
 export * from './profiles';
-export * from './buyer-profiles';
+export * from './pet-owner-profiles';
 export * from './animals';
 export * from './pedigree';
 export * from './matings';

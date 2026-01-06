@@ -286,7 +286,7 @@ export function CheckoutDialog({
         const conversationUrl = getConversationUrl(userRole, data.conversationId);
         router.push(conversationUrl);
       } else {
-        router.push(`/buyer/purchases/${data.purchase.id}`);
+        router.push(`/pet-owner/purchases/${data.purchase.id}`);
       }
     } catch (error) {
       console.error("Error creating purchase:", error);

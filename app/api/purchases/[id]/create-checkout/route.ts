@@ -48,10 +48,10 @@ export async function POST(
       );
     }
 
-    // Verify user is the buyer
-    if (purchase.buyerId !== userId) {
+    // Verify user is the pet owner
+    if (purchase.petOwnerId !== userId) {
       return NextResponse.json(
-        { error: 'Unauthorized - not the buyer' },
+        { error: 'Unauthorized - not the pet owner' },
         { status: 403 }
       );
     }
@@ -87,18 +87,18 @@ export async function POST(
       );
     }
 
-    // Get buyer's role to determine correct redirect URL
-    const [buyer] = await db
+    // Get pet owner's role to determine correct redirect URL
+    const [petOwner] = await db
       .select({ role: users.role })
       .from(users)
-      .where(eq(users.id, purchase.buyerId))
+      .where(eq(users.id, purchase.petOwnerId))
       .limit(1);
 
-    const buyerRole = (buyer?.role || 'buyer') as UserRole;
+    const petOwnerRole = (petOwner?.role || 'pet_owner') as UserRole;
     
     // Determine purchase path based on user role
-    // Breeders use /purchases, buyers use /buyer/purchases
-    const purchasePath = buyerRole === 'buyer' ? '/buyer/purchases' : '/purchases';
+    // Breeders use /purchases, pet owners use /pet-owner/purchases
+    const purchasePath = petOwnerRole === 'pet_owner' ? '/pet-owner/purchases' : '/purchases';
 
     // Create Stripe checkout session
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -110,7 +110,7 @@ export async function POST(
       metadata: {
         purchaseId: purchase.id,
         listingId: listing.id,
-        buyerId: purchase.buyerId,
+        petOwnerId: purchase.petOwnerId,
         sellerId: purchase.sellerId,
       },
       successUrl: `${baseUrl}${purchasePath}/${purchase.id}?payment=success`,

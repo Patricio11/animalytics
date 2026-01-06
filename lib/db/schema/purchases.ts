@@ -13,7 +13,7 @@ export const purchaseStatusEnum = pgEnum('purchase_status', [
   'payment_completed', // Payment successful
   'confirmed',         // Seller confirmed
   'preparing',         // Animal being prepared for handover
-  'ready_for_pickup',  // Ready for buyer pickup
+  'ready_for_pickup',  // Ready for pet owner pickup
   'in_transit',        // Being delivered
   'completed',         // Successfully completed
   'cancelled',         // Cancelled before completion
@@ -56,7 +56,7 @@ export const purchases = pgTable('purchases', {
   animalId: uuid('animal_id').references(() => animals.id, { onDelete: 'set null' }),
 
   // Parties
-  buyerId: text('buyer_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  petOwnerId: text('pet_owner_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   sellerId: text('seller_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
 
   // Purchase Details
@@ -111,16 +111,16 @@ export const purchases = pgTable('purchases', {
 
   // Cancellation Details
   cancelReason: text('cancel_reason'),
-  cancelledBy: text('cancelled_by'), // 'buyer' or 'seller'
+  cancelledBy: text('cancelled_by'), // 'pet_owner' or 'seller'
   refundAmount: integer('refund_amount'), // in cents
   refundedAt: timestamp('refunded_at'),
 
   // Escrow Integration
   escrowId: uuid('escrow_id').references(() => escrows.id, { onDelete: 'set null' }),
 
-  // Buyer Confirmation
-  buyerConfirmedReceipt: boolean('buyer_confirmed_receipt').default(false),
-  buyerConfirmedAt: timestamp('buyer_confirmed_at'),
+  // Pet Owner Confirmation
+  petOwnerConfirmedReceipt: boolean('pet_owner_confirmed_receipt').default(false),
+  petOwnerConfirmedAt: timestamp('pet_owner_confirmed_at'),
 
   // Seller Confirmation
   sellerConfirmedHandover: boolean('seller_confirmed_handover').default(false),
@@ -138,13 +138,13 @@ export const purchases = pgTable('purchases', {
   disputeResolution: text('dispute_resolution'),
 
   // Reviews
-  buyerReviewId: uuid('buyer_review_id'),
+  petOwnerReviewId: uuid('pet_owner_review_id'),
   sellerReviewId: uuid('seller_review_id'),
-  buyerReviewSubmitted: boolean('buyer_review_submitted').default(false),
+  petOwnerReviewSubmitted: boolean('pet_owner_review_submitted').default(false),
   sellerReviewSubmitted: boolean('seller_review_submitted').default(false),
 
   // Notes
-  buyerNotes: text('buyer_notes'),
+  petOwnerNotes: text('pet_owner_notes'),
   sellerNotes: text('seller_notes'),
   internalNotes: text('internal_notes'), // Admin notes
 
@@ -172,10 +172,10 @@ export const purchaseTimeline = pgTable('purchase_timeline', {
 
   // Actor
   actorId: text('actor_id').references(() => users.id),
-  actorRole: text('actor_role'), // 'buyer', 'seller', 'system', 'admin'
+  actorRole: text('actor_role'), // 'pet_owner', 'seller', 'system', 'admin'
 
   // Visibility
-  visibleToBuyer: boolean('visible_to_buyer').default(true),
+  visibleToPetOwner: boolean('visible_to_pet_owner').default(true),
   visibleToSeller: boolean('visible_to_seller').default(true),
 
   // Metadata
@@ -202,11 +202,11 @@ export const purchaseDocuments = pgTable('purchase_documents', {
 
   // Uploader
   uploadedBy: text('uploaded_by').references(() => users.id),
-  uploaderRole: text('uploader_role'), // 'buyer', 'seller', 'admin'
+  uploaderRole: text('uploader_role'), // 'pet_owner', 'seller', 'admin'
 
   // Visibility & Access
   isPublic: boolean('is_public').default(false),
-  accessibleToBuyer: boolean('accessible_to_buyer').default(true),
+  accessibleToPetOwner: boolean('accessible_to_pet_owner').default(true),
   accessibleToSeller: boolean('accessible_to_seller').default(true),
 
   // Verification

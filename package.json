@@ -14,7 +14,9 @@
     "db:seed": "tsx lib/db/seed/index.ts seed",
     "db:seed:creds": "tsx lib/db/seed/index.ts credentials",
     "db:seed:users": "tsx scripts/seed-test-users.ts",
-    "db:drop": "tsx scripts/drop-all-tables.ts"
+    "db:drop": "tsx scripts/drop-all-tables.ts",
+    "migrate:buyer-to-pet-owner": "tsx scripts/backup-and-migrate.ts",
+    "migrate:fix-archived": "tsx scripts/fix-archived-columns.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

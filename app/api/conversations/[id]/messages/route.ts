@@ -48,7 +48,7 @@ export async function GET(
     }
 
     // Check if user is part of the conversation
-    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+    if (conversation.petOwnerId !== userId && conversation.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -192,7 +192,7 @@ export async function POST(
     }
 
     // Check if user is part of the conversation
-    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+    if (conversation.petOwnerId !== userId && conversation.sellerId !== userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -208,12 +208,12 @@ export async function POST(
     }
 
     // Determine user role
-    const userRole = conversation.buyerId === userId ? 'buyer' : 'seller';
+    const userRole = conversation.petOwnerId === userId ? 'pet_owner' : 'seller';
 
     // Check if user is blocked
-    const isBlocked = userRole === 'buyer'
+    const isBlocked = userRole === 'pet_owner'
       ? conversation.blockedBySeller
-      : conversation.blockedByBuyer;
+      : conversation.blockedByPetOwner;
 
     if (isBlocked) {
       return NextResponse.json(
@@ -252,15 +252,15 @@ export async function POST(
       lastMessagePreview: message.trim().substring(0, 100),
       updatedAt: new Date(),
       // Unarchive if it was archived
-      archivedByBuyer: false,
+      archivedByPetOwner: false,
       archivedBySeller: false,
     };
 
     // Increment unread count for the other participant
-    if (userRole === 'buyer') {
+    if (userRole === 'pet_owner') {
       updateData.unreadCountSeller = conversation.unreadCountSeller + 1;
     } else {
-      updateData.unreadCountBuyer = conversation.unreadCountBuyer + 1;
+      updateData.unreadCountPetOwner = conversation.unreadCountPetOwner + 1;
     }
 
     await db
@@ -270,12 +270,12 @@ export async function POST(
 
     // Trigger real-time notification for both participants
     // This notifies their SSE connections to fetch updated unread counts
-    triggerMessageNotification([conversation.buyerId, conversation.sellerId]);
+    triggerMessageNotification([conversation.petOwnerId, conversation.sellerId]);
 
     // Create in-app notification for the recipient
     try {
       // Determine recipient ID based on conversation role
-      const recipientId = userRole === 'buyer' ? conversation.sellerId : conversation.buyerId;
+      const recipientId = userRole === 'pet_owner' ? conversation.sellerId : conversation.petOwnerId;
 
       // Get sender's name and recipient's actual user role from database
       const [sender] = await db
@@ -294,7 +294,7 @@ export async function POST(
       // Use actual user role (breeder/buyer), NOT conversation role (buyer/seller)
       // Breeders can buy AND sell, so they always use /messages
       // Buyers can only buy, so they use /buyer/messages
-      const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'buyer' | 'vet' | 'event_organizer' | 'admin';
+      const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'pet_owner' | 'vet' | 'event_organizer' | 'admin';
 
       // Create notification for recipient
       await createMessageReceivedNotification({

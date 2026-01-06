@@ -123,7 +123,7 @@ async function handlePaymentSuccess(paymentIntent: Record<string, unknown>) {
     oldStatus: 'payment_pending',
     newStatus: 'payment_completed',
     actorRole: 'system',
-    visibleToBuyer: true,
+    visibleToPetOwner: true,
     visibleToSeller: true,
     metadata: JSON.stringify({
       paymentIntentId: paymentIntent.id,
@@ -140,10 +140,10 @@ async function handlePaymentSuccess(paymentIntent: Record<string, unknown>) {
       .where(eq(listings.id, purchase.listingId!))
       .limit(1);
 
-    const [buyer] = await db
+    const [petOwner] = await db
       .select({ name: users.name })
       .from(users)
-      .where(eq(users.id, purchase.buyerId))
+      .where(eq(users.id, purchase.petOwnerId))
       .limit(1);
 
     const [seller] = await db
@@ -152,11 +152,11 @@ async function handlePaymentSuccess(paymentIntent: Record<string, unknown>) {
       .where(eq(users.id, purchase.sellerId))
       .limit(1);
 
-    if (listing && buyer && seller) {
+    if (listing && petOwner && seller) {
       // Send in-app notification to seller
       await createPaymentCompletedNotification({
         sellerId: purchase.sellerId,
-        buyerName: buyer.name || 'A buyer',
+        buyerName: petOwner.name || 'A pet owner',
         listingTitle: listing.title,
         amount: purchase.totalAmount,
         currency: purchase.currency,
@@ -170,7 +170,7 @@ async function handlePaymentSuccess(paymentIntent: Record<string, unknown>) {
           subject: '💰 Payment Received - Action Required',
           html: `
             <h2>Payment Received!</h2>
-            <p>Great news! ${buyer.name || 'A buyer'} has completed payment for your listing.</p>
+            <p>Great news! ${petOwner.name || 'A pet owner'} has completed payment for your listing.</p>
             
             <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
               <h3 style="margin: 0 0 8px 0;">${listing.title}</h3>
@@ -178,14 +178,14 @@ async function handlePaymentSuccess(paymentIntent: Record<string, unknown>) {
                 style: 'currency',
                 currency: purchase.currency,
               }).format(purchase.totalAmount / 100)}</p>
-              <p style="margin: 4px 0;"><strong>Buyer:</strong> ${buyer.name}</p>
+              <p style="margin: 4px 0;"><strong>Pet Owner:</strong> ${petOwner.name}</p>
             </div>
 
             <h3>Next Steps:</h3>
             <ol>
               <li>Prepare the item for ${purchase.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}</li>
               <li>Mark as dispatched when ready</li>
-              <li>Funds will be released after buyer confirms receipt</li>
+              <li>Funds will be released after pet owner confirms receipt</li>
             </ol>
 
             <p style="margin-top: 24px;">
@@ -196,7 +196,7 @@ async function handlePaymentSuccess(paymentIntent: Record<string, unknown>) {
             </p>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 24px;">
-              The payment is held securely in escrow and will be released to you once the buyer confirms receipt.
+              The payment is held securely in escrow and will be released to you once the pet owner confirms receipt.
             </p>
           `,
         });
@@ -235,7 +235,7 @@ async function handlePaymentFailed(paymentIntent: Record<string, unknown>) {
     eventTitle: 'Payment Failed',
     eventDescription: 'Payment could not be processed. Please try again.',
     actorRole: 'system',
-    visibleToBuyer: true,
+    visibleToPetOwner: true,
     visibleToSeller: false,
   });
 
@@ -270,7 +270,7 @@ async function handlePaymentCanceled(paymentIntent: Record<string, unknown>) {
     eventTitle: 'Payment Cancelled',
     eventDescription: 'Payment was cancelled',
     actorRole: 'system',
-    visibleToBuyer: true,
+    visibleToPetOwner: true,
     visibleToSeller: true,
   });
 
@@ -326,7 +326,7 @@ async function handleRefund(charge: Record<string, unknown>) {
     eventTitle: 'Refund Processed',
     eventDescription: `Refund of ${(refundAmount / 100).toFixed(2)} ${purchase.currency} processed`,
     actorRole: 'system',
-    visibleToBuyer: true,
+    visibleToPetOwner: true,
     visibleToSeller: true,
   });
 

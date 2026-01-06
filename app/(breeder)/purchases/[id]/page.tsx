@@ -293,8 +293,8 @@ export default function PurchaseDetailPage() {
                   </p>
                 </div>
               </div>
-              {/* Make Payment Button - Only show for BUYER if payment not completed */}
-              {purchase.userRole === 'buyer' &&
+              {/* Make Payment Button - Only show for PET OWNER if payment not completed */}
+              {purchase.userRole === 'pet_owner' &&
                purchase.purchase.paymentStatus !== 'completed' && 
                purchase.purchase.paymentStatus !== 'processing' &&
                (purchase.purchase.status === 'pending' || purchase.purchase.status === 'payment_pending') && (
@@ -314,8 +314,8 @@ export default function PurchaseDetailPage() {
                 </Button>
               )}
               
-              {/* Confirm Receipt Button - Only show for BUYER when item is ready/in transit */}
-              {purchase.userRole === 'buyer' &&
+              {/* Confirm Receipt Button - Only show for PET OWNER when item is ready/in transit */}
+              {purchase.userRole === 'pet_owner' &&
                (purchase.purchase.status === 'ready_for_pickup' || purchase.purchase.status === 'in_transit') && (
                 <Button onClick={() => handleAction('complete')} disabled={isProcessing} className="bg-green-600 hover:bg-green-700">
                   <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -494,12 +494,12 @@ export default function PurchaseDetailPage() {
                         </div>
                       </>
                     )}
-                    {purchase.purchase.buyerNotes && (
+                    {purchase.purchase.petOwnerNotes && (
                       <>
                         <Separator />
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Your Notes</p>
-                          <p>{purchase.purchase.buyerNotes}</p>
+                          <p>{purchase.purchase.petOwnerNotes}</p>
                         </div>
                       </>
                     )}
@@ -566,7 +566,7 @@ export default function PurchaseDetailPage() {
                 <Button className="w-full" variant="outline" asChild>
                   <Link href="/messages">
                     <MessageSquare className="h-4 w-4 mr-2" />
-                    Message Buyer
+                    Message Pet Owner
                   </Link>
                 </Button>
               </CardContent>

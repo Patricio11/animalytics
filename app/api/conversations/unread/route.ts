@@ -6,7 +6,7 @@ import { getUnreadCount } from '@/lib/services/messaging-service';
 /**
  * GET /api/conversations/unread
  * Get total unread message count for the current user
- * Supports all user roles: Buyer, Breeder, Veterinarian, Event Organizer
+ * Supports all user roles: Pet Owner, Breeder, Veterinarian, Event Organizer
  */
 export async function GET() {
   try {

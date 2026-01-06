@@ -1,5 +1,6 @@
 export const USER_ROLES = {
   BREEDER: 'breeder',
+  PET_OWNER: 'pet_owner',
   ADMIN: 'admin',
   VET: 'vet',
   EVENT_ORGANIZER: 'event_organizer',
@@ -15,6 +16,12 @@ export const ROLE_PERMISSIONS = {
     marketplace: ['read', 'create', 'update'],
     calculators: ['read', 'use'],
     reports: ['read', 'export'],
+    events: ['read', 'register'],
+  },
+  [USER_ROLES.PET_OWNER]: {
+    marketplace: ['read'],
+    purchases: ['read', 'create'],
+    messages: ['read', 'create'],
     events: ['read', 'register'],
   },
   [USER_ROLES.ADMIN]: {
@@ -48,6 +55,7 @@ export const ROLE_PERMISSIONS = {
 
 export const ROLE_LABELS = {
   [USER_ROLES.BREEDER]: 'Breeder',
+  [USER_ROLES.PET_OWNER]: 'Pet Owner',
   [USER_ROLES.ADMIN]: 'Administrator',
   [USER_ROLES.VET]: 'Veterinarian',
   [USER_ROLES.EVENT_ORGANIZER]: 'Event Organizer',
@@ -55,6 +63,7 @@ export const ROLE_LABELS = {
 
 export const ROLE_COLORS = {
   [USER_ROLES.BREEDER]: 'bg-primary-500',
+  [USER_ROLES.PET_OWNER]: 'bg-blue-500',
   [USER_ROLES.ADMIN]: 'bg-red-500',
   [USER_ROLES.VET]: 'bg-green-500',
   [USER_ROLES.EVENT_ORGANIZER]: 'bg-purple-500',
@@ -62,6 +71,7 @@ export const ROLE_COLORS = {
 
 export const ROLE_ROUTES = {
   [USER_ROLES.BREEDER]: '/(breeder)',
+  [USER_ROLES.PET_OWNER]: '/pet-owner',
   [USER_ROLES.ADMIN]: '/(admin)',
   [USER_ROLES.VET]: '/(vet)',
   [USER_ROLES.EVENT_ORGANIZER]: '/(event-organizer)',

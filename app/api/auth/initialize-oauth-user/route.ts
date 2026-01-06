@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { breederProfiles } from '@/lib/db/schema/profiles';
-import { buyerProfiles } from '@/lib/db/schema/buyer-profiles';
+import { petOwnerProfiles } from '@/lib/db/schema/pet-owner-profiles';
 import { accounts } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { detectAndGetRegionalPreferences, getClientIp } from '@/lib/utils/location';
@@ -102,31 +102,31 @@ export async function POST(request: NextRequest) {
     const userRole = currentUser?.role || 'breeder';
 
     // 3. Create appropriate profile based on role
-    if (userRole === 'buyer') {
-      // Create buyer profile
+    if (userRole === 'pet_owner') {
+      // Create pet owner profile
       try {
-        const [existingBuyerProfile] = await db
+        const [existingPetOwnerProfile] = await db
           .select()
-          .from(buyerProfiles)
-          .where(eq(buyerProfiles.userId, userId))
+          .from(petOwnerProfiles)
+          .where(eq(petOwnerProfiles.userId, userId))
           .limit(1);
 
-        if (!existingBuyerProfile) {
-          console.log('🛒 Creating buyer profile for OAuth user...');
+        if (!existingPetOwnerProfile) {
+          console.log('🛒 Creating pet owner profile for OAuth user...');
 
-          const displayName = session.user.name || 'Buyer';
+          const displayName = session.user.name || 'Pet Owner';
 
-          await db.insert(buyerProfiles).values({
+          await db.insert(petOwnerProfiles).values({
             userId: userId,
             displayName: displayName,
           });
 
-          console.log('✅ Buyer profile created');
+          console.log('✅ Pet owner profile created');
         } else {
-          console.log('ℹ️ Buyer profile already exists');
+          console.log('ℹ️ Pet owner profile already exists');
         }
       } catch (profileError) {
-        console.error('Failed to create buyer profile:', profileError);
+        console.error('Failed to create pet owner profile:', profileError);
         // Don't fail the whole request if profile creation fails
       }
     } else {

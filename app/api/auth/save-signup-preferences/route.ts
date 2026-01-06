@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { breederBreedPreferences } from '@/lib/db/schema/user-breed-preferences';
 import { breederProfiles } from '@/lib/db/schema/profiles';
-import { buyerProfiles } from '@/lib/db/schema/buyer-profiles';
+import { petOwnerProfiles } from '@/lib/db/schema/pet-owner-profiles';
 import { eq } from 'drizzle-orm';
 import { detectUserLocation, getRegionalPreferencesFromLocation, getClientIp } from '@/lib/utils/location';
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         await db
           .update(users)
           .set({
-            role: role as 'breeder' | 'veterinarian' | 'admin' | 'event_organizer' | 'buyer',
+            role: role as 'breeder' | 'veterinarian' | 'admin' | 'event_organizer' | 'pet_owner',
             updatedAt: new Date(),
           })
           .where(eq(users.id, user.id));
@@ -159,34 +159,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Create buyer profile if user is a buyer
-    if (role === 'buyer') {
+    // 4. Create pet owner profile if user is a pet owner
+    if (role === 'pet_owner') {
       try {
-        console.log('🛒 Creating buyer profile...');
+        console.log('🛒 Creating pet owner profile...');
 
         // Check if profile already exists
-        const [existingBuyerProfile] = await db
+        const [existingPetOwnerProfile] = await db
           .select()
-          .from(buyerProfiles)
-          .where(eq(buyerProfiles.userId, user.id))
+          .from(petOwnerProfiles)
+          .where(eq(petOwnerProfiles.userId, user.id))
           .limit(1);
 
-        if (!existingBuyerProfile) {
+        if (!existingPetOwnerProfile) {
           // Generate display name from user name
-          const displayName = user.name || 'Buyer';
+          const displayName = user.name || 'Pet Owner';
 
-          await db.insert(buyerProfiles).values({
+          await db.insert(petOwnerProfiles).values({
             userId: user.id,
             displayName: displayName,
           });
 
-          console.log('✅ Buyer profile created');
+          console.log('✅ Pet owner profile created');
         } else {
-          console.log('ℹ️ Buyer profile already exists');
+          console.log('ℹ️ Pet owner profile already exists');
         }
-      } catch (buyerError) {
-        console.error('Failed to create buyer profile:', buyerError);
-        // Don't fail the whole request if buyer profile creation fails
+      } catch (petOwnerError) {
+        console.error('Failed to create pet owner profile:', petOwnerError);
+        // Don't fail the whole request if pet owner profile creation fails
       }
     }
 

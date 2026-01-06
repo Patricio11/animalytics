@@ -45,10 +45,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user is the buyer
-    if (purchase.buyerId !== session.user.id) {
+    // Verify user is the pet owner
+    if (purchase.petOwnerId !== session.user.id) {
       return NextResponse.json(
-        { error: 'Only the buyer can create escrow' },
+        { error: 'Only the pet owner can create escrow' },
         { status: 403 }
       );
     }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const result = await escrowService.create({
       purchaseId: purchase.id,
       listingId: purchase.listingId,
-      buyerId: purchase.buyerId,
+      petOwnerId: purchase.petOwnerId,
       sellerId: purchase.sellerId,
       amount: purchase.totalAmount,
       currency: purchase.currency,
