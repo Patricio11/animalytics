@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       .select({
         total: sql<number>`count(*)::int`,
         breeders: sql<number>`COUNT(CASE WHEN ${users.role} = 'breeder' THEN 1 END)::int`,
-        buyers: sql<number>`COUNT(CASE WHEN ${users.role} = 'buyer' THEN 1 END)::int`,
+        petOwners: sql<number>`COUNT(CASE WHEN ${users.role} = 'pet_owner' THEN 1 END)::int`,
         veterinarians: sql<number>`COUNT(CASE WHEN ${users.role} = 'veterinarian' THEN 1 END)::int`,
         admins: sql<number>`COUNT(CASE WHEN ${users.role} = 'admin' THEN 1 END)::int`,
         verified: sql<number>`COUNT(CASE WHEN ${users.isVerified} = true THEN 1 END)::int`,
