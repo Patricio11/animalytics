@@ -8,7 +8,7 @@ import { authClient } from "@/lib/auth/client";
  * Marketplace Layout - Smart Layout with Auth Detection
  *
  * This layout conditionally renders:
- * - For authenticated breeders: Full AppLayout (sidebar + header)
+ * - For authenticated users (breeders & pet owners): Full AppLayout (sidebar + header)
  * - For guests: Public layout (landing header only)
  */
 export default function MarketplaceLayout({
@@ -18,7 +18,8 @@ export default function MarketplaceLayout({
 }) {
   const { data: session, isPending } = authClient.useSession();
   const isAuthenticated = !!session;
-  const isBreeder = (session?.user as any)?.role === 'breeder';
+  const userRole = (session?.user as any)?.role;
+  const isBreederOrPetOwner = userRole === 'breeder' || userRole === 'pet_owner';
 
   // Show loading state while checking auth
   if (isPending) {
@@ -29,12 +30,12 @@ export default function MarketplaceLayout({
     );
   }
 
-  // Authenticated breeder: Use full app layout with sidebar
-  if (isAuthenticated && isBreeder) {
+  // Authenticated breeder or pet owner: Use full app layout with sidebar
+  if (isAuthenticated && isBreederOrPetOwner) {
     return <AppLayout>{children}</AppLayout>;
   }
 
-  // Guest or non-breeder: Use public layout with landing header
+  // Guest or other roles: Use public layout with landing header
   return (
     <div className="min-h-screen bg-background">
       <LandingHeader />

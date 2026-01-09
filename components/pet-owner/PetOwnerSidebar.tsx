@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, MessageSquare, ShoppingBag, Heart, User, Settings, Search, HelpCircle, Wallet } from "lucide-react";
+import { Home, MessageSquare, ShoppingBag, Heart, User, Settings, Store, HelpCircle, Wallet, PawPrint, CheckSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -23,9 +23,19 @@ const menuItems = [
     icon: Home,
   },
   {
-    title: "Browse Listings",
+    title: "My Animals",
+    url: "/animals",
+    icon: PawPrint,
+  },
+  {
+    title: "Tasks",
+    url: "/tasks",
+    icon: CheckSquare,
+  },
+  {
+    title: "Marketplace",
     url: "/marketplace",
-    icon: Search,
+    icon: Store,
   },
   {
     title: "Messages",
@@ -51,11 +61,11 @@ const secondaryItems = [
     url: "/pet-owner/profile",
     icon: User,
   },
-  {
-    title: "Wallet",
-    url: "/wallet",
-    icon: Wallet,
-  },
+  // {
+  //   title: "Wallet",
+  //   url: "/wallet",
+  //   icon: Wallet,
+  // },
   {
     title: "Settings",
     url: "/settings",

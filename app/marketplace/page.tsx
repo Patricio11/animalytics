@@ -63,7 +63,10 @@ function useBreeds() {
 export default function Marketplace() {
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session;
-  const isBreeder = (session?.user as any)?.role === 'breeder';
+  const userRole = (session?.user as any)?.role;
+  const isBreeder = userRole === 'breeder';
+  const isPetOwner = userRole === 'pet_owner';
+  const canCreateListing = isBreeder || isPetOwner;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [breedFilter, setBreedFilter] = useState("");
@@ -218,7 +221,7 @@ export default function Marketplace() {
           </div>
         </div>
       ) : (
-        // Breeder Header
+        // Authenticated User Header (Breeder or Pet Owner)
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -226,7 +229,7 @@ export default function Marketplace() {
               <p className="text-muted-foreground">Browse and manage breeding animal listings</p>
             </div>
             <div className="flex items-center gap-2">
-              {isBreeder && (
+              {canCreateListing && (
                 <>
                   <Link href="/marketplace/my-listings">
                     <Button variant="outline" className="hover:bg-primary/10 hover:border-primary">
