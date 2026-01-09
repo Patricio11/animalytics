@@ -16,7 +16,9 @@
     "db:seed:users": "tsx scripts/seed-test-users.ts",
     "db:drop": "tsx scripts/drop-all-tables.ts",
     "migrate:buyer-to-pet-owner": "tsx scripts/backup-and-migrate.ts",
-    "migrate:fix-archived": "tsx scripts/fix-archived-columns.ts"
+    "migrate:fix-archived": "tsx scripts/fix-archived-columns.ts",
+    "migrate:add-missing-columns": "tsx scripts/add-missing-columns.ts",
+    "migrate:fix-remaining": "tsx scripts/fix-remaining-buyer-columns.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

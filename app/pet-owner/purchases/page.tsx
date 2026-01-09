@@ -119,7 +119,8 @@ export default function PetOwnerPurchasesPage() {
   useEffect(() => {
     async function fetchPurchases() {
       try {
-        const res = await fetch(`/api/purchases?role=pet_owner&status=${activeTab}`);
+        // Fetch all purchases without status filter (filter client-side)
+        const res = await fetch(`/api/purchases?role=pet_owner`);
         if (res.ok) {
           const data = await res.json();
           setPurchases(data.purchases || []);
@@ -252,7 +253,7 @@ export default function PetOwnerPurchasesPage() {
         <p className="font-medium text-muted-foreground">{msg.title}</p>
         <p className="text-sm text-muted-foreground mt-1">{msg.description}</p>
         {msg.action && (
-          <Button variant="link" asChild className="mt-2">
+          <Button variant="outline" asChild className="mt-2">
             <Link href={msg.href!}>{msg.action}</Link>
           </Button>
         )}
