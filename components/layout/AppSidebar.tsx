@@ -38,11 +38,11 @@ const menuItems = [
     url: "/calculators",
     icon: Calculator,
   },
-  {
-    title: "Reports",
-    url: "/reports",
-    icon: Activity,
-  },
+  // {
+  //   title: "Reports",
+  //   url: "/reports",
+  //   icon: Activity,
+  // },
   {
     title: "Tasks",
     url: "/tasks",

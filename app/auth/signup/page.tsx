@@ -444,7 +444,7 @@ export default function SignUp() {
                 </Button>
               </form>
 
-              <div className="mt-6">
+              {/* <div className="mt-6">
                 <Separator className="my-4" />
                 <Button
                   type="button"
@@ -472,7 +472,7 @@ export default function SignUp() {
                   </svg>
                   Continue with Google
                 </Button>
-              </div>
+              </div> */}
 
               <div className="text-center mt-6">
                 <p className="text-sm text-muted-foreground">
