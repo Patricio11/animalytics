@@ -149,7 +149,7 @@ export default function PetOwnerProfilePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-surface-secondary">
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className=" mx-auto p-4 sm:p-6 lg:p-8">
           <Card className="shadow-card">
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-6">
@@ -369,7 +369,7 @@ export default function PetOwnerProfilePage() {
                 <div>
                   <p className="text-sm font-medium mb-2">Interested Breeds</p>
                   <div className="flex flex-wrap gap-2">
-                    {profile.interestedBreeds.map((breed) => (
+                    {profile?.interestedBreeds?.map((breed) => (
                       <Badge key={breed} variant="secondary">{breed}</Badge>
                     ))}
                   </div>
@@ -379,7 +379,7 @@ export default function PetOwnerProfilePage() {
                 <div>
                   <p className="text-sm font-medium mb-2">Looking For</p>
                   <div className="flex flex-wrap gap-2">
-                    {profile.lookingFor.map((item) => (
+                    {profile?.lookingFor?.map((item) => (
                       <Badge key={item} variant="outline">{item}</Badge>
                     ))}
                   </div>

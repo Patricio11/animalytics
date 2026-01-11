@@ -366,7 +366,7 @@ export default function ConversationPage() {
 
       {/* Messages */}
       <ScrollArea className="flex-1">
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
+        <div className="mx-auto p-4 space-y-6">
           {/* Listing card if exists */}
           {conversation.listing && (
             <div className="flex justify-center">

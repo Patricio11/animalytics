@@ -262,7 +262,7 @@ export default function BreederPurchasesPage() {
 
   return (
     <div className="min-h-screen bg-surface-secondary">
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold">My Purchases</h1>

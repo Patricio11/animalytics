@@ -307,7 +307,7 @@ export default function ConversationPage() {
     <div className="h-screen flex flex-col bg-surface-secondary">
       {/* Header */}
       <div className="border-b bg-surface p-4">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mx-auto">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild className="lg:hidden">
               <Link href="/pet-owner/messages">
@@ -366,7 +366,7 @@ export default function ConversationPage() {
 
       {/* Messages */}
       <ScrollArea className="flex-1">
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
+        <div className="mx-auto p-4 space-y-6">
           {/* Listing card if exists */}
           {conversation.listing && (
             <div className="flex justify-center">
@@ -376,7 +376,6 @@ export default function ConversationPage() {
                     <div className="h-20 w-20 bg-muted rounded overflow-hidden flex-shrink-0">
                       {conversation.listing.additionalImages && conversation.listing.additionalImages.length > 0 ? (
                         <img
-                          userRole={'pet_owner' as UserRole}
                           src={conversation.listing.additionalImages[0]}
                           alt={conversation.listing.title}
                           className="h-full w-full object-cover"
@@ -514,7 +513,7 @@ export default function ConversationPage() {
 
       {/* Message Input */}
       <div className="border-t bg-surface p-4">
-        <div className="max-w-4xl mx-auto">
+        <div className=" mx-auto">
           {conversation.isBlocked ? (
             <div className="text-center py-2 text-muted-foreground text-sm">
               You cannot send messages in this conversation

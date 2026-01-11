@@ -126,7 +126,7 @@ export default function PetOwnerMessagesPage() {
 
   return (
     <div className="min-h-screen bg-surface-secondary">
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+      <div className=" mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -253,7 +253,7 @@ export default function PetOwnerMessagesPage() {
                     : 'Start a conversation by contacting a seller'}
                 </p>
                 {!showArchived && (
-                  <Button variant="link" asChild className="mt-2">
+                  <Button variant="outline" asChild className="mt-2">
                     <Link href="/marketplace">Browse Marketplace</Link>
                   </Button>
                 )}
