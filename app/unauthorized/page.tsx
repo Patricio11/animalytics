@@ -56,7 +56,7 @@ export default function UnauthorizedPage() {
               variant="outline"
               asChild
             >
-              <Link href="/dashboard">
+              <Link href={dashboardUrl}>
                 Go to Dashboard
               </Link>
             </Button>
