@@ -6,6 +6,7 @@ import { useCreateAnimal, useAnimals } from "@/lib/api/queries/animals";
 import { useBreedPreferences } from "@/lib/api/queries/breed-preferences";
 import { useBreeds } from "@/lib/api/queries/breeds";
 import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
+import { authClient } from "@/lib/auth/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,6 +89,11 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAllBreeds, setShowAllBreeds] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  
+  // Get user role to determine which fields to show
+  const { data: session } = authClient.useSession();
+  const userRole = (session?.user as any)?.role;
+  const isBreeder = userRole === 'breeder';
   
   // Get regional settings for location pre-population
   const { settings: regionalSettings } = useRegionalSettings();
@@ -763,20 +769,24 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="dndProfileNumber">DND Profile No.</Label>
-                  <Input
-                    id="dndProfileNumber"
-                    value={formData.dndProfileNumber}
-                    onChange={(e) => updateFormData("dndProfileNumber", e.target.value)}
-                    placeholder="DND profile number"
-                    className="bg-background border-primary/20"
-                  />
-                </div>
+                {/* DND Profile Number - Breeder Only */}
+                {isBreeder && (
+                  <div className="space-y-2">
+                    <Label htmlFor="dndProfileNumber">DND Profile No.</Label>
+                    <Input
+                      id="dndProfileNumber"
+                      value={formData.dndProfileNumber}
+                      onChange={(e) => updateFormData("dndProfileNumber", e.target.value)}
+                      placeholder="DND profile number"
+                      className="bg-background border-primary/20"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Breeder Information - Fieldset */}
-              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+              {/* Breeder Information - Breeder Only */}
+              {isBreeder && (
+                <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
                 <legend className="text-sm font-semibold px-2 text-primary">Breeder</legend>
                 
                 {/* Mode Selection */}
@@ -843,6 +853,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   </div>
                 )}
               </fieldset>
+              )}
 
               {/* Owner Information - Fieldset */}
               <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
@@ -913,7 +924,8 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                 )}
               </fieldset>
 
-              {/* Sire (Father) Information - Fieldset */}
+              {/* Sire (Father) Information - Breeder Only */}
+              {isBreeder && (
               <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
                 <legend className="text-sm font-semibold px-2 text-primary">Sire (Father) *</legend>
                 
@@ -1031,8 +1043,10 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   </div>
                 )}
               </fieldset>
+              )}
 
-              {/* Dam (Mother) Information - Fieldset */}
+              {/* Dam (Mother) Information - Breeder Only */}
+              {isBreeder && (
               <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
                 <legend className="text-sm font-semibold px-2 text-primary">Dam (Mother) *</legend>
                 
@@ -1150,6 +1164,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
                   </div>
                 )}
               </fieldset>
+              )}
             </div>
           )}
 
