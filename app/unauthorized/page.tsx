@@ -11,6 +11,28 @@ import { useToast } from "@/hooks/use-toast";
 export default function UnauthorizedPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = authClient.useSession();
+  const userRole = (session?.user as any)?.role;
+
+  // Determine dashboard URL based on user role
+  const getDashboardUrl = () => {
+    switch (userRole) {
+      case 'pet_owner':
+        return '/pet-owner/dashboard';
+      case 'breeder':
+        return '/dashboard';
+      case 'admin':
+        return '/admin/dashboard';
+      case 'vet':
+        return '/vet/dashboard';
+      case 'event_organizer':
+        return '/event-organizer/dashboard';
+      default:
+        return '/dashboard';
+    }
+  };
+
+  const dashboardUrl = getDashboardUrl();
 
   const handleSignOut = async () => {
     try {
