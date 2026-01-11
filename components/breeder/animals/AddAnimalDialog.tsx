@@ -434,7 +434,11 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
       case 2:
         return formData.color && formData.markings && formData.weight; // Required fields
       case 3:
-        // Validate parent selection based on mode
+        // Pet owners don't need to fill parent fields (they're hidden)
+        if (!isBreeder) {
+          return true; // Skip validation for pet owners
+        }
+        // Breeders: Validate parent selection based on mode
         const sireValid = formData.sireMode === 'select' 
           ? formData.sireId !== '' 
           : (formData.sireRegistrationNumber !== '' && formData.sireRegisteredName !== '');
