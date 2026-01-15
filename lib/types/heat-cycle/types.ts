@@ -172,6 +172,12 @@ export interface CreateProgesteroneReadingResponse {
     reason: string;
   };
   breedingWindowOpen: boolean;
+  breedingRecordCreated?: boolean;
+  breedingRecordId?: string;
+  isLastMating?: boolean;
+  pregnancyTasksGenerated?: boolean;
+  pregnancyTasksCount?: number;
+  pregnancyTasks?: any[];
   updatedCycle: HeatCycle;
 }
 

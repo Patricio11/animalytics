@@ -131,10 +131,10 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
         {/* Heat Start Date */}
         <div className="space-y-3">
           <Label htmlFor="start-date" className="text-sm font-semibold">
-            Day 1 - Heat Start Date *
+            Day 1 - Start of Season (First Blood) *
           </Label>
           <p className="text-xs text-muted-foreground">
-            When did you first notice bleeding/discharge? (You can select past dates if you forgot to record)
+            When did you first notice bleeding/discharge? This is Day 1 - no progesterone test needed yet. (You can select past dates if you forgot to record)
           </p>
           <Input
             id="start-date"
@@ -166,8 +166,13 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
                   </div>
                   {isOverdue ? (
                     <div className="mt-2 text-sm font-semibold text-amber-600">
-                      ⚠️ First progesterone test was due on {format(firstTestDate, "MMM d")} (Day 5). 
+                      ⚠️ First progesterone test is due on {format(firstTestDate, "MMM d")} (Day 5). 
                       You can add it immediately after starting the cycle.
+                    </div>
+                  ) : currentDay < 5 ? (
+                    <div className="mt-2 text-sm">
+                      <strong>Day 1-4:</strong> No progesterone test needed yet.<br />
+                      First test due: {format(firstTestDate, "EEEE, MMMM d, yyyy")} (Day 5)
                     </div>
                   ) : (
                     <div className="mt-2 text-sm">
@@ -213,8 +218,8 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
           <AlertDescription className="ml-2 text-sm">
             <strong>What happens next:</strong>
             <ul className="mt-2 space-y-1 text-xs">
-              <li>• Day 1 marks the start of the heat cycle (no test needed)</li>
-              <li>• You'll be reminded on Day 5 for the first progesterone test</li>
+              <li>• <strong>Day 1:</strong> Start of season (first blood) - no progesterone test needed</li>
+              <li>• <strong>Day 5:</strong> First progesterone test (5 days after Day 1)</li>
               <li>• System will guide you on when to test next based on results</li>
               <li>• You'll receive alerts when breeding window opens</li>
             </ul>

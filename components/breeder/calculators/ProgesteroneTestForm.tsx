@@ -163,7 +163,7 @@ export function ProgesteroneTestForm({
       setError("Please select a test date");
       return;
     }
-    onSubmit({ testDate: testDate, level: numLevel });
+    onSubmit({ testDate: new Date(testDate), level: numLevel });
   };
 
   const isValid = testDate && level && !error && phaseInfo;
@@ -185,16 +185,27 @@ export function ProgesteroneTestForm({
       </CardHeader>
 
       <CardContent className="p-6 space-y-6">
+        {/* Day Info Alert */}
+        {cycleDay < 5 && (
+          <Alert className="border-amber-500/50 bg-amber-500/10">
+            <Info className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="ml-2 text-sm">
+              <strong>Note:</strong> Day 1 is the start of season (first blood). The first progesterone test should be on Day 5, which is 5 days after Day 1.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Test Date */}
         <div className="space-y-2">
           <Label htmlFor="test-date" className="text-sm font-semibold">
             Test Date *
           </Label>
-          <DatePicker
-            date={testDate}
-            onDateChange={(date) => setTestDate(date || new Date())}
-            placeholder="Select test date"
-            maxDate={new Date()}
+          <Input
+            id="test-date"
+            type="date"
+            value={testDate}
+            onChange={(e) => setTestDate(e.target.value)}
+            max={new Date().toISOString().split('T')[0]}
             className="bg-background border-primary/20"
           />
         </div>

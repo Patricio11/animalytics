@@ -43,7 +43,7 @@ import type {
 
 const createReadingSchema = z.object({
   heatCycleId: z.string().uuid('Invalid heat cycle ID'),
-  day: z.number().int().min(1).max(30).optional(), // Optional - will be auto-calculated if not provided
+  day: z.number().int().min(5, 'First progesterone test should be on Day 5 or later').max(30).optional(), // Optional - will be auto-calculated if not provided
   testDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
   progesteroneLevel: z.number()
     .min(0.5, 'Progesterone level must be at least 0.5 ng/mL. Values below this are typically measurement errors.')
@@ -121,6 +121,12 @@ export async function POST(request: NextRequest) {
     // Validate calculated day
     if (calculatedDay < 1) {
       return errorResponse('Test date cannot be before the heat cycle start date', 400);
+    }
+    if (calculatedDay < 5) {
+      return errorResponse(
+        'First progesterone test should be on Day 5 or later. Day 1 is the start of season (first blood) and does not require a progesterone reading.',
+        400
+      );
     }
     if (calculatedDay > 30) {
       return errorResponse('Test date is too far from the start date (max 30 days)', 400);
