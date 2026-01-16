@@ -156,7 +156,9 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
     { value: 'pedigree', label: 'Pedigree', icon: Share2 },
     { value: 'photos-docs', label: 'Photos & Docs', icon: Award },
     { value: 'feeding', label: 'Feeding', icon: Calendar },
-    { value: 'semen', label: 'Semen', icon: Shield },
+    ...(animal.sex === 'male' ? [
+      { value: 'semen', label: 'Semen', icon: Shield },
+    ] : []),
     ...(animal.sex === 'female' ? [
       { value: 'seasons', label: 'Seasons', icon: Heart },
       { value: 'litters', label: 'Litter Details', icon: Activity },
@@ -275,12 +277,14 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                     />
                   </TabsContent>
 
-                  <TabsContent value="semen" className="mt-0">
-                    <SemenTab
-                      animalId={animal.id}
-                      assessments={animal.semenAssessments || []}
-                    />
-                  </TabsContent>
+                  {animal.sex === 'male' && (
+                    <TabsContent value="semen" className="mt-0">
+                      <SemenTab
+                        animalId={animal.id}
+                        assessments={animal.semenAssessments || []}
+                      />
+                    </TabsContent>
+                  )}
 
                   {animal.sex === 'female' && (
                     <>
