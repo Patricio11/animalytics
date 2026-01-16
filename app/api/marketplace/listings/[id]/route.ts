@@ -30,6 +30,22 @@ export async function GET(
             photos: true,
           },
         },
+        user: {
+          columns: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+          with: {
+            breederProfile: {
+              columns: {
+                slug: true,
+                displayName: true,
+                location: true,
+              },
+            },
+          },
+        },
       },
     });
 

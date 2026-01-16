@@ -857,21 +857,54 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                 <CardContent className="p-6 space-y-4">
                   <h3 className="text-lg font-semibold text-foreground">Seller Information</h3>
                   
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={listing.breederAvatar} />
-                      <AvatarFallback className="bg-gradient-brand text-white">
-                        {listing.contactName?.charAt(0) || 'B'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium text-foreground">{listing.contactName || 'Breeder'}</div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Star className="w-4 h-4 text-chart-2 fill-current" />
-                        <span>4.5</span>
+                  {listing.user?.breederProfile?.slug ? (
+                    <Link 
+                      href={`/breeders/${listing.user.breederProfile.slug}?source=marketplace`}
+                      className="block group"
+                    >
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={listing.user?.avatar || listing.breederAvatar} />
+                          <AvatarFallback className="bg-gradient-brand text-white">
+                            {(listing.user?.breederProfile?.displayName || listing.contactName)?.charAt(0) || 'B'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground group-hover:text-primary transition-colors">
+                            {listing.user?.breederProfile?.displayName || listing.contactName || 'Breeder'}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Star className="w-4 h-4 text-chart-2 fill-current" />
+                            <span>4.5</span>
+                          </div>
+                          {listing.user?.breederProfile?.location && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {listing.user.breederProfile.location}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-primary font-medium group-hover:underline">
+                          View Profile →
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={listing.breederAvatar} />
+                        <AvatarFallback className="bg-gradient-brand text-white">
+                          {listing.contactName?.charAt(0) || 'B'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium text-foreground">{listing.contactName || 'Breeder'}</div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Star className="w-4 h-4 text-chart-2 fill-current" />
+                          <span>4.5</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             )}

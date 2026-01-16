@@ -27,12 +27,16 @@ import { breederProfiles } from './profiles';
 // USER RELATIONS
 // ============================================================================
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   animals: many(animals),
   matings: many(matings),
   tasks: many(tasks),
   listings: many(listings),
   frozenSemen: many(frozenSemen),
+  breederProfile: one(breederProfiles, {
+    fields: [users.id],
+    references: [breederProfiles.userId],
+  }),
 }));
 
 // ============================================================================
