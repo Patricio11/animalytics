@@ -630,7 +630,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
             {listing.animal && (
               <Card className="shadow-card bg-surface border-0 overflow-hidden hover:shadow-lg transition-shadow">
                 <Link 
-                  href={`/animals/${listing.animal.id}`}
+                  href={`/public-profile/${listing.animal.id}?source=marketplace&breed=${encodeURIComponent(listing.breed || '')}&location=${encodeURIComponent(listing.location || '')}`}
                   className="block group"
                 >
                   <CardContent className="p-0">
