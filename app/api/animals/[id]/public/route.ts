@@ -64,6 +64,7 @@ export async function GET(
     const breederProfile = await db.query.breederProfiles.findFirst({
       where: (profiles, { eq }) => eq(profiles.userId, animal.userId),
       columns: {
+        slug: true,
         displayName: true,
         location: true,
         bio: true,

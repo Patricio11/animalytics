@@ -349,18 +349,50 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
                   <CardTitle className="text-lg">Breeder Information</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Breeder</p>
-                    <p className="font-medium">{animal.breeder.displayName || 'Anonymous'}</p>
-                  </div>
-                  {animal.breeder.location && (
-                    <div className="flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Location</p>
-                        <p className="text-sm">{animal.breeder.location}</p>
+                  {animal.breeder.slug ? (
+                    <Link 
+                      href={`/breeders/${animal.breeder.slug}?source=animal-profile&animal=${id}`}
+                      className="block group"
+                    >
+                      <div className="p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm text-muted-foreground">Breeder</p>
+                            <p className="font-medium group-hover:text-primary transition-colors">
+                              {animal.breeder.displayName || 'Anonymous'}
+                            </p>
+                          </div>
+                          <div className="text-xs text-primary font-medium group-hover:underline">
+                            View Profile →
+                          </div>
+                        </div>
+                        {animal.breeder.location && (
+                          <div className="flex items-start gap-2 mt-2">
+                            <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm text-muted-foreground">Location</p>
+                              <p className="text-sm">{animal.breeder.location}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </Link>
+                  ) : (
+                    <>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Breeder</p>
+                        <p className="font-medium">{animal.breeder.displayName || 'Anonymous'}</p>
+                      </div>
+                      {animal.breeder.location && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Location</p>
+                            <p className="text-sm">{animal.breeder.location}</p>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
