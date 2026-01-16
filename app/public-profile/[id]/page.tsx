@@ -52,13 +52,17 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
 
   const animal = data?.animal;
 
-  // Prepare photo gallery
+  // Identify profile photo using same logic as authenticated profile
+  const profilePhoto = animal?.photos?.find((p: any) => p.category === 'profile');
+  const primaryPhoto = profilePhoto?.fileUrl || animal?.photos?.[0]?.fileUrl || animal?.profileImageUrl || null;
+  
+  // Prepare photo gallery - profile image first, then all non-profile photos
   const allPhotos = animal?.photos
     ? [
-        animal.profileImageUrl,
+        primaryPhoto,
         ...animal.photos.filter((p: any) => p.category !== 'profile').map((p: any) => p.fileUrl)
       ].filter((url: string | undefined) => url)
-    : [];
+    : primaryPhoto ? [primaryPhoto] : [];
 
   if (isLoading) {
     return (
@@ -121,18 +125,18 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
                 <div 
                   className={cn(
                     "relative aspect-video overflow-hidden rounded-t-lg",
-                    animal.profileImageUrl ? "cursor-pointer group" : ""
+                    primaryPhoto ? "cursor-pointer group" : ""
                   )}
                   onClick={() => {
-                    if (!animal.profileImageUrl) return;
+                    if (!primaryPhoto) return;
                     setLightboxIndex(0);
                     setLightboxOpen(true);
                   }}
                 >
-                  {animal.profileImageUrl ? (
+                  {primaryPhoto ? (
                     <>
                       <img
-                        src={animal.profileImageUrl}
+                        src={primaryPhoto}
                         alt={animal.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -147,26 +151,34 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
                   )}
                 </div>
 
-                {/* Photo Gallery */}
-                {animal.photos && animal.photos.length > 0 && (
-                  <div className="p-4 grid grid-cols-4 gap-2">
-                    {animal.photos.slice(0, 8).map((photo: any, index: number) => (
-                      <div
-                        key={index}
-                        className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group"
-                        onClick={() => {
-                          setLightboxIndex(index + 1);
-                          setLightboxOpen(true);
-                        }}
-                      >
-                        <img 
-                          src={photo.fileUrl} 
-                          alt={`${animal.name} ${index + 1}`} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                      </div>
-                    ))}
+                {/* Photo Gallery - Show additional photos (non-profile) */}
+                {animal.photos && animal.photos.filter((p: any) => p.category !== 'profile').length > 0 && (
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold mb-3 text-muted-foreground">
+                      Photo Gallery ({animal.photos.filter((p: any) => p.category !== 'profile').length} photos)
+                    </h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      {animal.photos
+                        .filter((p: any) => p.category !== 'profile')
+                        .map((photo: any, index: number) => (
+                          <div
+                            key={index}
+                            className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group"
+                            onClick={() => {
+                              // +1 because profile image is at index 0 in allPhotos
+                              setLightboxIndex(index + 1);
+                              setLightboxOpen(true);
+                            }}
+                          >
+                            <img 
+                              src={photo.fileUrl} 
+                              alt={`${animal.name} ${index + 1}`} 
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 )}
               </CardContent>

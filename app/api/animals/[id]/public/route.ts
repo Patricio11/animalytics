@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { animals, breeds, users, breederProfiles } from '@/lib/db/schema';
+import { breederProfiles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -12,35 +12,46 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Fetch animal with public information only
-    const [animal] = await db
-      .select({
-        id: animals.id,
-        name: animals.name,
-        registeredName: animals.registeredName,
-        registrationNumber: animals.registrationNumber,
-        sex: animals.sex,
-        dateOfBirth: animals.dateOfBirth,
-        color: animals.color,
-        colorHex: animals.colorHex,
-        weight: animals.weight,
-        height: animals.height,
-        profileImageUrl: animals.profileImageUrl,
-        description: animals.description,
-        temperament: animals.temperament,
-        achievements: animals.achievements,
-        userId: animals.userId,
-        breedId: animals.breedId,
+    // Fetch animal with public information using relational query
+    const animal = await db.query.animals.findFirst({
+      where: (animals, { eq }) => eq(animals.id, id),
+      columns: {
+        id: true,
+        name: true,
+        registeredName: true,
+        registrationNumber: true,
+        sex: true,
+        dateOfBirth: true,
+        color: true,
+        colorHex: true,
+        weight: true,
+        height: true,
+        profileImageUrl: true,
+        description: true,
+        temperament: true,
+        achievements: true,
+        userId: true,
+        breedId: true,
+      },
+      with: {
         breed: {
-          id: breeds.id,
-          name: breeds.name,
-          category: breeds.category,
+          columns: {
+            id: true,
+            name: true,
+            category: true,
+          },
         },
-      })
-      .from(animals)
-      .leftJoin(breeds, eq(animals.breedId, breeds.id))
-      .where(eq(animals.id, id))
-      .limit(1);
+        photos: {
+          columns: {
+            id: true,
+            fileUrl: true,
+            category: true,
+            caption: true,
+          },
+          orderBy: (photos, { desc }) => [desc(photos.uploadedAt)],
+        },
+      },
+    });
 
     if (!animal) {
       return NextResponse.json(
@@ -50,26 +61,13 @@ export async function GET(
     }
 
     // Fetch breeder profile information (public info only)
-    const [breederProfile] = await db
-      .select({
-        displayName: breederProfiles.displayName,
-        location: breederProfiles.location,
-        bio: breederProfiles.bio,
-      })
-      .from(breederProfiles)
-      .where(eq(breederProfiles.userId, animal.userId))
-      .limit(1);
-
-    // Fetch photos (public photos only)
-    const photos = await db.query.animalPhotos.findMany({
-      where: (animalPhotos, { eq }) => eq(animalPhotos.animalId, id),
+    const breederProfile = await db.query.breederProfiles.findFirst({
+      where: (profiles, { eq }) => eq(profiles.userId, animal.userId),
       columns: {
-        id: true,
-        fileUrl: true,
-        category: true,
-        caption: true,
+        displayName: true,
+        location: true,
+        bio: true,
       },
-      orderBy: (animalPhotos, { desc }) => [desc(animalPhotos.uploadedAt)],
     });
 
     // Return public profile data
@@ -77,9 +75,7 @@ export async function GET(
       success: true,
       animal: {
         ...animal,
-        breed: animal.breed || undefined,
         breeder: breederProfile || undefined,
-        photos: photos || [],
       },
     });
   } catch (error) {
