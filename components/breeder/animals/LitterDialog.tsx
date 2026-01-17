@@ -42,7 +42,7 @@ export function LitterDialog({
   const [sireMode, setSireMode] = useState<'select' | 'manual'>('select');
   const [sireId, setSireId] = useState('');
   const [sireName, setSireName] = useState('');
-  const [sireRegistrationNumber, setSireRegistrationNumber] = useState('');
+  const [sireMicrochipNumber, setSireMicrochipNumber] = useState('');
   const [sireRegisteredName, setSireRegisteredName] = useState('');
   const [actualWhelpingDate, setActualWhelpingDate] = useState<Date | undefined>();
   const [puppyCount, setPuppyCount] = useState('');
@@ -63,7 +63,7 @@ export function LitterDialog({
         setSireName(existingLitter.sireName);
       } else {
         setSireMode('manual');
-        setSireRegistrationNumber(existingLitter.sireId || '');
+        setSireMicrochipNumber(existingLitter.sireId || '');
         setSireRegisteredName(existingLitter.sireName || '');
       }
       setActualWhelpingDate(existingLitter.whelpingDate ? new Date(existingLitter.whelpingDate) : undefined);
@@ -89,7 +89,7 @@ export function LitterDialog({
     setSireMode('select');
     setSireId('');
     setSireName('');
-    setSireRegistrationNumber('');
+    setSireMicrochipNumber('');
     setSireRegisteredName('');
     setActualWhelpingDate(undefined);
     setPuppyCount('');
@@ -132,8 +132,8 @@ export function LitterDialog({
         newErrors.sireId = 'Sire selection is required';
       }
     } else {
-      if (!sireRegistrationNumber) {
-        newErrors.sireRegistrationNumber = 'Sire registration number is required';
+      if (!sireMicrochipNumber) {
+        newErrors.sireMicrochipNumber = 'Sire microchip number is required';
       }
       if (!sireRegisteredName) {
         newErrors.sireRegisteredName = 'Sire registered name is required';
@@ -188,8 +188,8 @@ export function LitterDialog({
     const isWhelped = !!actualWhelpingDate;
 
     const litter: Omit<Litter, 'id'> = {
-      matingDate: matingDate?.toISOString(),
-      sireId: sireMode === 'select' ? sireId : sireRegistrationNumber,
+      matingDate: matingDate!.toISOString(),
+      sireId: sireMode === 'select' ? sireId : sireMicrochipNumber,
       sireName: sireMode === 'select' ? sireName : sireRegisteredName,
       expectedWhelpingDate,
       whelpingDate: actualWhelpingDate?.toISOString() || undefined,
@@ -273,18 +273,18 @@ export function LitterDialog({
             ) : (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sire-reg-number">
-                    Sire Registration Number <span className="text-destructive">*</span>
+                  <Label htmlFor="sire-microchip-number">
+                    Sire Microchip Number <span className="text-destructive">*</span>
                   </Label>
                   <Input
-                    id="sire-reg-number"
-                    value={sireRegistrationNumber}
-                    onChange={(e) => setSireRegistrationNumber(e.target.value)}
-                    placeholder="e.g., ZA001234B21"
+                    id="sire-microchip-number"
+                    value={sireMicrochipNumber}
+                    onChange={(e) => setSireMicrochipNumber(e.target.value)}
+                    placeholder="e.g., 985112345678901"
                     className="bg-background border-primary/20"
                   />
-                  {errors.sireRegistrationNumber && (
-                    <p className="text-sm text-destructive">{errors.sireRegistrationNumber}</p>
+                  {errors.sireMicrochipNumber && (
+                    <p className="text-sm text-destructive">{errors.sireMicrochipNumber}</p>
                   )}
                 </div>
                 <div className="space-y-2">
