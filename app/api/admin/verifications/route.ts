@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { verificationRequests } from '@/lib/db/schema/verification-requests';
 import { users } from '@/lib/db/schema/users';
 import { auth } from '@/lib/auth/config';
-import { eq, or, and, desc, ilike } from 'drizzle-orm';
+import { eq, or, and, desc, ilike, sql, count } from 'drizzle-orm';
 
 /**
  * GET /api/admin/verifications
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     const statusCounts = await db
       .select({
         status: verificationRequests.status,
-        count: verificationRequests.id,
+        count: count(verificationRequests.id),
       })
       .from(verificationRequests)
       .groupBy(verificationRequests.status);

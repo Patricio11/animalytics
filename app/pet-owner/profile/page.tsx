@@ -359,13 +359,13 @@ export default function PetOwnerProfilePage() {
         )}
 
         {/* Preferences */}
-        {!isEditing && (profile?.interestedBreeds?.length > 0 || profile?.lookingFor?.length > 0) && (
+        {!isEditing && ((profile?.interestedBreeds && profile.interestedBreeds.length > 0) || (profile?.lookingFor && profile.lookingFor.length > 0)) && (
           <Card className="shadow-card">
             <CardHeader>
               <CardTitle>Preferences</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {profile?.interestedBreeds?.length > 0 && (
+              {profile?.interestedBreeds && profile.interestedBreeds.length > 0 && (
                 <div>
                   <p className="text-sm font-medium mb-2">Interested Breeds</p>
                   <div className="flex flex-wrap gap-2">
@@ -375,7 +375,7 @@ export default function PetOwnerProfilePage() {
                   </div>
                 </div>
               )}
-              {profile?.lookingFor?.length > 0 && (
+              {profile?.lookingFor && profile.lookingFor.length > 0 && (
                 <div>
                   <p className="text-sm font-medium mb-2">Looking For</p>
                   <div className="flex flex-wrap gap-2">

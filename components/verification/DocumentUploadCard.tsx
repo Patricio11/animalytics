@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Upload, CheckCircle2, XCircle, AlertCircle, Trash2, Eye } from "lucide-react";
+import { Camera, Upload, CheckCircle2, XCircle, AlertCircle, Trash2, Eye, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
