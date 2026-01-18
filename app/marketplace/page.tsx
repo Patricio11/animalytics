@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth/client";
 import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BreedCombobox } from "@/components/ui/breed-combobox";
+import { detectUserLocation } from "@/lib/utils/location";
 import { 
   Plus, 
   Search, 
@@ -76,6 +77,24 @@ export default function Marketplace() {
   const [championOnlyFilter, setChampionOnlyFilter] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  // Auto-detect user location on mount
+  useEffect(() => {
+    const loadUserLocation = async () => {
+      try {
+        const location = await detectUserLocation();
+        if (location?.city) {
+          setLocationFilter(location.city);
+        } else if (location?.country) {
+          setLocationFilter(location.country);
+        }
+      } catch (error) {
+        console.error('Failed to detect location:', error);
+      }
+    };
+    
+    loadUserLocation();
+  }, []);
 
   // Fetch data
   const { data: breedsData, isLoading: breedsLoading } = useBreeds();

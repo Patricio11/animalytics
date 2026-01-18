@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, MapPin, Star, Users, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { BreederCard } from "@/components/breeder/BreederCard";
 import { BreedCombobox } from "@/components/ui/breed-combobox";
+import { detectUserLocation } from "@/lib/utils/location";
 
 // Fetch breeders from API
 function useBreeders(search: string, breed: string, location: string) {
@@ -35,6 +36,24 @@ export default function GlobalBreedersPage() {
   const [selectedBreed, setSelectedBreed] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Auto-detect user location on mount
+  useEffect(() => {
+    const loadUserLocation = async () => {
+      try {
+        const location = await detectUserLocation();
+        if (location?.city) {
+          setLocationFilter(location.city);
+        } else if (location?.country) {
+          setLocationFilter(location.country);
+        }
+      } catch (error) {
+        console.error('Failed to detect location:', error);
+      }
+    };
+    
+    loadUserLocation();
+  }, []);
 
   // Debounce search
   const handleSearch = (value: string) => {
