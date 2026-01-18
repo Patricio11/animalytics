@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { breederProfiles } from '@/lib/db/schema/profiles';
+import { users } from '@/lib/db/schema/users';
+import { breederBreedPreferences } from '@/lib/db/schema/user-breed-preferences';
+import { breeds } from '@/lib/db/schema/breeds';
 import { eq, desc, ilike, or, and, sql } from 'drizzle-orm';
 
 // ============================================================================
@@ -37,7 +40,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build query with all conditions
+    // Build query with all conditions - join with users for fallback location
     let query = db
       .select({
         id: breederProfiles.id,
@@ -48,6 +51,7 @@ export async function GET(request: NextRequest) {
         logoUrl: breederProfiles.logoUrl,
         bannerUrl: breederProfiles.bannerUrl,
         location: breederProfiles.location,
+        userPreferences: users.preferences,
         yearsInBusiness: breederProfiles.yearsInBusiness,
         primaryBreeds: breederProfiles.primaryBreeds,
         specializations: breederProfiles.specializations,
@@ -62,12 +66,13 @@ export async function GET(request: NextRequest) {
         responseRate: breederProfiles.responseRate,
         createdAt: breederProfiles.createdAt,
       })
-      .from(breederProfiles);
+      .from(breederProfiles)
+      .leftJoin(users, eq(breederProfiles.userId, users.id));
 
     // Apply conditions
     query = query.where(and(...conditions)) as any;
 
-    const breeders = await query
+    const results = await query
       .orderBy(
         desc(breederProfiles.premiumMember),
         desc(breederProfiles.averageRating),
@@ -76,15 +81,48 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
+    // Process results to merge location from user preferences if needed
+    const breeders = results.map(result => {
+      let location = result.location;
+      
+      // If breeder profile has no location, try to get from user preferences
+      if (!location && result.userPreferences) {
+        const prefs = result.userPreferences as any;
+        if (prefs.country || prefs.city || prefs.region) {
+          location = {
+            country: prefs.country || prefs.countryCode || 'Not specified',
+            city: prefs.city,
+            state: prefs.region,
+          };
+        }
+      }
+
+      // Remove userPreferences from final output
+      const { userPreferences, ...breederData } = result;
+      return {
+        ...breederData,
+        location,
+      };
+    });
+
     // Get total count for pagination
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(breederProfiles)
       .where(and(...conditions));
 
+    // Calculate unique countries for stats
+    const uniqueCountries = new Set(
+      breeders
+        .map(b => b.location?.country)
+        .filter(Boolean)
+    ).size;
+
     return NextResponse.json({
       success: true,
       breeders,
+      total: Number(count),
+      countries: uniqueCountries,
       pagination: {
         total: Number(count),
         limit,
