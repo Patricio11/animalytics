@@ -31,7 +31,7 @@ export default function Settings() {
   }, []);
   return (
     <div className="min-h-screen bg-surface-secondary">
-      <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
+      <div className="p-4 sm:p-6 space-y-6 mx-auto">
         {/* Header */}
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Settings</h1>

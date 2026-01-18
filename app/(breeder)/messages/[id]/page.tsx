@@ -307,7 +307,7 @@ export default function ConversationPage() {
     <div className="h-screen flex flex-col bg-surface-secondary">
       {/* Header */}
       <div className="border-b bg-surface p-4">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mx-auto">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild className="lg:hidden">
               <Link href="/messages">
@@ -516,7 +516,7 @@ export default function ConversationPage() {
 
       {/* Message Input */}
       <div className="border-t bg-surface p-4">
-        <div className="max-w-4xl mx-auto">
+        <div className=" mx-auto">
           {conversation.isBlocked ? (
             <div className="text-center py-2 text-muted-foreground text-sm">
               You cannot send messages in this conversation
