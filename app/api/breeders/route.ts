@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { breederProfiles } from '@/lib/db/schema/profiles';
 import { users } from '@/lib/db/schema/users';
 import { breederBreedPreferences } from '@/lib/db/schema/user-breed-preferences';
-import { breeds } from '@/lib/db/schema/breeds';
+import { breeds } from '@/lib/db/schema/animals';
 import { eq, desc, ilike, or, and, sql } from 'drizzle-orm';
 
 // ============================================================================
@@ -81,7 +81,33 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    // Process results to merge location from user preferences if needed
+    // Fetch breed preferences for all breeders in this batch
+    let breedsByBreeder: Record<string, string[]> = {};
+    
+    if (results.length > 0) {
+      const breederIds = results.map(r => r.id);
+      const breedPreferencesData = await db
+        .select({
+          breederProfileId: breederBreedPreferences.breederProfileId,
+          breedName: breeds.name,
+        })
+        .from(breederBreedPreferences)
+        .leftJoin(breeds, eq(breederBreedPreferences.breedId, breeds.id))
+        .where(sql`${breederBreedPreferences.breederProfileId} IN (${sql.join(breederIds.map(id => sql`${id}`), sql`, `)})`);
+
+      // Group breed preferences by breeder profile ID
+      breedsByBreeder = breedPreferencesData.reduce((acc, item) => {
+        if (!acc[item.breederProfileId]) {
+          acc[item.breederProfileId] = [];
+        }
+        if (item.breedName) {
+          acc[item.breederProfileId].push(item.breedName);
+        }
+        return acc;
+      }, {} as Record<string, string[]>);
+    }
+
+    // Process results to merge location and breed preferences
     const breeders = results.map(result => {
       let location = result.location;
       
@@ -97,11 +123,18 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Get breed preferences from junction table, fallback to primaryBreeds
+      const breedPreferences = breedsByBreeder[result.id] || [];
+      const primaryBreeds = breedPreferences.length > 0 
+        ? breedPreferences 
+        : (result.primaryBreeds || []);
+
       // Remove userPreferences from final output
       const { userPreferences, ...breederData } = result;
       return {
         ...breederData,
         location,
+        primaryBreeds,
       };
     });
 
