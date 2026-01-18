@@ -870,8 +870,11 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <div className="font-medium text-foreground group-hover:text-primary transition-colors">
-                            {listing.user?.breederProfile?.displayName || listing.contactName || 'Breeder'}
+                          <div className="flex items-center gap-1.5 font-medium text-foreground group-hover:text-primary transition-colors">
+                            <span>{listing.user?.breederProfile?.displayName || listing.contactName || 'Breeder'}</span>
+                            {listing.user?.breederProfile?.kycVerified && (
+                              <VerifiedCheckmark isVerified={true} className="w-4 h-4" />
+                            )}
                           </div>
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Star className="w-4 h-4 text-chart-2 fill-current" />

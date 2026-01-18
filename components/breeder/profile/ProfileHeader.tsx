@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
 
 interface ProfileHeaderProps {
   displayName: string;
@@ -77,9 +78,12 @@ export function ProfileHeader({
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="mb-4">
-                <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-foreground">
-                  {displayName}
-                </h1>
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+                    {displayName}
+                  </h1>
+                  {kycVerified && <VerifiedCheckmark isVerified={true} className="w-7 h-7" />}
+                </div>
                 {tagline && (
                   <p className="text-base sm:text-lg text-muted-foreground">
                     {tagline}

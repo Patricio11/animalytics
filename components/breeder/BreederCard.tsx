@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
 import Link from "next/link";
 
 interface BreederCardProps {
@@ -62,9 +63,12 @@ export function BreederCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
-                  {displayName}
-                </h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                    {displayName}
+                  </h3>
+                  {kycVerified && <VerifiedCheckmark isVerified={true} />}
+                </div>
                 {tagline && (
                   <p className="text-sm text-muted-foreground line-clamp-1">
                     {tagline}

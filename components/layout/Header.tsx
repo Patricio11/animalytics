@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationBell } from "@/components/notifications";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
 import { useAuth, useRole } from "@/lib/auth/client";
+import { useVerificationStatus } from "@/lib/hooks/useVerificationStatus";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -87,9 +89,14 @@ export function Header() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start text-left gap-1">
-                <span className="text-sm font-semibold text-foreground leading-tight">
-                  {user?.name || 'User'}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-semibold text-foreground leading-tight">
+                    {user?.name || 'User'}
+                  </span>
+                  {verificationStatus?.isVerified && (
+                    <VerifiedCheckmark isVerified={true} className="w-4 h-4" />
+                  )}
+                </div>
                 <Badge 
                   variant="secondary" 
                   className="text-[10px] capitalize px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
