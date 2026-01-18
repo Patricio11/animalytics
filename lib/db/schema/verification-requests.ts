@@ -5,13 +5,18 @@ import { petOwnerProfiles } from './pet-owner-profiles';
 
 /**
  * Verification Requests Table
- * Tracks verification submissions for both breeders and pet owners
- * Extends the existing KYC system with role-specific requirements
+ * FUTURE-PROOF: Supports verification for ALL user roles
+ * - breeders: Breeder certification, kennel license, business docs
+ * - pet_owners: Pet ownership proof, veterinary records
+ * - vets: Veterinary license, clinic registration, professional credentials
+ * - future roles: Extensible for any new user type
+ * 
+ * Role-specific documents are stored in flexible JSONB fields
  */
 export const verificationRequests = pgTable('verification_requests', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  userRole: text('user_role').notNull(), // 'breeder' | 'pet_owner'
+  userRole: text('user_role').notNull(), // 'breeder' | 'pet_owner' | 'vet' | any future role
   
   // Status tracking
   status: text('status').notNull().default('draft'), // draft, submitted, under_review, approved, rejected, expired
@@ -68,7 +73,28 @@ export const verificationRequests = pgTable('verification_requests', {
   petOwnershipProofUrl: text('pet_ownership_proof_url'),
   veterinaryRecordsUrl: text('veterinary_records_url'),
   
-  // Additional Documents (flexible)
+  // Vet-Specific Documents (FUTURE-PROOF)
+  vetLicenseUrl: text('vet_license_url'),
+  vetLicenseNumber: text('vet_license_number'),
+  vetLicenseIssuer: text('vet_license_issuer'),
+  vetLicenseExpiryDate: text('vet_license_expiry_date'),
+  clinicRegistrationUrl: text('clinic_registration_url'),
+  clinicRegistrationNumber: text('clinic_registration_number'),
+  professionalInsuranceUrl: text('professional_insurance_url'),
+  professionalInsuranceNumber: text('professional_insurance_number'),
+  degreeCertificateUrl: text('degree_certificate_url'),
+  specialistCertificationUrl: text('specialist_certification_url'),
+  
+  // Role-Specific Documents (FLEXIBLE JSONB for any future role)
+  roleSpecificDocuments: jsonb('role_specific_documents').$type<Record<string, {
+    url: string;
+    number?: string;
+    issuer?: string;
+    expiryDate?: string;
+    uploadedAt: string;
+  }>>().default({}),
+  
+  // Additional Documents (flexible for any extra documents)
   additionalDocuments: jsonb('additional_documents').$type<Array<{
     type: string;
     name: string;

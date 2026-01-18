@@ -5,7 +5,9 @@
 
 export type VerificationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'expired';
 export type DocumentStatus = 'pending' | 'approved' | 'rejected' | 'requires_reupload';
-export type UserRole = 'breeder' | 'pet_owner';
+// FUTURE-PROOF: Support for all user roles
+export type UserRole = 'breeder' | 'pet_owner' | 'vet' | 'admin';
+export type VerifiableUserRole = Exclude<UserRole, 'admin'>; // All roles except admin can be verified
 
 export interface VerificationRequest {
   id: string;
@@ -64,6 +66,27 @@ export interface VerificationRequest {
   // Pet Owner-Specific
   petOwnershipProofUrl?: string;
   veterinaryRecordsUrl?: string;
+  
+  // Vet-Specific (FUTURE-PROOF)
+  vetLicenseUrl?: string;
+  vetLicenseNumber?: string;
+  vetLicenseIssuer?: string;
+  vetLicenseExpiryDate?: string;
+  clinicRegistrationUrl?: string;
+  clinicRegistrationNumber?: string;
+  professionalInsuranceUrl?: string;
+  professionalInsuranceNumber?: string;
+  degreeCertificateUrl?: string;
+  specialistCertificationUrl?: string;
+  
+  // Role-Specific Documents (FLEXIBLE for any future role)
+  roleSpecificDocuments?: Record<string, {
+    url: string;
+    number?: string;
+    issuer?: string;
+    expiryDate?: string;
+    uploadedAt: string;
+  }>;
   
   // Additional Documents
   additionalDocuments: Array<{
@@ -148,6 +171,8 @@ export interface VerificationStepData {
   data: any;
 }
 
+// FUTURE-PROOF: Verification steps for all user roles
+
 // Breeder-specific verification steps
 export const BREEDER_VERIFICATION_STEPS = [
   'personal_info',
@@ -169,8 +194,31 @@ export const PET_OWNER_VERIFICATION_STEPS = [
   'review_submit',
 ] as const;
 
+// Vet-specific verification steps (FUTURE-PROOF)
+export const VET_VERIFICATION_STEPS = [
+  'personal_info',
+  'address_info',
+  'identity_documents',
+  'proof_of_address',
+  'vet_license',
+  'clinic_registration',
+  'professional_credentials',
+  'review_submit',
+] as const;
+
 export type BreederVerificationStep = typeof BREEDER_VERIFICATION_STEPS[number];
 export type PetOwnerVerificationStep = typeof PET_OWNER_VERIFICATION_STEPS[number];
+export type VetVerificationStep = typeof VET_VERIFICATION_STEPS[number];
+
+// Role-agnostic verification step type
+export type VerificationStep = BreederVerificationStep | PetOwnerVerificationStep | VetVerificationStep | string;
+
+// Helper to get verification steps by role
+export const VERIFICATION_STEPS_BY_ROLE: Record<VerifiableUserRole, readonly string[]> = {
+  breeder: BREEDER_VERIFICATION_STEPS,
+  pet_owner: PET_OWNER_VERIFICATION_STEPS,
+  vet: VET_VERIFICATION_STEPS,
+};
 
 // Document type definitions
 export const DOCUMENT_TYPES = {
@@ -197,6 +245,13 @@ export const DOCUMENT_TYPES = {
   // Pet Owner
   PET_OWNERSHIP_PROOF: 'pet_ownership_proof',
   VETERINARY_RECORDS: 'veterinary_records',
+  
+  // Vet (FUTURE-PROOF)
+  VET_LICENSE: 'vet_license',
+  CLINIC_REGISTRATION: 'clinic_registration',
+  PROFESSIONAL_INSURANCE: 'professional_insurance',
+  DEGREE_CERTIFICATE: 'degree_certificate',
+  SPECIALIST_CERTIFICATION: 'specialist_certification',
   
   // Other
   OTHER: 'other',
