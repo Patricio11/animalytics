@@ -102,6 +102,8 @@ export default function AdminUserDetailPage({
   const [showEditAnimalDialog, setShowEditAnimalDialog] = useState(false);
   const [showDeleteAnimalDialog, setShowDeleteAnimalDialog] = useState(false);
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
+  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [showListingDialog, setShowListingDialog] = useState(false);
 
   // Fetch user details
   const { data: user, isLoading: userLoading } = useQuery<UserDetail>({
@@ -136,6 +138,30 @@ export default function AdminUserDetailPage({
 
   const animals = animalsData?.animals || [];
   const breeds = breedsData?.breeds || [];
+
+  // Fetch user's listings
+  const { data: listingsData, isLoading: listingsLoading } = useQuery({
+    queryKey: ['admin-user-listings', userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/marketplace/listings?userId=${userId}`);
+      if (!res.ok) throw new Error('Failed to fetch listings');
+      return res.json();
+    },
+  });
+
+  const listings = listingsData?.listings || [];
+
+  // Fetch user's verification status
+  const { data: verificationData, isLoading: verificationLoading } = useQuery({
+    queryKey: ['admin-user-verification', userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/verification`);
+      if (!res.ok) throw new Error('Failed to fetch verification');
+      return res.json();
+    },
+  });
+
+  const verification = verificationData?.verification || null;
 
   // Notify user mutation
   const notifyUserMutation = useMutation({
@@ -479,12 +505,79 @@ export default function AdminUserDetailPage({
                 <CardTitle>Marketplace Listings</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground">
-                    Listing management coming soon
-                  </p>
-                </div>
+                {listingsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2].map(i => (
+                      <Skeleton key={i} className="h-32 w-full" />
+                    ))}
+                  </div>
+                ) : listings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-semibold text-foreground mb-2">No listings yet</h3>
+                    <p className="text-sm text-muted-foreground">
+                      This user hasn't created any marketplace listings
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {listings.map((listing: any) => (
+                      <Card key={listing.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            {/* Listing Image */}
+                            <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                              {listing.animal?.profileImageUrl ? (
+                                <img
+                                  src={listing.animal.profileImageUrl}
+                                  alt={listing.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <PawPrint className="w-8 h-8 text-muted-foreground/30" />
+                                </div>
+                              )}
+                              <Badge
+                                variant={listing.status === 'active' ? 'default' : listing.status === 'pending' ? 'secondary' : 'outline'}
+                                className="absolute top-1 right-1 text-xs"
+                              >
+                                {listing.status}
+                              </Badge>
+                            </div>
+
+                            {/* Listing Info */}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-base mb-1 truncate">{listing.title}</h3>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {listing.category?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                              </p>
+                              {listing.price && (
+                                <p className="text-sm font-medium text-primary">
+                                  {listing.currency} {(listing.price / 100).toFixed(2)}
+                                </p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Created {formatDistanceToNow(new Date(listing.createdAt), { addSuffix: true })}
+                              </p>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => router.push(`/marketplace/${listing.id}`)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -493,17 +586,107 @@ export default function AdminUserDetailPage({
           <TabsContent value="verification">
             <Card className="shadow-card">
               <CardHeader>
-                <CardTitle>Verification Status</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Verification Status</CardTitle>
+                  <Link href="/admin/verifications">
+                    <Button variant="outline" size="sm">
+                      All Verifications
+                    </Button>
+                  </Link>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <BadgeCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground">
-                    <Link href="/admin/verifications" className="text-primary hover:underline">
-                      Go to Verifications Dashboard
-                    </Link>
-                  </p>
-                </div>
+                {verificationLoading ? (
+                  <Skeleton className="h-32 w-full" />
+                ) : !verification ? (
+                  <div className="text-center py-12">
+                    <BadgeCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-semibold text-foreground mb-2">No verification request</h3>
+                    <p className="text-sm text-muted-foreground">
+                      This user hasn't submitted a verification request yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Verification Status Card */}
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-lg mb-1">Verification Request</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Submitted {formatDistanceToNow(new Date(verification.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            verification.status === 'approved'
+                              ? 'default'
+                              : verification.status === 'pending'
+                              ? 'secondary'
+                              : 'destructive'
+                          }
+                        >
+                          {verification.status}
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Verification Type</p>
+                          <p className="font-medium">{verification.verificationType || 'Breeder'}</p>
+                        </div>
+                        {verification.businessName && (
+                          <div>
+                            <p className="text-muted-foreground">Business Name</p>
+                            <p className="font-medium">{verification.businessName}</p>
+                          </div>
+                        )}
+                        {verification.registrationNumber && (
+                          <div>
+                            <p className="text-muted-foreground">Registration Number</p>
+                            <p className="font-medium">{verification.registrationNumber}</p>
+                          </div>
+                        )}
+                        {verification.reviewedAt && (
+                          <div>
+                            <p className="text-muted-foreground">Reviewed</p>
+                            <p className="font-medium">
+                              {formatDistanceToNow(new Date(verification.reviewedAt), { addSuffix: true })}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {verification.reviewNotes && (
+                        <div className="mt-4 p-3 bg-muted rounded-lg">
+                          <p className="text-sm font-medium mb-1">Review Notes</p>
+                          <p className="text-sm text-muted-foreground">{verification.reviewNotes}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Documents */}
+                    {verification.documents && verification.documents.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2">Submitted Documents</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {verification.documents.map((doc: any, idx: number) => (
+                            <a
+                              key={idx}
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-3 border rounded-lg hover:bg-muted transition-colors flex items-center gap-2"
+                            >
+                              <BadgeCheck className="w-4 h-4 text-primary" />
+                              <span className="text-sm truncate">{doc.name || `Document ${idx + 1}`}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

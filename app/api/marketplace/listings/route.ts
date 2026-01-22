@@ -142,6 +142,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const publicOnly = searchParams.get('public') === 'true';
     const userOnly = searchParams.get('userOnly') === 'true';
+    const userId = searchParams.get('userId'); // For admin to fetch specific user's listings
     
     const session = await auth.api.getSession({ headers: request.headers });
     
@@ -227,12 +228,44 @@ export async function GET(request: NextRequest) {
         success: true,
         listings: listingsQuery,
       });
-    } else if (session) {
-      // Default: Get user's own listings when authenticated
-      const userId = session.user.id;
-      
+    } else if (userId) {
+      // Get listings for a specific user (for admin)
       listingsQuery = await db.query.listings.findMany({
         where: eq(listings.userId, userId),
+        with: {
+          animal: {
+            columns: {
+              id: true,
+              name: true,
+              profileImageUrl: true,
+              dateOfBirth: true,
+            },
+            with: {
+              breed: true,
+              photos: true,
+            },
+          },
+          user: {
+            columns: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: [desc(listings.createdAt)],
+      });
+      
+      return NextResponse.json({
+        success: true,
+        listings: listingsQuery,
+      });
+    } else if (session) {
+      // Default: Get user's own listings when authenticated
+      const currentUserId = session.user.id;
+      
+      listingsQuery = await db.query.listings.findMany({
+        where: eq(listings.userId, currentUserId),
         with: {
           animal: {
             columns: {
