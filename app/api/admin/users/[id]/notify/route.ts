@@ -220,9 +220,9 @@ The Animalytics Team
       resource: 'user',
       resourceId: userId,
       targetUserId: userId,
-      targetUserName: targetUser.name,
-      targetUserEmail: targetUser.email,
-      description: `Admin sent welcome email with credentials to ${targetUser.name}`,
+      targetUserName: targetUser.name || undefined,
+      targetUserEmail: targetUser.email || undefined,
+      description: `Admin sent welcome email with credentials to ${targetUser.name || 'user'}`,
       metadata: {
         userRole: targetUser.role,
         emailSent: true,

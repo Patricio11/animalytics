@@ -151,7 +151,7 @@ export async function POST(
         registeredName: data.registeredName || null,
         breedId: data.breedId,
         sex: data.sex,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+        dateOfBirth: data.dateOfBirth || null,
         microchipNumber: data.microchipNumber || null,
         registrationNumber: data.registrationNumber || null,
         color: data.color || null,
