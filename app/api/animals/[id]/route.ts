@@ -75,12 +75,15 @@ export async function GET(
     }
 
     const { id } = await params;
+    const userRole = (session.user as any).role;
+
+    // Admin users can view any animal, regular users can only view their own
+    const whereClause = userRole === 'admin'
+      ? eq(animals.id, id)
+      : and(eq(animals.id, id), eq(animals.userId, session.user.id));
 
     const animal = await db.query.animals.findFirst({
-      where: and(
-        eq(animals.id, id),
-        eq(animals.userId, session.user.id)
-      ),
+      where: whereClause,
       columns: {
         // Explicitly include all columns to ensure userId is returned
         id: true,
