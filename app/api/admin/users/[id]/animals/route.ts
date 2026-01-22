@@ -119,7 +119,7 @@ export async function POST(
     const validation = createAnimalSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.errors },
+        { error: 'Validation failed', details: validation.error.format() },
         { status: 400 }
       );
     }
@@ -148,15 +148,15 @@ export async function POST(
       .values({
         userId: userId,
         name: data.name,
-        registeredName: data.registeredName,
+        registeredName: data.registeredName || null,
         breedId: data.breedId,
         sex: data.sex,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-        microchipNumber: data.microchipNumber,
-        registrationNumber: data.registrationNumber,
-        color: data.color,
-        profileImageUrl: data.profileImageUrl,
-        bio: data.bio,
+        microchipNumber: data.microchipNumber || null,
+        registrationNumber: data.registrationNumber || null,
+        color: data.color || null,
+        profileImageUrl: data.profileImageUrl || null,
+        bio: data.bio || null,
         healthStatus: data.healthStatus || 'good',
         isBreedingActive: data.isBreedingActive ?? false,
         isActive: true,
@@ -174,8 +174,8 @@ export async function POST(
       resource: 'animal',
       resourceId: newAnimal.id,
       targetUserId: userId,
-      targetUserName: targetUser.name,
-      targetUserEmail: targetUser.email,
+      targetUserName: targetUser.name || undefined,
+      targetUserEmail: targetUser.email || undefined,
       description: `Admin created animal "${data.name}" for user ${targetUser.name}`,
       changes: {
         after: data,

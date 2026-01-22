@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { adminAuditLogs } from '@/lib/db/schema/admin-audit-logs';
+import { eq, and, desc } from 'drizzle-orm';
 
 interface AuditLogParams {
   adminId: string;
@@ -56,8 +57,8 @@ export async function getAuditLogsForResource(resource: string, resourceId: stri
   return await db
     .select()
     .from(adminAuditLogs)
-    .where((logs) => logs.resource === resource && logs.resourceId === resourceId)
-    .orderBy((logs) => logs.createdAt);
+    .where(and(eq(adminAuditLogs.resource, resource), eq(adminAuditLogs.resourceId, resourceId)))
+    .orderBy(desc(adminAuditLogs.createdAt));
 }
 
 /**
@@ -67,8 +68,8 @@ export async function getAuditLogsForAdmin(adminId: string, limit = 100) {
   return await db
     .select()
     .from(adminAuditLogs)
-    .where((logs) => logs.adminId === adminId)
-    .orderBy((logs) => logs.createdAt)
+    .where(eq(adminAuditLogs.adminId, adminId))
+    .orderBy(desc(adminAuditLogs.createdAt))
     .limit(limit);
 }
 
@@ -79,6 +80,6 @@ export async function getRecentAuditLogs(limit = 50) {
   return await db
     .select()
     .from(adminAuditLogs)
-    .orderBy((logs) => logs.createdAt)
+    .orderBy(desc(adminAuditLogs.createdAt))
     .limit(limit);
 }

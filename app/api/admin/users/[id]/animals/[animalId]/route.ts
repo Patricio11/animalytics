@@ -105,7 +105,7 @@ export async function PUT(
     const validation = updateAnimalSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.errors },
+        { error: 'Validation failed', details: validation.error.format() },
         { status: 400 }
       );
     }
@@ -240,9 +240,9 @@ export async function DELETE(
       resource: 'animal',
       resourceId: animalId,
       targetUserId: userId,
-      targetUserName: targetUser?.name,
-      targetUserEmail: targetUser?.email,
-      description: `Admin deleted animal "${existingAnimal.name}" for user ${targetUser?.name}`,
+      targetUserName: targetUser?.name || undefined,
+      targetUserEmail: targetUser?.email || undefined,
+      description: `Admin deleted animal "${existingAnimal.name}" for user ${targetUser?.name || 'Unknown'}`,
       changes: {
         before: existingAnimal,
       },
