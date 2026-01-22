@@ -26,6 +26,7 @@ import { useState } from "react";
 export function Header() {
   const { user, signOut, isLoading } = useAuth();
   const { role, isBreeder } = useRole();
+  const { data: verificationStatus } = useVerificationStatus(user?.id);
   const router = useRouter();
   const { toast } = useToast();
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -94,7 +95,7 @@ export function Header() {
                     {user?.name || 'User'}
                   </span>
                   {verificationStatus?.isVerified && (
-                    <VerifiedCheckmark isVerified={true} className="w-4 h-4" />
+                    <VerifiedCheckmark isVerified={verificationStatus.isVerified} className="w-4 h-4" />
                   )}
                 </div>
                 <Badge 
