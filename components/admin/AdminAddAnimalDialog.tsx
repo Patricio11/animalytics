@@ -212,6 +212,7 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
         microchipNumber: formData.microchipId || undefined,
         registrationNumber: formData.registrationNumber || undefined,
+        profileImageUrl: uploadedImageUrl || undefined,
         bio: formData.description || undefined,
       };
 
