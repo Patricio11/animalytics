@@ -77,6 +77,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -478,10 +479,7 @@ export default function AdminUsersPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setShowViewDialog(true);
-                                }}
+                                onClick={() => router.push(`/admin/users/${user.id}`)}
                               >
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Details
