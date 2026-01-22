@@ -3,6 +3,7 @@ export * from './permissions';
 export * from './wallet';
 export * from './kyc';
 export * from './verification-requests';
+export * from './admin-audit-logs';
 export * from './profiles';
 export * from './pet-owner-profiles';
 export * from './animals';
