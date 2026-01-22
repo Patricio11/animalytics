@@ -462,7 +462,7 @@ export default function AdminUserDetailPage({
                                 variant="outline"
                                 size="sm"
                                 className="flex-1"
-                                onClick={() => router.push(`/animals/${animal.id}`)}
+                                onClick={() => router.push(`/admin/animals/${animal.id}?userId=${userId}`)}
                               >
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Profile
