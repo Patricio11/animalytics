@@ -30,6 +30,7 @@ export const STORAGE_PATHS = {
   USER_AVATARS: 'users/avatars',
   MARKETPLACE_IMAGES: 'marketplace/images',
   CLINIC_DOCUMENTS: 'clinics/documents',
+  VERIFICATION_DOCUMENTS: 'verification/documents',
 } as const;
 
 export type StoragePath = typeof STORAGE_PATHS[keyof typeof STORAGE_PATHS];

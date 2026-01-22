@@ -3,12 +3,7 @@ import { db } from '@/lib/db';
 import { verificationRequests, verificationDocuments, verificationAuditLog } from '@/lib/db/schema/verification-requests';
 import { auth } from '@/lib/auth/config';
 import { eq, and } from 'drizzle-orm';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase, STORAGE_BUCKET, STORAGE_PATHS } from '@/lib/supabase/client';
 
 /**
  * POST /api/verification/upload
@@ -74,16 +69,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
+    // Generate unique filename with folder structure
     const timestamp = Date.now();
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${verificationId}/${documentType}_${timestamp}.${fileExt}`;
+    const fileName = `${documentType}_${timestamp}.${fileExt}`;
+    const filePath = `${STORAGE_PATHS.VERIFICATION_DOCUMENTS}/${userId}/${verificationId}/${fileName}`;
 
     // Upload to Supabase Storage
     const fileBuffer = await file.arrayBuffer();
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('verification-documents')
-      .upload(fileName, fileBuffer, {
+      .from(STORAGE_BUCKET)
+      .upload(filePath, fileBuffer, {
         contentType: file.type,
         upsert: false,
       });
@@ -98,8 +94,8 @@ export async function POST(request: NextRequest) {
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('verification-documents')
-      .getPublicUrl(fileName);
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(filePath);
 
     // Save document record
     const [document] = await db.insert(verificationDocuments).values({
