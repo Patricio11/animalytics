@@ -25,6 +25,9 @@ interface AdminAddAnimalDialogProps {
   onOpenChange: (open: boolean) => void;
   userId: string;
   userName: string;
+  animalId?: string;
+  initialData?: Partial<AnimalFormData> & { breedId?: string };
+  mode?: 'create' | 'edit';
 }
 
 interface AnimalFormData {
@@ -49,7 +52,7 @@ interface AnimalFormData {
   description: string;
 }
 
-export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName }: AdminAddAnimalDialogProps) {
+export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, animalId, initialData, mode = 'create' }: AdminAddAnimalDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
@@ -75,6 +78,43 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName }: A
 
   const totalSteps = 4;
 
+  // Populate form data when editing
+  useEffect(() => {
+    if (open && mode === 'edit' && initialData) {
+      setFormData({
+        profilePhotoUrl: initialData.profilePhotoUrl || null,
+        name: initialData.name || '',
+        registeredName: initialData.registeredName || '',
+        type: initialData.type || 'bitch',
+        breed: initialData.breed || '',
+        dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined,
+        color: initialData.color || '',
+        markings: initialData.markings || '',
+        weight: initialData.weight || '',
+        microchipId: initialData.microchipId || '',
+        registrationNumber: initialData.registrationNumber || '',
+        description: initialData.description || '',
+      });
+    } else if (open && mode === 'create') {
+      // Reset form for create mode
+      setFormData({
+        profilePhotoUrl: null,
+        name: '',
+        registeredName: '',
+        type: 'bitch',
+        breed: '',
+        dateOfBirth: undefined,
+        color: '',
+        markings: '',
+        weight: '',
+        microchipId: '',
+        registrationNumber: '',
+        description: '',
+      });
+      setCurrentStep(1);
+    }
+  }, [open, mode, initialData]);
+
   const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -91,17 +131,22 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName }: A
     );
   }, [allBreeds, breedSearch]);
 
-  // Create animal mutation using admin API
-  const createAnimalMutation = useMutation({
+  // Create/Update animal mutation using admin API
+  const saveAnimalMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(`/api/admin/users/${userId}/animals`, {
-        method: 'POST',
+      const url = mode === 'edit' && animalId
+        ? `/api/admin/users/${userId}/animals/${animalId}`
+        : `/api/admin/users/${userId}/animals`;
+      const method = mode === 'edit' ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create animal');
+        throw new Error(error.error || `Failed to ${mode} animal`);
       }
       return res.json();
     },
@@ -170,13 +215,14 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName }: A
         bio: formData.description || undefined,
       };
 
-      // Create animal via admin API
-      const createdAnimal = await createAnimalMutation.mutateAsync(animalData);
+      // Create or update animal via admin API
+      const savedAnimal = await saveAnimalMutation.mutateAsync(animalData);
 
-      // If profile photo was uploaded, save it to animal_photos table
-      if (uploadedImageUrl && createdAnimal?.animal?.id) {
+      // If profile photo was uploaded, save it to animal_photos table (only for create mode)
+      const finalAnimalId = mode === 'edit' ? animalId : savedAnimal?.animal?.id;
+      if (uploadedImageUrl && finalAnimalId && mode === 'create') {
         try {
-          await fetch(`/api/animals/${createdAnimal.animal.id}/photos`, {
+          await fetch(`/api/animals/${finalAnimalId}/photos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -194,8 +240,10 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName }: A
       await queryClient.invalidateQueries({ queryKey: ['admin-user-animals', userId] });
 
       toast({
-        title: "Animal Added Successfully!",
-        description: `${formData.name} has been added to ${userName}'s animals.`,
+        title: mode === 'edit' ? "Animal Updated Successfully!" : "Animal Added Successfully!",
+        description: mode === 'edit' 
+          ? `${formData.name} has been updated.`
+          : `${formData.name} has been added to ${userName}'s animals.`,
       });
 
       // Reset and close
@@ -252,7 +300,9 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName }: A
               <PawPrint className="w-5 h-5 text-white" />
             </div>
             <div>
-              <DialogTitle className="text-2xl">Add Animal for {userName}</DialogTitle>
+              <DialogTitle className="text-2xl">
+                {mode === 'edit' ? `Edit ${initialData?.name || 'Animal'}` : `Add Animal for ${userName}`}
+              </DialogTitle>
               <DialogDescription>
                 Step {currentStep} of {totalSteps} - Fill in the animal details
               </DialogDescription>
@@ -623,7 +673,7 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName }: A
               ) : (
                 <>
                   <Check className="w-4 h-4 mr-2" />
-                  Add Animal
+                  {mode === 'edit' ? 'Update Animal' : 'Add Animal'}
                 </>
               )}
             </Button>

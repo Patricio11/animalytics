@@ -37,6 +37,8 @@ const updateAnimalSchema = z.object({
   microchipNumber: z.string().optional(),
   registrationNumber: z.string().optional(),
   color: z.string().optional(),
+  markings: z.string().optional(),
+  weight: z.number().optional(),
   profileImageUrl: z.string().optional(),
   bio: z.string().optional(),
   healthStatus: z.enum(['excellent', 'good', 'fair', 'poor']).optional(),

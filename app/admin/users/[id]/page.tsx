@@ -80,6 +80,12 @@ interface Animal {
   healthStatus?: string;
   isBreedingActive?: boolean;
   isActive?: boolean;
+  color?: string;
+  markings?: string;
+  weight?: number;
+  microchipNumber?: string;
+  registrationNumber?: string;
+  bio?: string;
 }
 
 export default function AdminUserDetailPage({
@@ -93,6 +99,7 @@ export default function AdminUserDetailPage({
   const queryClient = useQueryClient();
 
   const [showCreateAnimalDialog, setShowCreateAnimalDialog] = useState(false);
+  const [showEditAnimalDialog, setShowEditAnimalDialog] = useState(false);
   const [showDeleteAnimalDialog, setShowDeleteAnimalDialog] = useState(false);
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
 
@@ -379,38 +386,74 @@ export default function AdminUserDetailPage({
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {animals.map((animal: Animal) => (
-                      <Card key={animal.id} className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-4">
-                            <Avatar className="h-16 w-16">
-                              {animal.profileImageUrl && (
-                                <AvatarImage src={animal.profileImageUrl} />
-                              )}
-                              <AvatarFallback>
-                                <PawPrint className="w-8 h-8" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-lg">{animal.name}</h3>
-                                <Badge variant={animal.sex === 'male' ? 'default' : 'secondary'}>
-                                  {animal.sex}
-                                </Badge>
-                                {animal.isBreedingActive && (
-                                  <Badge variant="outline">Breeding Active</Badge>
-                                )}
+                      <Card key={animal.id} className="hover:shadow-lg transition-all group overflow-hidden">
+                        <CardContent className="p-0">
+                          {/* Profile Image */}
+                          <div className="relative aspect-square bg-muted overflow-hidden">
+                            {animal.profileImageUrl ? (
+                              <img
+                                src={animal.profileImageUrl}
+                                alt={animal.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-subtle">
+                                <PawPrint className="w-20 h-20 text-muted-foreground/30" />
                               </div>
+                            )}
+                            {/* Badges Overlay */}
+                            <div className="absolute top-2 right-2 flex flex-col gap-1">
+                              <Badge variant={animal.sex === 'male' ? 'default' : 'secondary'} className="shadow-md">
+                                {animal.sex === 'male' ? '♂ Male' : '♀ Female'}
+                              </Badge>
+                              {animal.isBreedingActive && (
+                                <Badge variant="outline" className="bg-white/90 shadow-md">
+                                  Breeding Active
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Animal Info */}
+                          <div className="p-4 space-y-3">
+                            <div>
+                              <h3 className="font-semibold text-lg mb-1">{animal.name}</h3>
                               <p className="text-sm text-muted-foreground">
                                 {animal.breed?.name || 'Unknown breed'}
-                                {animal.registeredName && ` • ${animal.registeredName}`}
                               </p>
+                              {animal.registeredName && (
+                                <p className="text-xs text-muted-foreground mt-1 truncate">
+                                  {animal.registeredName}
+                                </p>
+                              )}
                             </div>
+
+                            {/* Action Buttons */}
                             <div className="flex gap-2">
                               <Button
                                 variant="outline"
-                                size="icon"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => router.push(`/animals/${animal.id}`)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Profile
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedAnimal(animal);
+                                  setShowEditAnimalDialog(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
                                   setSelectedAnimal(animal);
                                   setShowDeleteAnimalDialog(true);
@@ -472,7 +515,35 @@ export default function AdminUserDetailPage({
           onOpenChange={setShowCreateAnimalDialog}
           userId={userId}
           userName={user?.name || 'User'}
+          mode="create"
         />
+
+        {/* Admin Animal Edit Wizard */}
+        {selectedAnimal && (
+          <AdminAddAnimalDialog
+            open={showEditAnimalDialog}
+            onOpenChange={setShowEditAnimalDialog}
+            userId={userId}
+            userName={user?.name || 'User'}
+            animalId={selectedAnimal.id}
+            mode="edit"
+            initialData={{
+              name: selectedAnimal.name,
+              registeredName: selectedAnimal.registeredName,
+              type: selectedAnimal.sex === 'male' ? 'dog' : 'bitch',
+              breed: selectedAnimal.breed?.name,
+              breedId: selectedAnimal.breed?.id,
+              dateOfBirth: selectedAnimal.dateOfBirth ? new Date(selectedAnimal.dateOfBirth) : undefined,
+              profilePhotoUrl: selectedAnimal.profileImageUrl,
+              color: selectedAnimal.color || '',
+              markings: selectedAnimal.markings || '',
+              weight: selectedAnimal.weight ? selectedAnimal.weight.toString() : '',
+              microchipId: selectedAnimal.microchipNumber || '',
+              registrationNumber: selectedAnimal.registrationNumber || '',
+              description: selectedAnimal.bio || '',
+            }}
+          />
+        )}
 
         {/* Delete Animal Dialog */}
         <Dialog open={showDeleteAnimalDialog} onOpenChange={setShowDeleteAnimalDialog}>
