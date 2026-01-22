@@ -143,7 +143,11 @@ export async function PUT(
     };
 
     if (data.dateOfBirth) {
-      updateData.dateOfBirth = new Date(data.dateOfBirth);
+      updateData.dateOfBirth = data.dateOfBirth; // Keep as string for date field
+    }
+
+    if (data.weight !== undefined) {
+      updateData.weight = data.weight?.toString(); // Convert to string for decimal field
     }
 
     const [updatedAnimal] = await db
