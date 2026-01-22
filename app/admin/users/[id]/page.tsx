@@ -567,7 +567,7 @@ export default function AdminUserDetailPage({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push(`/marketplace/${listing.id}`)}
+                                onClick={() => router.push(`/admin/animals/${listing.animal.id}?userId=${userId}`)}
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
