@@ -48,6 +48,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { AdminAddAnimalDialog } from "@/components/admin/AdminAddAnimalDialog";
 
 interface UserDetail {
   id: string;
@@ -92,7 +93,6 @@ export default function AdminUserDetailPage({
   const queryClient = useQueryClient();
 
   const [showCreateAnimalDialog, setShowCreateAnimalDialog] = useState(false);
-  const [showEditAnimalDialog, setShowEditAnimalDialog] = useState(false);
   const [showDeleteAnimalDialog, setShowDeleteAnimalDialog] = useState(false);
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
 
@@ -130,74 +130,23 @@ export default function AdminUserDetailPage({
   const animals = animalsData?.animals || [];
   const breeds = breedsData?.breeds || [];
 
-  // Animal form state
-  const [animalForm, setAnimalForm] = useState({
-    name: '',
-    registeredName: '',
-    breedId: '',
-    sex: 'male' as 'male' | 'female',
-    dateOfBirth: '',
-    microchipNumber: '',
-    registrationNumber: '',
-    color: '',
-    bio: '',
-    healthStatus: 'good' as 'excellent' | 'good' | 'fair' | 'poor',
-    isBreedingActive: false,
-  });
-
-  // Create animal mutation
-  const createAnimalMutation = useMutation({
-    mutationFn: async (data: typeof animalForm) => {
-      const res = await fetch(`/api/admin/users/${userId}/animals`, {
+  // Notify user mutation
+  const notifyUserMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/notify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create animal');
+        throw new Error(error.error || 'Failed to notify user');
       }
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-user-animals', userId] });
-      setShowCreateAnimalDialog(false);
-      resetAnimalForm();
+      queryClient.invalidateQueries({ queryKey: ['admin-user', userId] });
       toast({
         title: "Success",
-        description: "Animal created successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    },
-  });
-
-  // Update animal mutation
-  const updateAnimalMutation = useMutation({
-    mutationFn: async ({ animalId, data }: { animalId: string; data: Partial<typeof animalForm> }) => {
-      const res = await fetch(`/api/admin/users/${userId}/animals/${animalId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to update animal');
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-user-animals', userId] });
-      setShowEditAnimalDialog(false);
-      setSelectedAnimal(null);
-      toast({
-        title: "Success",
-        description: "Animal updated successfully",
+        description: "User has been notified via email with their login credentials",
       });
     },
     onError: (error: Error) => {
@@ -239,83 +188,9 @@ export default function AdminUserDetailPage({
     },
   });
 
-  // Notify user mutation
-  const notifyUserMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/admin/users/${userId}/notify`, {
-        method: 'POST',
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to send notification');
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-user', userId] });
-      toast({
-        title: "Success",
-        description: "Welcome email sent successfully with login credentials",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    },
-  });
-
-  const resetAnimalForm = () => {
-    setAnimalForm({
-      name: '',
-      registeredName: '',
-      breedId: '',
-      sex: 'male',
-      dateOfBirth: '',
-      microchipNumber: '',
-      registrationNumber: '',
-      color: '',
-      bio: '',
-      healthStatus: 'good',
-      isBreedingActive: false,
-    });
-  };
-
-  const handleCreateAnimal = () => {
-    createAnimalMutation.mutate(animalForm);
-  };
-
-  const handleEditAnimal = () => {
-    if (!selectedAnimal) return;
-    updateAnimalMutation.mutate({
-      animalId: selectedAnimal.id,
-      data: animalForm,
-    });
-  };
-
   const handleDeleteAnimal = () => {
     if (!selectedAnimal) return;
     deleteAnimalMutation.mutate(selectedAnimal.id);
-  };
-
-  const openEditDialog = (animal: Animal) => {
-    setSelectedAnimal(animal);
-    setAnimalForm({
-      name: animal.name,
-      registeredName: animal.registeredName || '',
-      breedId: animal.breed?.id || '',
-      sex: animal.sex,
-      dateOfBirth: animal.dateOfBirth || '',
-      microchipNumber: '',
-      registrationNumber: '',
-      color: '',
-      bio: '',
-      healthStatus: (animal.healthStatus as any) || 'good',
-      isBreedingActive: animal.isBreedingActive || false,
-    });
-    setShowEditAnimalDialog(true);
   };
 
   if (userLoading) {
@@ -473,14 +348,11 @@ export default function AdminUserDetailPage({
                 <div className="flex items-center justify-between">
                   <CardTitle>Animals</CardTitle>
                   <Button
-                    onClick={() => {
-                      resetAnimalForm();
-                      setShowCreateAnimalDialog(true);
-                    }}
+                    onClick={() => setShowCreateAnimalDialog(true)}
                     className="bg-gradient-brand"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Create Animal
+                    Add Animal
                   </Button>
                 </div>
               </CardHeader>
@@ -499,14 +371,11 @@ export default function AdminUserDetailPage({
                       Create an animal for this user to get started
                     </p>
                     <Button
-                      onClick={() => {
-                        resetAnimalForm();
-                        setShowCreateAnimalDialog(true);
-                      }}
+                      onClick={() => setShowCreateAnimalDialog(true)}
                       variant="outline"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Create First Animal
+                      Add First Animal
                     </Button>
                   </div>
                 ) : (
@@ -539,13 +408,6 @@ export default function AdminUserDetailPage({
                               </p>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => openEditDialog(animal)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
                               <Button
                                 variant="outline"
                                 size="icon"
@@ -604,274 +466,13 @@ export default function AdminUserDetailPage({
           </TabsContent>
         </Tabs>
 
-        {/* Create Animal Dialog */}
-        <Dialog open={showCreateAnimalDialog} onOpenChange={setShowCreateAnimalDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create Animal for {user.name}</DialogTitle>
-              <DialogDescription>
-                Add a new animal to this user's account
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    value={animalForm.name}
-                    onChange={(e) => setAnimalForm({ ...animalForm, name: e.target.value })}
-                    placeholder="Max"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="registeredName">Registered Name</Label>
-                  <Input
-                    id="registeredName"
-                    value={animalForm.registeredName}
-                    onChange={(e) => setAnimalForm({ ...animalForm, registeredName: e.target.value })}
-                    placeholder="Champion Max of..."
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="breedId">Breed *</Label>
-                  <Select
-                    value={animalForm.breedId}
-                    onValueChange={(value) => setAnimalForm({ ...animalForm, breedId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select breed" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {breeds.map((breed: any) => (
-                        <SelectItem key={breed.id} value={breed.id}>
-                          {breed.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="sex">Sex *</Label>
-                  <Select
-                    value={animalForm.sex}
-                    onValueChange={(value: 'male' | 'female') => setAnimalForm({ ...animalForm, sex: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={animalForm.dateOfBirth}
-                    onChange={(e) => setAnimalForm({ ...animalForm, dateOfBirth: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="healthStatus">Health Status</Label>
-                  <Select
-                    value={animalForm.healthStatus}
-                    onValueChange={(value: any) => setAnimalForm({ ...animalForm, healthStatus: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="excellent">Excellent</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
-                      <SelectItem value="poor">Poor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={animalForm.bio}
-                  onChange={(e) => setAnimalForm({ ...animalForm, bio: e.target.value })}
-                  placeholder="Tell us about this animal..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isBreedingActive"
-                  checked={animalForm.isBreedingActive}
-                  onChange={(e) => setAnimalForm({ ...animalForm, isBreedingActive: e.target.checked })}
-                  className="rounded"
-                />
-                <Label htmlFor="isBreedingActive" className="cursor-pointer">
-                  Breeding Active
-                </Label>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowCreateAnimalDialog(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateAnimal}
-                disabled={!animalForm.name || !animalForm.breedId || createAnimalMutation.isPending}
-              >
-                {createAnimalMutation.isPending ? 'Creating...' : 'Create Animal'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Animal Dialog */}
-        <Dialog open={showEditAnimalDialog} onOpenChange={setShowEditAnimalDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Animal</DialogTitle>
-              <DialogDescription>
-                Update animal information
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-name">Name *</Label>
-                  <Input
-                    id="edit-name"
-                    value={animalForm.name}
-                    onChange={(e) => setAnimalForm({ ...animalForm, name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-registeredName">Registered Name</Label>
-                  <Input
-                    id="edit-registeredName"
-                    value={animalForm.registeredName}
-                    onChange={(e) => setAnimalForm({ ...animalForm, registeredName: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-breedId">Breed *</Label>
-                  <Select
-                    value={animalForm.breedId}
-                    onValueChange={(value) => setAnimalForm({ ...animalForm, breedId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select breed" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {breeds.map((breed: any) => (
-                        <SelectItem key={breed.id} value={breed.id}>
-                          {breed.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="edit-sex">Sex *</Label>
-                  <Select
-                    value={animalForm.sex}
-                    onValueChange={(value: 'male' | 'female') => setAnimalForm({ ...animalForm, sex: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="edit-dateOfBirth"
-                    type="date"
-                    value={animalForm.dateOfBirth}
-                    onChange={(e) => setAnimalForm({ ...animalForm, dateOfBirth: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-healthStatus">Health Status</Label>
-                  <Select
-                    value={animalForm.healthStatus}
-                    onValueChange={(value: any) => setAnimalForm({ ...animalForm, healthStatus: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="excellent">Excellent</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
-                      <SelectItem value="poor">Poor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="edit-bio">Bio</Label>
-                <Textarea
-                  id="edit-bio"
-                  value={animalForm.bio}
-                  onChange={(e) => setAnimalForm({ ...animalForm, bio: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="edit-isBreedingActive"
-                  checked={animalForm.isBreedingActive}
-                  onChange={(e) => setAnimalForm({ ...animalForm, isBreedingActive: e.target.checked })}
-                  className="rounded"
-                />
-                <Label htmlFor="edit-isBreedingActive" className="cursor-pointer">
-                  Breeding Active
-                </Label>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditAnimalDialog(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleEditAnimal}
-                disabled={!animalForm.name || !animalForm.breedId || updateAnimalMutation.isPending}
-              >
-                {updateAnimalMutation.isPending ? 'Updating...' : 'Update Animal'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Admin Animal Creation Wizard */}
+        <AdminAddAnimalDialog
+          open={showCreateAnimalDialog}
+          onOpenChange={setShowCreateAnimalDialog}
+          userId={userId}
+          userName={user?.name || 'User'}
+        />
 
         {/* Delete Animal Dialog */}
         <Dialog open={showDeleteAnimalDialog} onOpenChange={setShowDeleteAnimalDialog}>
