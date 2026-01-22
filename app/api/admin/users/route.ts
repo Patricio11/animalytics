@@ -198,6 +198,9 @@ export async function POST(request: NextRequest) {
         specializations: specializations || null,
         isVerified,
         emailVerified: false,
+        createdByAdmin: true,
+        temporaryPassword: hashedPassword, // Store hashed password
+        credentialsNotifiedAt: null, // Not notified yet
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -210,10 +213,12 @@ export async function POST(request: NextRequest) {
         licenseNumber: users.licenseNumber,
         isVerified: users.isVerified,
         createdAt: users.createdAt,
+        createdByAdmin: users.createdByAdmin,
+        credentialsNotifiedAt: users.credentialsNotifiedAt,
       });
 
-    // TODO: Send welcome email with temporary password
-    // For now, return the password in response (in production, send via email)
+    // Store temporary password for admin to send later
+    // Admin will click "Notify User" button when ready
 
     return NextResponse.json({
       success: true,
@@ -221,7 +226,7 @@ export async function POST(request: NextRequest) {
       credentials: {
         email: newUser.email,
         temporaryPassword,
-        message: 'Please send these credentials to the user securely. They should change their password on first login.',
+        message: 'User created successfully. Click "Notify User" to send welcome email with credentials.',
       },
     }, { status: 201 });
   } catch (error) {

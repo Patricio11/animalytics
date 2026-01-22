@@ -42,6 +42,7 @@ import {
   PawPrint,
   ShoppingBag,
   BadgeCheck,
+  Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -58,6 +59,8 @@ interface UserDetail {
   licenseNumber: string | null;
   isVerified: boolean;
   emailVerified: boolean;
+  createdByAdmin?: boolean;
+  credentialsNotifiedAt?: string | null;
   lastLogin: string | null;
   createdAt: string;
 }
@@ -236,6 +239,34 @@ export default function AdminUserDetailPage({
     },
   });
 
+  // Notify user mutation
+  const notifyUserMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/notify`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to send notification');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-user', userId] });
+      toast({
+        title: "Success",
+        description: "Welcome email sent successfully with login credentials",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
+
   const resetAnimalForm = () => {
     setAnimalForm({
       name: '',
@@ -357,6 +388,18 @@ export default function AdminUserDetailPage({
                       Verified
                     </Badge>
                   )}
+                  {user.createdByAdmin && !user.credentialsNotifiedAt && (
+                    <Badge variant="secondary" className="gap-1">
+                      <Mail className="w-3 h-3" />
+                      Not Notified
+                    </Badge>
+                  )}
+                  {user.credentialsNotifiedAt && (
+                    <Badge variant="outline" className="gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Notified
+                    </Badge>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -381,7 +424,28 @@ export default function AdminUserDetailPage({
                   )}
                 </div>
               </div>
+              {/* Notify User Button */}
+              {user.createdByAdmin && !user.credentialsNotifiedAt && (
+                <div className="ml-auto">
+                  <Button
+                    onClick={() => notifyUserMutation.mutate()}
+                    disabled={notifyUserMutation.isPending}
+                    className="bg-gradient-brand"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {notifyUserMutation.isPending ? 'Sending...' : 'Notify User'}
+                  </Button>
+                </div>
+              )}
             </div>
+            {user.createdByAdmin && !user.credentialsNotifiedAt && (
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>⚠️ User Not Notified:</strong> This user was created by admin but hasn't received their login credentials yet. 
+                  Add animals and complete their profile, then click "Notify User" to send a welcome email with credentials.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

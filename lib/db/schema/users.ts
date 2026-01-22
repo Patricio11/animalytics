@@ -63,6 +63,12 @@ export const users = pgTable('users', {
   permissions: jsonb('permissions').$type<string[]>().default([]),
 
   isVerified: boolean('is_verified').default(false),
+  
+  // Admin-created user tracking
+  createdByAdmin: boolean('created_by_admin').default(false),
+  temporaryPassword: text('temporary_password'), // Encrypted, only for admin-created users
+  credentialsNotifiedAt: timestamp('credentials_notified_at'), // When welcome email was sent
+  
   lastLogin: timestamp('last_login'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
