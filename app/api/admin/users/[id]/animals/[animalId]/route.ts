@@ -159,9 +159,9 @@ export async function PUT(
       resource: 'animal',
       resourceId: animalId,
       targetUserId: userId,
-      targetUserName: targetUser?.name,
-      targetUserEmail: targetUser?.email,
-      description: `Admin updated animal "${existingAnimal.name}" for user ${targetUser?.name}`,
+      targetUserName: targetUser?.name || undefined,
+      targetUserEmail: targetUser?.email || undefined,
+      description: `Admin updated animal "${existingAnimal.name}" for user ${targetUser?.name || 'Unknown'}`,
       changes: {
         before: existingAnimal,
         after: data,
