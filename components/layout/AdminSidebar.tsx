@@ -9,6 +9,7 @@ import {
   Settings,
   ChevronDown,
   ShieldCheck,
+  BadgeCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +34,12 @@ const adminNavItems = [
     title: "Users",
     url: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Verifications",
+    url: "/admin/verifications",
+    icon: BadgeCheck,
+    description: "Manage verification requests",
   },
   {
     title: "Breeds",

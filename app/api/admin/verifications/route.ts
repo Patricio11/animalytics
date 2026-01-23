@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      requests: requests.map(r => ({
+      verifications: requests.map(r => ({
         ...r.verification,
         user: r.user,
       })),
