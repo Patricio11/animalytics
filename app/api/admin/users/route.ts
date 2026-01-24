@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
+import { breederProfiles } from '@/lib/db/schema/profiles';
+import { breederBreedPreferences } from '@/lib/db/schema/user-breed-preferences';
 import { eq, sql, ilike, or, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
@@ -153,6 +155,7 @@ export async function POST(request: NextRequest) {
       certifications,
       specializations,
       isVerified = false,
+      breedIds,
     } = body;
 
     // Validate required fields
@@ -219,6 +222,43 @@ export async function POST(request: NextRequest) {
 
     // Store temporary password for admin to send later
     // Admin will click "Notify User" button when ready
+
+    // Save breed preferences if user is a breeder and selected breeds
+    if (role === 'breeder' && breedIds && Array.isArray(breedIds) && breedIds.length > 0) {
+      try {
+        console.log('🐕 Saving breed preferences for admin-created breeder:', breedIds);
+
+        // Create breeder profile
+        const displayName = name;
+        const slug = `${displayName.toLowerCase().replace(/\s+/g, '-')}-${userId.substring(0, 8)}`;
+
+        const [breederProfile] = await db
+          .insert(breederProfiles)
+          .values({
+            userId: newUser.id,
+            displayName,
+            slug,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+
+        console.log('✅ Breeder profile created:', breederProfile.id);
+
+        // Insert breed preferences
+        const preferences = breedIds.map((breedId: string) => ({
+          breederProfileId: breederProfile.id,
+          breedId: breedId,
+        }));
+
+        await db.insert(breederBreedPreferences).values(preferences);
+
+        console.log('✅ Breed preferences saved');
+      } catch (error) {
+        console.error('❌ Error saving breed preferences:', error);
+        // Don't fail user creation if breed preferences fail
+      }
+    }
 
     return NextResponse.json({
       success: true,

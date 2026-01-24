@@ -56,8 +56,11 @@ import {
   XCircle,
   Copy,
   CheckCheck,
+  Heart,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { BreedMultiSelect } from "@/components/ui/breed-multi-select";
+import { useBreeds } from "@/lib/api/queries/breeds";
 
 interface User {
   id: string;
@@ -98,6 +101,7 @@ export default function AdminUsersPage() {
     password: string;
   } | null>(null);
   const [copiedPassword, setCopiedPassword] = useState(false);
+  const [selectedBreedIds, setSelectedBreedIds] = useState<string[]>([]);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -108,6 +112,9 @@ export default function AdminUsersPage() {
     licenseNumber: "",
     isVerified: false,
   });
+
+  // Fetch breeds for breed selector
+  const { data: allBreeds, isLoading: breedsLoading } = useBreeds();
 
   // Fetch users
   const fetchUsers = async () => {
@@ -168,7 +175,10 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          breedIds: formData.role === 'breeder' ? selectedBreedIds : undefined,
+        }),
       });
 
       if (res.ok) {
@@ -689,6 +699,33 @@ export default function AdminUsersPage() {
                     placeholder="ABC123"
                   />
                 </div>
+
+                {/* Breed Preferences - Only show for breeders */}
+                {formData.role === "breeder" && (
+                  <div className="space-y-2 p-4 bg-muted/30 rounded-lg border border-primary/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Heart className="h-4 w-4 text-primary" />
+                      <Label>Breed Preferences (Optional)</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Select the breeds this breeder works with
+                    </p>
+                    <BreedMultiSelect
+                      breeds={
+                        allBreeds?.map((breed) => ({
+                          id: breed.id,
+                          name: breed.name,
+                          sizeCategory: breed.sizeCategory,
+                        })) || []
+                      }
+                      selectedBreedIds={selectedBreedIds}
+                      onSelectionChange={setSelectedBreedIds}
+                      placeholder="Search and select breeds..."
+                      emptyText="No breeds found."
+                      disabled={breedsLoading}
+                    />
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2">
                   <input
