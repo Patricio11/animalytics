@@ -134,9 +134,10 @@ export async function POST(request: NextRequest) {
               userId: user.id,
               displayName: displayName,
               slug: slug,
+              isPublic: true, // Explicitly set to true to ensure profile is public
             })
             .returning();
-          console.log('✅ Breeder profile created');
+          console.log('✅ Breeder profile created with public visibility');
         }
 
         // Delete existing preferences (in case of re-signup)

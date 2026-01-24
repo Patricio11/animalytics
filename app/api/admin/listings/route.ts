@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { listings } from '@/lib/db/schema/marketplace';
 import { users } from '@/lib/db/schema/users';
+import { breederProfiles } from '@/lib/db/schema/profiles';
 import { eq, sql, ilike, or, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
@@ -101,9 +102,12 @@ export async function GET(request: NextRequest) {
         publishedAt: listings.publishedAt,
         userName: users.name,
         userEmail: users.email,
+        breederProfileSlug: breederProfiles.slug,
+        breederProfileDisplayName: breederProfiles.displayName,
       })
       .from(listings)
       .leftJoin(users, eq(listings.userId, users.id))
+      .leftJoin(breederProfiles, eq(users.id, breederProfiles.userId))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(listings.createdAt))
       .limit(limit)

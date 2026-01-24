@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { breederProfiles } from '@/lib/db/schema/profiles';
 import { eq } from 'drizzle-orm';
+import { auth } from '@/lib/auth/config';
+import { headers } from 'next/headers';
 
 // ============================================================================
 // GET /api/breeders/[slug]
 // ============================================================================
-// Fetch a single public breeder profile by slug
+// Fetch a single breeder profile by slug
+// Public profiles are accessible to everyone
+// Private profiles are only accessible to admins
 
 export async function GET(
   request: NextRequest,
@@ -15,12 +19,25 @@ export async function GET(
   try {
     const { slug } = await params;
 
+    // Check if user is admin
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    const isAdmin = session?.user?.role === 'admin';
+
     // Fetch breeder profile by slug
     const [profile] = await db
       .select()
       .from(breederProfiles)
       .where(eq(breederProfiles.slug, slug))
       .limit(1);
+
+    console.log('Breeder profile lookup:', { 
+      slug, 
+      found: !!profile, 
+      isPublic: profile?.isPublic,
+      isAdmin 
+    });
 
     if (!profile) {
       return NextResponse.json(
@@ -29,8 +46,9 @@ export async function GET(
       );
     }
 
-    // Check if profile is public
-    if (!profile.isPublic) {
+    // Check if profile is accessible
+    // Admins can view any profile, others can only view public profiles
+    if (!profile.isPublic && !isAdmin) {
       return NextResponse.json(
         { error: 'This profile is not public' },
         { status: 403 }

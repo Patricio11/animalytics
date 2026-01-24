@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       .from(users)
       .where(conditions.length > 0 ? and(...conditions) : undefined);
 
-    // Get users
+    // Get users with breeder profile info
     const userList = await db
       .select({
         id: users.id,
@@ -105,8 +105,12 @@ export async function GET(request: NextRequest) {
         lastLogin: users.lastLogin,
         createdAt: users.createdAt,
         subscription: users.subscription,
+        breederProfileId: breederProfiles.id,
+        breederProfileSlug: breederProfiles.slug,
+        breederProfileIsPublic: breederProfiles.isPublic,
       })
       .from(users)
+      .leftJoin(breederProfiles, eq(users.id, breederProfiles.userId))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(users.createdAt))
       .limit(limit)

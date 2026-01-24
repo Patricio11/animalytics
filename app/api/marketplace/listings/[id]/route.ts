@@ -42,6 +42,8 @@ export async function GET(
                 slug: true,
                 displayName: true,
                 location: true,
+                kycVerified: true,
+                isPublic: true,
               },
             },
           },

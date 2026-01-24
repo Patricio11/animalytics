@@ -57,6 +57,8 @@ import {
   Copy,
   CheckCheck,
   Heart,
+  EyeOff,
+  Globe,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BreedMultiSelect } from "@/components/ui/breed-multi-select";
@@ -77,6 +79,9 @@ interface User {
   subscription?: {
     plan: string;
   };
+  breederProfileId?: string | null;
+  breederProfileSlug?: string | null;
+  breederProfileIsPublic?: boolean | null;
 }
 
 export default function AdminUsersPage() {
@@ -278,6 +283,40 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Toggle breeder profile visibility
+  const handleToggleProfileVisibility = async (user: User) => {
+    try {
+      const newIsPublic = !user.breederProfileIsPublic;
+      
+      const res = await fetch(`/api/admin/users/${user.id}/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: newIsPublic }),
+      });
+
+      if (res.ok) {
+        toast({
+          title: "Success",
+          description: `Profile ${newIsPublic ? 'published' : 'unpublished'} successfully`,
+        });
+        fetchUsers();
+      } else {
+        const error = await res.json();
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.error || "Failed to update profile visibility",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update profile visibility",
+      });
+    }
+  };
+
   // Copy credentials
   const copyToClipboard = async (text: string) => {
     try {
@@ -423,6 +462,7 @@ export default function AdminUsersPage() {
                       <TableHead>Role</TableHead>
                       <TableHead>Organization</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Profile</TableHead>
                       <TableHead>Last Login</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -471,6 +511,25 @@ export default function AdminUsersPage() {
                           </div>
                         </TableCell>
                         <TableCell>
+                          {user.role === 'breeder' && user.breederProfileId ? (
+                            <div className="flex items-center gap-2">
+                              {user.breederProfileIsPublic ? (
+                                <Badge variant="default" className="gap-1">
+                                  <Globe className="w-3 h-3" />
+                                  Public
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="gap-1">
+                                  <EyeOff className="w-3 h-3" />
+                                  Private
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <span className="text-sm text-muted-foreground">
                             {formatDate(user.lastLogin)}
                           </span>
@@ -511,6 +570,23 @@ export default function AdminUsersPage() {
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit User
                               </DropdownMenuItem>
+                              {user.role === 'breeder' && user.breederProfileId && (
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleProfileVisibility(user)}
+                                >
+                                  {user.breederProfileIsPublic ? (
+                                    <>
+                                      <EyeOff className="w-4 h-4 mr-2" />
+                                      Make Profile Private
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Globe className="w-4 h-4 mr-2" />
+                                      Make Profile Public
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive"

@@ -51,6 +51,8 @@ interface Listing {
   userId: string;
   userName: string;
   userEmail: string;
+  breederProfileSlug: string | null;
+  breederProfileDisplayName: string | null;
   category: string;
   title: string;
   description: string | null;
@@ -496,14 +498,18 @@ export default function AdminMarketplacePage() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Owner:</span>
-                      <Link 
-                        href={`/breeder/profile/${listing.userId}`}
-                        target="_blank"
-                        className="font-medium text-primary hover:underline flex items-center gap-1"
-                      >
-                        {listing.userName}
-                        <Eye className="w-3 h-3" />
-                      </Link>
+                      {listing.breederProfileSlug ? (
+                        <Link 
+                          href={`/breeders/${listing.breederProfileSlug}`}
+                          target="_blank"
+                          className="font-medium text-primary hover:underline flex items-center gap-1"
+                        >
+                          {listing.breederProfileDisplayName || listing.userName}
+                          <Eye className="w-3 h-3" />
+                        </Link>
+                      ) : (
+                        <span className="font-medium text-foreground">{listing.userName}</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Email:</span>

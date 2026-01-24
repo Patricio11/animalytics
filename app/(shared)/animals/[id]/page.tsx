@@ -22,11 +22,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
   ArrowLeft, Share2, Edit, Heart, Award, Shield, Calendar,
-  Weight, Activity, Ruler, MapPin, Eye
+  Weight, Activity, Ruler, MapPin, Eye, User
 } from "lucide-react";
 import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth/client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
+import Link from "next/link";
 
 interface PageProps {
   params: Promise<{
@@ -317,6 +320,110 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
           </div>
 
           <div className="space-y-6">
+            {/* Breeder/Owner Info Card */}
+            {(animal.breeder || animal.breederName || animal.owner || animal.ownerName) && (
+              <Card className="shadow-card bg-surface border-0">
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Breeder Information</h3>
+                  
+                  {animal.breeder?.breederProfile?.slug ? (
+                    <Link 
+                      href={`/breeders/${animal.breeder.breederProfile.slug}?source=animal`}
+                      className="block group"
+                    >
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={animal.breeder.breederProfile?.logoUrl || animal.breeder.avatar} />
+                          <AvatarFallback className="bg-gradient-brand text-white">
+                            {(animal.breeder.breederProfile?.displayName || animal.breeder.name || animal.breederName)?.charAt(0) || 'B'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-1.5 font-medium text-foreground group-hover:text-primary transition-colors">
+                            <span>{animal.breeder.breederProfile?.displayName || animal.breeder.name || animal.breederName || 'Breeder'}</span>
+                            {animal.breeder.breederProfile?.kycVerified && (
+                              <VerifiedCheckmark isVerified={true} className="w-4 h-4" />
+                            )}
+                          </div>
+                          {animal.breeder.breederProfile?.location && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {typeof animal.breeder.breederProfile.location === 'string' 
+                                ? animal.breeder.breederProfile.location
+                                : [animal.breeder.breederProfile.location.city, animal.breeder.breederProfile.location.country].filter(Boolean).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-primary font-medium group-hover:underline">
+                          View Profile →
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-12 h-12">
+                        <AvatarFallback className="bg-gradient-brand text-white">
+                          {(animal.breeder?.name || animal.breederName)?.charAt(0) || 'B'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium text-foreground">{animal.breeder?.name || animal.breederName || 'Breeder'}</div>
+                        {animal.breederRegistrationNumber && (
+                          <div className="text-xs text-muted-foreground">Reg: {animal.breederRegistrationNumber}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Owner Info if different from breeder */}
+                  {(animal.owner || animal.ownerName) && animal.owner?.id !== animal.breeder?.id && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground mb-2">Current Owner</h4>
+                        {animal.owner?.breederProfile?.slug ? (
+                          <Link 
+                            href={`/breeders/${animal.owner.breederProfile.slug}?source=animal`}
+                            className="block group"
+                          >
+                            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                              <Avatar className="w-10 h-10">
+                                <AvatarImage src={animal.owner.breederProfile?.logoUrl || animal.owner.avatar} />
+                                <AvatarFallback className="bg-gradient-brand text-white">
+                                  {(animal.owner.breederProfile?.displayName || animal.owner.name || animal.ownerName)?.charAt(0) || 'O'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-1.5 font-medium text-sm text-foreground group-hover:text-primary transition-colors">
+                                  <span>{animal.owner.breederProfile?.displayName || animal.owner.name || animal.ownerName || 'Owner'}</span>
+                                  {animal.owner.breederProfile?.kycVerified && (
+                                    <VerifiedCheckmark isVerified={true} className="w-3.5 h-3.5" />
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-xs text-primary font-medium group-hover:underline">
+                                View →
+                              </div>
+                            </div>
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-10 h-10">
+                              <AvatarFallback className="bg-gradient-brand text-white">
+                                {(animal.owner?.name || animal.ownerName)?.charAt(0) || 'O'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-sm text-foreground">{animal.owner?.name || animal.ownerName || 'Owner'}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-6 space-y-6">
                 <div className="space-y-4">

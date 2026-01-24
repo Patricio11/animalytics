@@ -130,12 +130,38 @@ export async function GET(
           columns: {
             id: true,
             name: true,
+            avatar: true,
+          },
+          with: {
+            breederProfile: {
+              columns: {
+                id: true,
+                slug: true,
+                displayName: true,
+                logoUrl: true,
+                location: true,
+                kycVerified: true,
+              },
+            },
           },
         },
         breeder: {
           columns: {
             id: true,
             name: true,
+            avatar: true,
+          },
+          with: {
+            breederProfile: {
+              columns: {
+                id: true,
+                slug: true,
+                displayName: true,
+                logoUrl: true,
+                location: true,
+                kycVerified: true,
+              },
+            },
           },
         },
         // Parent relations (if in system)
