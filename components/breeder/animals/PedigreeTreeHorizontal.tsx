@@ -304,12 +304,12 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
               <div className="relative">
                 {/* Horizontal branch from vertical to card */}
                 <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
-                <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                <PedigreeCard animal={node.sire?.sire?.sire} generation={3} position="sire.sire.sire" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
               </div>
               <div className="relative">
                 {/* Horizontal branch from vertical to card */}
                 <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
-                <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="sire.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                <PedigreeCard animal={node.sire?.sire?.dam} generation={3} position="sire.sire.dam" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
               </div>
             </div>
             {/* Sire's Dam's parents - aligned with Sire's Dam */}
@@ -320,12 +320,12 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
               <div className="relative">
                 {/* Horizontal branch from vertical to card */}
                 <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
-                <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                <PedigreeCard animal={node.sire?.dam?.sire} generation={3} position="sire.dam.sire" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
               </div>
               <div className="relative">
                 {/* Horizontal branch from vertical to card */}
                 <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
-                <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                <PedigreeCard animal={node.sire?.dam?.dam} generation={3} position="sire.dam.dam" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
               </div>
             </div>
             {/* Dam's Sire's parents - aligned with Dam's Sire */}
@@ -336,12 +336,12 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
               <div className="relative">
                 {/* Horizontal branch from vertical to card */}
                 <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
-                <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                <PedigreeCard animal={node.dam?.sire?.sire} generation={3} position="dam.sire.sire" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
               </div>
               <div className="relative">
                 {/* Horizontal branch from vertical to card */}
                 <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
-                <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                <PedigreeCard animal={node.dam?.sire?.dam} generation={3} position="dam.sire.dam" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
               </div>
             </div>
             {/* Dam's Dam's parents - aligned with Dam's Dam */}
@@ -352,12 +352,12 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
               <div className="relative">
                 {/* Horizontal branch from vertical to card */}
                 <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
-                <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                <PedigreeCard animal={node.dam?.dam?.sire} generation={3} position="dam.dam.sire" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
               </div>
               <div className="relative">
                 {/* Horizontal branch from vertical to card */}
                 <div className="absolute right-full top-1/2 w-8 h-px bg-border" />
-                <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" compact onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
+                <PedigreeCard animal={node.dam?.dam?.dam} generation={3} position="dam.dam.dam" onEdit={handleEditClick} onAddManual={handleAddManualClick} onEditManual={handleEditManualClick} onDelete={handleDeleteClick} onCardClick={handleCardClick} subjectId={node.id} isOwner={isOwner} />
               </div>
             </div>
           </div>
