@@ -87,6 +87,7 @@ export async function canAccessRoute(route: string) {
       "/marketplace",
       "/frozen-semen",
       "/breeders",
+      "/verification",
       "/documents",
       "/settings",
     ],

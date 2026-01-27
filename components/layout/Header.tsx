@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationBell } from "@/components/notifications";
-import { VerifiedCheckmark } from "@/components/ui/verified-badge";
+import { VerifiedCheckmark, VerifiedBadge } from "@/components/ui/verified-badge";
 import { useAuth, useRole } from "@/lib/auth/client";
 import { useVerificationStatus } from "@/lib/hooks/useVerificationStatus";
 import { useRouter } from "next/navigation";
@@ -98,12 +98,25 @@ export function Header() {
                     <VerifiedCheckmark isVerified={verificationStatus.isVerified} className="w-4 h-4" />
                   )}
                 </div>
-                <Badge 
-                  variant="secondary" 
-                  className="text-[10px] capitalize px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-                >
-                  {role?.replace('_', ' ') || 'User'}
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                  <Badge 
+                    variant="secondary" 
+                    className="text-[10px] capitalize px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                  >
+                    {role?.replace('_', ' ') || 'User'}
+                  </Badge>
+                  {role !== 'admin' && verificationStatus && (
+                    <BadgeCheck 
+                      className={`w-3.5 h-3.5 ${
+                        verificationStatus.isVerified && verificationStatus.verificationStatus === 'approved'
+                          ? 'text-blue-500'
+                          : verificationStatus.verificationStatus === 'pending'
+                          ? 'text-yellow-500'
+                          : 'text-red-500'
+                      }`}
+                    />
+                  )}
+                </div>
               </div>
             </Button>
           </DropdownMenuTrigger>

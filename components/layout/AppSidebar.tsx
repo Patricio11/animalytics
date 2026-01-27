@@ -83,12 +83,12 @@ const secondaryItems = [
   //   url: "/wallet",
   //   icon: Wallet,
   // },
-  // TODO: Implement Verification feature
-  // {
-  //   title: "Verification",
-  //   url: "/verification",
-  //   icon: BadgeCheck,
-  // },
+
+  {
+    title: "Verification",
+    url: "/verification",
+    icon: BadgeCheck,
+  },
   {
     title: "Breeders",
     url: "/breeders",
