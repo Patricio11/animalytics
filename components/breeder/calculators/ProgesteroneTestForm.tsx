@@ -8,6 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Calendar, 
   TrendingUp, 
@@ -15,15 +22,27 @@ import {
   AlertCircle, 
   Info,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Beaker
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, addDays } from "date-fns";
+import {
+  type ProgesteroneMachine,
+  PROGESTERONE_MACHINES,
+  convertToVidasStandard,
+  getMachineOptions,
+} from "@/lib/utils/progesterone-machine-conversion";
 
 interface ProgesteroneTestFormProps {
   cycleDay: number;
   bitchName: string;
-  onSubmit: (data: { testDate: Date; level: number }) => void;
+  onSubmit: (data: { 
+    testDate: Date; 
+    level: number; 
+    normalizedLevel: number;
+    machine: ProgesteroneMachine;
+  }) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
@@ -133,29 +152,34 @@ export function ProgesteroneTestForm({
 }: ProgesteroneTestFormProps) {
   const [testDate, setTestDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [level, setLevel] = useState<string>("");
+  const [machine, setMachine] = useState<ProgesteroneMachine>('VIDAS');
+  const [normalizedLevel, setNormalizedLevel] = useState<number>(0);
   const [phaseInfo, setPhaseInfo] = useState<PhaseInfo | null>(null);
   const [nextTest, setNextTest] = useState<{ days: number; date: Date; reason: string } | null>(null);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const numLevel = parseFloat(level);
-    if (!isNaN(numLevel) && numLevel >= 0 && numLevel <= 50) {
-      setPhaseInfo(getPhaseInfo(numLevel));
-      setNextTest(calculateNextTest(numLevel, new Date(testDate)));
+    if (!isNaN(numLevel) && numLevel >= 0 && numLevel <= 100) {
+      // Convert to VIDAS standard for phase detection
+      const normalized = convertToVidasStandard(numLevel, machine);
+      setNormalizedLevel(normalized);
+      setPhaseInfo(getPhaseInfo(normalized));
+      setNextTest(calculateNextTest(normalized, new Date(testDate)));
       setError("");
-    } else if (level && (isNaN(numLevel) || numLevel < 0 || numLevel > 50)) {
-      setError("Please enter a value between 0 and 50 ng/mL");
+    } else if (level && (isNaN(numLevel) || numLevel < 0 || numLevel > 100)) {
+      setError("Please enter a value between 0 and 100 ng/mL");
       setPhaseInfo(null);
       setNextTest(null);
     } else {
       setPhaseInfo(null);
       setNextTest(null);
     }
-  }, [level, testDate]);
+  }, [level, machine, testDate]);
 
   const handleSubmit = () => {
     const numLevel = parseFloat(level);
-    if (isNaN(numLevel) || numLevel < 0 || numLevel > 50) {
+    if (isNaN(numLevel) || numLevel < 0 || numLevel > 100) {
       setError("Please enter a valid progesterone level");
       return;
     }
@@ -163,10 +187,19 @@ export function ProgesteroneTestForm({
       setError("Please select a test date");
       return;
     }
-    onSubmit({ testDate: new Date(testDate), level: numLevel });
+    if (!machine) {
+      setError("Please select a testing machine");
+      return;
+    }
+    onSubmit({ 
+      testDate: new Date(testDate), 
+      level: numLevel,
+      normalizedLevel,
+      machine
+    });
   };
 
-  const isValid = testDate && level && !error && phaseInfo;
+  const isValid = testDate && level && machine && !error && phaseInfo;
 
   return (
     <Card className="shadow-card border-primary/10">
@@ -210,6 +243,35 @@ export function ProgesteroneTestForm({
           />
         </div>
 
+        {/* Testing Machine */}
+        <div className="space-y-2">
+          <Label htmlFor="machine" className="text-sm font-semibold flex items-center gap-2">
+            <Beaker className="w-4 h-4" />
+            Testing Machine *
+          </Label>
+          <Select value={machine} onValueChange={(value) => setMachine(value as ProgesteroneMachine)}>
+            <SelectTrigger className="bg-background border-primary/20">
+              <SelectValue placeholder="Select testing machine" />
+            </SelectTrigger>
+            <SelectContent>
+              {getMachineOptions().map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{option.label}</span>
+                    <span className="text-xs text-muted-foreground">{option.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {machine !== 'VIDAS' && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Info className="w-3 h-3" />
+              Values will be normalized to VIDAS standard for consistent interpretation
+            </p>
+          )}
+        </div>
+
         {/* Progesterone Level */}
         <div className="space-y-2">
           <Label htmlFor="level" className="text-sm font-semibold">
@@ -248,6 +310,16 @@ export function ProgesteroneTestForm({
           )}
         </div>
 
+        {/* Machine Conversion Info */}
+        {machine !== 'VIDAS' && level && !error && normalizedLevel > 0 && (
+          <Alert className="border-blue-500/50 bg-blue-500/10">
+            <Info className="h-4 w-4 text-blue-500" />
+            <AlertDescription className="ml-2 text-sm">
+              <strong>Machine Conversion:</strong> {level} ng/mL on {PROGESTERONE_MACHINES[machine].name} = <strong>{normalizedLevel.toFixed(1)} ng/mL</strong> VIDAS equivalent
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Phase Detection */}
         {phaseInfo && (
           <>
@@ -267,9 +339,16 @@ export function ProgesteroneTestForm({
                     {phaseInfo.description}
                   </p>
                 </div>
-                <Badge className={cn(phaseInfo.bgClass, phaseInfo.borderClass, phaseInfo.textClass)}>
-                  {level} ng/mL
-                </Badge>
+                <div className="flex flex-col gap-1 items-end">
+                  <Badge className={cn(phaseInfo.bgClass, phaseInfo.borderClass, phaseInfo.textClass)}>
+                    {level} ng/mL
+                  </Badge>
+                  {machine !== 'VIDAS' && (
+                    <span className="text-xs text-muted-foreground">
+                      ({normalizedLevel.toFixed(1)} VIDAS)
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </>

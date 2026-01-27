@@ -6,7 +6,15 @@ import { users } from './users';
 // ENUMS
 // ============================================================================
 
-export const laboratoryEnum = pgEnum('laboratory', ['VIDAS', 'IDEXX']);
+export const laboratoryEnum = pgEnum('laboratory', [
+  'VIDAS',              // Mini VIDAS (bioMérieux) - Standard reference
+  'IDEXX',              // IDEXX Catalyst - In-clinic
+  'IDEXX_LAB',          // IDEXX Reference Laboratory
+  'IMMULITE',           // Siemens Immulite
+  'CHEMILUMINESCENCE',  // Generic chemiluminescence
+  'RIA',                // Radioimmunoassay
+  'OTHER'               // Other/Unknown
+]);
 export const unitEnum = pgEnum('unit', ['nanograms', 'nanomoles']);
 export const breedingMethodEnum = pgEnum('breeding_method', ['natural_ai', 'tci', 'surgical_ai', 'frozen']);
 export const matingStatusEnum = pgEnum('mating_status', ['planned', 'confirmed', 'unsuccessful', 'resulted_in_litter']);

@@ -27,6 +27,11 @@ import {
   estimateOvulationDay,
   calculateWhelpingDate
 } from '@/lib/utils/progesterone';
+import {
+  type ProgesteroneMachine,
+  convertToVidasStandard,
+  validateReading,
+} from '@/lib/utils/progesterone-machine-conversion';
 import { 
   createBreedingWindowNotification,
   createDailyTestNotification,
@@ -49,7 +54,8 @@ const createReadingSchema = z.object({
     .min(0.5, 'Progesterone level must be at least 0.5 ng/mL. Values below this are typically measurement errors.')
     .max(100, 'Progesterone level cannot exceed 100 ng/mL. Please verify your reading.'),
   unit: z.enum(['nanograms', 'nanomoles']).optional(),
-  laboratory: z.enum(['VIDAS', 'IDEXX', 'IMMULITE', 'RIA', 'ELISA', 'OTHER']).optional(),
+  machine: z.enum(['VIDAS', 'IDEXX', 'IDEXX_LAB', 'IMMULITE', 'CHEMILUMINESCENCE', 'RIA', 'OTHER']).optional(),
+  laboratory: z.enum(['VIDAS', 'IDEXX', 'IDEXX_LAB', 'IMMULITE', 'CHEMILUMINESCENCE', 'RIA', 'OTHER']).optional(), // Deprecated, use machine
   notes: z.string().optional(),
   markAsMating: z.boolean().optional(),
   markAsLastMating: z.boolean().optional(),
@@ -81,11 +87,15 @@ export async function POST(request: NextRequest) {
       testDate,
       progesteroneLevel,
       unit = 'nanograms',
-      laboratory = 'VIDAS',
+      machine,
+      laboratory,
       notes,
       markAsMating = false,
       markAsLastMating = false,
     } = validation.data;
+
+    // Use machine if provided, otherwise fall back to laboratory (for backwards compatibility)
+    const testMachine: ProgesteroneMachine = (machine || laboratory || 'VIDAS') as ProgesteroneMachine;
 
     // Verify the heat cycle belongs to the breeder
     const [heatCycle] = await db
@@ -151,13 +161,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Detect phase
-    const phaseInfo = detectPhase(progesteroneLevel);
+    // Validate reading based on machine type
+    const unitForValidation = unit === 'nanograms' ? 'ng/mL' : 'nmol/L';
+    const validation2 = validateReading(progesteroneLevel, testMachine, unitForValidation);
+    if (!validation2.valid) {
+      return errorResponse(validation2.message || 'Invalid progesterone reading', 400);
+    }
 
-    // Calculate next test recommendation
-    const nextTest = calculateNextTest(progesteroneLevel, new Date(testDate));
+    // Convert to ng/mL if in nmol/L
+    let rawValueNgMl = progesteroneLevel;
+    if (unit === 'nanomoles') {
+      rawValueNgMl = progesteroneLevel * 0.314; // 1 nmol/L = 0.314 ng/mL
+    }
 
-    // Create progesterone reading
+    // Normalize to VIDAS standard for consistent phase detection
+    const normalizedValue = convertToVidasStandard(rawValueNgMl, testMachine);
+
+    // Detect phase using normalized value
+    const phaseInfo = detectPhase(normalizedValue);
+
+    // Calculate next test recommendation using normalized value
+    const nextTest = calculateNextTest(normalizedValue, new Date(testDate));
+
+    // Create progesterone reading with both raw and normalized values
     const [reading] = await db
       .insert(heatCycleProgesteroneReadings)
       .values({
@@ -165,9 +191,10 @@ export async function POST(request: NextRequest) {
         breederId: session.user.id,
         day: calculatedDay,
         testDate,
-        progesteroneLevel: progesteroneLevel.toString(),
+        progesteroneLevel: rawValueNgMl.toString(), // Store raw value in ng/mL
+        normalizedProgesteroneLevel: normalizedValue.toString(), // Store normalized VIDAS equivalent
         unit,
-        laboratory,
+        laboratory: testMachine, // Store machine type
         phase: phaseInfo.phase,
         phaseColor: phaseInfo.color,
         nextTestDays: nextTest.days,
@@ -190,7 +217,7 @@ export async function POST(request: NextRequest) {
             breedingDate: testDate,
             breedingDay: calculatedDay,
             breedingMethod: 'natural', // Default, can be updated later
-            progesteroneLevelAtBreeding: progesteroneLevel.toString(),
+            progesteroneLevelAtBreeding: normalizedValue.toString(), // Use normalized value
             isLastMating: markAsLastMating,
             notes: markAsLastMating 
               ? 'Last mating - pregnancy screening tasks will be generated' 
@@ -262,8 +289,8 @@ export async function POST(request: NextRequest) {
       .where(eq(heatCycles.id, heatCycleId))
       .returning();
 
-    // Check if breeding window is open
-    const breedingWindowOpen = isBreedingWindowOpen(progesteroneLevel);
+    // Check if breeding window is open using normalized value
+    const breedingWindowOpen = isBreedingWindowOpen(normalizedValue);
 
     // Get bitch name for task/reminder
     const [bitchData] = await db
@@ -297,7 +324,7 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         type: 'event',
         title: `Progesterone Test - ${bitchName} (Day ${calculatedDay + nextTest.days})`,
-        description: `${nextTest.reason}. Current level: ${progesteroneLevel.toFixed(1)} ng/mL`,
+        description: `${nextTest.reason}. Current level: ${normalizedValue.toFixed(1)} ng/mL (VIDAS equiv.)${testMachine !== 'VIDAS' ? ` [${rawValueNgMl.toFixed(1)} on ${testMachine}]` : ''}`,
         animalId: heatCycle.bitchId,
         dueDate: format(nextTest.date, 'yyyy-MM-dd'),
         dueTime: '09:00',
@@ -327,7 +354,7 @@ export async function POST(request: NextRequest) {
           dueDate: new Date().toISOString().split('T')[0],
           dueTime: new Date().toISOString().split('T')[1].substring(0, 8),
           title: 'Breeding Window Open!',
-          message: `Optimal breeding time detected for Day ${calculatedDay}. Progesterone level: ${progesteroneLevel} ng/mL`,
+          message: `Optimal breeding time detected for Day ${calculatedDay}. Progesterone level: ${normalizedValue.toFixed(1)} ng/mL (VIDAS equiv.)${testMachine !== 'VIDAS' ? ` [${rawValueNgMl.toFixed(1)} on ${testMachine}]` : ''}`,
           priority: 'urgent',
           channels: ['email', 'sms', 'in_app'],
         });
@@ -337,7 +364,7 @@ export async function POST(request: NextRequest) {
           userId: session.user.id,
           bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
           day: calculatedDay,
-          progesteroneLevel,
+          progesteroneLevel: normalizedValue,
           heatCycleId,
           breedingMethod: heatCycle.breedingMethod,
         });
@@ -346,14 +373,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create daily test notification if levels are rising (>10 ng/mL)
-    if (progesteroneLevel >= 10 && nextTest.days === 1) {
+    // Create daily test notification if levels are rising (>10 ng/mL normalized)
+    if (normalizedValue >= 10 && nextTest.days === 1) {
       try {
         await createDailyTestNotification({
           userId: session.user.id,
           bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
           day: calculatedDay,
-          lastLevel: progesteroneLevel,
+          lastLevel: normalizedValue,
           heatCycleId,
         });
       } catch (error) {
@@ -382,8 +409,10 @@ export async function POST(request: NextRequest) {
         day: reading.day,
         testDate: new Date(reading.testDate),
         progesteroneLevel: parseFloat(reading.progesteroneLevel),
-        unit: reading.unit,
-        laboratory: reading.laboratory || 'VIDAS',
+        normalizedProgesteroneLevel: reading.normalizedProgesteroneLevel ? parseFloat(reading.normalizedProgesteroneLevel) : undefined,
+        unit: reading.unit as 'nanograms' | 'nanomoles',
+        machine: (reading.laboratory as ProgesteroneMachine) || 'VIDAS',
+        laboratory: reading.laboratory || 'VIDAS', // Deprecated, kept for backwards compatibility
         phase: reading.phase || undefined,
         phaseColor: reading.phaseColor || undefined,
         nextTestDays: reading.nextTestDays || undefined,

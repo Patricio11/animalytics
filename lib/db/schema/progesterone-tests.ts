@@ -22,8 +22,10 @@ export const progesteroneTests = pgTable('progesterone_tests', {
   // Progesterone readings (Day 0-5)
   readings: jsonb('readings').notNull().$type<{
     day: number; // 0-5
-    value: number;
+    value: number; // Raw value from machine
+    normalizedValue: number; // Normalized to VIDAS standard
     date: string; // ISO date string
+    machine: string; // Machine type for this specific reading
   }[]>(),
   
   // Calculation results

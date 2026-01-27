@@ -34,12 +34,13 @@ export const progesteroneUnitEnum = pgEnum('progesterone_unit', [
 ]);
 
 export const laboratoryTypeEnum = pgEnum('laboratory_type', [
-  'VIDAS',           // VIDAS machine (most common)
-  'IDEXX',           // IDEXX machine
-  'IMMULITE',        // Immulite machine
-  'RIA',             // Radioimmunoassay
-  'ELISA',           // Enzyme-linked immunosorbent assay
-  'OTHER'            // Other laboratory methods
+  'VIDAS',              // Mini VIDAS (bioMérieux) - Standard reference
+  'IDEXX',              // IDEXX Catalyst - In-clinic
+  'IDEXX_LAB',          // IDEXX Reference Laboratory
+  'IMMULITE',           // Siemens Immulite
+  'CHEMILUMINESCENCE',  // Generic chemiluminescence
+  'RIA',                // Radioimmunoassay
+  'OTHER'               // Other/Unknown
 ]);
 
 export const breedingRecordMethodEnum = pgEnum('breeding_record_method', [
@@ -117,9 +118,10 @@ export const heatCycleProgesteroneReadings = pgTable('heat_cycle_progesterone_re
   // Reading Information
   day: integer('day').notNull(), // Day of heat cycle (1-30+)
   testDate: date('test_date').notNull(),
-  progesteroneLevel: decimal('progesterone_level', { precision: 5, scale: 2 }).notNull(),
+  progesteroneLevel: decimal('progesterone_level', { precision: 5, scale: 2 }).notNull(), // Raw value from machine
+  normalizedProgesteroneLevel: decimal('normalized_progesterone_level', { precision: 5, scale: 2 }), // Normalized to VIDAS standard (ng/mL)
   unit: progesteroneUnitEnum('unit').notNull().default('nanograms'),
-  laboratory: laboratoryTypeEnum('laboratory').default('VIDAS'),
+  laboratory: laboratoryTypeEnum('laboratory').default('VIDAS'), // Machine type: VIDAS, IDEXX, IDEXX_LAB, etc.
   
   // Automatic Analysis Results
   phase: text('phase'), // Anestrus, LH Surge, Ovulation, Egg Maturation, Fertile Range

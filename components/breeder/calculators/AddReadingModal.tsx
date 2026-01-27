@@ -20,10 +20,11 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Activity, AlertCircle, Loader2, TrendingUp, Calendar, Heart, Sparkles } from 'lucide-react';
+import { Activity, AlertCircle, Loader2, TrendingUp, Calendar, Heart, Sparkles, Info, Beaker } from 'lucide-react';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { getPhaseInfo } from '@/lib/utils/progesterone';
 import { DatePicker } from '@/components/ui/date-picker';
+import { convertToVidasStandard, PROGESTERONE_MACHINES, type ProgesteroneMachine } from '@/lib/utils/progesterone-machine-conversion';
 
 interface AddReadingModalProps {
   open: boolean;
@@ -54,7 +55,7 @@ export function AddReadingModal({
     addDays(new Date(startDate), cycleDay - 1)
   );
   const [progesteroneLevel, setProgesteroneLevel] = useState<string>('');
-  const [laboratory, setLaboratory] = useState<string>('VIDAS');
+  const [laboratory, setLaboratory] = useState<ProgesteroneMachine>('VIDAS');
   const [markAsMating, setMarkAsMating] = useState<boolean>(false);
   const [markAsLastMating, setMarkAsLastMating] = useState<boolean>(false);
 
@@ -64,10 +65,12 @@ export function AddReadingModal({
     : cycleDay;
 
   const level = parseFloat(progesteroneLevel);
-  const phaseInfo = !isNaN(level) ? getPhaseInfo(level, calculatedDay, testDate) : null;
+  // Convert to VIDAS standard for phase detection
+  const normalizedLevel = !isNaN(level) ? convertToVidasStandard(level, laboratory) : 0;
+  const phaseInfo = !isNaN(level) ? getPhaseInfo(normalizedLevel, calculatedDay, testDate) : null;
   
-  // Check if in breeding window (P4: 15-35 ng/mL)
-  const isInBreedingWindow = !isNaN(level) && level >= 15 && level <= 35;
+  // Check if in breeding window (P4: 15-35 ng/mL normalized)
+  const isInBreedingWindow = !isNaN(normalizedLevel) && normalizedLevel >= 15 && normalizedLevel <= 35;
 
   const handleSubmit = async () => {
     if (testDate && progesteroneLevel) {
@@ -139,20 +142,93 @@ export function AddReadingModal({
           {/* Laboratory */}
           <div className="space-y-2">
             <Label htmlFor="laboratory">Laboratory Method</Label>
-            <Select value={laboratory} onValueChange={setLaboratory}>
+            <Select value={laboratory} onValueChange={(value) => setLaboratory(value as ProgesteroneMachine)}>
               <SelectTrigger id="laboratory">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="VIDAS">VIDAS</SelectItem>
-                <SelectItem value="IDEXX">IDEXX</SelectItem>
-                <SelectItem value="IMMULITE">IMMULITE</SelectItem>
-                <SelectItem value="RIA">RIA</SelectItem>
-                <SelectItem value="ELISA">ELISA</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
+                <SelectItem value="VIDAS">
+                  <div className="flex items-center gap-2">
+                    <Beaker className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">VIDAS</div>
+                      <div className="text-xs text-muted-foreground">Mini VIDAS (Reference Standard)</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="IDEXX">
+                  <div className="flex items-center gap-2">
+                    <Beaker className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">IDEXX</div>
+                      <div className="text-xs text-muted-foreground">IDEXX Catalyst (In-clinic)</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="IDEXX_LAB">
+                  <div className="flex items-center gap-2">
+                    <Beaker className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">IDEXX Lab</div>
+                      <div className="text-xs text-muted-foreground">IDEXX Reference Laboratory</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="IMMULITE">
+                  <div className="flex items-center gap-2">
+                    <Beaker className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">IMMULITE</div>
+                      <div className="text-xs text-muted-foreground">Siemens Immulite</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="CHEMILUMINESCENCE">
+                  <div className="flex items-center gap-2">
+                    <Beaker className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">Chemiluminescence</div>
+                      <div className="text-xs text-muted-foreground">Generic analyzer</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="RIA">
+                  <div className="flex items-center gap-2">
+                    <Beaker className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">RIA</div>
+                      <div className="text-xs text-muted-foreground">Radioimmunoassay</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="OTHER">
+                  <div className="flex items-center gap-2">
+                    <Beaker className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">Other</div>
+                      <div className="text-xs text-muted-foreground">Unknown/Other method</div>
+                    </div>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
+            {laboratory !== 'VIDAS' && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="w-3 h-3" />
+                Values will be normalized to VIDAS standard for consistent interpretation
+              </p>
+            )}
           </div>
+
+          {/* Machine Conversion Info */}
+          {laboratory !== 'VIDAS' && progesteroneLevel && !isNaN(level) && level > 0 && (
+            <Alert className="border-blue-500/50 bg-blue-500/10">
+              <Info className="h-4 w-4 text-blue-500" />
+              <AlertDescription className="ml-2 text-sm">
+                <strong>Machine Conversion:</strong> {progesteroneLevel} ng/mL on {PROGESTERONE_MACHINES[laboratory].name} = <strong>{normalizedLevel.toFixed(1)} ng/mL</strong> VIDAS equivalent
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Mating Markers - Only show in breeding window */}
           {isInBreedingWindow && (
@@ -249,6 +325,11 @@ export function AddReadingModal({
                 </p>
                 <div className="text-sm bg-white dark:bg-gray-800 p-2 rounded border">
                   <strong>Reading:</strong> {progesteroneLevel} ng/mL on Day {calculatedDay}
+                  {laboratory !== 'VIDAS' && (
+                    <span className="text-xs text-muted-foreground ml-2">
+                      ({normalizedLevel.toFixed(1)} VIDAS equiv.)
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2 text-sm font-semibold text-foreground">
                   📅 Next Action: {phaseInfo.nextAction}

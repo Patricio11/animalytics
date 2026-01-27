@@ -2,7 +2,7 @@
 export type HeatCycleStatus = 'active' | 'completed' | 'cancelled';
 export type BreedingMethod = 'natural_ai' | 'frozen';
 export type ProgesteroneUnit = 'nanograms' | 'nanomoles';
-export type Laboratory = 'VIDAS' | 'IDEXX' | 'IMMULITE' | 'RIA' | 'ELISA' | 'OTHER';
+export type Laboratory = 'VIDAS' | 'IDEXX' | 'IDEXX_LAB' | 'IMMULITE' | 'CHEMILUMINESCENCE' | 'RIA' | 'OTHER';
 
 export interface HeatCycle {
   id: string;
@@ -34,9 +34,11 @@ export interface ProgesteroneReading {
   // Reading Information
   day: number;
   testDate: Date;
-  progesteroneLevel: number;
+  progesteroneLevel: number; // Raw value from machine
+  normalizedProgesteroneLevel?: number; // Normalized to VIDAS standard
   unit: ProgesteroneUnit;
-  laboratory: Laboratory;
+  machine?: Laboratory; // New field for machine type
+  laboratory: Laboratory; // Deprecated, use machine instead
   
   // Analysis Results
   phase?: string;
