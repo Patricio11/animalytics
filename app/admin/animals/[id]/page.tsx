@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
   ArrowLeft, Share2, Heart, Award, Shield, Calendar,
-  Weight, Activity, Ruler, MapPin, Eye, User, FileText, Clock
+  Weight, Activity, Ruler, MapPin, Eye, User, FileText, Clock, Edit
 } from "lucide-react";
 import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -69,6 +69,7 @@ export default function AdminAnimalProfilePage({ params, searchParams }: PagePro
   const [activeTab, setActiveTab] = useState(initialTab);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -192,14 +193,24 @@ export default function AdminAnimalProfilePage({ params, searchParams }: PagePro
               Admin View
             </Badge>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleShare}
-            className="hover:bg-primary/10 hover:border-primary shadow-card"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(true)}
+              className="hover:bg-primary/10 hover:border-primary shadow-card"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              className="hover:bg-primary/10 hover:border-primary shadow-card"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -398,6 +409,12 @@ export default function AdminAnimalProfilePage({ params, searchParams }: PagePro
                       <span className="text-sm font-medium">{animal.weight} kg</span>
                     </div>
                   )}
+                  {animal.height && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Height</span>
+                      <span className="text-sm font-medium">{animal.height} cm</span>
+                    </div>
+                  )}
                   {animal.microchipNumber && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Microchip</span>
@@ -407,6 +424,35 @@ export default function AdminAnimalProfilePage({ params, searchParams }: PagePro
                 </div>
               </CardContent>
             </Card>
+
+            {/* Breeder/Owner Info Card */}
+            {(animal.breederName || animal.ownerName) && (
+              <Card className="shadow-card bg-surface border-0">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Breeder & Owner Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {animal.breederName && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Breeder</span>
+                      <p className="font-medium">{animal.breederName}</p>
+                    </div>
+                  )}
+                  {animal.ownerName && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Owner</span>
+                      <p className="font-medium">{animal.ownerName}</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Manually entered information
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Owner Information Card */}
             {owner && (

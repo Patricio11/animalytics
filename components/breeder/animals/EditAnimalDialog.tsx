@@ -31,6 +31,7 @@ interface EditAnimalDialogProps {
     color?: string;
     markings?: string;
     weight?: string;
+    height?: string;
     microchipId?: string;
     registrationNumber?: string;
     bloodline?: string;
@@ -48,6 +49,7 @@ interface AnimalFormData {
   color: string;
   markings: string;
   weight: string;
+  height: string;
   microchipId: string;
   registrationNumber: string;
   bloodline: string;
@@ -97,6 +99,7 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
     color: animalData.color || "",
     markings: animalData.markings || "",
     weight: animalData.weight || "",
+    height: animalData.height || "",
     microchipId: animalData.microchipId || "",
     registrationNumber: animalData.registrationNumber || "",
     bloodline: animalData.bloodline || "",
@@ -115,6 +118,7 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
         color: animalData.color || "",
         markings: animalData.markings || "",
         weight: animalData.weight || "",
+        height: animalData.height || "",
         microchipId: animalData.microchipId || "",
         registrationNumber: animalData.registrationNumber || "",
         bloodline: animalData.bloodline || "",
@@ -154,6 +158,7 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
         color: formData.color || undefined,
         markings: formData.markings || undefined,
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        height: formData.height ? parseFloat(formData.height) : undefined,
         microchipNumber: formData.microchipId || undefined,
         registrationNumber: formData.registrationNumber || undefined,
         bio: formData.description || undefined,
@@ -359,6 +364,19 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
                 value={formData.weight}
                 onChange={(e) => updateFormData("weight", e.target.value)}
                 placeholder="e.g., 25.5"
+                className="bg-background border-primary/20 focus:border-primary"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-height">Height (cm)</Label>
+              <Input
+                id="edit-height"
+                type="number"
+                step="0.1"
+                value={formData.height}
+                onChange={(e) => updateFormData("height", e.target.value)}
+                placeholder="Height at shoulder"
                 className="bg-background border-primary/20 focus:border-primary"
               />
             </div>

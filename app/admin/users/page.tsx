@@ -63,6 +63,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { BreedMultiSelect } from "@/components/ui/breed-multi-select";
 import { useBreeds } from "@/lib/api/queries/breeds";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
 
 interface User {
   id: string;
@@ -480,10 +481,7 @@ export default function AdminUsersPage() {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className="flex items-center gap-1.5">
-                                <p className="font-medium">{user.name}</p>
-                                {user.isVerified && <VerifiedCheckmark isVerified={true} className="w-3.5 h-3.5" />}
-                              </div>
+                              <p className="font-medium">{user.name}</p>
                               <p className="text-sm text-muted-foreground">{user.email}</p>
                             </div>
                           </div>

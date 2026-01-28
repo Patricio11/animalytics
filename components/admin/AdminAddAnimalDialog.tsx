@@ -20,16 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/upload";
 import { STORAGE_PATHS } from "@/lib/supabase";
 
-interface AdminAddAnimalDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  userId: string;
-  userName: string;
-  animalId?: string;
-  initialData?: Partial<AnimalFormData> & { breedId?: string };
-  mode?: 'create' | 'edit';
-}
-
 interface AnimalFormData {
   // Step 1: Basic Info & Photo
   profilePhotoUrl: string | null;
@@ -43,13 +33,26 @@ interface AnimalFormData {
   color: string;
   markings: string;
   weight: string;
+  height: string;
 
   // Step 3: Registration
   microchipId: string;
   registrationNumber: string;
+  breederName: string;
+  ownerName: string;
 
   // Step 4: Additional Info
   description: string;
+}
+
+interface AdminAddAnimalDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  userId: string;
+  userName: string;
+  animalId?: string;
+  initialData?: Partial<AnimalFormData> & { breedId?: string };
+  mode?: 'create' | 'edit';
 }
 
 export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, animalId, initialData, mode = 'create' }: AdminAddAnimalDialogProps) {
@@ -71,8 +74,11 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
     color: "",
     markings: "",
     weight: "",
+    height: "",
     microchipId: "",
     registrationNumber: "",
+    breederName: "",
+    ownerName: "",
     description: "",
   });
 
@@ -91,8 +97,11 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
         color: initialData.color || '',
         markings: initialData.markings || '',
         weight: initialData.weight || '',
+        height: initialData.height || '',
         microchipId: initialData.microchipId || '',
         registrationNumber: initialData.registrationNumber || '',
+        breederName: initialData.breederName || '',
+        ownerName: initialData.ownerName || '',
         description: initialData.description || '',
       });
     } else if (open && mode === 'create') {
@@ -107,8 +116,11 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
         color: '',
         markings: '',
         weight: '',
+        height: '',
         microchipId: '',
         registrationNumber: '',
+        breederName: '',
+        ownerName: '',
         description: '',
       });
       setCurrentStep(1);
@@ -210,8 +222,11 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
         color: formData.color || undefined,
         markings: formData.markings || undefined,
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        height: formData.height ? parseFloat(formData.height) : undefined,
         microchipNumber: formData.microchipId || undefined,
         registrationNumber: formData.registrationNumber || undefined,
+        breederName: formData.breederName || undefined,
+        ownerName: formData.ownerName || undefined,
         profileImageUrl: uploadedImageUrl || undefined,
         bio: formData.description || undefined,
       };
@@ -258,8 +273,11 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
         color: "",
         markings: "",
         weight: "",
+        height: "",
         microchipId: "",
         registrationNumber: "",
+        breederName: "",
+        ownerName: "",
         description: "",
       });
       setCurrentStep(1);
@@ -539,17 +557,33 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg) *</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  value={formData.weight}
-                  onChange={(e) => updateFormData("weight", e.target.value)}
-                  placeholder="Enter weight in kg"
-                  className="bg-background border-primary/20"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="weight">Weight (kg) *</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    step="0.01"
+                    value={formData.weight}
+                    onChange={(e) => updateFormData("weight", e.target.value)}
+                    placeholder="Enter weight in kg"
+                    className="bg-background border-primary/20"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="height">Height (cm)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    step="0.01"
+                    value={formData.height}
+                    onChange={(e) => updateFormData("height", e.target.value)}
+                    placeholder="Height at shoulder"
+                    className="bg-background border-primary/20"
+                  />
+                </div>
               </div>
             </div>
           )}
