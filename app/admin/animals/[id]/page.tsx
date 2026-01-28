@@ -2,7 +2,8 @@
 
 import { use, useState } from "react";
 import { notFound, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AdminAddAnimalDialog } from "@/components/admin/AdminAddAnimalDialog";
 import { ProfileTab } from "@/components/breeder/animals/ProfileTab";
 import { PhotosDocsTab } from "@/components/breeder/animals/PhotosDocsTab";
 import { FeedingPlanTab } from "@/components/breeder/animals/FeedingPlanTab";
@@ -531,41 +532,6 @@ export default function AdminAnimalProfilePage({ params, searchParams }: PagePro
           </div>
         </div>
       </div>
-
-      {/* Edit Animal Dialog */}
-      {animal && owner && (
-        <AdminAddAnimalDialog
-          open={showEditDialog}
-          onOpenChange={(open) => {
-            setShowEditDialog(open);
-            if (!open) {
-              queryClient.invalidateQueries({ queryKey: ['admin-animal', resolvedParams.id] });
-            }
-          }}
-          userId={animal.userId}
-          userName={owner.name || 'User'}
-          animalId={animal.id}
-          mode="edit"
-          initialData={{
-            name: animal.name,
-            registeredName: animal.registeredName,
-            type: animal.sex === 'male' ? 'dog' : 'bitch',
-            breed: animal.breed?.name,
-            breedId: animal.breed?.id,
-            dateOfBirth: animal.dateOfBirth ? new Date(animal.dateOfBirth) : undefined,
-            profilePhotoUrl: animal.profileImageUrl,
-            color: animal.color || '',
-            markings: animal.markings || '',
-            weight: animal.weight ? animal.weight.toString() : '',
-            height: animal.height ? animal.height.toString() : '',
-            microchipId: animal.microchipNumber || '',
-            registrationNumber: animal.registrationNumber || '',
-            description: animal.bio || '',
-            breederName: animal.breederName || '',
-            ownerName: animal.ownerName || '',
-          }}
-        />
-      )}
 
       {/* Image Lightbox */}
       <ImageLightbox

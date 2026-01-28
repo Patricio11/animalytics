@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ShieldCheck,
   BadgeCheck,
+  PawPrint,
 } from "lucide-react";
 import {
   Sidebar,
@@ -34,6 +35,12 @@ const adminNavItems = [
     title: "Users",
     url: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Animals",
+    url: "/admin/animals",
+    icon: PawPrint,
+    description: "Manage all animals",
   },
   {
     title: "Verifications",

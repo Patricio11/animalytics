@@ -1,8 +1,7 @@
 import {
   Home, Heart, Activity, Calculator, ShoppingBag, Settings,
   Users, Shield, BarChart3, Calendar, Stethoscope,
-  FileText, Trophy, UserCheck,
-  Presentation, Database
+  FileText, Trophy, UserCheck, Presentation, Database, PawPrint
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { UserRole, USER_ROLES } from './roles';
@@ -91,6 +90,12 @@ export const ROLE_NAVIGATION: Record<UserRole, NavigationItem[]> = {
       ]
     },
     {
+      name: 'Animals',
+      href: '/admin/animals',
+      icon: PawPrint,
+      description: 'Manage all animals in the system',
+    },
+    {
       name: 'Analytics',
       href: '/(admin)/analytics',
       icon: BarChart3,
@@ -113,6 +118,27 @@ export const ROLE_NAVIGATION: Record<UserRole, NavigationItem[]> = {
         { name: 'Integrations', href: '/(admin)/settings/integrations', icon: Settings },
         { name: 'Backup', href: '/(admin)/settings/backup', icon: Database },
       ]
+    },
+  ],
+
+  [USER_ROLES.PET_OWNER]: [
+    {
+      name: 'Dashboard',
+      href: '/pet-owner/dashboard',
+      icon: Home,
+      description: 'Your pet management overview'
+    },
+    {
+      name: 'My Pets',
+      href: '/pet-owner/animals',
+      icon: Heart,
+      description: 'Manage your pet profiles'
+    },
+    {
+      name: 'Marketplace',
+      href: '/pet-owner/marketplace',
+      icon: ShoppingBag,
+      description: 'Browse available animals'
     },
   ],
 
@@ -213,6 +239,10 @@ export const QUICK_ACTIONS: Record<UserRole, NavigationItem[]> = {
     { name: 'View Analytics', href: '/(admin)/analytics', icon: BarChart3 },
     { name: 'System Health', href: '/(admin)/settings/health', icon: Shield },
     { name: 'Backup Data', href: '/(admin)/settings/backup', icon: Database },
+  ],
+  [USER_ROLES.PET_OWNER]: [
+    { name: 'Add Pet', href: '/pet-owner/animals/new', icon: Heart },
+    { name: 'Browse Marketplace', href: '/pet-owner/marketplace', icon: ShoppingBag },
   ],
   [USER_ROLES.VET]: [
     { name: 'New Appointment', href: '/(vet)/appointments/new', icon: Calendar },
