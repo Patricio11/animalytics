@@ -35,14 +35,32 @@ interface AnimalFormData {
   weight: string;
   height: string;
 
-  // Step 3: Registration
+  // Step 3: Registration & Parentage
   microchipId: string;
   registrationNumber: string;
+  dndProfileNumber: string;
+  
+  // Breeder information
+  breederMode: 'account_owner' | 'manual';
   breederName: string;
+  breederRegistrationNumber: string;
+  
+  // Owner information
+  ownerMode: 'account_owner' | 'manual';
   ownerName: string;
+  ownerRegistrationNumber: string;
+  
+  // Parent information
+  sireMode: 'none' | 'manual';
+  damMode: 'none' | 'manual';
+  sireRegistrationNumber: string;
+  sireRegisteredName: string;
+  damRegistrationNumber: string;
+  damRegisteredName: string;
 
   // Step 4: Additional Info
   description: string;
+  location: string;
 }
 
 interface AdminAddAnimalDialogProps {
@@ -77,9 +95,21 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
     height: "",
     microchipId: "",
     registrationNumber: "",
+    dndProfileNumber: "",
+    breederMode: "account_owner",
     breederName: "",
+    breederRegistrationNumber: "",
+    ownerMode: "account_owner",
     ownerName: "",
+    ownerRegistrationNumber: "",
+    sireMode: "none",
+    damMode: "none",
+    sireRegistrationNumber: "",
+    sireRegisteredName: "",
+    damRegistrationNumber: "",
+    damRegisteredName: "",
     description: "",
+    location: "",
   });
 
   const totalSteps = 4;
@@ -100,9 +130,21 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
         height: initialData.height || '',
         microchipId: initialData.microchipId || '',
         registrationNumber: initialData.registrationNumber || '',
+        dndProfileNumber: (initialData as any).dndProfileNumber || '',
+        breederMode: initialData.breederName ? 'manual' : 'account_owner',
         breederName: initialData.breederName || '',
+        breederRegistrationNumber: (initialData as any).breederRegistrationNumber || '',
+        ownerMode: initialData.ownerName ? 'manual' : 'account_owner',
         ownerName: initialData.ownerName || '',
+        ownerRegistrationNumber: (initialData as any).ownerRegistrationNumber || '',
+        sireMode: (initialData as any).sireRegisteredName ? 'manual' : 'none',
+        damMode: (initialData as any).damRegisteredName ? 'manual' : 'none',
+        sireRegistrationNumber: (initialData as any).sireRegistrationNumber || '',
+        sireRegisteredName: (initialData as any).sireRegisteredName || '',
+        damRegistrationNumber: (initialData as any).damRegistrationNumber || '',
+        damRegisteredName: (initialData as any).damRegisteredName || '',
         description: initialData.description || '',
+        location: (initialData as any).location || '',
       });
     } else if (open && mode === 'create') {
       // Reset form for create mode
@@ -225,10 +267,27 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
         height: formData.height ? parseFloat(formData.height) : undefined,
         microchipNumber: formData.microchipId || undefined,
         registrationNumber: formData.registrationNumber || undefined,
-        breederName: formData.breederName || undefined,
-        ownerName: formData.ownerName || undefined,
+        dndProfileNumber: formData.dndProfileNumber || undefined,
+        
+        // Breeder information - send based on mode
+        breederMode: formData.breederMode,
+        breederName: formData.breederMode === 'manual' ? formData.breederName || undefined : undefined,
+        breederRegistrationNumber: formData.breederMode === 'manual' ? formData.breederRegistrationNumber || undefined : undefined,
+        
+        // Owner information - send based on mode
+        ownerMode: formData.ownerMode,
+        ownerName: formData.ownerMode === 'manual' ? formData.ownerName || undefined : undefined,
+        ownerRegistrationNumber: formData.ownerMode === 'manual' ? formData.ownerRegistrationNumber || undefined : undefined,
+        
+        // Parent information - send based on mode
+        sireRegistrationNumber: formData.sireMode === 'manual' ? formData.sireRegistrationNumber || undefined : undefined,
+        sireRegisteredName: formData.sireMode === 'manual' ? formData.sireRegisteredName || undefined : undefined,
+        damRegistrationNumber: formData.damMode === 'manual' ? formData.damRegistrationNumber || undefined : undefined,
+        damRegisteredName: formData.damMode === 'manual' ? formData.damRegisteredName || undefined : undefined,
+        
         profileImageUrl: uploadedImageUrl || undefined,
         bio: formData.description || undefined,
+        location: formData.location || undefined,
       };
 
       // Create or update animal via admin API
@@ -276,9 +335,21 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
         height: "",
         microchipId: "",
         registrationNumber: "",
+        dndProfileNumber: "",
+        breederMode: "account_owner",
         breederName: "",
+        breederRegistrationNumber: "",
+        ownerMode: "account_owner",
         ownerName: "",
+        ownerRegistrationNumber: "",
+        sireMode: "none",
+        damMode: "none",
+        sireRegistrationNumber: "",
+        sireRegisteredName: "",
+        damRegistrationNumber: "",
+        damRegisteredName: "",
         description: "",
+        location: "",
       });
       setCurrentStep(1);
       setPendingImageFile(null);
@@ -588,14 +659,15 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
             </div>
           )}
 
-          {/* Step 3: Registration */}
+          {/* Step 3: Registration & Parentage */}
           {currentStep === 3 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Registration Information</h3>
-                <p className="text-sm text-muted-foreground">Official registration details (optional)</p>
+                <h3 className="text-lg font-semibold mb-2">Registration & Parentage</h3>
+                <p className="text-sm text-muted-foreground">Official registration and parent information</p>
               </div>
 
+              {/* Registration Numbers - Grid Layout */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="microchipId">Microchip ID</Label>
@@ -618,7 +690,272 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
                     className="bg-background border-primary/20"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dndProfileNumber">DND Profile No.</Label>
+                  <Input
+                    id="dndProfileNumber"
+                    value={formData.dndProfileNumber}
+                    onChange={(e) => updateFormData("dndProfileNumber", e.target.value)}
+                    placeholder="DND profile number"
+                    className="bg-background border-primary/20"
+                  />
+                </div>
               </div>
+
+              {/* Breeder Information - Fieldset */}
+              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+                <legend className="text-sm font-semibold px-2 text-primary">Breeder</legend>
+                
+                {/* Mode Selection */}
+                <RadioGroup 
+                  value={formData.breederMode} 
+                  onValueChange={(value: 'account_owner' | 'manual') => {
+                    updateFormData("breederMode", value);
+                    if (value === 'account_owner') {
+                      updateFormData("breederName", "");
+                      updateFormData("breederRegistrationNumber", "");
+                    }
+                  }}
+                  className="mb-4"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="account_owner" id="breeder-account" />
+                      <Label htmlFor="breeder-account" className="font-normal cursor-pointer">
+                        Account owner ({userName})
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="manual" id="breeder-manual" />
+                      <Label htmlFor="breeder-manual" className="font-normal cursor-pointer">
+                        Enter manually
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+
+                {/* Manual Entry */}
+                {formData.breederMode === 'manual' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="breederName">Breeder Name</Label>
+                      <Input
+                        id="breederName"
+                        value={formData.breederName}
+                        onChange={(e) => updateFormData("breederName", e.target.value)}
+                        placeholder="e.g., John Smith Kennels"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="breederRegistrationNumber">Registration Number</Label>
+                      <Input
+                        id="breederRegistrationNumber"
+                        value={formData.breederRegistrationNumber}
+                        onChange={(e) => updateFormData("breederRegistrationNumber", e.target.value)}
+                        placeholder="e.g., AKC-BREEDER-123"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Account Owner Mode - Show confirmation */}
+                {formData.breederMode === 'account_owner' && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      ✓ {userName} will be recorded as the breeder of this animal.
+                    </p>
+                  </div>
+                )}
+              </fieldset>
+
+              {/* Owner Information - Fieldset */}
+              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+                <legend className="text-sm font-semibold px-2 text-primary">Owner</legend>
+                
+                {/* Mode Selection */}
+                <RadioGroup 
+                  value={formData.ownerMode} 
+                  onValueChange={(value: 'account_owner' | 'manual') => {
+                    updateFormData("ownerMode", value);
+                    if (value === 'account_owner') {
+                      updateFormData("ownerName", "");
+                      updateFormData("ownerRegistrationNumber", "");
+                    }
+                  }}
+                  className="mb-4"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="account_owner" id="owner-account" />
+                      <Label htmlFor="owner-account" className="font-normal cursor-pointer">
+                        Account owner ({userName})
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="manual" id="owner-manual" />
+                      <Label htmlFor="owner-manual" className="font-normal cursor-pointer">
+                        Enter manually
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+
+                {/* Manual Entry */}
+                {formData.ownerMode === 'manual' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="ownerName">Owner Name</Label>
+                      <Input
+                        id="ownerName"
+                        value={formData.ownerName}
+                        onChange={(e) => updateFormData("ownerName", e.target.value)}
+                        placeholder="e.g., Jane Doe"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ownerRegistrationNumber">Registration Number</Label>
+                      <Input
+                        id="ownerRegistrationNumber"
+                        value={formData.ownerRegistrationNumber}
+                        onChange={(e) => updateFormData("ownerRegistrationNumber", e.target.value)}
+                        placeholder="e.g., AKC-OWNER-456"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Account Owner Mode - Show confirmation */}
+                {formData.ownerMode === 'account_owner' && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      ✓ {userName} will be recorded as the owner of this animal.
+                    </p>
+                  </div>
+                )}
+              </fieldset>
+
+              {/* Sire (Father) Information */}
+              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+                <legend className="text-sm font-semibold px-2 text-primary">Sire (Father)</legend>
+                
+                {/* Mode Selection */}
+                <RadioGroup 
+                  value={formData.sireMode} 
+                  onValueChange={(value: 'none' | 'manual') => {
+                    updateFormData("sireMode", value);
+                    if (value === 'none') {
+                      updateFormData("sireRegistrationNumber", "");
+                      updateFormData("sireRegisteredName", "");
+                    }
+                  }}
+                  className="mb-4"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="none" id="sire-none" />
+                      <Label htmlFor="sire-none" className="font-normal cursor-pointer">
+                        Unknown / Not specified
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="manual" id="sire-manual" />
+                      <Label htmlFor="sire-manual" className="font-normal cursor-pointer">
+                        Enter manually
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+
+                {/* Manual Entry */}
+                {formData.sireMode === 'manual' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="sireRegisteredName">Registered Name</Label>
+                      <Input
+                        id="sireRegisteredName"
+                        value={formData.sireRegisteredName}
+                        onChange={(e) => updateFormData("sireRegisteredName", e.target.value)}
+                        placeholder="e.g., Champion Goldcrest's Maximus Rex"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sireRegistrationNumber">Registration Number</Label>
+                      <Input
+                        id="sireRegistrationNumber"
+                        value={formData.sireRegistrationNumber}
+                        onChange={(e) => updateFormData("sireRegistrationNumber", e.target.value)}
+                        placeholder="e.g., AKC-12345678"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                  </div>
+                )}
+              </fieldset>
+
+              {/* Dam (Mother) Information */}
+              <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
+                <legend className="text-sm font-semibold px-2 text-primary">Dam (Mother)</legend>
+                
+                {/* Mode Selection */}
+                <RadioGroup 
+                  value={formData.damMode} 
+                  onValueChange={(value: 'none' | 'manual') => {
+                    updateFormData("damMode", value);
+                    if (value === 'none') {
+                      updateFormData("damRegistrationNumber", "");
+                      updateFormData("damRegisteredName", "");
+                    }
+                  }}
+                  className="mb-4"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="none" id="dam-none" />
+                      <Label htmlFor="dam-none" className="font-normal cursor-pointer">
+                        Unknown / Not specified
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="manual" id="dam-manual" />
+                      <Label htmlFor="dam-manual" className="font-normal cursor-pointer">
+                        Enter manually
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+
+                {/* Manual Entry */}
+                {formData.damMode === 'manual' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="damRegisteredName">Registered Name</Label>
+                      <Input
+                        id="damRegisteredName"
+                        value={formData.damRegisteredName}
+                        onChange={(e) => updateFormData("damRegisteredName", e.target.value)}
+                        placeholder="e.g., Champion Goldcrest's Bella Rose"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="damRegistrationNumber">Registration Number</Label>
+                      <Input
+                        id="damRegistrationNumber"
+                        value={formData.damRegistrationNumber}
+                        onChange={(e) => updateFormData("damRegistrationNumber", e.target.value)}
+                        placeholder="e.g., AKC-87654321"
+                        className="bg-background border-primary/20"
+                      />
+                    </div>
+                  </div>
+                )}
+              </fieldset>
             </div>
           )}
 
@@ -627,7 +964,21 @@ export function AdminAddAnimalDialog({ open, onOpenChange, userId, userName, ani
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold mb-2">Additional Information</h3>
-                <p className="text-sm text-muted-foreground">Optional notes and description</p>
+                <p className="text-sm text-muted-foreground">Location and additional notes</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => updateFormData("location", e.target.value)}
+                  placeholder="e.g., Cape Town, Western Cape, South Africa"
+                  className="bg-background border-primary/20"
+                />
+                <p className="text-xs text-muted-foreground">
+                  City, Region, Country - Used for filtering and search
+                </p>
               </div>
 
               <div className="space-y-2">
