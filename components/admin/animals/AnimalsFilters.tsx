@@ -24,8 +24,8 @@ export function AnimalsFilters({ filters, onFiltersChange, onReset }: AnimalsFil
   const { data: breedsData } = useBreeds();
   const [breedSearchOpen, setBreedSearchOpen] = useState(false);
 
-  const allBreeds = breedsData?.breeds || [];
-  const selectedBreed = allBreeds.find(b => b.id === filters.breedId);
+  const allBreeds = breedsData || [];
+  const selectedBreed = allBreeds.find((breed) => breed.id === filters.breedId);
 
   const updateFilter = (key: keyof AnimalFilters, value: any) => {
     // Convert 'all' to empty string for API
