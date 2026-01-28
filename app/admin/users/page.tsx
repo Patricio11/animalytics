@@ -480,7 +480,10 @@ export default function AdminUsersPage() {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium">{user.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-medium">{user.name}</p>
+                                {user.isVerified && <VerifiedCheckmark isVerified={true} className="w-3.5 h-3.5" />}
+                              </div>
                               <p className="text-sm text-muted-foreground">{user.email}</p>
                             </div>
                           </div>

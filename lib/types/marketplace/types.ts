@@ -43,6 +43,7 @@ export interface MarketplaceListing {
   breederName: string;
   breederAvatar?: string;
   breederReputation: number;
+  breederVerified?: boolean;
   title: string;
   description: string;
   price?: number;

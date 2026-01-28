@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
 import { EditListingDialog } from "@/components/breeder/marketplace/EditListingDialog";
 import {
   Dialog,

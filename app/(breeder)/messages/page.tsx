@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
 import {
   MessageSquare,
   Search,
@@ -36,6 +37,7 @@ interface Conversation {
     id: string;
     name: string;
     image: string | null;
+    isVerified?: boolean;
   };
   listing: {
     id: string;
@@ -201,9 +203,14 @@ export default function BreederMessagesPage() {
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <h3 className="font-semibold text-foreground truncate">
-                                {conversation.otherParticipant.name}
-                              </h3>
+                              <div className="flex items-center gap-1.5">
+                                <h3 className="font-semibold text-foreground truncate">
+                                  {conversation.otherParticipant.name}
+                                </h3>
+                                {conversation.otherParticipant.isVerified && (
+                                  <VerifiedCheckmark isVerified={true} className="w-3.5 h-3.5" />
+                                )}
+                              </div>
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
                                 {formatRelativeTime(conversation.lastMessageAt)}
                               </span>
@@ -298,9 +305,14 @@ export default function BreederMessagesPage() {
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <h3 className="font-semibold text-foreground truncate">
-                                {conversation.otherParticipant.name}
-                              </h3>
+                              <div className="flex items-center gap-1.5">
+                                <h3 className="font-semibold text-foreground truncate">
+                                  {conversation.otherParticipant.name}
+                                </h3>
+                                {conversation.otherParticipant.isVerified && (
+                                  <VerifiedCheckmark isVerified={true} className="w-3.5 h-3.5" />
+                                )}
+                              </div>
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
                                 {formatRelativeTime(conversation.lastMessageAt)}
                               </span>

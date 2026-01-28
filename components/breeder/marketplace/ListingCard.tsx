@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Trash2, Share2 } from "lucide-react";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
 import type { MarketplaceListing } from "@/lib/types/marketplace";
 import { getCategoryLabel } from "@/lib/utils/marketplace";
 import { CURRENCIES } from "@/lib/utils/currency";
@@ -42,12 +43,13 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onDe
     }
   };
 
-  const categoryConfig = {
+  const categoryConfig: Record<string, { color: string; icon: string }> = {
     'dog-for-sale': { color: 'bg-chart-1 text-white', icon: '🐕' },
     'pups-for-sale': { color: 'bg-chart-3 text-white', icon: '🐶' },
     'reproductive-services': { color: 'bg-chart-4 text-white', icon: '💉' },
     'frozen-semen': { color: 'bg-chart-2 text-white', icon: '❄️' },
     'stud-dog': { color: 'bg-primary text-white', icon: '👑' },
+    'other': { color: 'bg-muted text-white', icon: '📦' },
   };
 
   const config = categoryConfig[listing.category];
@@ -196,7 +198,10 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onDe
               <AvatarFallback>{listing.breederName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="font-medium text-sm text-foreground">{listing.breederName}</div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-sm text-foreground">{listing.breederName}</span>
+                {listing.breederVerified && <VerifiedCheckmark isVerified={true} className="w-3.5 h-3.5" />}
+              </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className="w-3 h-3" />
                 {listing.contact.location}
