@@ -87,15 +87,15 @@ export async function GET(request: NextRequest) {
     if (hasPedigree === 'yes') {
       conditions.push(
         or(
-          isNotNull(animals.sireRegisteredName),
-          isNotNull(animals.damRegisteredName)
+          isNotNull(animals.sireId),
+          isNotNull(animals.damId)
         )
       );
     } else if (hasPedigree === 'no') {
       conditions.push(
         and(
-          isNull(animals.sireRegisteredName),
-          isNull(animals.damRegisteredName)
+          isNull(animals.sireId),
+          isNull(animals.damId)
         )
       );
     }
@@ -115,19 +115,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filter by status (active/inactive based on deletedAt)
+    // Filter by status (active/inactive based on isActive)
     if (status === 'active') {
-      conditions.push(isNull(animals.deletedAt));
+      conditions.push(eq(animals.isActive, true));
     } else if (status === 'inactive') {
-      conditions.push(isNotNull(animals.deletedAt));
+      conditions.push(eq(animals.isActive, false));
     }
-
-    // Default to active animals only if no status filter
-    if (status === 'all') {
-      // Show all
-    } else if (!status || status === 'active') {
-      conditions.push(isNull(animals.deletedAt));
-    }
+    // If status === 'all', don't add any status filter
 
     // Determine sort column
     let orderByColumn;
@@ -136,7 +130,8 @@ export async function GET(request: NextRequest) {
         orderByColumn = animals.name;
         break;
       case 'breed':
-        orderByColumn = breeds.name;
+        // Note: Can't sort by breed name with db.query, will sort by breedId
+        orderByColumn = animals.breedId;
         break;
       case 'dateOfBirth':
         orderByColumn = animals.dateOfBirth;
@@ -149,59 +144,37 @@ export async function GET(request: NextRequest) {
 
     const orderByFn = sortOrder === 'asc' ? asc : desc;
 
-    // Fetch animals with joins
-    const animalsData = await db
-      .select({
-        id: animals.id,
-        name: animals.name,
-        registeredName: animals.registeredName,
-        sex: animals.sex,
-        dateOfBirth: animals.dateOfBirth,
-        profileImageUrl: animals.profileImageUrl,
-        color: animals.color,
-        markings: animals.markings,
-        weight: animals.weight,
-        height: animals.height,
-        microchipNumber: animals.microchipNumber,
-        registrationNumber: animals.registrationNumber,
-        dndProfileNumber: animals.dndProfileNumber,
-        breederName: animals.breederName,
-        ownerName: animals.ownerName,
-        location: animals.location,
-        bio: animals.bio,
-        userId: animals.userId,
-        breedId: animals.breedId,
-        createdAt: animals.createdAt,
-        updatedAt: animals.updatedAt,
-        deletedAt: animals.deletedAt,
-        sireRegisteredName: animals.sireRegisteredName,
-        damRegisteredName: animals.damRegisteredName,
-        breed: {
-          id: breeds.id,
-          name: breeds.name,
-        },
+    // Fetch animals using db.query pattern (like breeder side)
+    const animalsData = await db.query.animals.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      with: {
+        breed: true,
         owner: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          }
         },
-      })
-      .from(animals)
-      .leftJoin(breeds, eq(animals.breedId, breeds.id))
-      .leftJoin(users, eq(animals.userId, users.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(orderByFn(orderByColumn))
-      .limit(limit)
-      .offset(offset);
+        breeder: {
+          columns: {
+            id: true,
+            name: true,
+          }
+        },
+      },
+      orderBy: orderByFn(orderByColumn),
+      limit,
+      offset,
+    });
 
     // Get total count for pagination
-    const totalCountResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(animals)
-      .leftJoin(breeds, eq(animals.breedId, breeds.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
-
-    const totalCount = Number(totalCountResult[0]?.count || 0);
+    const totalCountResult = await db.query.animals.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      columns: { id: true },
+    });
+    
+    const totalCount = totalCountResult.length;
     const totalPages = Math.ceil(totalCount / limit);
 
     // Get stats for dashboard
@@ -231,19 +204,18 @@ async function getAnimalStats() {
     // Total animals
     const totalAnimals = await db
       .select({ count: sql<number>`count(*)` })
-      .from(animals)
-      .where(isNull(animals.deletedAt));
+      .from(animals);
 
     // Active vs Inactive
     const activeCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(animals)
-      .where(isNull(animals.deletedAt));
+      .where(eq(animals.isActive, true));
 
     const inactiveCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(animals)
-      .where(isNotNull(animals.deletedAt));
+      .where(eq(animals.isActive, false));
 
     // Animals by sex
     const bySex = await db
@@ -252,7 +224,7 @@ async function getAnimalStats() {
         count: sql<number>`count(*)`,
       })
       .from(animals)
-      .where(isNull(animals.deletedAt))
+      .where(eq(animals.isActive, true))
       .groupBy(animals.sex);
 
     // Top 5 breeds
@@ -263,7 +235,7 @@ async function getAnimalStats() {
       })
       .from(animals)
       .leftJoin(breeds, eq(animals.breedId, breeds.id))
-      .where(isNull(animals.deletedAt))
+      .where(eq(animals.isActive, true))
       .groupBy(breeds.name)
       .orderBy(desc(sql<number>`count(*)`))
       .limit(5);
@@ -274,10 +246,10 @@ async function getAnimalStats() {
       .from(animals)
       .where(
         and(
-          isNull(animals.deletedAt),
+          eq(animals.isActive, true),
           or(
-            isNotNull(animals.sireRegisteredName),
-            isNotNull(animals.damRegisteredName)
+            isNotNull(animals.sireId),
+            isNotNull(animals.damId)
           )
         )
       );
@@ -291,8 +263,8 @@ async function getAnimalStats() {
       .from(animals)
       .where(
         and(
-          isNull(animals.deletedAt),
-          gte(animals.createdAt, thirtyDaysAgo.toISOString())
+          eq(animals.isActive, true),
+          gte(animals.createdAt, thirtyDaysAgo)
         )
       );
 

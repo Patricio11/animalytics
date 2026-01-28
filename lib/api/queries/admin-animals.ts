@@ -41,8 +41,8 @@ export interface Animal {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  sireRegisteredName: string | null;
-  damRegisteredName: string | null;
+  sireId: string | null;
+  damId: string | null;
   breed: {
     id: string;
     name: string;
