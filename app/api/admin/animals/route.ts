@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { animals, breeds, users, breederProfiles } from '@/lib/db/schema';
 import { eq, and, or, like, sql, desc, asc, gte, lte, isNotNull, isNull } from 'drizzle-orm';
-import { authClient } from '@/lib/auth/server';
+import { auth } from '@/lib/auth/config';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await authClient.api.getSession({
+    const session = await auth.api.getSession({
       headers: request.headers,
     });
 

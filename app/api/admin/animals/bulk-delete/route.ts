@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { animals } from '@/lib/db/schema';
 import { inArray } from 'drizzle-orm';
-import { authClient } from '@/lib/auth/server';
+import { auth } from '@/lib/auth/config';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await authClient.api.getSession({
+    const session = await auth.api.getSession({
       headers: request.headers,
     });
 
