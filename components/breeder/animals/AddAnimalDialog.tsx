@@ -46,6 +46,7 @@ interface AnimalFormData {
   color: string;
   markings: string;
   weight: string;
+  height: string;
 
   // Step 3: Registration & Parentage
   microchipId: string;
@@ -112,6 +113,7 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
     color: "",
     markings: "",
     weight: "",
+    height: "",
     microchipId: "",
     registrationNumber: "",
     dndProfileNumber: "",
@@ -150,6 +152,7 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
         color: initialData.color || '',
         markings: initialData.markings || '',
         weight: initialData.weight || '',
+        height: initialData.height || '',
         microchipId: initialData.microchipId || '',
         registrationNumber: initialData.registrationNumber || '',
         dndProfileNumber: (initialData as any).dndProfileNumber || '',
@@ -172,7 +175,7 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
         description: initialData.description || '',
         location: (initialData as any).location || '',
       });
-    } else if (open && mode === 'create' && !formData.location) {
+    } else if (open && mode === 'create') {
       // Build location string from regional settings
       const locationParts = [];
       if (regionalSettings.city) locationParts.push(regionalSettings.city);
@@ -180,12 +183,43 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
       if (regionalSettings.country) locationParts.push(regionalSettings.country);
       
       const locationString = locationParts.join(', ');
-      if (locationString) {
-        setFormData(prev => ({ ...prev, location: locationString }));
-        console.log('📍 Pre-populated location from regional settings:', locationString);
-      } else {
-        console.log('⚠️ Regional settings location data not available:', regionalSettings);
-      }
+      
+      // Reset form for create mode with location pre-populated
+      setFormData({
+        profilePhotoUrl: null,
+        name: '',
+        registeredName: '',
+        type: 'bitch',
+        breed: '',
+        dateOfBirth: undefined,
+        color: '',
+        markings: '',
+        weight: '',
+        height: '',
+        microchipId: '',
+        registrationNumber: '',
+        dndProfileNumber: '',
+        breederMode: 'self',
+        breederId: '',
+        breederName: '',
+        breederRegistrationNumber: '',
+        ownerMode: 'self',
+        ownerId: '',
+        ownerName: '',
+        ownerRegistrationNumber: '',
+        sireMode: 'manual',
+        damMode: 'manual',
+        sireId: '',
+        damId: '',
+        sireRegistrationNumber: '',
+        sireRegisteredName: '',
+        damRegistrationNumber: '',
+        damRegisteredName: '',
+        description: '',
+        location: locationString,
+      });
+      setCurrentStep(1);
+      setPendingImageFile(null);
     }
   }, [open, mode, initialData, regionalSettings]);
 
@@ -345,6 +379,7 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
         color: formData.color || undefined,
         markings: formData.markings || undefined,
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        height: formData.height ? parseFloat(formData.height) : undefined,
         microchipNumber: formData.microchipId || undefined,
         registrationNumber: formData.registrationNumber || undefined,
         bio: formData.description || undefined,
@@ -448,6 +483,7 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
         color: "",
         markings: "",
         weight: "",
+        height: "",
         microchipId: "",
         registrationNumber: "",
         dndProfileNumber: "",
@@ -788,11 +824,25 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                 <Input
                   id="weight"
                   type="number"
+                  step="0.01"
                   value={formData.weight}
                   onChange={(e) => updateFormData("weight", e.target.value)}
                   placeholder="Enter weight in kg"
                   className="bg-background border-primary/20"
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="height">Height (cm)</Label>
+                <Input
+                  id="height"
+                  type="number"
+                  step="0.01"
+                  value={formData.height}
+                  onChange={(e) => updateFormData("height", e.target.value)}
+                  placeholder="Height at shoulder"
+                  className="bg-background border-primary/20"
                 />
               </div>
             </div>
