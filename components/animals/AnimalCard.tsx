@@ -166,7 +166,7 @@ export function AnimalCard({
           )}
 
           {/* View Profile Button */}
-          <Link href={`/animal/${id}`} className="block pt-2">
+          <Link href={`/animals/${id}`} className="block pt-2">
             <Button className="w-full bg-gradient-brand hover:opacity-90">
               View Profile
             </Button>
