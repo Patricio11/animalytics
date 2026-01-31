@@ -397,6 +397,18 @@ export async function PATCH(
 }
 
 // ============================================================================
+// PUT /api/animals/[id] - Update animal (alias for PATCH)
+// ============================================================================
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // PUT and PATCH do the same thing for this endpoint
+  return PATCH(request, { params });
+}
+
+// ============================================================================
 // DELETE /api/animals/[id] - Delete animal
 // ============================================================================
 
