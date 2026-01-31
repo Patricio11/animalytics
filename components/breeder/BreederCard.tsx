@@ -26,6 +26,7 @@ interface BreederCardProps {
   kycVerified?: boolean;
   premiumMember?: boolean;
   profileViews?: number;
+  animalCount?: number;
 }
 
 export function BreederCard({
@@ -41,6 +42,7 @@ export function BreederCard({
   kycVerified = false,
   premiumMember = false,
   profileViews = 0,
+  animalCount = 0,
 }: BreederCardProps) {
   const locationString = location
     ? [location.city, location.state, location.country].filter(Boolean).join(', ')
@@ -117,8 +119,8 @@ export function BreederCard({
           </div>
 
           <div className="text-center border-x">
-            <div className="font-bold text-sm mb-1">{totalSales}</div>
-            <p className="text-xs text-muted-foreground">Sales</p>
+            <div className="font-bold text-sm mb-1">{animalCount}</div>
+            <p className="text-xs text-muted-foreground">Animals</p>
           </div>
 
           <div className="text-center">

@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { breederProfiles } from '@/lib/db/schema/profiles';
 import { users } from '@/lib/db/schema/users';
 import { breederBreedPreferences } from '@/lib/db/schema/user-breed-preferences';
-import { breeds } from '@/lib/db/schema/animals';
+import { breeds, animals } from '@/lib/db/schema/animals';
 import { eq, desc, ilike, or, and, sql } from 'drizzle-orm';
 
 // ============================================================================
@@ -81,11 +81,15 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    // Fetch breed preferences for all breeders in this batch
+    // Fetch breed preferences and animal counts for all breeders in this batch
     let breedsByBreeder: Record<string, string[]> = {};
+    let animalCountsByUserId: Record<string, number> = {};
     
     if (results.length > 0) {
       const breederIds = results.map(r => r.id);
+      const userIds = results.map(r => r.userId);
+      
+      // Fetch breed preferences
       const breedPreferencesData = await db
         .select({
           breederProfileId: breederBreedPreferences.breederProfileId,
@@ -94,6 +98,27 @@ export async function GET(request: NextRequest) {
         .from(breederBreedPreferences)
         .leftJoin(breeds, eq(breederBreedPreferences.breedId, breeds.id))
         .where(sql`${breederBreedPreferences.breederProfileId} IN (${sql.join(breederIds.map(id => sql`${id}`), sql`, `)})`);
+
+      // Fetch animal counts per breeder
+      const animalCountsData = await db
+        .select({
+          userId: animals.userId,
+          count: sql<number>`count(*)`
+        })
+        .from(animals)
+        .where(
+          and(
+            sql`${animals.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`,
+            eq(animals.isActive, true)
+          )
+        )
+        .groupBy(animals.userId);
+      
+      // Map animal counts by userId
+      animalCountsByUserId = animalCountsData.reduce((acc, item) => {
+        acc[item.userId] = Number(item.count);
+        return acc;
+      }, {} as Record<string, number>);
 
       // Group breed preferences by breeder profile ID
       breedsByBreeder = breedPreferencesData.reduce((acc, item) => {
@@ -129,12 +154,16 @@ export async function GET(request: NextRequest) {
         ? breedPreferences 
         : (result.primaryBreeds || []);
 
+      // Get animal count for this breeder
+      const animalCount = animalCountsByUserId[result.userId] || 0;
+
       // Remove userPreferences from final output
       const { userPreferences, ...breederData } = result;
       return {
         ...breederData,
         location,
         primaryBreeds,
+        animalCount,
       };
     });
 
