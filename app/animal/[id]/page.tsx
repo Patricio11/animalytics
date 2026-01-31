@@ -12,7 +12,7 @@ import { LitterDetailsTab } from "@/components/breeder/animals/LitterDetailsTab"
 import { RemindersTab } from "@/components/breeder/animals/RemindersTab";
 import { PedigreeTab } from "@/components/breeder/animals/PedigreeTab";
 import { HealthTab } from "@/components/breeder/animals/HealthTab";
-import { EditAnimalDialog } from "@/components/breeder/animals/EditAnimalDialog";
+import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -341,7 +341,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
                 <div className="p-6">
                   <TabsContent value="profile" className="mt-0">
-                    <ProfileTab animal={animal} onEdit={() => setShowEditDialog(true)} />
+                    <ProfileTab animal={animal} animalId={animal.id} onEdit={() => setShowEditDialog(true)} />
                   </TabsContent>
 
                   <TabsContent value="health" className="mt-0">
@@ -359,6 +359,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   <TabsContent value="feeding" className="mt-0">
                     <FeedingPlanTab
                       animalId={animal.id}
+                      animalName={animal.name}
                       feedingPlans={animal.feedingPlans || []}
                     />
                   </TabsContent>
@@ -575,13 +576,14 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
       {/* Edit Animal Dialog - Only for owner */}
       {isOwner && (
-        <EditAnimalDialog
+        <AddAnimalDialog
           open={showEditDialog}
           onOpenChange={setShowEditDialog}
+          mode="edit"
           animalId={animal.id}
-          animalData={{
+          initialData={{
             name: animal.name,
-            sex: animal.sex,
+            type: animal.sex === 'male' ? 'dog' : 'bitch',
             breed: animal.breed?.name || '',
             dateOfBirth: new Date(animal.dateOfBirth),
             color: animal.color || '',
@@ -589,10 +591,12 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
             weight: animal.weight || '',
             microchipId: animal.microchipNumber || '',
             registrationNumber: animal.registrationNumber || '',
-            bloodline: '',
+            dndProfileNumber: animal.dndProfileNumber || '',
+            breederName: animal.breederName || '',
+            ownerName: animal.ownerName || '',
             description: animal.bio || '',
-            location: '',
-            imageUrl: animal.profileImageUrl || '',
+            location: animal.location || '',
+            profilePhotoUrl: animal.profileImageUrl || '',
           }}
         />
       )}

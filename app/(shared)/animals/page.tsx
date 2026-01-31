@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import { AnimalCard } from "@/components/breeder/AnimalCard";
 import { AddAnimalDialog } from "@/components/breeder/animals/AddAnimalDialog";
-import { EditAnimalDialog } from "@/components/breeder/animals/EditAnimalDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -214,16 +213,17 @@ export default function Animals() {
         
         {/* Edit Animal Dialog */}
         {editingAnimal && (
-          <EditAnimalDialog
+          <AddAnimalDialog
             open={showEditAnimal}
             onOpenChange={setShowEditAnimal}
+            mode="edit"
             animalId={editingAnimal.id}
-            animalData={{
+            initialData={{
               name: editingAnimal.name,
-              sex: editingAnimal.gender,
+              type: editingAnimal.gender === 'male' ? 'dog' : 'bitch',
               breed: editingAnimal.breed,
               dateOfBirth: editingAnimal.dateOfBirth,
-              imageUrl: editingAnimal.imageUrl,
+              profilePhotoUrl: editingAnimal.imageUrl,
             }}
           />
         )}

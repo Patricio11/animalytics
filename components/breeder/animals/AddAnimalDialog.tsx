@@ -28,6 +28,9 @@ import { STORAGE_PATHS } from "@/lib/supabase";
 interface AddAnimalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode?: 'create' | 'edit';
+  animalId?: string;
+  initialData?: Partial<AnimalFormData> & { breedId?: string };
 }
 
 interface AnimalFormData {
@@ -80,7 +83,7 @@ interface AnimalFormData {
   location: string;
 }
 
-export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
+export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId, initialData }: AddAnimalDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
@@ -134,9 +137,42 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
 
   const totalSteps = 4;
 
-  // Pre-populate location from regional settings when dialog opens
+  // Populate form data when editing or reset when creating
   useEffect(() => {
-    if (open && !formData.location) {
+    if (open && mode === 'edit' && initialData) {
+      setFormData({
+        profilePhotoUrl: initialData.profilePhotoUrl || null,
+        name: initialData.name || '',
+        registeredName: initialData.registeredName || '',
+        type: initialData.type || 'bitch',
+        breed: initialData.breed || '',
+        dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined,
+        color: initialData.color || '',
+        markings: initialData.markings || '',
+        weight: initialData.weight || '',
+        microchipId: initialData.microchipId || '',
+        registrationNumber: initialData.registrationNumber || '',
+        dndProfileNumber: (initialData as any).dndProfileNumber || '',
+        breederMode: initialData.breederName ? 'manual' : 'self',
+        breederId: '',
+        breederName: initialData.breederName || '',
+        breederRegistrationNumber: (initialData as any).breederRegistrationNumber || '',
+        ownerMode: initialData.ownerName ? 'manual' : 'self',
+        ownerId: '',
+        ownerName: initialData.ownerName || '',
+        ownerRegistrationNumber: (initialData as any).ownerRegistrationNumber || '',
+        sireMode: (initialData as any).sireRegisteredName ? 'manual' : 'select',
+        damMode: (initialData as any).damRegisteredName ? 'manual' : 'select',
+        sireId: '',
+        damId: '',
+        sireRegistrationNumber: (initialData as any).sireRegistrationNumber || '',
+        sireRegisteredName: (initialData as any).sireRegisteredName || '',
+        damRegistrationNumber: (initialData as any).damRegistrationNumber || '',
+        damRegisteredName: (initialData as any).damRegisteredName || '',
+        description: initialData.description || '',
+        location: (initialData as any).location || '',
+      });
+    } else if (open && mode === 'create' && !formData.location) {
       // Build location string from regional settings
       const locationParts = [];
       if (regionalSettings.city) locationParts.push(regionalSettings.city);
@@ -151,7 +187,7 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         console.log('⚠️ Regional settings location data not available:', regionalSettings);
       }
     }
-  }, [open, regionalSettings.city, regionalSettings.region, regionalSettings.country, formData.location]);
+  }, [open, mode, initialData, regionalSettings]);
 
   const updateFormData = (field: keyof AnimalFormData, value: string | Date | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -338,13 +374,32 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         damRegisteredName: formData.damMode === 'manual' ? formData.damRegisteredName || undefined : undefined,
       };
 
-      // Create animal via API
-      const createdAnimal = await createAnimalMutation.mutateAsync(animalData);
+      // Create or update animal via API
+      let resultAnimal;
+      if (mode === 'edit' && animalId) {
+        // Update existing animal
+        const response = await fetch(`/api/animals/${animalId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(animalData),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update animal');
+        }
+        
+        const result = await response.json();
+        resultAnimal = result.data;
+      } else {
+        // Create new animal
+        resultAnimal = await createAnimalMutation.mutateAsync(animalData);
+      }
 
       // If profile photo was uploaded, save it to animal_photos table
-      if (uploadedImageUrl && createdAnimal?.id) {
+      if (uploadedImageUrl && resultAnimal?.id) {
         try {
-          const photoResponse = await fetch(`/api/animals/${createdAnimal.id}/photos`, {
+          const photoResponse = await fetch(`/api/animals/${resultAnimal.id}/photos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -369,15 +424,17 @@ export function AddAnimalDialog({ open, onOpenChange }: AddAnimalDialogProps) {
         }
       }
 
-      // Invalidate queries to refresh animal data (always do this after creation)
+      // Invalidate queries to refresh animal data
       await queryClient.invalidateQueries({ queryKey: ['animals'] });
-      if (createdAnimal?.id) {
-        await queryClient.invalidateQueries({ queryKey: ['animals', createdAnimal.id] });
+      if (resultAnimal?.id) {
+        await queryClient.invalidateQueries({ queryKey: ['animals', resultAnimal.id] });
       }
 
       toast({
-        title: "Animal Added Successfully!",
-        description: `${formData.name} has been added to your animals.`,
+        title: mode === 'edit' ? "Animal Updated Successfully!" : "Animal Added Successfully!",
+        description: mode === 'edit' 
+          ? `${formData.name} has been updated.`
+          : `${formData.name} has been added to your animals.`,
       });
 
       // Reset and close
