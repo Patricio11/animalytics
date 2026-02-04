@@ -375,7 +375,9 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
         registeredName: formData.registeredName || undefined,
         breedId: selectedBreed.id,
         sex: formData.type === 'dog' ? 'male' as const : 'female' as const,
-        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split('T')[0] : undefined,
+        dateOfBirth: formData.dateOfBirth 
+          ? `${formData.dateOfBirth.getFullYear()}-${String(formData.dateOfBirth.getMonth() + 1).padStart(2, '0')}-${String(formData.dateOfBirth.getDate()).padStart(2, '0')}`
+          : undefined,
         color: formData.color || undefined,
         markings: formData.markings || undefined,
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
