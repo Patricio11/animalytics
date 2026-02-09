@@ -500,7 +500,7 @@ export default function AdminMarketplacePage() {
                       <span className="text-muted-foreground">Owner:</span>
                       {listing.breederProfileSlug ? (
                         <Link 
-                          href={`/breeders/${listing.breederProfileSlug}`}
+                          href={`/breeders/${listing.breederProfileSlug}?source=admin-marketplace`}
                           target="_blank"
                           className="font-medium text-primary hover:underline flex items-center gap-1"
                         >
@@ -679,7 +679,7 @@ export default function AdminMarketplacePage() {
                       <p className="text-sm text-muted-foreground">{selectedListing.userEmail}</p>
                     </div>
                     <Link 
-                      href={`/breeder/profile/${selectedListing.userId}`}
+                      href={selectedListing.breederProfileSlug ? `/breeders/${selectedListing.breederProfileSlug}?source=admin-marketplace` : `/admin/users/${selectedListing.userId}`}
                       target="_blank"
                       className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                     >

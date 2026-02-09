@@ -50,6 +50,15 @@ export function BreederCard({
 
   const rating = parseFloat(averageRating);
 
+  // Build SEO-friendly marketing URL with tracking params
+  const profileUrl = (() => {
+    const params = new URLSearchParams();
+    params.set('source', 'breeders-directory');
+    if (primaryBreeds.length > 0) params.set('breed', primaryBreeds[0]);
+    if (location?.country) params.set('location', location.country);
+    return `/breeders/${slug}?${params.toString()}`;
+  })();
+
   return (
     <Card className="shadow-card hover-elevate transition-all duration-200 group">
       <CardContent className="p-6">
@@ -141,7 +150,7 @@ export function BreederCard({
         )}
 
         {/* View Profile Button */}
-        <Link href={`/breeders/${slug}`} className="block">
+        <Link href={profileUrl} className="block">
           <Button className="w-full bg-gradient-brand hover:opacity-90">
             View Profile
           </Button>
