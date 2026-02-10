@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Save, X } from "lucide-react";
 import {
@@ -34,6 +34,7 @@ export function EditProfileDialog({
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     logoUrl: profile?.logoUrl || "",
+    bannerUrl: profile?.bannerUrl || "",
     displayName: profile?.displayName || "",
     tagline: profile?.tagline || "",
     bio: profile?.bio || "",
@@ -46,7 +47,35 @@ export function EditProfileDialog({
     healthGuarantee: profile?.healthGuarantee || "",
     returnPolicy: profile?.returnPolicy || "",
     shippingPolicy: profile?.shippingPolicy || "",
+    locationCity: profile?.location?.city || "",
+    locationState: profile?.location?.state || "",
+    locationCountry: profile?.location?.country || "",
   });
+
+  // Reset form data when dialog opens or profile changes
+  useEffect(() => {
+    if (open && profile) {
+      setFormData({
+        logoUrl: profile.logoUrl || "",
+        bannerUrl: profile.bannerUrl || "",
+        displayName: profile.displayName || "",
+        tagline: profile.tagline || "",
+        bio: profile.bio || "",
+        publicEmail: profile.publicEmail || "",
+        publicPhone: profile.publicPhone || "",
+        website: profile.website || "",
+        businessName: profile.businessName || "",
+        yearsInBusiness: profile.yearsInBusiness || "",
+        breedingPhilosophy: profile.breedingPhilosophy || "",
+        healthGuarantee: profile.healthGuarantee || "",
+        returnPolicy: profile.returnPolicy || "",
+        shippingPolicy: profile.shippingPolicy || "",
+        locationCity: profile.location?.city || "",
+        locationState: profile.location?.state || "",
+        locationCountry: profile.location?.country || "",
+      });
+    }
+  }, [open, profile]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -83,10 +112,34 @@ export function EditProfileDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Convert yearsInBusiness to number
+    // Normalize empty strings to null for optional fields
+    const normalize = (val: string) => (val && val.trim() !== "" ? val.trim() : null);
+    
+    // Build location object
+    const location = (formData.locationCity || formData.locationState || formData.locationCountry)
+      ? {
+          city: normalize(formData.locationCity) || undefined,
+          state: normalize(formData.locationState) || undefined,
+          country: formData.locationCountry?.trim() || 'Not specified',
+        }
+      : null;
+
     const dataToSubmit = {
-      ...formData,
+      logoUrl: normalize(formData.logoUrl),
+      bannerUrl: normalize(formData.bannerUrl),
+      displayName: formData.displayName.trim(),
+      tagline: normalize(formData.tagline),
+      bio: normalize(formData.bio),
+      publicEmail: normalize(formData.publicEmail),
+      publicPhone: normalize(formData.publicPhone),
+      website: normalize(formData.website),
+      businessName: normalize(formData.businessName),
       yearsInBusiness: formData.yearsInBusiness ? parseInt(formData.yearsInBusiness.toString()) : null,
+      breedingPhilosophy: normalize(formData.breedingPhilosophy),
+      healthGuarantee: normalize(formData.healthGuarantee),
+      returnPolicy: normalize(formData.returnPolicy),
+      shippingPolicy: normalize(formData.shippingPolicy),
+      location,
     };
     
     updateMutation.mutate(dataToSubmit);
@@ -128,6 +181,22 @@ export function EditProfileDialog({
                   showPreview={true}
                   aspectRatio="square"
                   maxSizeInMB={2}
+                />
+              </div>
+
+              {/* Banner Upload */}
+              <div className="space-y-2">
+                <ImageUpload
+                  storagePath={STORAGE_PATHS.USER_AVATARS}
+                  onUploadSuccess={(result) => {
+                    handleChange("bannerUrl", result.url!);
+                  }}
+                  currentImageUrl={formData.bannerUrl || undefined}
+                  label="Profile Banner"
+                  helperText="Upload a banner image for your profile page (recommended: 1200x400)"
+                  showPreview={true}
+                  aspectRatio="video"
+                  maxSizeInMB={5}
                 />
               </div>
 
@@ -220,6 +289,40 @@ export function EditProfileDialog({
                   onChange={(e) => handleChange("yearsInBusiness", e.target.value)}
                   placeholder="10"
                 />
+              </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Location</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="locationCity" className="text-xs text-muted-foreground">City</Label>
+                    <Input
+                      id="locationCity"
+                      value={formData.locationCity}
+                      onChange={(e) => handleChange("locationCity", e.target.value)}
+                      placeholder="Cape Town"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="locationState" className="text-xs text-muted-foreground">State / Region</Label>
+                    <Input
+                      id="locationState"
+                      value={formData.locationState}
+                      onChange={(e) => handleChange("locationState", e.target.value)}
+                      placeholder="Western Cape"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="locationCountry" className="text-xs text-muted-foreground">Country</Label>
+                    <Input
+                      id="locationCountry"
+                      value={formData.locationCountry}
+                      onChange={(e) => handleChange("locationCountry", e.target.value)}
+                      placeholder="South Africa"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
