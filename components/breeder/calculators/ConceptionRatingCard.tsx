@@ -113,12 +113,17 @@ export function ConceptionRatingCard({ rating, createdAt, bitch, dog, frozenSeme
               {bitch && (
                 <Link href={`/animals/${bitch.id}`} className="flex-1">
                   <div className="flex items-center gap-3 p-3 bg-white rounded-lg hover:shadow-md transition-all cursor-pointer group">
-                    <Avatar className="h-12 w-12 border-2 border-pink-200">
-                      <AvatarImage src={bitch.avatarUrl || undefined} alt={bitch.name} />
-                      <AvatarFallback className="bg-pink-100 text-pink-700">
-                        {bitch.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    {bitch.avatarUrl ? (
+                      <div className="h-12 w-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-pink-200">
+                        <img src={bitch.avatarUrl} alt={bitch.name} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <Avatar className="h-12 w-12 border-2 border-pink-200">
+                        <AvatarFallback className="bg-pink-100 text-pink-700">
+                          {bitch.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
                         {bitch.name}
@@ -146,12 +151,17 @@ export function ConceptionRatingCard({ rating, createdAt, bitch, dog, frozenSeme
               {dog ? (
                 <Link href={`/animals/${dog.id}`} className="flex-1">
                   <div className="flex items-center gap-3 p-3 bg-white rounded-lg hover:shadow-md transition-all cursor-pointer group">
-                    <Avatar className="h-12 w-12 border-2 border-blue-200">
-                      <AvatarImage src={dog.avatarUrl || undefined} alt={dog.name} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700">
-                        {dog.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    {dog.avatarUrl ? (
+                      <div className="h-12 w-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-200">
+                        <img src={dog.avatarUrl} alt={dog.name} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <Avatar className="h-12 w-12 border-2 border-blue-200">
+                        <AvatarFallback className="bg-blue-100 text-blue-700">
+                          {dog.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
                         {dog.name}

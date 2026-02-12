@@ -45,6 +45,13 @@ export default function ConceptionRatingPage() {
   const [ratingToDelete, setRatingToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Resolve profile photo from photos relation
+  const resolvePhoto = (animal: any) => {
+    if (!animal) return undefined;
+    const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
+    return profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || animal.profileImageUrl || undefined;
+  };
+
   // Fetch ratings from database
   useEffect(() => {
     const fetchRatings = async () => {
@@ -62,8 +69,8 @@ export default function ConceptionRatingPage() {
           totalWeight: 100,
           missingWeight: 0,
           createdAt: new Date(mating.createdAt),
-          bitch: mating.bitch,
-          dog: mating.dog,
+          bitch: mating.bitch ? { ...mating.bitch, avatarUrl: resolvePhoto(mating.bitch) } : undefined,
+          dog: mating.dog ? { ...mating.dog, avatarUrl: resolvePhoto(mating.dog) } : undefined,
           frozenSemen: mating.frozenSemen,
         }));
         
@@ -113,8 +120,8 @@ export default function ConceptionRatingPage() {
         totalWeight: 100,
         missingWeight: 0,
         createdAt: new Date(mating.createdAt),
-        bitch: mating.bitch,
-        dog: mating.dog,
+        bitch: mating.bitch ? { ...mating.bitch, avatarUrl: resolvePhoto(mating.bitch) } : undefined,
+        dog: mating.dog ? { ...mating.dog, avatarUrl: resolvePhoto(mating.dog) } : undefined,
         frozenSemen: mating.frozenSemen,
       }));
       

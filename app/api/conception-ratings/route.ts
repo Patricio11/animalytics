@@ -86,11 +86,13 @@ export async function POST(request: NextRequest) {
         bitch: {
           with: {
             breed: true,
+            photos: true,
           },
         },
         dog: {
           with: {
             breed: true,
+            photos: true,
           },
         },
         frozenSemen: true,
@@ -137,11 +139,13 @@ export async function GET(request: NextRequest) {
         bitch: {
           with: {
             breed: true,
+            photos: true,
           },
         },
         dog: {
           with: {
             breed: true,
+            photos: true,
           },
         },
         frozenSemen: true,
