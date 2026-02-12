@@ -22,7 +22,7 @@ import { ClinicSelector } from "./ClinicSelector";
 import type { ListingCategory } from "@/lib/types/marketplace";
 import { categoryRequiresClinic, getCategoryLabel } from "@/lib/utils/marketplace";
 import { useRegionalSettings } from "@/lib/contexts/regional-settings-context";
-import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Plus, Check, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { MultipleImageUpload } from "@/components/upload";
@@ -55,7 +55,7 @@ const steps = [
   { id: 1, name: 'Animal Selection', icon: '🐕' },
   { id: 2, name: 'Contact Details', icon: '📞' },
   { id: 3, name: 'Listing Details', icon: '📝' },
-  { id: 4, name: 'Images (Optional)', icon: '📸' },
+  { id: 4, name: 'Listing Images', icon: '📸' },
 ];
 
 interface CreateListingDialogProps {
@@ -70,6 +70,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
+  const [selectedAnimalPhotoUrls, setSelectedAnimalPhotoUrls] = useState<string[]>([]);
   const [formData, setFormData] = useState<ListingFormData>({
     category: 'stud-dog',
     contactName: '',
@@ -223,8 +224,8 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
     try {
       console.log('Submitting listing with data:', formData);
 
-      // Upload pending images first if any
-      let uploadedImageUrls = [...(formData.additionalImages || [])];
+      // Start with selected animal photos, then any already-uploaded images
+      let uploadedImageUrls = [...selectedAnimalPhotoUrls, ...(formData.additionalImages || [])];
       if (pendingImageFiles.length > 0) {
         try {
           const { uploadMultipleFiles, FILE_VALIDATION } = await import('@/lib/supabase/upload');
@@ -319,6 +320,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
   const resetForm = () => {
     setCurrentStep(1);
     setPendingImageFiles([]); // Clear pending files
+    setSelectedAnimalPhotoUrls([]);
     setFormData({
       category: 'stud-dog',
       contactName: '',
@@ -441,7 +443,10 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                         sex: animal.sex,
                       }))}
                       value={formData.animalId}
-                      onValueChange={(value) => updateFormData('animalId', value)}
+                      onValueChange={(value) => {
+                        updateFormData('animalId', value);
+                        setSelectedAnimalPhotoUrls([]); // Reset photo selection when animal changes
+                      }}
                       placeholder={animalsLoading || listingsLoading ? "Loading animals..." : "Select an animal"}
                       emptyText={
                         animalsLoading || listingsLoading 
@@ -683,22 +688,100 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
             </div>
           )}
 
-          {/* Step 4: Additional Images */}
+          {/* Step 4: Listing Images */}
           {currentStep === 4 && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">Additional Images (Optional)</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Listing Images</h3>
                 <p className="text-sm text-muted-foreground">
-                  The main image will be from your animal's profile. Add additional images here for your listing (e.g., facility photos, certificates, etc.)
+                  Select images from your animal's gallery and/or upload new ones for this listing
                 </p>
               </div>
 
-              <Alert className="border-chart-3/50 bg-chart-3/10">
-                <CheckCircle className="h-4 w-4 text-chart-3" />
-                <AlertDescription className="ml-2 text-sm">
-                  <strong>Note:</strong> The animal's profile image will be used as the main listing image. Additional images are optional and can showcase your facility, certificates, or other relevant photos.
-                </AlertDescription>
-              </Alert>
+              {/* Animal Photos Selection */}
+              {selectedAnimal?.photos && selectedAnimal.photos.length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    {selectedAnimal.name}'s Photos
+                    <Badge variant="outline" className="text-xs">
+                      {selectedAnimalPhotoUrls.length} selected
+                    </Badge>
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Click to select which photos to include in your listing
+                  </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                    {selectedAnimal.photos.map((photo: any) => {
+                      const isSelected = selectedAnimalPhotoUrls.includes(photo.fileUrl);
+                      return (
+                        <button
+                          key={photo.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAnimalPhotoUrls(prev =>
+                              isSelected
+                                ? prev.filter(url => url !== photo.fileUrl)
+                                : [...prev, photo.fileUrl]
+                            );
+                          }}
+                          className={cn(
+                            "relative aspect-square rounded-lg overflow-hidden border-2 transition-all hover:opacity-90",
+                            isSelected
+                              ? "border-primary ring-2 ring-primary/30"
+                              : "border-muted hover:border-primary/40"
+                          )}
+                        >
+                          <img
+                            src={photo.fileUrl}
+                            alt={photo.caption || selectedAnimal.name}
+                            className="w-full h-full object-cover"
+                          />
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                              <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
+                                <Check className="w-4 h-4 text-white" />
+                              </div>
+                            </div>
+                          )}
+                          {photo.category === 'profile' && (
+                            <div className="absolute top-1 left-1">
+                              <Badge className="text-[10px] px-1.5 py-0 bg-primary/80">Profile</Badge>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedAnimalPhotoUrls.length === 0 && (
+                    <p className="text-xs text-amber-600">
+                      Select at least one photo so buyers can see your animal
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* No animal photos message */}
+              {selectedAnimal && (!selectedAnimal.photos || selectedAnimal.photos.length === 0) && (
+                <Alert className="border-amber-500/50 bg-amber-500/10">
+                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <AlertDescription className="ml-2 text-sm">
+                    <strong>No photos found</strong> for {selectedAnimal.name}. Upload images below for your listing.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-primary/10" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-3 text-muted-foreground flex items-center gap-1.5">
+                    <Upload className="w-3 h-3" />
+                    Upload Additional Images
+                  </span>
+                </div>
+              </div>
 
               <MultipleImageUpload
                 storagePath={STORAGE_PATHS.MARKETPLACE_IMAGES}
@@ -712,8 +795,8 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                 currentImages={formData.additionalImages || []}
                 maxFiles={10}
                 maxSizeInMB={5}
-                label="Listing Images"
-                helperText="Upload images to showcase your listing"
+                label="Upload New Images"
+                helperText="Upload facility photos, certificates, or other images not in your animal's gallery"
               />
 
               <Alert className="border-primary/50 bg-gradient-subtle">
@@ -725,7 +808,7 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }: CreateLis
                     <div>Category: <Badge variant="outline">{getCategoryLabel(formData.category)}</Badge></div>
                     <div>Title: {formData.title}</div>
                     {formData.price && <div>Price: {formData.price.toLocaleString()} {settings.currency}</div>}
-                    {/* <div>Additional Images: {formData.additionalImages?.length || 0}</div> */}
+                    <div>Images: {selectedAnimalPhotoUrls.length + (formData.additionalImages?.length || 0)} selected</div>
                   </div>
                 </AlertDescription>
               </Alert>
