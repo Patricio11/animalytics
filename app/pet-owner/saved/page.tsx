@@ -102,7 +102,7 @@ export default function PetOwnerSavedPage() {
               
               return (
                 <Card key={listing.id} className="shadow-card overflow-hidden hover:shadow-lg transition-shadow">
-                  <Link href={`/marketplace/${listing.id}`}>
+                  <Link href={`/marketplace/${listing.slug || listing.id}`}>
                     <div className="h-48 bg-muted relative group">
                       <img
                         src={images[0]}
@@ -132,7 +132,7 @@ export default function PetOwnerSavedPage() {
                   </Link>
                   <CardContent className="p-4 space-y-3">
                     <div>
-                      <Link href={`/marketplace/${listing.id}`}>
+                      <Link href={`/marketplace/${listing.slug || listing.id}`}>
                         <h3 className="font-semibold truncate hover:text-primary transition-colors">
                           {listing.title}
                         </h3>
@@ -165,7 +165,7 @@ export default function PetOwnerSavedPage() {
                         size="sm"
                         asChild
                       >
-                        <Link href={`/marketplace/${listing.id}`}>
+                        <Link href={`/marketplace/${listing.slug || listing.id}`}>
                           View
                         </Link>
                       </Button>

@@ -130,6 +130,9 @@ export const listings = pgTable('listings', {
     wizardCompletedAt?: string;
   }>(),
 
+  // SEO-friendly URL slug
+  slug: text('slug').unique(),
+
   // Core listing fields (derived from wizard)
   title: text('title').notNull(),
   description: text('description'),

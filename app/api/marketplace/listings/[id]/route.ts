@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { db } from '@/lib/db';
 import { listings, animals } from '@/lib/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, or } from 'drizzle-orm';
 
 // ============================================================================
 // GET /api/marketplace/listings/[id] - Get single listing
@@ -16,13 +16,20 @@ export async function GET(
     const { id } = await params;
     const session = await auth.api.getSession({ headers: request.headers });
 
+    // Support lookup by slug or UUID
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const whereClause = isUuid
+      ? eq(listings.id, id)
+      : eq(listings.slug, id);
+
     const listing = await db.query.listings.findFirst({
-      where: eq(listings.id, id),
+      where: whereClause,
       with: {
         animal: {
           columns: {
             id: true,
             name: true,
+            registeredName: true,
             profileImageUrl: true,
           },
           with: {
@@ -69,18 +76,34 @@ export async function GET(
       );
     }
     
+    // Resolve profile photo from photos relation
+    const resolvePhoto = (animal: any) => {
+      if (!animal) return undefined;
+      const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
+      return profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || animal.profileImageUrl || undefined;
+    };
+
+    // Attach resolved photo URL
+    const enrichedListing = {
+      ...listing,
+      animal: listing.animal ? {
+        ...listing.animal,
+        profilePhotoUrl: resolvePhoto(listing.animal),
+      } : null,
+    };
+
     // Increment view count (async, don't wait)
     db.update(listings)
       .set({ 
         viewCount: sql`${listings.viewCount} + 1`,
       })
-      .where(eq(listings.id, id))
+      .where(eq(listings.id, listing.id))
       .execute()
       .catch(console.error);
     
     return NextResponse.json({
       success: true,
-      listing,
+      listing: enrichedListing,
     });
     
   } catch (error) {

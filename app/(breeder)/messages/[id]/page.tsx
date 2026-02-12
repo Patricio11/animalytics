@@ -60,6 +60,7 @@ interface Conversation {
   };
   listing: {
     id: string;
+    slug?: string;
     title: string;
     category: string;
     price: number | null;
@@ -326,7 +327,7 @@ export default function ConversationPage() {
               <h2 className="font-semibold">{conversation.otherParticipant.name}</h2>
               {conversation.listing && (
                 <Link
-                  href={`/marketplace/${conversation.listing.id}`}
+                  href={`/marketplace/${conversation.listing.slug || conversation.listing.id}`}
                   className="text-xs text-primary hover:underline"
                 >
                   {conversation.listing.title}
@@ -337,7 +338,7 @@ export default function ConversationPage() {
           <div className="flex items-center gap-1">
             {conversation.listing && (
               <Button variant="ghost" size="icon" asChild>
-                <Link href={`/marketplace/${conversation.listing.id}`}>
+                <Link href={`/marketplace/${conversation.listing.slug || conversation.listing.id}`}>
                   <Info className="h-5 w-5" />
                 </Link>
               </Button>
@@ -415,7 +416,7 @@ export default function ConversationPage() {
                       </Button>
                     )}
                     <Button variant="outline" asChild className={conversation.userRole === 'pet_owner' ? '' : 'flex-1'}>
-                      <Link href={`/marketplace/${conversation.listing.id}`}>
+                      <Link href={`/marketplace/${conversation.listing.slug || conversation.listing.id}`}>
                         View Listing
                       </Link>
                     </Button>

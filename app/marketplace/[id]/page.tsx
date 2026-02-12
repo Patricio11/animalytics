@@ -132,7 +132,7 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
 
   // Handle share
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/marketplace/${id}`;
+    const shareUrl = `${window.location.origin}/marketplace/${listing?.slug || id}`;
 
     if (navigator.share) {
       try {

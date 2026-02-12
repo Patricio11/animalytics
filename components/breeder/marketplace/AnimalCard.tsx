@@ -12,6 +12,7 @@ import Image from "next/image";
 interface AnimalCardProps {
   animal: {
     id: string;
+    slug?: string;
     name: string;
     registeredName?: string;
     breedName?: string;
@@ -66,8 +67,8 @@ export function AnimalCard({ animal, featured = false, onInterested, isPublicVie
     return parts.join(', ') || 'Location not specified';
   };
 
-  // All routes now use unified marketplace
-  const detailUrl = `/marketplace/${animal.id}`;
+  // All routes now use unified marketplace (SEO-friendly slug)
+  const detailUrl = `/marketplace/${animal.slug || animal.id}`;
 
   // Sex icon
   const sexIcon = animal.sex === 'male' ? '♂' : animal.sex === 'female' ? '♀' : '';

@@ -69,7 +69,7 @@ export default function BuyerSavedPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {savedListings.map((listing) => (
               <Card key={listing.id} className="shadow-card overflow-hidden">
-                <Link href={`/marketplace/${listing.id}`}>
+                <Link href={`/marketplace/${listing.slug || listing.id}`}>
                   <div className="h-48 bg-muted relative">
                     {listing.imageUrl ? (
                       <img
@@ -96,7 +96,7 @@ export default function BuyerSavedPage() {
                   </div>
                 </Link>
                 <CardContent className="p-4">
-                  <Link href={`/marketplace/${listing.id}`}>
+                  <Link href={`/marketplace/${listing.slug || listing.id}`}>
                     <h3 className="font-semibold truncate hover:text-primary">
                       {listing.title}
                     </h3>

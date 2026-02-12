@@ -63,8 +63,8 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onDe
 
   const statusStyle = statusConfig[listing.status];
   
-  // All routes now use unified marketplace
-  const detailUrl = `/marketplace/${listing.id}`;
+  // All routes now use unified marketplace (SEO-friendly slug)
+  const detailUrl = `/marketplace/${listing.slug || listing.id}`;
 
   // Handle share
   const handleShare = async () => {

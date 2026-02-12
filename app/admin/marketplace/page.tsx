@@ -48,6 +48,7 @@ import Link from "next/link";
 
 interface Listing {
   id: string;
+  slug?: string;
   userId: string;
   userName: string;
   userEmail: string;
@@ -575,7 +576,7 @@ export default function AdminMarketplacePage() {
                           View Details
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/marketplace/${listing.id}`} target="_blank">
+                          <Link href={`/marketplace/${listing.slug || listing.id}`} target="_blank">
                             <ShoppingBag className="w-4 h-4 mr-2" />
                             View in Marketplace
                           </Link>

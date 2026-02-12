@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth/config';
 import { db } from '@/lib/db';
 import { listings, animals } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { generateSlug } from '@/lib/utils/slugify';
 
 // ============================================================================
 // POST /api/marketplace/listings - Create new listing
@@ -107,12 +108,18 @@ export async function POST(request: NextRequest) {
         })
         .returning();
       
-      console.log('✅ Listing created successfully:', newListing.id);
+      // Generate and save SEO-friendly slug
+      const slug = generateSlug(body.title, newListing.id.substring(0, 8));
+      await db.update(listings)
+        .set({ slug })
+        .where(eq(listings.id, newListing.id));
+      
+      console.log('✅ Listing created successfully:', newListing.id, 'slug:', slug);
       console.log('=== END CREATE LISTING ===');
       
       return NextResponse.json({
         success: true,
-        listing: newListing,
+        listing: { ...newListing, slug },
       }, { status: 201 });
     }
     

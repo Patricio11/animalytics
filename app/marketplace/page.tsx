@@ -144,6 +144,7 @@ export default function Marketplace() {
   const listings = useMemo(() => {
     return allListings.map((listing: any) => ({
       id: listing.id,
+      slug: listing.slug,
       category: listing.category?.replace(/_/g, '-') || 'stud-dog',
       animalId: listing.animalId,
       animalName: listing.animal?.name || 'Unknown',

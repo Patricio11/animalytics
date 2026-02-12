@@ -35,6 +35,7 @@ export interface Clinic {
 
 export interface MarketplaceListing {
   id: string;
+  slug?: string;
   category: ListingCategory;
   animalId?: string;
   animalName?: string;
