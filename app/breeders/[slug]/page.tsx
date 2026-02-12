@@ -591,6 +591,7 @@ export default function BreederProfilePage({
                     key={animal.id}
                     id={animal.id}
                     name={animal.name}
+                    registeredName={animal.registeredName}
                     breed={animal.breed?.name}
                     sex={animal.sex}
                     dateOfBirth={animal.dateOfBirth}

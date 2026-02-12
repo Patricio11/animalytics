@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export interface AnimalOption {
   id: string;
   name: string;
+  registeredName?: string;
   breed?: string;
   profileImageUrl?: string | null;
   sex?: string;
@@ -98,7 +99,7 @@ export function AnimalCombobox({
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start min-w-0 flex-1">
-                <span className="font-medium truncate">{selectedAnimal.name}</span>
+                <span className="font-medium truncate">{selectedAnimal.registeredName || selectedAnimal.name}</span>
                 {selectedAnimal.breed && (
                   <span className="text-xs text-muted-foreground truncate">
                     {selectedAnimal.breed}
@@ -124,7 +125,7 @@ export function AnimalCombobox({
               {animals.map((animal) => (
                 <CommandItem
                   key={animal.id}
-                  value={animal.name}
+                  value={`${animal.registeredName || ''} ${animal.name}`}
                   onSelect={() => handleSelect(animal.id)}
                   className="cursor-pointer"
                 >
@@ -139,7 +140,7 @@ export function AnimalCombobox({
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start min-w-0 flex-1">
-                      <span className="font-medium truncate">{animal.name}</span>
+                      <span className="font-medium truncate">{animal.registeredName || animal.name}</span>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {animal.breed && (
                           <span className="truncate">{animal.breed}</span>

@@ -93,7 +93,7 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <div className="font-medium">{animal.name}</div>
+                            <div className="font-medium">{animal.registeredName || animal.name}</div>
                             <div className="text-xs text-muted-foreground">{animal.breed}</div>
                           </div>
                           {animal.registeredName && (
@@ -116,7 +116,7 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <div className="font-semibold text-foreground">{selectedAnimal.name}</div>
+                <div className="font-semibold text-foreground">{selectedAnimal.registeredName || selectedAnimal.name}</div>
                 <div className="text-sm text-muted-foreground">{selectedAnimal.breed}</div>
                 {selectedAnimal.registeredName && (
                   <div className="text-xs text-muted-foreground mt-0.5">

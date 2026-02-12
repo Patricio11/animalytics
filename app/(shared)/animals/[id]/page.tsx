@@ -433,7 +433,10 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                     </Badge>
                   </div>
 
-                  <h1 className="text-3xl font-bold text-foreground">{animal.name}</h1>
+                  <h1 className="text-3xl font-bold text-foreground">{animal.registeredName || animal.name}</h1>
+                  {animal.registeredName && animal.name && (
+                    <p className="text-sm text-muted-foreground italic">Call name: {animal.name}</p>
+                  )}
                   <div className="text-lg text-muted-foreground">{animal.breed?.name || 'Unknown Breed'}</div>
                 </div>
 

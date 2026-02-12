@@ -4,6 +4,7 @@ export interface Animal {
   id: string;
   userId: string; // Owner's user ID
   name: string;
+  registeredName?: string;
   type: 'dog' | 'bitch';
   breed: string;
   dateOfBirth: string;

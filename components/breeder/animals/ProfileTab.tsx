@@ -126,8 +126,11 @@ export function ProfileTab({ animal, animalId, onEdit }: ProfileTabProps) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Name</div>
-              <div className="font-semibold text-foreground">{animal.name}</div>
+              <div className="text-sm text-muted-foreground mb-1">Registered Name</div>
+              <div className="font-semibold text-foreground">{animal.registeredName || animal.name}</div>
+              {animal.registeredName && animal.name && (
+                <div className="text-xs text-muted-foreground italic mt-0.5">Call name: {animal.name}</div>
+              )}
             </div>
 
             <div>

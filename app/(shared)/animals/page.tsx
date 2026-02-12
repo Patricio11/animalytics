@@ -35,6 +35,7 @@ export default function Animals() {
         // Search filter
         const matchesSearch = searchQuery
           ? animal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            animal.registeredName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             animal.breed?.name?.toLowerCase().includes(searchQuery.toLowerCase())
           : true;
 

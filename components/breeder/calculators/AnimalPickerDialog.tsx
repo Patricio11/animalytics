@@ -218,7 +218,7 @@ export function AnimalPickerDialog({
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">{selectedBitch.name}</span>
+                    <span className="font-semibold text-foreground">{selectedBitch.registeredName || selectedBitch.name}</span>
                     <Badge variant="outline" className="text-xs">Bitch</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{selectedBitch.breed}</p>
@@ -305,7 +305,7 @@ export function AnimalPickerDialog({
 
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">{animal.name}</span>
+                        <span className="font-semibold text-foreground">{animal.registeredName || animal.name}</span>
                         <Badge variant="outline" className="text-xs capitalize">
                           {animal.type}
                         </Badge>

@@ -184,7 +184,7 @@ export function AnimalSelectionStep({ data, onUpdate, onNext }: AnimalSelectionS
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-lg">{selectedBitch.name}</h4>
+                    <h4 className="font-semibold text-lg">{selectedBitch.registeredName || selectedBitch.name}</h4>
                     <p className="text-sm text-muted-foreground">{selectedBitch.breed?.name || selectedBitch.breedName || 'Unknown breed'}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="outline" className="bg-pink-100 dark:bg-pink-900">
@@ -255,7 +255,7 @@ export function AnimalSelectionStep({ data, onUpdate, onNext }: AnimalSelectionS
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-lg">{selectedDog.name}</h4>
+                        <h4 className="font-semibold text-lg">{selectedDog.registeredName || selectedDog.name}</h4>
                         <p className="text-sm text-muted-foreground">{selectedDog.breed?.name || selectedDog.breedName || 'Unknown breed'}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900">

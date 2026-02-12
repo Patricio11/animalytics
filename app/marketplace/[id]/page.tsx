@@ -655,11 +655,11 @@ export default function ListingDetailPage({ params }: ListingDetailPageProps) {
                       <div className="flex-1 min-w-0 space-y-2">
                         <div>
                           <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                            {listing.animal.name}
+                            {listing.animal.registeredName || listing.animal.name}
                           </h3>
-                          {listing.animal.registeredName && (
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {listing.animal.registeredName}
+                          {listing.animal.registeredName && listing.animal.name && (
+                            <p className="text-sm text-muted-foreground line-clamp-1 italic">
+                              Call name: {listing.animal.name}
                             </p>
                           )}
                         </div>

@@ -211,10 +211,10 @@ export function AnimalsTable({
                         onClick={() => router.push(`/admin/animals/${animal.id}`)}
                         className="font-medium text-left hover:text-primary transition-colors"
                       >
-                        {animal.name}
+                        {animal.registeredName || animal.name}
                       </button>
-                      {animal.registeredName && (
-                        <span className="text-xs text-muted-foreground">{animal.registeredName}</span>
+                      {animal.registeredName && animal.name && (
+                        <span className="text-xs text-muted-foreground italic">Call name: {animal.name}</span>
                       )}
                     </div>
                   </TableCell>

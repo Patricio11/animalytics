@@ -189,7 +189,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
               <CardHeader className="border-b border-primary/10 bg-gradient-subtle">
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-primary" />
-                  About {animal.name}
+                  About {animal.registeredName || animal.name}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
@@ -235,10 +235,10 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
             {/* Basic Info Card */}
             <Card className="shadow-card bg-surface border-0">
               <CardHeader className="border-b border-primary/10 bg-gradient-subtle">
-                <CardTitle className="text-xl">{animal.name}</CardTitle>
-                {animal.registeredName && (
-                  <p className="text-sm text-muted-foreground font-normal mt-1">
-                    {animal.registeredName}
+                <CardTitle className="text-xl">{animal.registeredName || animal.name}</CardTitle>
+                {animal.registeredName && animal.name && (
+                  <p className="text-sm text-muted-foreground font-normal mt-1 italic">
+                    Call name: {animal.name}
                   </p>
                 )}
               </CardHeader>
