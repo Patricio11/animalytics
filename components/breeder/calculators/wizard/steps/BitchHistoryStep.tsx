@@ -27,7 +27,6 @@ export function BitchHistoryStep({ data, onUpdate, onNext, onPrevious }: BitchHi
   const [complications, setComplications] = useState(data?.complicationDetails || '');
   
   // New Step 3 fields
-  const [previousPregnancies, setPreviousPregnancies] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.previousPregnancies || '');
   const [numberOfSiblings, setNumberOfSiblings] = useState<'0' | '1-3' | '4-5' | '6+' | ''>(data?.numberOfSiblings || '');
   const [numberOfBreedings, setNumberOfBreedings] = useState(data?.numberOfBreedings || 0);
   const [hadMatingThatDidNotProduce, setHadMatingThatDidNotProduce] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.hadMatingThatDidNotProduce || '');
@@ -41,7 +40,7 @@ export function BitchHistoryStep({ data, onUpdate, onNext, onPrevious }: BitchHi
       complications: hasBeenBred === 'yes' && hasComplications === 'yes',
       complicationDetails: hasBeenBred === 'yes' && hasComplications === 'yes' ? complications : '',
       // New fields
-      previousPregnancies,
+      previousPregnancies: hasBeenBred as 'yes' | 'no' | 'dont_know',
       numberOfSiblings,
       numberOfBreedings,
       hadMatingThatDidNotProduce,
@@ -195,21 +194,7 @@ export function BitchHistoryStep({ data, onUpdate, onNext, onPrevious }: BitchHi
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="previous-pregnancies">Previous Pregnancies?</Label>
-              <Select value={previousPregnancies} onValueChange={(val) => setPreviousPregnancies(val as 'yes' | 'no' | 'dont_know')}>
-                <SelectTrigger id="previous-pregnancies" className="bg-background border-primary/20">
-                  <SelectValue placeholder="Had any previous pregnancies?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                  <SelectItem value="dont_know">Don't know</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="number-of-siblings">Number of Siblings</Label>
+              <Label htmlFor="number-of-siblings">Number of Siblings (in her litter)</Label>
               <Select value={numberOfSiblings} onValueChange={(val) => setNumberOfSiblings(val as '0' | '1-3' | '4-5' | '6+')}>
                 <SelectTrigger id="number-of-siblings" className="bg-background border-primary/20">
                   <SelectValue placeholder="Siblings" />

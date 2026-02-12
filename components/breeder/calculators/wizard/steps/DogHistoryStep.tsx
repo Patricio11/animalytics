@@ -19,25 +19,46 @@ interface DogHistoryStepProps {
 }
 
 export function DogHistoryStep({ data, onUpdate, onNext, onPrevious }: DogHistoryStepProps) {
+  const selectedDog = data?.selectedDog;
+
+  // Auto-calculate dog age from DOB
+  const calculateAge = (dateOfBirth: string | Date | null | undefined) => {
+    if (!dateOfBirth) return undefined;
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    const ageInYears = (today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    return Math.round(ageInYears * 10) / 10;
+  };
+
+  const dogAge = selectedDog?.dateOfBirth ? calculateAge(selectedDog.dateOfBirth) : undefined;
+
   const [hasBeenUsed, setHasBeenUsed] = useState(data?.hasBeenUsed || 'no');
   const [previousLitters, setPreviousLitters] = useState(data?.previousLitters || 0);
   const [successRate, setSuccessRate] = useState(data?.successRate || '');
   const [ageAtFirstUse, setAgeAtFirstUse] = useState(data?.ageAtFirstUse || '');
   
-  // New Step 5 fields
-  const [littersSired, setLittersSired] = useState<'0' | '1-2' | '3-5' | '5+' | ''>(data?.littersSired || '');
+  // New Step 5 fields - removed littersSired (duplicate of previousLitters)
   const [fathersLittersSired, setFathersLittersSired] = useState<'1-3' | '4-10' | '11+' | ''>(data?.fathersLittersSired || '');
   const [recentLitterDate, setRecentLitterDate] = useState<'less_than_1_month' | '1-6_months' | '6-18_months' | 'more_than_18_months' | ''>(data?.recentLitterDate || '');
   const [pupsInMostRecentSire, setPupsInMostRecentSire] = useState<'0' | '1-3' | '4-6' | '7+' | ''>(data?.pupsInMostRecentSire || '');
+
+  // Auto-derive littersSired range from exact number
+  const deriveLittersSired = (count: number): '0' | '1-2' | '3-5' | '5+' => {
+    if (count === 0) return '0';
+    if (count <= 2) return '1-2';
+    if (count <= 5) return '3-5';
+    return '5+';
+  };
 
   const handleContinue = () => {
     onUpdate({
       hasBeenUsed,
       previousLitters: hasBeenUsed === 'yes' ? previousLitters : 0,
+      previousLittersCount: hasBeenUsed === 'yes' ? previousLitters : 0,
       successRate: hasBeenUsed === 'yes' ? successRate : '',
       ageAtFirstUse: hasBeenUsed === 'yes' ? ageAtFirstUse : '',
-      // New fields
-      littersSired,
+      dogAge,
+      littersSired: deriveLittersSired(hasBeenUsed === 'yes' ? previousLitters : 0),
       fathersLittersSired,
       recentLitterDate,
       pupsInMostRecentSire,
@@ -91,21 +112,7 @@ export function DogHistoryStep({ data, onUpdate, onNext, onPrevious }: DogHistor
                     min="0"
                     max="100"
                     value={previousLitters}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value) || 0;
-                      setPreviousLitters(value);
-                      
-                      // Auto-populate the dropdown in Additional Dog History
-                      if (value === 0) {
-                        setLittersSired('0');
-                      } else if (value >= 1 && value <= 2) {
-                        setLittersSired('1-2');
-                      } else if (value >= 3 && value <= 5) {
-                        setLittersSired('3-5');
-                      } else if (value > 5) {
-                        setLittersSired('5+');
-                      }
-                    }}
+                    onChange={(e) => setPreviousLitters(parseInt(e.target.value) || 0)}
                     placeholder="Enter number of litters"
                     className="bg-background border-primary/20"
                   />
@@ -185,22 +192,14 @@ export function DogHistoryStep({ data, onUpdate, onNext, onPrevious }: DogHistor
           <CardTitle className="text-base">Additional Dog History</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="litters-sired">Number of litters sired?</Label>
-              <Select value={littersSired} onValueChange={(val) => setLittersSired(val as '0' | '1-2' | '3-5' | '5+')}>
-                <SelectTrigger id="litters-sired" className="bg-background border-primary/20">
-                  <SelectValue placeholder="Amount Sired" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">0</SelectItem>
-                  <SelectItem value="1-2">1-2</SelectItem>
-                  <SelectItem value="3-5">3-5</SelectItem>
-                  <SelectItem value="5+">5+</SelectItem>
-                </SelectContent>
-              </Select>
+          {dogAge !== undefined && (
+            <div className="p-3 rounded-lg bg-chart-3/10 border border-chart-3/20">
+              <div className="text-sm text-muted-foreground">Dog Age (from profile)</div>
+              <div className="font-semibold text-foreground">{dogAge} years</div>
             </div>
+          )}
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fathers-litters-sired">Father&apos;s number of litters sired?</Label>
               <Select value={fathersLittersSired} onValueChange={(val) => setFathersLittersSired(val as '1-3' | '4-10' | '11+')}>

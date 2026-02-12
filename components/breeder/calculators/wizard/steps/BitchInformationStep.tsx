@@ -36,6 +36,8 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
   const bitchWeight = selectedBitch?.weight ? (typeof selectedBitch.weight === 'number' ? selectedBitch.weight : parseFloat(selectedBitch.weight)) : 25;
   const bitchHealth = selectedBitch?.healthStatus || 'excellent';
 
+  const hasAutoAge = !!selectedBitch?.dateOfBirth;
+
   // Use real data or existing wizard data
   const [age, setAge] = useState(data?.bitchAge || bitchAge);
   const [weight, setWeight] = useState(data?.bitchWeight || bitchWeight);
@@ -45,7 +47,6 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
   // New Step 2 fields
   const [livingCondition, setLivingCondition] = useState<'kennels' | 'pack' | 'on_her_own' | ''>(data?.livingCondition || '');
   const [positionInPack, setPositionInPack] = useState<'dominant' | 'doesnt_care' | 'bottom' | 'dont_know' | ''>(data?.positionInPack || '');
-  const [ageAtMating, setAgeAtMating] = useState(data?.ageAtMating || bitchAge);
   const [runsWithOthers, setRunsWithOthers] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.runsWithOthers || '');
   const [runsWithHowMany, setRunsWithHowMany] = useState(data?.runsWithHowMany || 0);
   const [ranWithOthersDuringPreviousPregnancies, setRanWithOthersDuringPreviousPregnancies] = useState<'yes' | 'no' | 'dont_know' | ''>(data?.ranWithOthersDuringPreviousPregnancies || '');
@@ -59,7 +60,7 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
       // New fields
       livingCondition,
       positionInPack,
-      ageAtMating,
+      ageAtMating: age,
       runsWithOthers,
       runsWithHowMany,
       ranWithOthersDuringPreviousPregnancies,
@@ -77,16 +78,22 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="age">Bitch Age (years)</Label>
-            <Input
-              id="age"
-              type="number"
-              min="0"
-              max="20"
-              step="0.1"
-              value={age}
-              onChange={(e) => setAge(parseFloat(e.target.value) || 0)}
-              className="bg-background border-primary/20"
-            />
+            <div className="relative">
+              <Input
+                id="age"
+                type="number"
+                min="0"
+                max="20"
+                step="0.1"
+                value={age}
+                onChange={(e) => setAge(parseFloat(e.target.value) || 0)}
+                className="bg-background border-primary/20"
+                readOnly={hasAutoAge}
+              />
+              {hasAutoAge && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-chart-3 font-medium">Auto-calculated from DOB</span>
+              )}
+            </div>
           </div>
 
           <Alert className="border-primary/20 bg-primary/5">
@@ -188,20 +195,6 @@ export function BitchInformationStep({ data, onUpdate, onNext, onPrevious }: Bit
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="age-at-mating">Age at the time of Mating (years)</Label>
-            <Input
-              id="age-at-mating"
-              type="number"
-              min="0"
-              max="20"
-              step="0.1"
-              value={ageAtMating}
-              onChange={(e) => setAgeAtMating(parseFloat(e.target.value) || 0)}
-              className="bg-background border-primary/20"
-            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -17,6 +17,9 @@ export interface WizardData extends Record<string, unknown> {
   selectedDog?: {
     id: string;
     name: string;
+    dateOfBirth?: string | Date | null;
+    weight?: string | number | null;
+    healthStatus?: 'excellent' | 'good' | 'fair' | 'poor' | null;
     breed?: {
       name: string;
     };
@@ -66,6 +69,7 @@ export interface WizardData extends Record<string, unknown> {
   // Step 5: Dog History
   hasBeenUsed?: string;
   previousLittersCount?: number;
+  dogAge?: number;
   successRate?: string | number;
   ageAtFirstUse?: string | number;
   // New Step 5 fields

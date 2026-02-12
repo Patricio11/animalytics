@@ -75,19 +75,27 @@ export function AnimalSelectionStep({ data, onUpdate, onNext }: AnimalSelectionS
   const bitchesSource = searchAllBitches ? allBitchesData : myAnimals.filter((a: any) => a.sex === 'female');
   const dogsSource = searchAllDogs ? allDogsData : myAnimals.filter((a: any) => a.sex === 'male');
 
+  // Resolve photo from photos relation or profileImageUrl
+  const resolvePhoto = (animal: any) => {
+    const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
+    return profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || animal.profileImageUrl || undefined;
+  };
+
   const bitches = bitchesSource.map((animal: any) => ({
     id: animal.id,
     name: animal.name,
+    registeredName: animal.registeredName,
     breed: animal.breed?.name || animal.breedName,
-    profileImageUrl: animal.profileImageUrl,
+    profileImageUrl: resolvePhoto(animal),
     sex: animal.sex,
   }));
 
   const dogs = dogsSource.map((animal: any) => ({
     id: animal.id,
     name: animal.name,
+    registeredName: animal.registeredName,
     breed: animal.breed?.name || animal.breedName,
-    profileImageUrl: animal.profileImageUrl,
+    profileImageUrl: resolvePhoto(animal),
     sex: animal.sex,
   }));
 
@@ -177,12 +185,17 @@ export function AnimalSelectionStep({ data, onUpdate, onNext }: AnimalSelectionS
             <Card className="border-pink-200 bg-pink-50/50 dark:bg-pink-950/20">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={selectedBitch.profileImageUrl || undefined} />
-                    <AvatarFallback className="bg-gradient-brand text-white">
-                      {getAnimalInitials(selectedBitch.name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+                    {resolvePhoto(selectedBitch) ? (
+                      <img src={resolvePhoto(selectedBitch)} alt={selectedBitch.registeredName || selectedBitch.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Avatar className="h-16 w-16">
+                        <AvatarFallback className="bg-gradient-brand text-white">
+                          {getAnimalInitials(selectedBitch.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-lg">{selectedBitch.registeredName || selectedBitch.name}</h4>
                     <p className="text-sm text-muted-foreground">{selectedBitch.breed?.name || selectedBitch.breedName || 'Unknown breed'}</p>
@@ -248,12 +261,17 @@ export function AnimalSelectionStep({ data, onUpdate, onNext }: AnimalSelectionS
                 <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-16 w-16">
-                        <AvatarImage src={selectedDog.profileImageUrl || undefined} />
-                        <AvatarFallback className="bg-gradient-brand text-white">
-                          {getAnimalInitials(selectedDog.name)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+                        {resolvePhoto(selectedDog) ? (
+                          <img src={resolvePhoto(selectedDog)} alt={selectedDog.registeredName || selectedDog.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Avatar className="h-16 w-16">
+                            <AvatarFallback className="bg-gradient-brand text-white">
+                              {getAnimalInitials(selectedDog.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-lg">{selectedDog.registeredName || selectedDog.name}</h4>
                         <p className="text-sm text-muted-foreground">{selectedDog.breed?.name || selectedDog.breedName || 'Unknown breed'}</p>
