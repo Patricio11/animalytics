@@ -586,24 +586,28 @@ export default function BreederProfilePage({
               </div>
             ) : animals && animals.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {animals.map((animal: any) => (
-                  <AnimalCard
-                    key={animal.id}
-                    id={animal.id}
-                    name={animal.name}
-                    registeredName={animal.registeredName}
-                    breed={animal.breed?.name}
-                    sex={animal.sex}
-                    dateOfBirth={animal.dateOfBirth}
-                    profileImageUrl={animal.profileImageUrl}
-                    isBreedingActive={animal.isBreedingActive}
-                    isChampion={animal.isChampion}
-                    titles={animal.titles}
-                    color={animal.color}
-                    isActive={animal.isActive}
-                    healthStatus={animal.healthStatus}
-                  />
-                ))}
+                {animals.map((animal: any) => {
+                  const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
+                  const imageUrl = profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || animal.profileImageUrl || undefined;
+                  return (
+                    <AnimalCard
+                      key={animal.id}
+                      id={animal.id}
+                      name={animal.name}
+                      registeredName={animal.registeredName}
+                      breed={animal.breed?.name}
+                      sex={animal.sex}
+                      dateOfBirth={animal.dateOfBirth}
+                      profileImageUrl={imageUrl}
+                      isBreedingActive={animal.isBreedingActive}
+                      isChampion={animal.isChampion}
+                      titles={animal.titles}
+                      color={animal.color}
+                      isActive={animal.isActive}
+                      healthStatus={animal.healthStatus}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <Card className="shadow-card">

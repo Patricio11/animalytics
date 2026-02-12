@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Heart, Award, Eye } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 interface AnimalCardProps {
   id: string;
@@ -57,12 +56,10 @@ export function AnimalCard({
         {/* Image Section */}
         <div className="relative aspect-square overflow-hidden bg-muted">
           {profileImageUrl ? (
-            <Image
+            <img
               src={profileImageUrl}
-              alt={name}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              alt={registeredName || name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">

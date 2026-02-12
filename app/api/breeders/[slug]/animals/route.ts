@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { breederProfiles } from '@/lib/db/schema/profiles';
 import { animals } from '@/lib/db/schema/animals';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, asc } from 'drizzle-orm';
 
 // ============================================================================
 // GET /api/breeders/[slug]/animals
@@ -41,13 +41,16 @@ export async function GET(
       conditions.push(eq(animals.isActive, true));
     }
 
-    // Fetch animals
-    const breederAnimals = await db
-      .select()
-      .from(animals)
-      .where(and(...conditions))
-      .orderBy(desc(animals.createdAt))
-      .limit(limit);
+    // Fetch animals with photos and breed relations
+    const breederAnimals = await db.query.animals.findMany({
+      where: and(...conditions),
+      with: {
+        breed: true,
+        photos: true,
+      },
+      orderBy: [desc(animals.createdAt)],
+      limit,
+    });
 
     return NextResponse.json({
       success: true,
