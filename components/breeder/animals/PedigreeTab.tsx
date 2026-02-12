@@ -215,16 +215,18 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
             </Button>
           )}
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => createSnapshotMutation.mutate()}
-            disabled={createSnapshotMutation.isPending}
-            className="hover:bg-primary/10 hover:border-primary shadow-card"
-          >
-            <Camera className="w-4 h-4 mr-2" />
-            {createSnapshotMutation.isPending ? "Saving..." : "Snapshot"}
-          </Button>
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => createSnapshotMutation.mutate()}
+              disabled={createSnapshotMutation.isPending}
+              className="hover:bg-primary/10 hover:border-primary shadow-card"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              {createSnapshotMutation.isPending ? "Saving..." : "Snapshot"}
+            </Button>
+          )}
 
           {isOwner && (
             <Button

@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
 
 interface LitterCardProps {
   litter: Litter;
-  onEdit: (litter: Litter) => void;
-  onDelete: (litterId: string) => void;
+  onEdit?: (litter: Litter) => void;
+  onDelete?: (litterId: string) => void;
 }
 
 export function LitterCard({ litter, onEdit, onDelete }: LitterCardProps) {
@@ -121,24 +121,30 @@ export function LitterCard({ litter, onEdit, onDelete }: LitterCardProps) {
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-primary/10"
-              onClick={() => onEdit(litter)}
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => onDelete(litter.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+          {(onEdit || onDelete) && (
+            <div className="flex gap-2">
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hover:bg-primary/10"
+                  onClick={() => onEdit(litter)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => onDelete(litter.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Puppy Info Grid */}

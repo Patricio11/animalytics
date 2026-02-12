@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { animalPhotos } from '@/lib/db/schema/animals';
+import { animalPhotos, animals } from '@/lib/db/schema/animals';
 import { requireAuth } from '@/lib/auth/server';
 import { eq, and, count } from 'drizzle-orm';
 
@@ -65,6 +65,21 @@ export async function POST(
     const session = await requireAuth();
 
     const { id } = await params;
+
+    // Verify ownership
+    const [animal] = await db
+      .select({ id: animals.id })
+      .from(animals)
+      .where(and(eq(animals.id, id), eq(animals.userId, session.user.id)))
+      .limit(1);
+
+    if (!animal) {
+      return NextResponse.json(
+        { success: false, error: 'Animal not found or access denied' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { category, fileUrl, fileName, fileSize, thumbnailUrl, caption, width, height } = body;
 
@@ -163,6 +178,21 @@ export async function DELETE(
     const session = await requireAuth();
 
     const { id } = await params;
+
+    // Verify ownership
+    const [animal] = await db
+      .select({ id: animals.id })
+      .from(animals)
+      .where(and(eq(animals.id, id), eq(animals.userId, session.user.id)))
+      .limit(1);
+
+    if (!animal) {
+      return NextResponse.json(
+        { success: false, error: 'Animal not found or access denied' },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const photoId = searchParams.get('photoId');
 

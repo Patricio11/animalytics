@@ -15,6 +15,7 @@ import { uploadMultipleFiles, STORAGE_PATHS, FILE_VALIDATION } from "@/lib/supab
 
 interface PhotosDocsTabProps {
   animalId: string;
+  isOwner?: boolean;
 }
 
 type FileType = 'photo' | 'document';
@@ -45,7 +46,7 @@ const categoryDefinitions: CategoryDefinition[] = [
   { id: 'health', name: 'Health Records', description: 'Health documents and records', icon: '⚕️', types: ['document'], limit: 10 },
 ];
 
-export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
+export function PhotosDocsTab({ animalId, isOwner }: PhotosDocsTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -284,7 +285,8 @@ export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Unified Upload Zone */}
+      {/* Unified Upload Zone - Only show for owner */}
+      {isOwner && (
       <Card className="shadow-card bg-surface border-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -482,6 +484,7 @@ export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Uploaded Files Gallery by Category */}
       {isLoading ? (
@@ -546,20 +549,22 @@ export function PhotosDocsTab({ animalId }: PhotosDocsTabProps) {
                         >
                           <Download className="w-4 h-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-white hover:text-white hover:bg-destructive/80"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm('Are you sure you want to delete this photo?')) {
-                              deleteMutation.mutate(photo.id);
-                            }
-                          }}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {isOwner && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-white hover:text-white hover:bg-destructive/80"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm('Are you sure you want to delete this photo?')) {
+                                deleteMutation.mutate(photo.id);
+                              }
+                            }}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
 
                       {/* Caption */}

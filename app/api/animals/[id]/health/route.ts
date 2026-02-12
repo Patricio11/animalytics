@@ -51,6 +51,20 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
+    // Verify ownership
+    const [animal] = await db
+      .select({ id: animals.id })
+      .from(animals)
+      .where(and(eq(animals.id, id), eq(animals.userId, session.user.id)))
+      .limit(1);
+
+    if (!animal) {
+      return NextResponse.json(
+        { success: false, error: 'Animal not found or access denied' },
+        { status: 403 }
+      );
+    }
+
     const [newRecord] = await db
       .insert(healthRecords)
       .values({

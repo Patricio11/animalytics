@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { healthRecords } from '@/lib/db/schema/animals';
+import { healthRecords, animals } from '@/lib/db/schema/animals';
 import { requireAuth } from '@/lib/auth/server';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 /**
  * DELETE /api/animals/[id]/health/[recordId]
@@ -14,11 +14,25 @@ export async function DELETE(
 ) {
   try {
     const session = await requireAuth();
-    const { recordId } = await params;
+    const { id, recordId } = await params;
+
+    // Verify ownership
+    const [animal] = await db
+      .select({ id: animals.id })
+      .from(animals)
+      .where(and(eq(animals.id, id), eq(animals.userId, session.user.id)))
+      .limit(1);
+
+    if (!animal) {
+      return NextResponse.json(
+        { success: false, error: 'Animal not found or access denied' },
+        { status: 403 }
+      );
+    }
 
     await db
       .delete(healthRecords)
-      .where(eq(healthRecords.id, recordId));
+      .where(and(eq(healthRecords.id, recordId), eq(healthRecords.animalId, id)));
 
     return NextResponse.json({
       success: true,

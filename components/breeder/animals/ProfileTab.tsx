@@ -14,9 +14,10 @@ interface ProfileTabProps {
   animal: Animal;
   animalId: string;
   onEdit?: () => void;
+  isOwner?: boolean;
 }
 
-export function ProfileTab({ animal, animalId, onEdit }: ProfileTabProps) {
+export function ProfileTab({ animal, animalId, onEdit, isOwner }: ProfileTabProps) {
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -113,15 +114,17 @@ export function ProfileTab({ animal, animalId, onEdit }: ProfileTabProps) {
       <Card className="shadow-card border-primary/10">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Basic Information</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="hover:bg-primary/10 hover:border-primary"
-            onClick={onEdit}
-          >
-            <Edit className="w-3 h-3 mr-2" />
-            Edit Profile
-          </Button>
+          {isOwner && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hover:bg-primary/10 hover:border-primary"
+              onClick={onEdit}
+            >
+              <Edit className="w-3 h-3 mr-2" />
+              Edit Profile
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

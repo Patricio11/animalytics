@@ -41,9 +41,10 @@ interface HealthTabProps {
   animalName: string;
   animalSex?: 'male' | 'female';
   animalDateOfBirth?: string;
+  isOwner?: boolean;
 }
 
-export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }: HealthTabProps) {
+export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth, isOwner }: HealthTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { settings } = useRegionalSettings();
@@ -329,10 +330,12 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
             </TabsTrigger>
           </TabsList>
           
-          <Button onClick={handleAddRecord} className="ml-4">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Record
-          </Button>
+          {isOwner && (
+            <Button onClick={handleAddRecord} className="ml-4">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Record
+            </Button>
+          )}
         </div>
 
         {/* Overview Tab */}
@@ -357,10 +360,12 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                 <div className="text-center py-12">
                   <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground mb-4">No health records yet</p>
-                  <Button onClick={() => setShowAddRecord(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add First Record
-                  </Button>
+                  {isOwner && (
+                    <Button onClick={() => setShowAddRecord(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add First Record
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -438,13 +443,15 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                           )}
                         </div>
                         
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteMutation.mutate(record.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                        {isOwner && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteMutation.mutate(record.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     );
                   })}
@@ -591,10 +598,12 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                   <p className="text-sm text-muted-foreground mb-4">
                     Upload vaccination certificates, lab results, or medical documents
                   </p>
-                  <Button onClick={() => setShowCertificateDialog(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Upload Health Certificate
-                  </Button>
+                  {isOwner && (
+                    <Button onClick={() => setShowCertificateDialog(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Upload Health Certificate
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -652,13 +661,15 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                               <Download className="w-3 h-3 mr-2" />
                               View Certificate
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteMutation.mutate(cert.id)}
-                            >
-                              <Trash2 className="w-3 h-3 text-destructive" />
-                            </Button>
+                            {isOwner && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteMutation.mutate(cert.id)}
+                              >
+                                <Trash2 className="w-3 h-3 text-destructive" />
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -691,10 +702,12 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                   <p className="text-sm text-muted-foreground mb-4">
                     Schedule veterinary appointments and get reminders
                   </p>
-                  <Button onClick={() => setShowAppointmentDialog(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Schedule Appointment
-                  </Button>
+                  {isOwner && (
+                    <Button onClick={() => setShowAppointmentDialog(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Schedule Appointment
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -767,10 +780,12 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                   <Building2 className="w-5 h-5 text-primary" />
                   Veterinary Clinics & Contacts
                 </CardTitle>
-                <Button onClick={handleAddClinic} size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Clinic
-                </Button>
+                {isOwner && (
+                  <Button onClick={handleAddClinic} size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Clinic
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -786,10 +801,12 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                   <p className="text-sm text-muted-foreground mb-4">
                     Save your preferred veterinary clinics for quick access
                   </p>
-                  <Button onClick={handleAddClinic}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add First Clinic
-                  </Button>
+                  {isOwner && (
+                    <Button onClick={handleAddClinic}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add First Clinic
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -845,23 +862,25 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth }
                           )}
                         </div>
 
-                        <div className="flex gap-2 mt-4 pt-3 border-t">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleEditClinic(clinic)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteClinicMutation.mutate(clinic.id)}
-                          >
-                            <Trash2 className="w-3 h-3 text-destructive" />
-                          </Button>
-                        </div>
+                        {isOwner && (
+                          <div className="flex gap-2 mt-4 pt-3 border-t">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleEditClinic(clinic)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteClinicMutation.mutate(clinic.id)}
+                            >
+                              <Trash2 className="w-3 h-3 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   ))}

@@ -341,19 +341,19 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
 
                 <div className="p-6">
                   <TabsContent value="profile" className="mt-0">
-                    <ProfileTab animal={animal} animalId={animal.id} onEdit={() => setShowEditDialog(true)} />
+                    <ProfileTab animal={animal} animalId={animal.id} onEdit={() => setShowEditDialog(true)} isOwner={!!isOwner} />
                   </TabsContent>
 
                   <TabsContent value="health" className="mt-0">
-                    <HealthTab animalId={animal.id} animalName={animal.name} />
+                    <HealthTab animalId={animal.id} animalName={animal.name} isOwner={!!isOwner} />
                   </TabsContent>
 
                   <TabsContent value="pedigree" className="mt-0">
-                    <PedigreeTab animalId={animal.id} animalName={animal.name} />
+                    <PedigreeTab animalId={animal.id} animalName={animal.name} animalUserId={animal.userId} />
                   </TabsContent>
 
                   <TabsContent value="photos-docs" className="mt-0">
-                    <PhotosDocsTab animalId={animal.id} />
+                    <PhotosDocsTab animalId={animal.id} isOwner={!!isOwner} />
                   </TabsContent>
 
                   <TabsContent value="feeding" className="mt-0">
@@ -361,6 +361,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                       animalId={animal.id}
                       animalName={animal.name}
                       feedingPlans={animal.feedingPlans || []}
+                      isOwner={!!isOwner}
                     />
                   </TabsContent>
 
@@ -368,6 +369,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                     <SemenTab
                       animalId={animal.id}
                       assessments={animal.semenAssessments || []}
+                      isOwner={!!isOwner}
                     />
                   </TabsContent>
 
@@ -377,6 +379,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                         <SeasonsTab
                           animalId={animal.id}
                           seasons={animal.seasons || []}
+                          isOwner={!!isOwner}
                         />
                       </TabsContent>
 
@@ -384,6 +387,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                         <LitterDetailsTab
                           animalId={animal.id}
                           litters={animal.littersAsBitch || []}
+                          isOwner={!!isOwner}
                         />
                       </TabsContent>
                     </>
@@ -394,6 +398,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                       animalId={animal.id}
                       animalSex={animal.sex}
                       reminders={animal.reminders || []}
+                      isOwner={!!isOwner}
                     />
                   </TabsContent>
                 </div>

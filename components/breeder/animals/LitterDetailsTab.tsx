@@ -18,9 +18,10 @@ import { PregnancyTracker } from "./PregnancyTracker";
 interface LitterDetailsTabProps {
   animalId: string;
   litters: Litter[];
+  isOwner?: boolean;
 }
 
-export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDetailsTabProps) {
+export function LitterDetailsTab({ animalId, litters: initialLitters, isOwner }: LitterDetailsTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -236,15 +237,17 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
               <Baby className="w-5 h-5 text-primary" />
               Litter History
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="hover:bg-primary/10 hover:border-primary"
-              onClick={handleCreateNew}
-            >
-              <Plus className="w-3 h-3 mr-2" />
-              Record New Litter
-            </Button>
+            {isOwner && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hover:bg-primary/10 hover:border-primary"
+                onClick={handleCreateNew}
+              >
+                <Plus className="w-3 h-3 mr-2" />
+                Record New Litter
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -254,8 +257,8 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
                 <LitterCard
                   key={litter.id}
                   litter={litter}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
+                  onEdit={isOwner ? handleEdit : undefined}
+                  onDelete={isOwner ? handleDelete : undefined}
                 />
               ))}
             </div>
@@ -263,14 +266,16 @@ export function LitterDetailsTab({ animalId, litters: initialLitters }: LitterDe
             <div className="text-center py-12 border-2 border-dashed border-primary/20 rounded-lg">
               <Baby className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <p className="text-muted-foreground mb-4">No litters recorded yet</p>
-              <Button
-                variant="outline"
-                className="hover:bg-primary/10 hover:border-primary"
-                onClick={handleCreateNew}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Record First Litter
-              </Button>
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  className="hover:bg-primary/10 hover:border-primary"
+                  onClick={handleCreateNew}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Record First Litter
+                </Button>
+              )}
             </div>
           )}
         </CardContent>

@@ -16,9 +16,10 @@ import { format } from "date-fns";
 interface SemenTabProps {
   animalId: string;
   assessments: SemenAssessment[];
+  isOwner?: boolean;
 }
 
-export function SemenTab({ animalId, assessments: initialAssessments }: SemenTabProps) {
+export function SemenTab({ animalId, assessments: initialAssessments, isOwner }: SemenTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -185,15 +186,17 @@ export function SemenTab({ animalId, assessments: initialAssessments }: SemenTab
               <Microscope className="w-5 h-5 text-primary" />
               Semen Assessments
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="hover:bg-primary/10 hover:border-primary"
-              onClick={handleCreateNew}
-            >
-              <Plus className="w-3 h-3 mr-2" />
-              New Assessment
-            </Button>
+            {isOwner && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hover:bg-primary/10 hover:border-primary"
+                onClick={handleCreateNew}
+              >
+                <Plus className="w-3 h-3 mr-2" />
+                New Assessment
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -203,8 +206,8 @@ export function SemenTab({ animalId, assessments: initialAssessments }: SemenTab
                 <SemenAssessmentCard
                   key={assessment.id}
                   assessment={assessment}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
+                  onEdit={isOwner ? handleEdit : undefined}
+                  onDelete={isOwner ? handleDelete : undefined}
                 />
               ))}
             </div>
@@ -212,14 +215,16 @@ export function SemenTab({ animalId, assessments: initialAssessments }: SemenTab
             <div className="text-center py-12 border-2 border-dashed border-primary/20 rounded-lg">
               <Microscope className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <p className="text-muted-foreground mb-4">No semen assessments recorded yet</p>
-              <Button
-                variant="outline"
-                className="hover:bg-primary/10 hover:border-primary"
-                onClick={handleCreateNew}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Record First Assessment
-              </Button>
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  className="hover:bg-primary/10 hover:border-primary"
+                  onClick={handleCreateNew}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Record First Assessment
+                </Button>
+              )}
             </div>
           )}
         </CardContent>

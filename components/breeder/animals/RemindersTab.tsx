@@ -24,9 +24,10 @@ interface RemindersTabProps {
   animalId: string;
   animalSex: 'male' | 'female';
   reminders: Reminder[];
+  isOwner?: boolean;
 }
 
-export function RemindersTab({ animalId, animalSex, reminders }: RemindersTabProps) {
+export function RemindersTab({ animalId, animalSex, reminders, isOwner }: RemindersTabProps) {
   const isBitch = animalSex === 'female';
   
   // Settings for notification preferences (would be stored in user preferences)
@@ -195,24 +196,26 @@ export function RemindersTab({ animalId, animalSex, reminders }: RemindersTabPro
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="hover:bg-primary/10"
-                        disabled={!settings.enabled}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="hover:bg-destructive/10 hover:text-destructive"
-                        disabled={!settings.enabled}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {isOwner && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="hover:bg-primary/10"
+                          disabled={!settings.enabled}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                          disabled={!settings.enabled}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -221,76 +224,80 @@ export function RemindersTab({ animalId, animalSex, reminders }: RemindersTabPro
             <div className="text-center py-8 border-2 border-dashed border-primary/20 rounded-lg">
               <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <p className="text-muted-foreground mb-4">No custom reminders set</p>
-              <Button
-                variant="outline"
-                className="hover:bg-primary/10 hover:border-primary"
-                disabled={!settings.enabled}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Custom Reminder
-              </Button>
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  className="hover:bg-primary/10 hover:border-primary"
+                  disabled={!settings.enabled}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Custom Reminder
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Add Custom Reminder Form */}
-      <Card className="shadow-card border-primary/10 bg-surface-secondary">
-        <CardHeader>
-          <CardTitle className="text-lg">Quick Add Custom Reminder</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="reminder-title">Reminder Title</Label>
-            <Input
-              id="reminder-title"
-              className="bg-background border-primary/20"
-              placeholder="e.g., Hip X-ray for breeding certification"
-              disabled={!settings.enabled}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Add Custom Reminder Form - Only for owner */}
+      {isOwner && (
+        <Card className="shadow-card border-primary/10 bg-surface-secondary">
+          <CardHeader>
+            <CardTitle className="text-lg">Quick Add Custom Reminder</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="frequency">Frequency</Label>
-              <Select disabled={!settings.enabled}>
-                <SelectTrigger id="frequency" className="bg-background border-primary/20">
-                  <SelectValue placeholder="Select frequency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="next-date">Next Date</Label>
+              <Label htmlFor="reminder-title">Reminder Title</Label>
               <Input
-                id="next-date"
-                type="date"
+                id="reminder-title"
                 className="bg-background border-primary/20"
+                placeholder="e.g., Hip X-ray for breeding certification"
                 disabled={!settings.enabled}
               />
             </div>
-          </div>
 
-          <div className="flex gap-2">
-            <Button
-              className="bg-gradient-brand hover:opacity-90 shadow-card"
-              disabled={!settings.enabled}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Reminder
-            </Button>
-            <Button variant="outline" disabled={!settings.enabled}>
-              Clear
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="frequency">Frequency</Label>
+                <Select disabled={!settings.enabled}>
+                  <SelectTrigger id="frequency" className="bg-background border-primary/20">
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="next-date">Next Date</Label>
+                <Input
+                  id="next-date"
+                  type="date"
+                  className="bg-background border-primary/20"
+                  disabled={!settings.enabled}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                className="bg-gradient-brand hover:opacity-90 shadow-card"
+                disabled={!settings.enabled}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Reminder
+              </Button>
+              <Button variant="outline" disabled={!settings.enabled}>
+                Clear
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

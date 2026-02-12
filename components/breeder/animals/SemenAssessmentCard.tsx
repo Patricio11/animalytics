@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
 
 interface SemenAssessmentCardProps {
   assessment: SemenAssessment;
-  onEdit: (assessment: SemenAssessment) => void;
-  onDelete: (assessmentId: string) => void;
+  onEdit?: (assessment: SemenAssessment) => void;
+  onDelete?: (assessmentId: string) => void;
 }
 
 export function SemenAssessmentCard({ assessment, onEdit, onDelete }: SemenAssessmentCardProps) {
@@ -81,24 +81,30 @@ export function SemenAssessmentCard({ assessment, onEdit, onDelete }: SemenAsses
             )}
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-primary/10"
-              onClick={() => onEdit(assessment)}
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => onDelete(assessment.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+          {(onEdit || onDelete) && (
+            <div className="flex gap-2">
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hover:bg-primary/10"
+                  onClick={() => onEdit(assessment)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => onDelete(assessment.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Parameters Grid - Only for full assessments */}

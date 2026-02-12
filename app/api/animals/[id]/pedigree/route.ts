@@ -102,7 +102,7 @@ export async function PUT(
     // Get session for user attribution
     const session = await auth.api.getSession({ headers: request.headers });
 
-    // Check if animal exists
+    // Check if animal exists and verify ownership
     const [animal] = await db
       .select()
       .from(animals)
@@ -113,6 +113,13 @@ export async function PUT(
       return NextResponse.json(
         { error: 'Animal not found' },
         { status: 404 }
+      );
+    }
+
+    if (session && animal.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: You do not own this animal' },
+        { status: 403 }
       );
     }
 

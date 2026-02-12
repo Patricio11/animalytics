@@ -12,8 +12,8 @@ import { SeasonProgesteroneChart } from "./SeasonProgesteroneChart";
 
 interface SeasonCardProps {
   season: Season;
-  onEdit: (season: Season) => void;
-  onDelete: (seasonId: string) => void;
+  onEdit?: (season: Season) => void;
+  onDelete?: (seasonId: string) => void;
 }
 
 export function SeasonCard({ season, onEdit, onDelete }: SeasonCardProps) {
@@ -72,22 +72,26 @@ export function SeasonCard({ season, onEdit, onDelete }: SeasonCardProps) {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-primary/10"
-              onClick={() => onEdit(season)}
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => onDelete(season.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-primary/10"
+                onClick={() => onEdit(season)}
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => onDelete(season.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
             {hasProgesterone && (
               <Button
                 variant="ghost"
