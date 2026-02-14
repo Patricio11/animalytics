@@ -370,9 +370,9 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
                 </div>
               ) : data?.pedigree ? (
                 viewMode === 'horizontal' ? (
-                  <PedigreeTreeHorizontal 
-                    node={data.pedigree} 
-                    generations={3} 
+                  <PedigreeTreeHorizontal
+                    node={data.pedigree}
+                    generations={4}
                     onUpdate={() => queryClient.invalidateQueries({ queryKey: ["pedigree", animalId] })}
                     isOwner={isOwner}
                   />

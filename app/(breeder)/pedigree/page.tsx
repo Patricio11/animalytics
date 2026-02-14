@@ -267,7 +267,7 @@ export default function PedigreePage() {
                   {treeOrientation === "horizontal" ? (
                     <PedigreeTreeHorizontal
                       node={pedigreeData.pedigree}
-                      generations={3}
+                      generations={4}
                       onUpdate={() => queryClient.invalidateQueries({ queryKey: ["pedigree", selectedAnimalId] })}
                       isOwner={isOwner}
                     />
