@@ -325,7 +325,7 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
         <TabsContent value="certificate" className="space-y-6">
           {/* Pedigree Tree - Full Width */}
           <div>
-          <Card className="shadow-elevated bg-surface border-0">
+          <Card className="shadow-elevated bg-surface border-0 overflow-hidden">
             <CardHeader>
               <CardTitle className="text-base">
                 {viewMode === 'vertical' ? 'Family Tree' : 'Pedigree Certificate'}

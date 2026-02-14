@@ -302,13 +302,13 @@ export function PedigreeTree({ node, generations = 3, onUpdate, isOwner = true }
       </div>
 
       {/* Scrollable Tree Container */}
-      <div className="relative w-full overflow-x-auto pb-6 -mx-2 px-2">
-        <div ref={treeRef} className="relative" style={{ minWidth: `${Math.max(900, generations >= 4 ? rows[rows.length - 1].length * 172 + (rows[rows.length - 1].length / 2 - 1) * 20 : 900)}px` }}>
-          {/* SVG Connector Lines */}
-          <svg
-            className="absolute inset-0 w-full h-full pointer-events-none z-0"
-            style={{ overflow: "visible" }}
-          >
+      <div className="relative w-full overflow-hidden">
+        <div className="overflow-x-auto pb-6">
+          <div ref={treeRef} className="relative" style={{ minWidth: `${Math.max(900, generations >= 4 ? rows[rows.length - 1].length * 172 + (rows[rows.length - 1].length / 2 - 1) * 20 : 900)}px` }}>
+            {/* SVG Connector Lines */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none z-0"
+            >
             <defs>
               <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
@@ -429,6 +429,7 @@ export function PedigreeTree({ node, generations = 3, onUpdate, isOwner = true }
                 </div>
               </div>
             ))}
+            </div>
           </div>
         </div>
       </div>
