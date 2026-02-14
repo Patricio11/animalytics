@@ -301,95 +301,135 @@ export function PedigreeTree({ node, generations = 3, onUpdate, isOwner = true }
         </Button>
       </div>
 
-      {/* Tree Container */}
-      <div ref={treeRef} className="relative w-full overflow-x-auto pb-4">
-        {/* SVG Connector Lines */}
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none z-0"
-          style={{ overflow: "visible" }}
-        >
-          <defs>
-            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.15" />
-            </linearGradient>
-          </defs>
-          {lines.map((line, i) => {
-            // Draw a stepped path: down from parent, then horizontal, then down to child
-            const midY = line.y1 + (line.y2 - line.y1) * 0.5;
-            return (
-              <path
-                key={i}
-                d={`M ${line.x1} ${line.y1} L ${line.x1} ${midY} L ${line.x2} ${midY} L ${line.x2} ${line.y2}`}
-                fill="none"
-                stroke="url(#lineGradient)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="transition-all duration-300"
-              />
-            );
-          })}
-        </svg>
+      {/* Scrollable Tree Container */}
+      <div className="relative w-full overflow-x-auto pb-6 -mx-2 px-2">
+        <div ref={treeRef} className="relative" style={{ minWidth: `${Math.max(900, generations >= 4 ? rows[rows.length - 1].length * 172 + (rows[rows.length - 1].length / 2 - 1) * 20 : 900)}px` }}>
+          {/* SVG Connector Lines */}
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none z-0"
+            style={{ overflow: "visible" }}
+          >
+            <defs>
+              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.15" />
+              </linearGradient>
+            </defs>
+            {lines.map((line, i) => {
+              const midY = line.y1 + (line.y2 - line.y1) * 0.5;
+              return (
+                <path
+                  key={i}
+                  d={`M ${line.x1} ${line.y1} L ${line.x1} ${midY} L ${line.x2} ${midY} L ${line.x2} ${line.y2}`}
+                  fill="none"
+                  stroke="url(#lineGradient)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="transition-all duration-300"
+                />
+              );
+            })}
+          </svg>
 
-        {/* Generation Rows */}
-        <div className="relative z-10 space-y-10">
-          {rows.map((row, genIndex) => (
-            <div key={genIndex} className="space-y-2">
-              {/* Generation Label */}
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-                <span
-                  className={cn(
-                    "text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full",
-                    genIndex === 0
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "bg-muted/60 text-muted-foreground border border-border/50"
-                  )}
-                >
-                  {genLabels[genIndex] || `Gen ${genIndex}`}
-                </span>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-              </div>
-
-              {/* Cards Row */}
-              <div
-                className={cn(
-                  "flex justify-center gap-3",
-                  genIndex >= 3 && "gap-2"
-                )}
-              >
-                {row.map((item) => (
-                  <div
-                    key={item.path}
-                    ref={(el) => registerCardRef(item.path === "subject" ? "subject" : item.position, el)}
+          {/* Generation Rows */}
+          <div className="relative z-10 space-y-10">
+            {rows.map((row, genIndex) => (
+              <div key={genIndex} className="space-y-2">
+                {/* Generation Label */}
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                  <span
                     className={cn(
-                      "flex-shrink-0",
-                      genIndex === 0 && "w-64",
-                      genIndex === 1 && "w-52",
-                      genIndex === 2 && "w-44",
-                      genIndex >= 3 && "w-36"
+                      "text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full whitespace-nowrap",
+                      genIndex === 0
+                        ? "bg-primary/10 text-primary border border-primary/20"
+                        : "bg-muted/60 text-muted-foreground border border-border/50"
                     )}
                   >
-                    <TreeCard
-                      animal={item.animal}
-                      generation={genIndex}
-                      position={item.position}
-                      label={item.label}
-                      compact={genIndex >= 3}
-                      isOwner={isOwner}
-                      subjectId={node.id}
-                      onEdit={handleEditClick}
-                      onAddManual={handleAddManualClick}
-                      onEditManual={handleEditManualClick}
-                      onDelete={handleDeleteClick}
-                      onCardClick={handleCardClick}
-                    />
-                  </div>
-                ))}
+                    {genLabels[genIndex] || `Gen ${genIndex}`}
+                  </span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                </div>
+
+                {/* Cards Row - grouped in pairs under each parent */}
+                <div
+                  className={cn(
+                    "flex justify-center",
+                    genIndex === 0 && "gap-4",
+                    genIndex >= 1 && "gap-8"
+                  )}
+                >
+                  {(() => {
+                    // Group items in pairs (sire+dam from same parent) for gen >= 2
+                    if (genIndex >= 2) {
+                      const groups: typeof row[] = [];
+                      for (let i = 0; i < row.length; i += 2) {
+                        groups.push(row.slice(i, i + 2));
+                      }
+                      return groups.map((pair, groupIdx) => (
+                        <div key={groupIdx} className="flex gap-3">
+                          {pair.map((item) => (
+                            <div
+                              key={item.path}
+                              ref={(el) => registerCardRef(item.path === "subject" ? "subject" : item.position, el)}
+                              className={cn(
+                                "flex-shrink-0",
+                                genIndex === 2 && "w-44",
+                                genIndex >= 3 && "w-40"
+                              )}
+                            >
+                              <TreeCard
+                                animal={item.animal}
+                                generation={genIndex}
+                                position={item.position}
+                                label={item.label}
+                                compact={genIndex >= 3}
+                                isOwner={isOwner}
+                                subjectId={node.id}
+                                onEdit={handleEditClick}
+                                onAddManual={handleAddManualClick}
+                                onEditManual={handleEditManualClick}
+                                onDelete={handleDeleteClick}
+                                onCardClick={handleCardClick}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ));
+                    }
+                    // Gen 0 and 1: no grouping needed
+                    return row.map((item) => (
+                      <div
+                        key={item.path}
+                        ref={(el) => registerCardRef(item.path === "subject" ? "subject" : item.position, el)}
+                        className={cn(
+                          "flex-shrink-0",
+                          genIndex === 0 && "w-64",
+                          genIndex === 1 && "w-52"
+                        )}
+                      >
+                        <TreeCard
+                          animal={item.animal}
+                          generation={genIndex}
+                          position={item.position}
+                          label={item.label}
+                          compact={false}
+                          isOwner={isOwner}
+                          subjectId={node.id}
+                          onEdit={handleEditClick}
+                          onAddManual={handleAddManualClick}
+                          onEditManual={handleEditManualClick}
+                          onDelete={handleDeleteClick}
+                          onCardClick={handleCardClick}
+                        />
+                      </div>
+                    ));
+                  })()}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
