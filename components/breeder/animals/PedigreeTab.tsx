@@ -13,6 +13,7 @@ import { PedigreeTreeHorizontal } from "@/components/breeder/animals/PedigreeTre
 import { EditParentsDialog } from "@/components/breeder/animals/EditParentsDialog";
 import { PedigreeDocumentsList } from "@/components/breeder/animals/PedigreeDocumentsList";
 import { ImportPedigreeDialog } from "@/components/breeder/animals/ImportPedigreeDialog";
+import { ScanPedigreeDialog } from "@/components/breeder/animals/ScanPedigreeDialog";
 import {
   Download,
   FileText,
@@ -24,6 +25,7 @@ import {
   Upload,
   LayoutGrid,
   LayoutList,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -41,6 +43,7 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [scanDialogOpen, setScanDialogOpen] = useState(false);
   const [generations, setGenerations] = useState(4);
   const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('horizontal');
   const [activeSubTab, setActiveSubTab] = useState('certificate');
@@ -225,6 +228,18 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
             >
               <Camera className="w-4 h-4 mr-2" />
               {createSnapshotMutation.isPending ? "Saving..." : "Snapshot"}
+            </Button>
+          )}
+
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setScanDialogOpen(true)}
+              className="hover:bg-primary/10 hover:border-primary shadow-card bg-gradient-brand text-white"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Scan Pedigree
             </Button>
           )}
 
@@ -434,6 +449,18 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
         animalId={animalId}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["pedigree", animalId] });
+        }}
+      />
+
+      {/* AI Scan Pedigree Dialog */}
+      <ScanPedigreeDialog
+        open={scanDialogOpen}
+        onOpenChange={setScanDialogOpen}
+        animalId={animalId}
+        animalName={animalName}
+        animalBreed={data?.pedigree?.breed}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["pedigree", animalId] });
         }}

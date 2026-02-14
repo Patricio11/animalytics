@@ -128,22 +128,6 @@ export async function fetchPedigree(
   } else if (animal.damId) {
     console.log(`🔄 Recursing for dam: ${animal.damId}`);
     dam = await fetchPedigree(animal.damId, depth + 1, maxGens, rootAnimalId, damPath, manualEntries);
-  } else if (animal.damName && animal.damRegisteredName) {
-    // Legacy manual entry from animal table
-    dam = {
-      id: `manual-dam-${animal.id}`,
-      name: animal.damName,
-      registeredName: animal.damRegisteredName,
-      breed: null,
-      sex: 'female',
-      registrationNumber: null,
-      dateOfBirth: null,
-      color: null,
-      profileImageUrl: null,
-      dam: null,
-      sire: null,
-      isManualEntry: true,
-    };
   }
 
   // Fetch sire - check manual entries first, then linked animals
@@ -154,22 +138,6 @@ export async function fetchPedigree(
   } else if (animal.sireId) {
     console.log(`🔄 Recursing for sire: ${animal.sireId}`);
     sire = await fetchPedigree(animal.sireId, depth + 1, maxGens, rootAnimalId, sirePath, manualEntries);
-  } else if (animal.sireName && animal.sireRegisteredName) {
-    // Legacy manual entry from animal table
-    sire = {
-      id: `manual-sire-${animal.id}`,
-      name: animal.sireName,
-      registeredName: animal.sireRegisteredName,
-      breed: null,
-      sex: 'male',
-      registrationNumber: null,
-      dateOfBirth: null,
-      color: null,
-      profileImageUrl: null,
-      dam: null,
-      sire: null,
-      isManualEntry: true,
-    };
   }
 
   return {
