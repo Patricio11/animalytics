@@ -45,26 +45,8 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [scanDialogOpen, setScanDialogOpen] = useState(false);
   const [generations, setGenerations] = useState(4);
-  const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('horizontal');
+  const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('vertical');
   const [activeSubTab, setActiveSubTab] = useState('certificate');
-
-  // Debug logging - check all props
-  console.log('🔍 PedigreeTab received props:', {
-    animalId,
-    animalName,
-    animalUserId,
-    animalUserIdType: typeof animalUserId,
-  });
-  
-  console.log('🔍 PedigreeTab ownership check:', {
-    userId: user?.id,
-    userIdType: typeof user?.id,
-    animalUserId,
-    animalUserIdType: typeof animalUserId,
-    isOwner,
-    match: user?.id === animalUserId,
-    strictMatch: user?.id === animalUserId,
-  });
 
   // Fetch pedigree data
   const { data, isLoading, error } = useQuery({
@@ -181,6 +163,18 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1 border border-primary/20 rounded-md p-1">
             <Button
+              variant={viewMode === 'vertical' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('vertical')}
+              className={cn(
+                "h-8 px-3",
+                viewMode === 'vertical' && "bg-gradient-brand text-white shadow-card"
+              )}
+            >
+              <LayoutGrid className="w-4 h-4 mr-1" />
+              Family Tree
+            </Button>
+            <Button
               variant={viewMode === 'horizontal' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('horizontal')}
@@ -191,18 +185,6 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
             >
               <LayoutList className="w-4 h-4 mr-1" />
               Certificate
-            </Button>
-            <Button
-              variant={viewMode === 'vertical' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('vertical')}
-              className={cn(
-                "h-8 px-3",
-                viewMode === 'vertical' && "bg-gradient-brand text-white shadow-card"
-              )}
-            >
-              <LayoutGrid className="w-4 h-4 mr-1" />
-              Grid
             </Button>
           </div>
 
@@ -346,7 +328,7 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
           <Card className="shadow-elevated bg-surface border-0">
             <CardHeader>
               <CardTitle className="text-base">
-                {viewMode === 'horizontal' ? 'Pedigree Certificate' : 'Family Tree'}
+                {viewMode === 'vertical' ? 'Family Tree' : 'Pedigree Certificate'}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -395,10 +377,11 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
                     isOwner={isOwner}
                   />
                 ) : (
-                  <PedigreeTree 
-                    node={data.pedigree} 
+                  <PedigreeTree
+                    node={data.pedigree}
                     generations={generations}
                     isOwner={isOwner}
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["pedigree", animalId] })}
                   />
                 )
               ) : (
