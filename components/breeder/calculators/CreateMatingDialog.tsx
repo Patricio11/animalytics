@@ -82,7 +82,13 @@ export function CreateMatingDialog({
       const response = await fetch(`/api/mating-partners?sex=${sex}&limit=100`);
       if (!response.ok) throw new Error('Failed to fetch animals');
       const data = await response.json();
-      return data.data || [];
+      // API returns { partners: [...] } with flat breedName field
+      // Normalize to match the shape expected by the animal mapping below
+      const partners = data.partners || [];
+      return partners.map((p: any) => ({
+        ...p,
+        breed: p.breed || { name: p.breedName || 'Unknown' },
+      }));
     } catch (error) {
       console.error('Error fetching all animals:', error);
       return [];
