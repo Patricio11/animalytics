@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Trash2, Share2 } from "lucide-react";
+import { Heart, Eye, MapPin, Phone, Mail, Star, Award, Shield, Trash2, Share2, Zap } from "lucide-react";
 import { VerifiedCheckmark } from "@/components/ui/verified-badge";
+import { BoostListingDialog } from "@/components/marketplace/BoostListingDialog";
 import type { MarketplaceListing } from "@/lib/types/marketplace";
 import { getCategoryLabel } from "@/lib/utils/marketplace";
 import { CURRENCIES } from "@/lib/utils/currency";
@@ -21,12 +22,14 @@ interface ListingCardProps {
   isPublicView?: boolean;
   isOwner?: boolean;
   isSaved?: boolean;
+  isBoosted?: boolean;
   onDelete?: (listingId: string) => void;
 }
 
-export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSaved, onDelete }: ListingCardProps) {
+export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSaved, isBoosted, onDelete }: ListingCardProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showBoostDialog, setShowBoostDialog] = useState(false);
 
   const handleDeleteClick = () => {
     setShowDeleteModal(true);
@@ -96,7 +99,8 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSa
   return (
     <Card className={cn(
       "shadow-card border-0 hover:shadow-elevated transition-all duration-200",
-      listing.featured && "border-2 border-primary/20 bg-gradient-subtle"
+      listing.featured && "border-2 border-primary/20 bg-gradient-subtle",
+      isBoosted && "ring-2 ring-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5"
     )}>
       <CardContent className="p-0">
         {/* Image */}
@@ -120,10 +124,16 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSa
                 {config.icon} {getCategoryLabel(listing.category)}
               </Badge>
             </div>
-            <div className="absolute bottom-3 left-3">
+            <div className="absolute bottom-3 left-3 flex gap-2">
               <Badge className={cn(statusStyle.color, "shadow-card")}>
                 {statusStyle.label}
               </Badge>
+              {isBoosted && (
+                <Badge className="bg-gradient-brand text-white shadow-card">
+                  <Zap className="w-3 h-3 mr-1 fill-current" />
+                  Boosted
+                </Badge>
+              )}
             </div>
           </div>
         </Link>
@@ -245,6 +255,20 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSa
                 <Button
                   variant="outline"
                   size="icon"
+                  className={cn(
+                    "shadow-card transition-all duration-200",
+                    isBoosted
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "hover:bg-primary/10 hover:border-primary hover:text-primary"
+                  )}
+                  onClick={() => setShowBoostDialog(true)}
+                  title={isBoosted ? "Currently boosted" : "Boost listing"}
+                >
+                  <Zap className={cn("w-4 h-4", isBoosted && "fill-current")} />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
                   className="hover:bg-destructive/10 hover:border-destructive hover:text-destructive shadow-card"
                   onClick={handleDeleteClick}
                   title="Delete listing"
@@ -292,6 +316,16 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSa
           </div>
         </div>
       </CardContent>
+
+      {/* Boost Dialog */}
+      {isOwner && (
+        <BoostListingDialog
+          listingId={listing.id}
+          listingTitle={listing.title}
+          open={showBoostDialog}
+          onOpenChange={setShowBoostDialog}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal

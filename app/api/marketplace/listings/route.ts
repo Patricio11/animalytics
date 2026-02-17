@@ -188,13 +188,15 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: [desc(listings.createdAt)],
+        orderBy: [desc(listings.isFeatured), desc(listings.featuredPriority), desc(listings.createdAt)],
       });
-      
-      // Add isOwner flag for each listing
+
+      // Add isOwner flag and boosted status for each listing
+      const now = new Date();
       const listingsWithOwnership = listingsQuery.map(listing => ({
         ...listing,
         isOwner: session ? listing.userId === session.user.id : false,
+        boosted: listing.isFeatured && listing.featuredEndDate ? new Date(listing.featuredEndDate) > now : false,
       }));
       
       return NextResponse.json({

@@ -20,6 +20,7 @@ import { matings } from './matings';
 import { progesteroneTests } from './progesterone-tests';
 import { tasks } from './tasks';
 import { listings } from './marketplace';
+import { listingBoosts } from './boost';
 import { breederBreedPreferences } from './user-breed-preferences';
 import { breederProfiles } from './profiles';
 
@@ -358,6 +359,21 @@ export const manualPedigreeEntriesRelations = relations(manualPedigreeEntries, (
   }),
   user: one(users, {
     fields: [manualPedigreeEntries.userId],
+    references: [users.id],
+  }),
+}));
+
+// ============================================================================
+// LISTING BOOSTS RELATIONS
+// ============================================================================
+
+export const listingBoostsRelations = relations(listingBoosts, ({ one }) => ({
+  listing: one(listings, {
+    fields: [listingBoosts.listingId],
+    references: [listings.id],
+  }),
+  user: one(users, {
+    fields: [listingBoosts.userId],
     references: [users.id],
   }),
 }));

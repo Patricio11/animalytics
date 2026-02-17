@@ -556,6 +556,7 @@ export default function Marketplace() {
                   isOwner={listing.isOwner}
                   isPublicView={!isAuthenticated}
                   isSaved={savedListingIds.has(listing.id)}
+                  isBoosted={listing.boosted || listing.isFeatured}
                   onDelete={handleDeleteListing}
                   onInterested={(id) => toggleSaveMutation.mutate(id)}
                 />
@@ -583,6 +584,7 @@ export default function Marketplace() {
                   isOwner={listing.isOwner}
                   isPublicView={!isAuthenticated}
                   isSaved={savedListingIds.has(listing.id)}
+                  isBoosted={listing.boosted || listing.isFeatured}
                   onDelete={handleDeleteListing}
                   onInterested={(id) => toggleSaveMutation.mutate(id)}
                 />

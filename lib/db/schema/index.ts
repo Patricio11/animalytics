@@ -24,3 +24,4 @@ export * from './clinics';
 export * from './official-clinics';
 export * from './clinic-staff';
 export * from './vet-invitations';
+export * from './boost';

@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search,
   MoreVertical,
@@ -42,8 +43,12 @@ import {
   AlertCircle,
   Image as ImageIcon,
   DollarSign,
+  Zap,
+  Settings,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { BoostPricingSettings } from "@/components/admin/BoostPricingSettings";
+import { ActiveBoostsView } from "@/components/admin/ActiveBoostsView";
 import Link from "next/link";
 
 interface Listing {
@@ -341,11 +346,37 @@ export default function AdminMarketplacePage() {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Marketplace Moderation</h1>
+          <h1 className="text-3xl font-bold text-foreground">Marketplace Management</h1>
           <p className="text-muted-foreground mt-1">
-            Review and approve marketplace listings
+            Manage listings, boost pricing, and promotions
           </p>
         </div>
+
+        <Tabs defaultValue="listings" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="listings" className="gap-2">
+              <ShoppingBag className="w-4 h-4" />
+              Listings
+            </TabsTrigger>
+            <TabsTrigger value="boost-pricing" className="gap-2">
+              <Settings className="w-4 h-4" />
+              Boost Pricing
+            </TabsTrigger>
+            <TabsTrigger value="active-boosts" className="gap-2">
+              <Zap className="w-4 h-4" />
+              Active Boosts
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="boost-pricing">
+            <BoostPricingSettings />
+          </TabsContent>
+
+          <TabsContent value="active-boosts">
+            <ActiveBoostsView />
+          </TabsContent>
+
+          <TabsContent value="listings" className="space-y-6">
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -814,6 +845,9 @@ export default function AdminMarketplacePage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -66,4 +66,6 @@ export interface MarketplaceListing {
   registrationNumber?: string;
   healthCertified?: boolean;
   championLines?: boolean;
+  boosted?: boolean;
+  boostEndDate?: string;
 }
