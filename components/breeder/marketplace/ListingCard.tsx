@@ -20,10 +20,11 @@ interface ListingCardProps {
   onInterested?: (listingId: string) => void;
   isPublicView?: boolean;
   isOwner?: boolean;
+  isSaved?: boolean;
   onDelete?: (listingId: string) => void;
 }
 
-export function ListingCard({ listing, onInterested, isPublicView, isOwner, onDelete }: ListingCardProps) {
+export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSaved, onDelete }: ListingCardProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -274,11 +275,16 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, onDe
                   <Button
                     variant="outline"
                     size="icon"
-                    className="hover:bg-primary/10 hover:border-primary shadow-card"
+                    className={cn(
+                      "shadow-card transition-all duration-200",
+                      isSaved
+                        ? "bg-red-50 border-red-300 text-red-500 hover:bg-red-100 hover:border-red-400 dark:bg-red-950/30 dark:border-red-800 dark:text-red-400"
+                        : "hover:bg-primary/10 hover:border-primary"
+                    )}
                     onClick={() => onInterested?.(listing.id)}
-                    title="Mark as interested"
+                    title={isSaved ? "Remove from wishlist" : "Add to wishlist"}
                   >
-                    <Heart className="w-4 h-4" />
+                    <Heart className={cn("w-4 h-4", isSaved && "fill-current")} />
                   </Button>
                 )}
               </>

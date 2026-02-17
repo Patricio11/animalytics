@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth/client";
+import { useToast } from "@/hooks/use-toast";
 import { ListingCard } from "@/components/breeder/marketplace/ListingCard";
 import { CreateListingDialog } from "@/components/breeder/marketplace/CreateListingDialog";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,8 @@ export default function Marketplace() {
   const isBreeder = userRole === 'breeder';
   const isPetOwner = userRole === 'pet_owner';
   const canCreateListing = isBreeder || isPetOwner;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [breedFilter, setBreedFilter] = useState("");
@@ -77,6 +80,56 @@ export default function Marketplace() {
   const [championOnlyFilter, setChampionOnlyFilter] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  // Fetch saved listing IDs for the current user
+  const { data: savedData } = useQuery({
+    queryKey: ['saved-listings'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace/saved');
+      if (!response.ok) return { saved: [] };
+      return response.json();
+    },
+    enabled: isAuthenticated,
+  });
+
+  const savedListingIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (savedData?.saved) {
+      for (const item of savedData.saved) {
+        ids.add(item.listingId);
+      }
+    }
+    return ids;
+  }, [savedData]);
+
+  // Toggle save/unsave mutation
+  const toggleSaveMutation = useMutation({
+    mutationFn: async (listingId: string) => {
+      const response = await fetch('/api/marketplace/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle save');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['saved-listings'] });
+      toast({
+        title: data.saved ? "Added to Wishlist" : "Removed from Wishlist",
+        description: data.saved
+          ? "Listing has been saved to your wishlist"
+          : "Listing has been removed from your wishlist",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update wishlist. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Auto-detect user location on mount
   useEffect(() => {
@@ -497,15 +550,14 @@ export default function Marketplace() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredListings.map((listing: any) => (
-                <ListingCard 
-                  key={listing.id} 
+                <ListingCard
+                  key={listing.id}
                   listing={listing}
                   isOwner={listing.isOwner}
                   isPublicView={!isAuthenticated}
+                  isSaved={savedListingIds.has(listing.id)}
                   onDelete={handleDeleteListing}
-                  onInterested={(id) => {
-                    console.log('Interested in listing:', id);
-                  }}
+                  onInterested={(id) => toggleSaveMutation.mutate(id)}
                 />
               ))}
             </div>
@@ -525,15 +577,14 @@ export default function Marketplace() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.map((listing: any) => (
-                <ListingCard 
-                  key={listing.id} 
+                <ListingCard
+                  key={listing.id}
                   listing={listing}
                   isOwner={listing.isOwner}
                   isPublicView={!isAuthenticated}
+                  isSaved={savedListingIds.has(listing.id)}
                   onDelete={handleDeleteListing}
-                  onInterested={(id) => {
-                    console.log('Interested in listing:', id);
-                  }}
+                  onInterested={(id) => toggleSaveMutation.mutate(id)}
                 />
               ))}
             </div>
