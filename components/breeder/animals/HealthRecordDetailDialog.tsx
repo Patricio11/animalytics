@@ -239,7 +239,15 @@ export function HealthRecordDetailDialog({ record, open, onOpenChange }: HealthR
                 <div>
                   <div className="text-sm font-medium text-muted-foreground">Cost</div>
                   <div className="text-base font-semibold">
-                    {record.currency || 'USD'} {(record.cost / 100).toFixed(2)}
+                    {(() => {
+                      const amount = record.cost / 100;
+                      const curr = record.currency || 'USD';
+                      try {
+                        return new Intl.NumberFormat(undefined, { style: 'currency', currency: curr }).format(amount);
+                      } catch {
+                        return `${curr} ${amount.toFixed(2)}`;
+                      }
+                    })()}
                   </div>
                 </div>
               </div>

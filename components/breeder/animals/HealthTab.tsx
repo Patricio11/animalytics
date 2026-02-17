@@ -203,8 +203,11 @@ export function HealthTab({ animalId, animalName, animalSex, animalDateOfBirth, 
   const formatCurrency = (cents: number | null, currency: string) => {
     if (!cents) return '-';
     const amount = cents / 100;
-    const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency;
-    return `${symbol}${amount.toFixed(2)}`;
+    try {
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
+    } catch {
+      return `${currency} ${amount.toFixed(2)}`;
+    }
   };
 
   if (isLoading) {

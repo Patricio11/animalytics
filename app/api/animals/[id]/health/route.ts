@@ -85,6 +85,7 @@ export async function POST(
         diagnosis: body.diagnosis,
         treatment: body.treatment,
         cost: body.cost,
+        currency: body.currency,
         notes: body.notes,
         certificateUrl: body.certificateUrl,
       })
