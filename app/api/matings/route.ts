@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
           },
           with: {
             breed: true,
+            photos: true,
           },
         },
         dog: {
@@ -99,6 +100,7 @@ export async function GET(request: NextRequest) {
           },
           with: {
             breed: true,
+            photos: true,
           },
         },
         frozenSemen: true,

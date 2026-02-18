@@ -53,12 +53,17 @@ export function ActiveCycleCard({ cycle, onAddReading, onViewDetails }: ActiveCy
       <CardHeader className="border-b border-primary/10 pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1">
-            <Avatar className="w-12 h-12 border-2 border-primary/20 shadow-sm">
-              <AvatarImage src={cycle.bitchPhotoUrl} alt={cycle.bitchName} />
-              <AvatarFallback className="bg-gradient-brand text-white font-semibold">
-                {cycle.bitchName[0]}
-              </AvatarFallback>
-            </Avatar>
+            {cycle.bitchPhotoUrl ? (
+              <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-pink-200 shadow-sm">
+                <img src={cycle.bitchPhotoUrl} alt={cycle.bitchName} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <Avatar className="w-12 h-12 border-2 border-pink-200 shadow-sm">
+                <AvatarFallback className="bg-pink-100 text-pink-700 font-semibold">
+                  {cycle.bitchName.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            )}
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg mb-1">{cycle.bitchName}</CardTitle>
               <p className="text-sm text-muted-foreground">{cycle.bitchBreed}</p>

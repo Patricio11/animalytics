@@ -148,28 +148,42 @@ export function MatingCard({ mating, bitch, dog, onDelete }: MatingCardProps) {
         {/* Animal Preview */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-2 p-2 bg-background rounded-lg border border-primary/10">
-            <Avatar className="w-10 h-10 border-2 border-primary/20">
-              <AvatarImage src={bitch.photos[0]} alt={bitch.name} />
-              <AvatarFallback>{bitch.name[0]}</AvatarFallback>
-            </Avatar>
+            {(bitch as any).avatarUrl ? (
+              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-pink-200">
+                <img src={(bitch as any).avatarUrl} alt={bitch.name} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <Avatar className="w-10 h-10 border-2 border-pink-200">
+                <AvatarFallback className="bg-pink-100 text-pink-700 font-semibold">
+                  {bitch.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            )}
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium text-foreground truncate">
                 {bitch.name}
               </div>
-              <div className="text-xs text-muted-foreground">Bitch</div>
+              <div className="text-xs text-muted-foreground">Dam</div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 p-2 bg-background rounded-lg border border-primary/10">
-            <Avatar className="w-10 h-10 border-2 border-primary/20">
-              <AvatarImage src={dog.photos[0]} alt={dog.name} />
-              <AvatarFallback>{dog.name[0]}</AvatarFallback>
-            </Avatar>
+            {(dog as any).avatarUrl ? (
+              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-200">
+                <img src={(dog as any).avatarUrl} alt={dog.name} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <Avatar className="w-10 h-10 border-2 border-blue-200">
+                <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
+                  {dog.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            )}
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium text-foreground truncate">
                 {dog.name}
               </div>
-              <div className="text-xs text-muted-foreground">Dog</div>
+              <div className="text-xs text-muted-foreground">Sire</div>
             </div>
           </div>
         </div>

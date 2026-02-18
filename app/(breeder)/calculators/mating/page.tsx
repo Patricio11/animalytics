@@ -18,6 +18,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APIMating, APIAnimal } from "@/lib/api/types";
 import { format } from "date-fns";
 
+// Resolve profile photo from photos relation (same pattern as Conception Rating Calculator)
+const resolvePhoto = (animal: any) => {
+  if (!animal) return undefined;
+  const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
+  return profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || animal.profileImageUrl || undefined;
+};
+
 export default function MatingCalculatorPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -286,13 +293,13 @@ export default function MatingCalculatorPage() {
                           id: mating.bitch?.id || '',
                           name: mating.bitch?.name || 'Unknown',
                           breed: mating.bitch?.breed?.name || 'Unknown',
-                          photos: [mating.bitch?.profileImageUrl || '']
+                          avatarUrl: resolvePhoto(mating.bitch),
                         } as any}
                         dog={{
                           id: mating.dog?.id || '',
                           name: mating.dog?.name || mating.frozenSemenBatch?.batchIdentifier || 'Unknown',
                           breed: mating.dog?.breed?.name || 'Frozen Semen',
-                          photos: [mating.dog?.profileImageUrl || '']
+                          avatarUrl: resolvePhoto(mating.dog),
                         } as any}
                         onDelete={() => handleDeleteClick(mating)}
                       />

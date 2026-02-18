@@ -86,12 +86,17 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
                     animals.filter(a => a.sex === 'female').map(animal => (
                       <SelectItem key={animal.id} value={animal.id}>
                         <div className="flex items-center gap-3 py-1">
-                          <Avatar className="w-8 h-8 border-2 border-primary/20">
-                            <AvatarImage src={animal.profilePhotoUrl} alt={animal.name} />
-                            <AvatarFallback className="bg-gradient-brand text-white text-xs">
-                              {animal.name[0]}
-                            </AvatarFallback>
-                          </Avatar>
+                          {animal.profilePhotoUrl ? (
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border-2 border-pink-200">
+                              <img src={animal.profilePhotoUrl} alt={animal.name} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <Avatar className="w-8 h-8 border-2 border-pink-200">
+                              <AvatarFallback className="bg-pink-100 text-pink-700 text-xs font-semibold">
+                                {animal.name.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
                           <div className="flex-1">
                             <div className="font-medium">{animal.registeredName || animal.name}</div>
                             <div className="text-xs text-muted-foreground">{animal.breed}</div>
@@ -109,12 +114,17 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
           </Select>
           {selectedAnimal && (
             <div className="p-3 bg-chart-3/10 border border-chart-3/20 rounded-lg flex items-center gap-3">
-              <Avatar className="w-12 h-12 border-2 border-chart-3/30">
-                <AvatarImage src={selectedAnimal.profilePhotoUrl} alt={selectedAnimal.name} />
-                <AvatarFallback className="bg-gradient-brand text-white">
-                  {selectedAnimal.name[0]}
-                </AvatarFallback>
-              </Avatar>
+              {selectedAnimal.profilePhotoUrl ? (
+                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-chart-3/30">
+                  <img src={selectedAnimal.profilePhotoUrl} alt={selectedAnimal.name} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <Avatar className="w-12 h-12 border-2 border-chart-3/30">
+                  <AvatarFallback className="bg-pink-100 text-pink-700 font-semibold">
+                    {selectedAnimal.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              )}
               <div className="flex-1">
                 <div className="font-semibold text-foreground">{selectedAnimal.registeredName || selectedAnimal.name}</div>
                 <div className="text-sm text-muted-foreground">{selectedAnimal.breed}</div>

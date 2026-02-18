@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calculator, Activity, Heart, Beaker, ArrowRight, Calendar, TrendingUp, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -16,6 +17,13 @@ export default function CalculatorPage() {
   // Fetch real data from API
   const { data: matingsData, isLoading: matingsLoading } = useMatings();
 
+  // Resolve photo URL from animal data (same pattern as conception-rating page)
+  const resolvePhoto = (animal: any) => {
+    if (!animal) return undefined;
+    const profilePhoto = animal.photos?.find((p: any) => p.category === 'profile');
+    return profilePhoto?.fileUrl || animal.photos?.[0]?.fileUrl || animal.profileImageUrl || undefined;
+  };
+
   // Get recent matings (last 2)
   const recentMatingCalculations = matingsData?.slice(0, 2).map((mating: any) => {
     const ratingValue = parseFloat(mating.overallRating || '0');
@@ -23,6 +31,8 @@ export default function CalculatorPage() {
       id: mating.id,
       dogName: mating.dog?.name || mating.frozenSemen?.dogName || 'Unknown',
       bitchName: mating.bitch?.name || 'Unknown',
+      dogAvatarUrl: resolvePhoto(mating.dog),
+      bitchAvatarUrl: resolvePhoto(mating.bitch),
       date: mating.matingDate,
       rating: ratingValue,
       status: (ratingValue >= 80 ? 'excellent' : 'good') as 'excellent' | 'good',
@@ -223,29 +233,57 @@ export default function CalculatorPage() {
                   ) : (
                     <>
                       {recentMatingCalculations.map((calc: any) => (
-                        <Card key={calc.id} className="shadow-card bg-surface-secondary border-0">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium text-foreground">
-                                  {calc.dogName} × {calc.bitchName}
+                        <Link key={calc.id} href={`/calculators/mating/${calc.id}`}>
+                          <Card className="shadow-card bg-surface-secondary border-0 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex -space-x-2">
+                                    {calc.bitchAvatarUrl ? (
+                                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-pink-200 z-10">
+                                        <img src={calc.bitchAvatarUrl} alt={calc.bitchName} className="w-full h-full object-cover" />
+                                      </div>
+                                    ) : (
+                                      <Avatar className="w-8 h-8 border-2 border-pink-200 z-10">
+                                        <AvatarFallback className="bg-pink-100 text-pink-700 text-xs font-semibold">
+                                          {calc.bitchName.substring(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    )}
+                                    {calc.dogAvatarUrl ? (
+                                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-blue-200">
+                                        <img src={calc.dogAvatarUrl} alt={calc.dogName} className="w-full h-full object-cover" />
+                                      </div>
+                                    ) : (
+                                      <Avatar className="w-8 h-8 border-2 border-blue-200">
+                                        <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">
+                                          {calc.dogName.substring(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-foreground">
+                                      {calc.dogName} × {calc.bitchName}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {calc.date}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {calc.date}
+                                <div className="text-right">
+                                  <div className="text-2xl font-bold text-foreground">{calc.rating.toFixed(1)}%</div>
+                                  <Badge
+                                    className={calc.status === 'excellent' ? 'bg-chart-3 text-white' : 'bg-chart-4 text-white'}
+                                  >
+                                    {calc.status}
+                                  </Badge>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-foreground">{calc.rating.toFixed(1)}%</div>
-                                <Badge
-                                  className={calc.status === 'excellent' ? 'bg-chart-3 text-white' : 'bg-chart-4 text-white'}
-                                >
-                                  {calc.status}
-                                </Badge>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                            </CardContent>
+                          </Card>
+                        </Link>
                       ))}
                       <Button
                         variant="outline"
