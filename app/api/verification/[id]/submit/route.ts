@@ -13,7 +13,7 @@ import { sendAdminVerificationNotification } from '@/lib/services/verification-e
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({
@@ -28,7 +28,7 @@ export async function POST(
     }
 
     const userId = session.user.id;
-    const verificationId = params.id;
+    const { id: verificationId } = await params;
 
     // Get verification request
     const verificationRequest = await db.query.verificationRequests.findFirst({
@@ -70,15 +70,10 @@ export async function POST(
     if (!verificationRequest.selfieWithIdUrl) missingFields.push('Selfie with ID');
     if (!verificationRequest.proofOfAddressUrl) missingFields.push('Proof of Address');
 
-    // Role-specific required fields
-    if (verificationRequest.userRole === 'breeder') {
-      if (!verificationRequest.breederCertificationUrl) missingFields.push('Breeder Certification');
-    }
-
     if (missingFields.length > 0) {
       return NextResponse.json(
-        { 
-          error: 'Missing required fields',
+        {
+          error: `Missing required fields: ${missingFields.join(', ')}`,
           missingFields,
         },
         { status: 400 }
@@ -106,32 +101,32 @@ export async function POST(
       userAgent: request.headers.get('user-agent') || undefined,
     });
 
-    // Get user info for notifications
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-    });
+    // Send notifications (non-blocking — don't fail submit if notifications fail)
+    try {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+      });
 
-    if (!user) {
-      throw new Error('User not found');
+      if (user) {
+        await notifyVerificationStatusChange(
+          userId,
+          user.email,
+          user.name || 'User',
+          'submitted',
+          verificationId
+        );
+
+        await sendAdminVerificationNotification({
+          userName: user.name || 'User',
+          userEmail: user.email,
+          userRole: verificationRequest.userRole as 'breeder' | 'pet_owner',
+          verificationId,
+          submittedAt: submittedAt.toISOString(),
+        });
+      }
+    } catch (notificationError) {
+      console.error('Failed to send notifications (submit still succeeded):', notificationError);
     }
-
-    // Send notifications (email + in-system) to user
-    await notifyVerificationStatusChange(
-      userId,
-      user.email,
-      user.name || 'User',
-      'submitted',
-      verificationId
-    );
-
-    // Send notification to admin
-    await sendAdminVerificationNotification({
-      userName: user.name || 'User',
-      userEmail: user.email,
-      userRole: verificationRequest.userRole as 'breeder' | 'pet_owner',
-      verificationId,
-      submittedAt: submittedAt.toISOString(),
-    });
 
     console.log(`✅ Verification request submitted: ${verificationId}`);
 

@@ -47,12 +47,36 @@ export function DocumentUploadCard({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Build file extensions string for the accept attribute (more reliable on mobile)
+  const mimeToExtensions: Record<string, string> = {
+    'image/jpeg': '.jpg,.jpeg',
+    'image/jpg': '.jpg,.jpeg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+    'application/pdf': '.pdf',
+  };
+  const acceptFileExtensions = acceptedFormats
+    .map(mime => mimeToExtensions[mime] || `.${mime.split('/')[1]}`)
+    .join(',');
+
+  // Normalize MIME types for validation (image/jpg → image/jpeg)
+  const normalizeType = (type: string) => type === 'image/jpg' ? 'image/jpeg' : type;
+  const normalizedAccepted = acceptedFormats.map(normalizeType);
+
   const handleFileSelect = async (file: File) => {
     setError(null);
 
-    // Validate file type
-    if (!acceptedFormats.includes(file.type)) {
-      setError(`Invalid file type. Accepted formats: ${acceptedFormats.join(', ')}`);
+    // Validate file type (also check by extension as fallback for mobile)
+    const fileType = normalizeType(file.type);
+    const fileExt = file.name.toLowerCase().split('.').pop();
+    const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
+    const isValidByType = normalizedAccepted.includes(fileType);
+    const isValidByExt = fileExt ? validExtensions.some(ext =>
+      acceptFileExtensions.includes(`.${ext}`) && ext === fileExt
+    ) : false;
+
+    if (!isValidByType && !isValidByExt) {
+      setError(`Invalid file type. Accepted formats: ${acceptFileExtensions}`);
       return;
     }
 
@@ -89,6 +113,8 @@ export function DocumentUploadCard({
     if (file) {
       handleFileSelect(file);
     }
+    // Reset input value so the same file can be re-selected
+    e.target.value = '';
   };
 
   const handleRemove = () => {
@@ -214,7 +240,7 @@ export function DocumentUploadCard({
             <input
               ref={fileInputRef}
               type="file"
-              accept={acceptedFormats.join(',')}
+              accept={acceptFileExtensions}
               onChange={handleFileInputChange}
               className="hidden"
             />

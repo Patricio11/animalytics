@@ -67,6 +67,27 @@ export default function VerificationWizardPage() {
     },
   });
 
+  // Pre-fill form data from existing verification request
+  useEffect(() => {
+    if (verificationRequest) {
+      const addr = verificationRequest.address || {};
+      setFormData((prev) => ({
+        ...prev,
+        firstName: verificationRequest.firstName || '',
+        lastName: verificationRequest.lastName || '',
+        dateOfBirth: verificationRequest.dateOfBirth || '',
+        nationality: verificationRequest.nationality || '',
+        phoneNumber: verificationRequest.phoneNumber || '',
+        addressLine1: addr.street || '',
+        addressLine2: addr.addressLine2 || '',
+        city: addr.city || '',
+        stateProvince: addr.state || '',
+        postalCode: addr.postalCode || '',
+        country: addr.country || '',
+      }));
+    }
+  }, [verificationRequest]);
+
   // Update verification mutation
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -89,7 +110,10 @@ export default function VerificationWizardPage() {
       const res = await fetch(`/api/verification/${verificationId}/submit`, {
         method: 'POST',
       });
-      if (!res.ok) throw new Error('Failed to submit verification');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || 'Failed to submit verification');
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -125,13 +149,13 @@ export default function VerificationWizardPage() {
       id: 'identity',
       title: 'Identity Documents',
       description: 'ID and 4-corner photos',
-      isComplete: false,
+      isComplete: !!(verificationRequest?.idFrontImageUrl && verificationRequest?.idBackImageUrl && verificationRequest?.selfieWithIdUrl),
     },
     {
       id: 'proof_address',
       title: 'Proof of Address',
       description: 'Bank statement or utility bill',
-      isComplete: false,
+      isComplete: !!verificationRequest?.proofOfAddressUrl,
     },
     {
       id: 'review',
@@ -144,11 +168,30 @@ export default function VerificationWizardPage() {
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   const handleNext = async () => {
-    // Save current step data
-    if (currentStep === 0 || currentStep === 1) {
-      await updateMutation.mutateAsync(formData);
+    // Save current step data with only the relevant fields
+    if (currentStep === 0) {
+      // Personal info step - only send personal fields
+      await updateMutation.mutateAsync({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dateOfBirth: formData.dateOfBirth,
+        nationality: formData.nationality,
+        phoneNumber: formData.phoneNumber,
+      });
+    } else if (currentStep === 1) {
+      // Address step - save as JSON object matching schema
+      await updateMutation.mutateAsync({
+        address: {
+          street: formData.addressLine1,
+          addressLine2: formData.addressLine2,
+          city: formData.city,
+          state: formData.stateProvince,
+          postalCode: formData.postalCode,
+          country: formData.country,
+        },
+      });
     }
-    
+
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -366,19 +409,23 @@ export default function VerificationWizardPage() {
                 description="Front side of your government-issued ID"
                 documentType="id_front"
                 required
+                uploadedUrl={verificationRequest?.idFrontImageUrl}
                 onUpload={async (file, docType) => {
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  formData.append('verificationId', verificationId);
-                  formData.append('documentType', docType);
-                  formData.append('category', 'identity');
-                  
+                  const uploadData = new FormData();
+                  uploadData.append('file', file);
+                  uploadData.append('verificationId', verificationId);
+                  uploadData.append('documentType', docType);
+                  uploadData.append('category', 'identity');
+
                   const res = await fetch('/api/verification/upload', {
                     method: 'POST',
-                    body: formData,
+                    body: uploadData,
                   });
                   
-                  if (!res.ok) throw new Error('Upload failed');
+                  if (!res.ok) {
+                    const errData = await res.json().catch(() => null);
+                    throw new Error(errData?.error || 'Upload failed');
+                  }
                   queryClient.invalidateQueries({ queryKey: ['verification-request', verificationId] });
                 }}
               />
@@ -388,37 +435,50 @@ export default function VerificationWizardPage() {
                 description="Back side of your government-issued ID"
                 documentType="id_back"
                 required
+                uploadedUrl={verificationRequest?.idBackImageUrl}
                 onUpload={async (file, docType) => {
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  formData.append('verificationId', verificationId);
-                  formData.append('documentType', docType);
-                  formData.append('category', 'identity');
-                  
+                  const uploadData = new FormData();
+                  uploadData.append('file', file);
+                  uploadData.append('verificationId', verificationId);
+                  uploadData.append('documentType', docType);
+                  uploadData.append('category', 'identity');
+
                   const res = await fetch('/api/verification/upload', {
                     method: 'POST',
-                    body: formData,
+                    body: uploadData,
                   });
                   
-                  if (!res.ok) throw new Error('Upload failed');
+                  if (!res.ok) {
+                    const errData = await res.json().catch(() => null);
+                    throw new Error(errData?.error || 'Upload failed');
+                  }
                   queryClient.invalidateQueries({ queryKey: ['verification-request', verificationId] });
                 }}
               />
 
               <FourCornerPhotoUpload
+                uploadedPhotos={{
+                  topLeft: verificationRequest?.idTopLeftCornerUrl,
+                  topRight: verificationRequest?.idTopRightCornerUrl,
+                  bottomLeft: verificationRequest?.idBottomLeftCornerUrl,
+                  bottomRight: verificationRequest?.idBottomRightCornerUrl,
+                }}
                 onUpload={async (file, docType) => {
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  formData.append('verificationId', verificationId);
-                  formData.append('documentType', docType);
-                  formData.append('category', 'identity');
-                  
+                  const uploadData = new FormData();
+                  uploadData.append('file', file);
+                  uploadData.append('verificationId', verificationId);
+                  uploadData.append('documentType', docType);
+                  uploadData.append('category', 'identity');
+
                   const res = await fetch('/api/verification/upload', {
                     method: 'POST',
-                    body: formData,
+                    body: uploadData,
                   });
                   
-                  if (!res.ok) throw new Error('Upload failed');
+                  if (!res.ok) {
+                    const errData = await res.json().catch(() => null);
+                    throw new Error(errData?.error || 'Upload failed');
+                  }
                   queryClient.invalidateQueries({ queryKey: ['verification-request', verificationId] });
                 }}
               />
@@ -428,19 +488,23 @@ export default function VerificationWizardPage() {
                 description="Hold your ID next to your face"
                 documentType="selfie_with_id"
                 required
+                uploadedUrl={verificationRequest?.selfieWithIdUrl}
                 onUpload={async (file, docType) => {
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  formData.append('verificationId', verificationId);
-                  formData.append('documentType', docType);
-                  formData.append('category', 'identity');
-                  
+                  const uploadData = new FormData();
+                  uploadData.append('file', file);
+                  uploadData.append('verificationId', verificationId);
+                  uploadData.append('documentType', docType);
+                  uploadData.append('category', 'identity');
+
                   const res = await fetch('/api/verification/upload', {
                     method: 'POST',
-                    body: formData,
+                    body: uploadData,
                   });
                   
-                  if (!res.ok) throw new Error('Upload failed');
+                  if (!res.ok) {
+                    const errData = await res.json().catch(() => null);
+                    throw new Error(errData?.error || 'Upload failed');
+                  }
                   queryClient.invalidateQueries({ queryKey: ['verification-request', verificationId] });
                 }}
               />
@@ -462,19 +526,23 @@ export default function VerificationWizardPage() {
                 description="Bank statement or utility bill (last 30 days)"
                 documentType="proof_of_address"
                 required
+                uploadedUrl={verificationRequest?.proofOfAddressUrl}
                 onUpload={async (file, docType) => {
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  formData.append('verificationId', verificationId);
-                  formData.append('documentType', docType);
-                  formData.append('category', 'proof_of_address');
-                  
+                  const uploadData = new FormData();
+                  uploadData.append('file', file);
+                  uploadData.append('verificationId', verificationId);
+                  uploadData.append('documentType', docType);
+                  uploadData.append('category', 'proof_of_address');
+
                   const res = await fetch('/api/verification/upload', {
                     method: 'POST',
-                    body: formData,
+                    body: uploadData,
                   });
                   
-                  if (!res.ok) throw new Error('Upload failed');
+                  if (!res.ok) {
+                    const errData = await res.json().catch(() => null);
+                    throw new Error(errData?.error || 'Upload failed');
+                  }
                   queryClient.invalidateQueries({ queryKey: ['verification-request', verificationId] });
                 }}
               />

@@ -10,7 +10,7 @@ import { eq, and } from 'drizzle-orm';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({
@@ -25,7 +25,7 @@ export async function GET(
     }
 
     const userId = session.user.id;
-    const verificationId = params.id;
+    const { id: verificationId } = await params;
 
     // Get verification request
     const verificationRequest = await db.query.verificationRequests.findFirst({
@@ -58,7 +58,7 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({
@@ -73,7 +73,7 @@ export async function PATCH(
     }
 
     const userId = session.user.id;
-    const verificationId = params.id;
+    const { id: verificationId } = await params;
     const body = await request.json();
 
     // Get verification request

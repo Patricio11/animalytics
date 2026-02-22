@@ -114,16 +114,33 @@ export async function POST(request: NextRequest) {
       uploadedFromDevice: request.headers.get('user-agent') || undefined,
     }).returning();
 
-    // Update verification request with document URL
-    const updateField: Record<string, string> = {};
-    updateField[`${documentType}Url`] = publicUrl;
+    // Map document types to the correct schema field names
+    const documentTypeToField: Record<string, string> = {
+      'id_front': 'idFrontImageUrl',
+      'id_back': 'idBackImageUrl',
+      'id_corner_tl': 'idTopLeftCornerUrl',
+      'id_corner_tr': 'idTopRightCornerUrl',
+      'id_corner_bl': 'idBottomLeftCornerUrl',
+      'id_corner_br': 'idBottomRightCornerUrl',
+      'selfie_with_id': 'selfieWithIdUrl',
+      'proof_of_address': 'proofOfAddressUrl',
+      'breeder_certification': 'breederCertificationUrl',
+      'kennel_license': 'kennelLicenseUrl',
+      'business_registration': 'businessRegistrationUrl',
+      'tax_id': 'taxIdUrl',
+      'pet_ownership_proof': 'petOwnershipProofUrl',
+      'veterinary_records': 'veterinaryRecordsUrl',
+    };
 
-    await db.update(verificationRequests)
-      .set({
-        ...updateField,
-        updatedAt: new Date(),
-      })
-      .where(eq(verificationRequests.id, verificationId));
+    const fieldName = documentTypeToField[documentType];
+    if (fieldName) {
+      await db.update(verificationRequests)
+        .set({
+          [fieldName]: publicUrl,
+          updatedAt: new Date(),
+        })
+        .where(eq(verificationRequests.id, verificationId));
+    }
 
     // Create audit log entry
     await db.insert(verificationAuditLog).values({
