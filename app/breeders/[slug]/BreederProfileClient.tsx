@@ -499,25 +499,12 @@ export default function BreederProfileClient({
               {/* Contact Info */}
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle className="text-base">Contact Information</CardTitle>
+                  <CardTitle className="text-base">Contact</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {profile.publicEmail && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="w-4 h-4 text-muted-foreground" />
-                      <a href={`mailto:${profile.publicEmail}`} className="text-primary hover:underline">
-                        {profile.publicEmail}
-                      </a>
-                    </div>
-                  )}
-                  {profile.publicPhone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <a href={`tel:${profile.publicPhone}`} className="text-primary hover:underline">
-                        {profile.publicPhone}
-                      </a>
-                    </div>
-                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Use the platform messaging to contact this breeder directly.
+                  </p>
                   {profile.website && (
                     <div className="flex items-center gap-2 text-sm">
                       <Globe className="w-4 h-4 text-muted-foreground" />

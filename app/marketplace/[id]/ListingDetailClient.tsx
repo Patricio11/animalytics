@@ -741,26 +741,17 @@ export default function ListingDetailClient({ params }: ListingDetailPageProps) 
                     </div>
                   )}
 
-                  {isAuthenticated && listing.contactPhone && (
+                  {isAuthenticated && !isOwner && (
                     <div className="flex items-center gap-3">
-                      <Phone className="w-5 h-5 text-muted-foreground" />
+                      <MessageSquare className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <div className="text-sm text-muted-foreground">Phone</div>
-                        <a href={`tel:${listing.contactPhone}`} className="font-medium text-foreground hover:underline">
-                          {listing.contactPhone}
-                        </a>
-                      </div>
-                    </div>
-                  )}
-
-                  {isAuthenticated && listing.contactEmail && (
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <div className="text-sm text-muted-foreground">Email</div>
-                        <a href={`mailto:${listing.contactEmail}`} className="font-medium text-foreground hover:underline break-all">
-                          {listing.contactEmail}
-                        </a>
+                        <div className="text-sm text-muted-foreground">Contact</div>
+                        <button
+                          onClick={() => setContactDialogOpen(true)}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          Message the seller
+                        </button>
                       </div>
                     </div>
                   )}

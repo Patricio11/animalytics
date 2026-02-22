@@ -1,36 +1,63 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { CURRENCIES } from "@/lib/utils/currency";
 import {
   Heart,
   Search,
   MessageSquare,
   Trash2,
+  MapPin,
 } from "lucide-react";
 
 export default function BuyerSavedPage() {
-  const [savedListings, setSavedListings] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch saved listings
-  useEffect(() => {
-    async function fetchSaved() {
-      try {
-        // TODO: Implement saved listings API
-        // For now, show empty state
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching saved listings:', error);
-        setIsLoading(false);
-      }
-    }
+  const { data, isLoading } = useQuery({
+    queryKey: ['saved-listings'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace/saved');
+      if (!response.ok) throw new Error('Failed to fetch saved listings');
+      return response.json();
+    },
+  });
 
-    fetchSaved();
-  }, []);
+  const savedListings = data?.saved || [];
+
+  // Remove from saved mutation
+  const removeMutation = useMutation({
+    mutationFn: async (listingId: string) => {
+      const response = await fetch('/api/marketplace/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId }),
+      });
+      if (!response.ok) throw new Error('Failed to remove listing');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-listings'] });
+      toast({
+        title: "Listing Removed",
+        description: "Listing removed from your saved items",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove listing",
+        variant: "destructive",
+      });
+    },
+  });
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -67,55 +94,86 @@ export default function BuyerSavedPage() {
           </div>
         ) : savedListings.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {savedListings.map((listing) => (
-              <Card key={listing.id} className="shadow-card overflow-hidden">
-                <Link href={`/marketplace/${listing.slug || listing.id}`}>
-                  <div className="h-48 bg-muted relative">
-                    {listing.imageUrl ? (
+            {savedListings.map((item: any) => {
+              const listing = item.listing;
+              const images = listing.additionalImages?.length > 0
+                ? listing.additionalImages
+                : [listing.animal?.profileImageUrl || '/placeholder-dog.jpg'];
+
+              return (
+                <Card key={listing.id} className="shadow-card overflow-hidden hover:shadow-lg transition-shadow">
+                  <Link href={`/marketplace/${listing.slug || listing.id}`}>
+                    <div className="h-48 bg-muted relative group">
                       <img
-                        src={listing.imageUrl}
+                        src={images[0]}
                         alt={listing.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain bg-muted/30 group-hover:scale-105 transition-transform duration-300"
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Heart className="h-12 w-12 text-muted-foreground opacity-50" />
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 shadow-lg"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          removeMutation.mutate(listing.id);
+                        }}
+                        disabled={removeMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      {listing.status !== 'active' && (
+                        <div className="absolute top-2 left-2">
+                          <Badge variant="secondary" className="capitalize">
+                            {listing.status}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                  <CardContent className="p-4 space-y-3">
+                    <div>
+                      <Link href={`/marketplace/${listing.slug || listing.id}`}>
+                        <h3 className="font-semibold truncate hover:text-primary transition-colors">
+                          {listing.title}
+                        </h3>
+                      </Link>
+                      {listing.animal?.breed?.name && (
+                        <p className="text-sm text-muted-foreground">
+                          {listing.animal.breed.name}
+                        </p>
+                      )}
+                    </div>
+
+                    {listing.location && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span className="truncate">{listing.location}</span>
                       </div>
                     )}
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        // TODO: Remove from saved
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </Link>
-                <CardContent className="p-4">
-                  <Link href={`/marketplace/${listing.slug || listing.id}`}>
-                    <h3 className="font-semibold truncate hover:text-primary">
-                      {listing.title}
-                    </h3>
-                  </Link>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {listing.breed} • {listing.location}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-lg">
-                      ${listing.price?.toLocaleString()}
-                    </p>
-                    <Button variant="outline" size="sm">
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      Contact
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+
+                    <div className="flex items-center justify-between pt-2">
+                      {listing.price ? (
+                        <p className="font-bold text-lg text-primary">
+                          {CURRENCIES[listing.currency as keyof typeof CURRENCIES]?.symbol || listing.currency}
+                          {(listing.price / 100).toLocaleString()}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Contact for price</p>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                      >
+                        <Link href={`/marketplace/${listing.slug || listing.id}`}>
+                          View
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <Card className="shadow-card">
