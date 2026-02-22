@@ -223,7 +223,7 @@ export default function ListingDetailClient({ params }: ListingDetailPageProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sellerId: listing?.userId,
-          listingId: id,
+          listingId: listing?.id,
           initialMessage: messageText.trim(),
         }),
       });
@@ -265,7 +265,7 @@ export default function ListingDetailClient({ params }: ListingDetailPageProps) 
     setIsInitiatingPurchase(true);
     try {
       const requestBody = {
-        listingId: id,
+        listingId: listing?.id,
         animalId: listing?.animalId,
         paymentMethod: 'stripe', // Default to Stripe as per requirements
         deliveryMethod: deliveryMethod,

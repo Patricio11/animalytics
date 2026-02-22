@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
   try {
     // Get current session
     const session = await auth.api.getSession({
-      headers: await headers(),
+      headers: request.headers,
     });
 
     if (!session) {
@@ -346,7 +346,7 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       const senderName = sender?.name || 'Someone';
-      const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'buyer' | 'vet' | 'event_organizer' | 'admin';
+      const recipientUserRole = (recipient?.role || 'breeder') as 'breeder' | 'pet_owner' | 'vet' | 'event_organizer' | 'admin';
 
       await createMessageReceivedNotification({
         userId: sellerId,
@@ -368,7 +368,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating conversation:', error);
     return NextResponse.json(
-      { error: 'Failed to create conversation' },
+      { error: error instanceof Error ? error.message : 'Failed to create conversation' },
       { status: 500 }
     );
   }
