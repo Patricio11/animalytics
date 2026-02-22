@@ -1,44 +1,34 @@
-"use client";
+import type { Metadata } from 'next';
+import BreedersLayoutClient from '@/components/layout/BreedersLayoutClient';
 
-import { AppLayout } from "@/components/layout/AppLayout";
-import { LandingHeader } from "@/components/layout/LandingHeader";
-import { authClient } from "@/lib/auth/client";
+export const metadata: Metadata = {
+  title: 'Find Trusted Breeders - Verified Breeders Directory',
+  description: 'Connect with verified, professional breeders in your area. Browse breeder profiles, read reviews, and find the perfect match for your breeding program on Animalytics.',
+  keywords: [
+    'dog breeders', 'verified breeders', 'professional breeders',
+    'breeder directory', 'find breeders', 'breeder reviews',
+    'reputable breeders', 'registered breeders', 'breeding kennel',
+  ],
+  openGraph: {
+    title: 'Find Trusted Breeders | Animalytics',
+    description: 'Connect with verified, professional breeders worldwide. Browse profiles, read reviews, and find the perfect breeder.',
+    type: 'website',
+    url: '/breeders',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Find Trusted Breeders | Animalytics',
+    description: 'Connect with verified, professional breeders worldwide.',
+  },
+  alternates: {
+    canonical: '/breeders',
+  },
+};
 
-/**
- * Breeders Layout - Smart Layout with Auth Detection
- *
- * This layout conditionally renders:
- * - For authenticated breeders: Full AppLayout (sidebar + header)
- * - For guests: Public layout (landing header only)
- */
 export default function BreedersLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, isPending } = authClient.useSession();
-  const isAuthenticated = !!session;
-  const isBreeder = (session?.user as any)?.role === 'breeder';
-
-  // Show loading state while checking auth
-  if (isPending) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  // Authenticated breeder: Use full app layout with sidebar
-  if (isAuthenticated && isBreeder) {
-    return <AppLayout>{children}</AppLayout>;
-  }
-
-  // Guest or non-breeder: Use public layout with landing header
-  return (
-    <div className="min-h-screen bg-background">
-      <LandingHeader />
-      <main>{children}</main>
-    </div>
-  );
+  return <BreedersLayoutClient>{children}</BreedersLayoutClient>;
 }

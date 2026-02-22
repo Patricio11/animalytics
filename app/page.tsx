@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LandingHeader } from "@/components/layout/LandingHeader";
+import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 import { authClient } from "@/lib/auth/client";
 import {
   PawPrint,
@@ -86,6 +87,9 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <OrganizationJsonLd />
+      <WebsiteJsonLd />
+
       {/* Header */}
       <LandingHeader />
 
@@ -272,7 +276,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            © 2025 Animalytics. All rights reserved.
+            © {new Date().getFullYear()} Animalytics. All rights reserved.
           </div>
         </div>
       </footer>
