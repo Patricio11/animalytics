@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users } from '@/lib/db/schema/users';
+import { users, accounts } from '@/lib/db/schema/users';
 import { auth } from '@/lib/auth/config';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { createAdminAuditLog } from '@/lib/services/admin-audit';
 import { sendEmail } from '@/lib/services/email';
 import { hash } from 'bcrypt';
@@ -80,18 +80,7 @@ export async function POST(
       );
     }
 
-    // Check if already notified
-    if (targetUser.credentialsNotifiedAt) {
-      return NextResponse.json(
-        { 
-          error: 'User has already been notified',
-          notifiedAt: targetUser.credentialsNotifiedAt,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Generate new temporary password (for security, don't use stored one)
+    // Generate new temporary password (for security, always generate fresh)
     const newTemporaryPassword = generatePassword();
     const hashedPassword = await hash(newTemporaryPassword, 10);
 
@@ -100,10 +89,43 @@ export async function POST(
       .update(users)
       .set({
         temporaryPassword: hashedPassword,
+        emailVerified: true, // Admin-sent credentials = verified email
         credentialsNotifiedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+
+    // Also update the accounts table so Better Auth can authenticate the user
+    const [existingAccount] = await db
+      .select()
+      .from(accounts)
+      .where(and(
+        eq(accounts.userId, userId),
+        eq(accounts.providerId, 'credential')
+      ))
+      .limit(1);
+
+    if (existingAccount) {
+      await db
+        .update(accounts)
+        .set({
+          password: hashedPassword,
+          updatedAt: new Date(),
+        })
+        .where(eq(accounts.id, existingAccount.id));
+    } else {
+      // Create accounts record if it doesn't exist
+      const accountId = `acc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      await db.insert(accounts).values({
+        id: accountId,
+        accountId: userId,
+        providerId: 'credential',
+        userId: userId,
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
 
     // Send welcome email with credentials
     const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/signin`;

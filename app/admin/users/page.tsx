@@ -59,6 +59,7 @@ import {
   Heart,
   EyeOff,
   Globe,
+  Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BreedMultiSelect } from "@/components/ui/breed-multi-select";
@@ -318,6 +319,35 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Resend credentials email
+  const handleResendCredentials = async (user: User) => {
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/notify`, {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        toast({
+          title: "Email Sent",
+          description: `Welcome email with new credentials sent to ${user.email}`,
+        });
+      } else {
+        const error = await res.json();
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.error || "Failed to send credentials email",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to send credentials email",
+      });
+    }
+  };
+
   // Copy credentials
   const copyToClipboard = async (text: string) => {
     try {
@@ -571,6 +601,12 @@ export default function AdminUsersPage() {
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit User
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleResendCredentials(user)}
+                              >
+                                <Send className="w-4 h-4 mr-2" />
+                                Send / Resend Credentials
+                              </DropdownMenuItem>
                               {user.role === 'breeder' && user.breederProfileId && (
                                 <DropdownMenuItem
                                   onClick={() => handleToggleProfileVisibility(user)}
@@ -656,7 +692,8 @@ export default function AdminUsersPage() {
                     <div className="flex-1">
                       <h4 className="font-semibold text-green-900 dark:text-green-100">User Created Successfully!</h4>
                       <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                        Please save these credentials and send them to the user securely.
+                        A welcome email with login credentials has been sent to the user.
+                        You can also copy the credentials below.
                       </p>
                     </div>
                   </div>
