@@ -67,8 +67,12 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSa
 
   const statusStyle = statusConfig[listing.status];
   
-  // All routes now use unified marketplace (SEO-friendly slug)
-  const detailUrl = `/marketplace/${listing.slug || listing.id}`;
+  // All routes now use unified marketplace (SEO-friendly slug with SEO query params)
+  const queryParams = new URLSearchParams();
+  queryParams.append('source', 'marketplace');
+  if (listing.breed) queryParams.append('breed', listing.breed);
+  if (listing.contact?.location) queryParams.append('location', listing.contact.location);
+  const detailUrl = `/marketplace/${listing.slug || listing.id}?${queryParams.toString()}`;
 
   // Handle share
   const handleShare = async () => {

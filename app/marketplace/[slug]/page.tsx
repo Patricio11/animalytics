@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import { listings } from '@/lib/db/schema';
-import { eq, or } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
 import ListingDetailClient from './ListingDetailClient';
 
 // Fetch listing data for SEO metadata
-async function getListingForSeo(id: string) {
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+async function getListingForSeo(slug: string) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
 
   const listing = await db.query.listings.findFirst({
     where: isUuid
-      ? eq(listings.id, id)
-      : eq(listings.slug, id),
+      ? eq(listings.id, slug)
+      : eq(listings.slug, slug),
     with: {
       animal: {
         columns: {
@@ -36,12 +37,12 @@ async function getListingForSeo(id: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
 
   try {
-    const listing = await getListingForSeo(id);
+    const listing = await getListingForSeo(slug);
 
     if (!listing) {
       return {
@@ -114,10 +115,25 @@ export async function generateMetadata({
   }
 }
 
-export default function ListingDetailPage({
+export default async function ListingDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  return <ListingDetailClient params={params} />;
+  const { slug } = await params;
+
+  // If accessed via UUID, redirect to the slug URL for SEO
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+  if (isUuid) {
+    const listing = await db.query.listings.findFirst({
+      where: eq(listings.id, slug),
+      columns: { slug: true },
+    });
+
+    if (listing?.slug) {
+      redirect(`/marketplace/${listing.slug}`);
+    }
+  }
+
+  return <ListingDetailClient slug={slug} />;
 }

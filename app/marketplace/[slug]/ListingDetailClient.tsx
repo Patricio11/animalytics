@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth/client";
 import { ListingJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
@@ -39,15 +39,15 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
 interface ListingDetailPageProps {
-  params: Promise<{ id: string }>;
+  slug: string;
 }
 
-export default function ListingDetailClient({ params }: ListingDetailPageProps) {
+export default function ListingDetailClient({ slug }: ListingDetailPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
-  const { id } = use(params);
+  const id = slug;
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -175,7 +175,7 @@ export default function ListingDetailClient({ params }: ListingDetailPageProps) 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          listingId: id,
+          listingId: listing?.id,
         }),
       });
 
