@@ -12,9 +12,12 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadMultipleFiles, STORAGE_PATHS, FILE_VALIDATION } from "@/lib/supabase";
+import type { SeoFileContext } from "@/lib/supabase/upload";
 
 interface PhotosDocsTabProps {
   animalId: string;
+  animalName?: string;
+  breedName?: string;
   isOwner?: boolean;
 }
 
@@ -46,7 +49,7 @@ const categoryDefinitions: CategoryDefinition[] = [
   { id: 'health', name: 'Health Records', description: 'Health documents and records', icon: '⚕️', types: ['document'], limit: 10 },
 ];
 
-export function PhotosDocsTab({ animalId, isOwner }: PhotosDocsTabProps) {
+export function PhotosDocsTab({ animalId, animalName, breedName, isOwner }: PhotosDocsTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -73,11 +76,19 @@ export function PhotosDocsTab({ animalId, isOwner }: PhotosDocsTabProps) {
       // Determine validation based on file type
       const validation = fileType === 'photo' ? FILE_VALIDATION.IMAGE : FILE_VALIDATION.DOCUMENT;
       
-      // Upload files to Supabase
+      // Build SEO context for file naming
+      const seoContext: SeoFileContext = {
+        animalName: animalName || undefined,
+        breedName: breedName || undefined,
+        category: selectedCategory,
+      };
+
+      // Upload files to Supabase with SEO-friendly names
       const results = await uploadMultipleFiles(
         files,
         STORAGE_PATHS.ANIMAL_PHOTOS,
-        validation
+        validation,
+        seoContext
       );
 
       // Check for errors

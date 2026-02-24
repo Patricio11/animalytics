@@ -219,6 +219,27 @@ export async function sendVerificationEmail(
   });
 }
 
+/**
+ * Send new message notification email
+ */
+export async function sendNewMessageEmail(
+  to: string,
+  data: {
+    recipientName: string;
+    senderName: string;
+    messagePreview: string;
+    conversationUrl: string;
+  }
+): Promise<boolean> {
+  const html = generateNewMessageEmailHTML(data);
+
+  return sendEmail({
+    to,
+    subject: `New message from ${data.senderName} - Animalytics`,
+    html,
+  });
+}
+
 // ============================================================================
 // EMAIL TEMPLATES
 // ============================================================================
@@ -880,6 +901,137 @@ function generatePasswordResetEmailHTML(data: {
       <p>This password reset was requested from your Animalytics account.</p>
       <p>If you didn't make this request, please <a href="mailto:support@animalytics.co">contact support</a> immediately.</p>
       <p style="margin-top: 16px;">© ${new Date().getFullYear()} Animalytics. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Generate new message notification email HTML
+ */
+function generateNewMessageEmailHTML(data: {
+  recipientName: string;
+  senderName: string;
+  messagePreview: string;
+  conversationUrl: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Message</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo {
+      font-size: 36px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: #6b7280;
+    }
+    .message-box {
+      background: #f9fafb;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 24px 0;
+      border-radius: 4px;
+    }
+    .message-sender {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    .message-preview {
+      color: #4b5563;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .button-container {
+      text-align: center;
+      margin: 32px 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white !important;
+      padding: 14px 36px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .footer p {
+      margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Animalytics</div>
+      <div class="title">You have a new message</div>
+      <div class="subtitle">from ${data.senderName}</div>
+    </div>
+
+    <p style="font-size: 16px; color: #4b5563;">Hi ${data.recipientName},</p>
+    <p style="font-size: 16px; color: #4b5563;"><strong>${data.senderName}</strong> sent you a message on Animalytics:</p>
+
+    <div class="message-box">
+      <div class="message-sender">${data.senderName}</div>
+      <div class="message-preview">${data.messagePreview}</div>
+    </div>
+
+    <div class="button-container">
+      <a href="${data.conversationUrl}" class="button">View Conversation</a>
+    </div>
+
+    <div class="footer">
+      <p>You received this email because someone sent you a message on Animalytics.</p>
+      <p>&copy; ${new Date().getFullYear()} Animalytics. All rights reserved.</p>
     </div>
   </div>
 </body>

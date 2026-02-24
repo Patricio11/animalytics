@@ -353,7 +353,7 @@ export default function AnimalProfilePage({ params, searchParams }: PageProps) {
                   </TabsContent>
 
                   <TabsContent value="photos-docs" className="mt-0">
-                    <PhotosDocsTab animalId={animal.id} isOwner={!!isOwner} />
+                    <PhotosDocsTab animalId={animal.id} animalName={animal.name} breedName={animal.breed?.name} isOwner={!!isOwner} />
                   </TabsContent>
 
                   <TabsContent value="feeding" className="mt-0">

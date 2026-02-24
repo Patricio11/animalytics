@@ -94,14 +94,62 @@ export function generateUniqueFileName(originalName: string): string {
   const randomString = Math.random().toString(36).substring(2, 15);
   const extension = originalName.slice(originalName.lastIndexOf('.'));
   const nameWithoutExt = originalName.slice(0, originalName.lastIndexOf('.'));
-  
+
   // Sanitize filename - remove special characters
   const sanitizedName = nameWithoutExt
     .replace(/[^a-zA-Z0-9-_]/g, '-')
     .replace(/-+/g, '-')
     .toLowerCase();
-  
+
   return `${sanitizedName}-${timestamp}-${randomString}${extension}`;
+}
+
+/**
+ * SEO context for generating search-engine friendly file names
+ */
+export interface SeoFileContext {
+  animalName?: string;
+  breedName?: string;
+  category?: string;
+}
+
+/**
+ * Generate an SEO-friendly file name with breed, animal name, and category
+ * Example: golden-retriever-max-gallery-a8f3k2.jpg
+ */
+export function generateSeoFileName(originalName: string, context: SeoFileContext): string {
+  const extension = originalName.slice(originalName.lastIndexOf('.'));
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+
+  const parts: string[] = [];
+
+  if (context.breedName) {
+    parts.push(sanitizeForFilename(context.breedName));
+  }
+  if (context.animalName) {
+    parts.push(sanitizeForFilename(context.animalName));
+  }
+  if (context.category) {
+    parts.push(sanitizeForFilename(context.category));
+  }
+
+  // Fallback if no context provided
+  if (parts.length === 0) {
+    return generateUniqueFileName(originalName);
+  }
+
+  const seoName = parts.join('-').substring(0, 80);
+  return `${seoName}-${randomSuffix}${extension}`;
+}
+
+function sanitizeForFilename(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 /**
@@ -168,9 +216,15 @@ export async function uploadFile(
 export async function uploadMultipleFiles(
   files: File[],
   storagePath: StoragePath,
-  options: FileValidationOptions = FILE_VALIDATION.ANY
+  options: FileValidationOptions = FILE_VALIDATION.ANY,
+  seoContext?: SeoFileContext
 ): Promise<UploadResult[]> {
-  const uploadPromises = files.map(file => uploadFile(file, storagePath, options));
+  const uploadPromises = files.map(file => {
+    const customFileName = seoContext
+      ? generateSeoFileName(file.name, seoContext)
+      : undefined;
+    return uploadFile(file, storagePath, options, customFileName);
+  });
   return Promise.all(uploadPromises);
 }
 

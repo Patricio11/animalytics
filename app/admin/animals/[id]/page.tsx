@@ -312,7 +312,7 @@ export default function AdminAnimalProfilePage({ params, searchParams }: PagePro
                     />
                   </TabsContent>
                   <TabsContent value="photos-docs" className="mt-0">
-                    <PhotosDocsTab animalId={animal.id} />
+                    <PhotosDocsTab animalId={animal.id} animalName={animal.name} breedName={animal.breed?.name} />
                   </TabsContent>
                   <TabsContent value="feeding" className="mt-0">
                     <FeedingPlanTab 

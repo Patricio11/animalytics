@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
 import { triggerMessageNotification } from '@/lib/services/realtime-messaging';
 import { createMessageReceivedNotification } from '@/lib/services/notification-creator';
+import { sendNewMessageEmail } from '@/lib/services/email';
 
 /**
  * GET /api/conversations/[id]/messages
@@ -285,7 +286,7 @@ export async function POST(
         .limit(1);
 
       const [recipient] = await db
-        .select({ role: users.role })
+        .select({ name: users.name, role: users.role, email: users.email })
         .from(users)
         .where(eq(users.id, recipientId))
         .limit(1);
@@ -304,6 +305,20 @@ export async function POST(
         conversationId,
         recipientUserRole,
       });
+
+      // Send email notification to recipient
+      if (recipient?.email) {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || 'https://animalytics.co';
+        const messagesPath = recipientUserRole === 'pet_owner' ? '/buyer/messages' : '/messages';
+        const conversationUrl = `${baseUrl}${messagesPath}?conversation=${conversationId}`;
+
+        sendNewMessageEmail(recipient.email, {
+          recipientName: recipient.name || 'there',
+          senderName,
+          messagePreview: message.trim().substring(0, 200),
+          conversationUrl,
+        }).catch(err => console.error('Failed to send message email:', err));
+      }
     } catch (notifError) {
       // Don't fail the message send if notification creation fails
       console.error('Failed to create message notification:', notifError);
