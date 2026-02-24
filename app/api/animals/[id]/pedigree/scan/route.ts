@@ -8,7 +8,7 @@ import { scanPedigreeCertificate } from '@/lib/services/pedigree-scanner';
 // ============================================================================
 // POST /api/animals/[id]/pedigree/scan
 // ============================================================================
-// Scan pedigree certificate images with AI vision and return extracted data
+// Scan pedigree certificate images/PDFs with AI vision and return extracted data
 
 export async function POST(
   request: NextRequest,
@@ -33,24 +33,26 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { imageUrls } = body;
+    const { imageUrls = [], pdfUrls = [] } = body;
 
-    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+    const totalFiles = imageUrls.length + pdfUrls.length;
+
+    if (totalFiles === 0) {
       return NextResponse.json(
-        { success: false, error: 'Please provide at least one image URL' },
+        { success: false, error: 'Please provide at least one image or PDF' },
         { status: 400 }
       );
     }
 
-    if (imageUrls.length > 4) {
+    if (totalFiles > 4) {
       return NextResponse.json(
-        { success: false, error: 'Maximum 4 images allowed per scan' },
+        { success: false, error: 'Maximum 4 files allowed per scan' },
         { status: 400 }
       );
     }
 
     // Scan with AI
-    const result = await scanPedigreeCertificate(imageUrls);
+    const result = await scanPedigreeCertificate(imageUrls, pdfUrls);
 
     return NextResponse.json(result);
   } catch (error) {

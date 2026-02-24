@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   X,
   ImageIcon,
+  FileText,
   Scan,
   Edit,
   Trash2,
@@ -74,31 +75,43 @@ export function ScanPedigreeDialog({
     warnings: string[];
   }>({ warnings: [] });
 
-  // Handle file selection
+  // Handle file selection (images + PDFs)
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    const imageFiles = selectedFiles.filter((f) =>
-      f.type.startsWith("image/")
+    const validFiles = selectedFiles.filter((f) =>
+      f.type.startsWith("image/") || f.type === "application/pdf"
     );
 
-    if (imageFiles.length + files.length > 4) {
+    if (validFiles.length !== selectedFiles.length) {
       toast({
-        title: "Too many images",
-        description: "You can upload a maximum of 4 images.",
+        title: "Invalid file type",
+        description: "Only images and PDF files are accepted.",
+        variant: "destructive",
+      });
+    }
+
+    if (validFiles.length + files.length > 4) {
+      toast({
+        title: "Too many files",
+        description: "You can upload a maximum of 4 files.",
         variant: "destructive",
       });
       return;
     }
 
-    setFiles((prev) => [...prev, ...imageFiles]);
+    setFiles((prev) => [...prev, ...validFiles]);
 
-    // Generate previews
-    imageFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviews((prev) => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
+    // Generate previews (images get thumbnail, PDFs get placeholder)
+    validFiles.forEach((file) => {
+      if (file.type === "application/pdf") {
+        setPreviews((prev) => [...prev, `pdf:${file.name}`]);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      }
     });
   }, [files.length, toast]);
 
@@ -108,29 +121,36 @@ export function ScanPedigreeDialog({
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Upload images to Supabase, then scan with AI
+  // Upload files to Supabase, then scan with AI
   const scanMutation = useMutation({
     mutationFn: async () => {
-      // Step 1: Upload images to Supabase
-      const results = await uploadMultipleFiles(
-        files,
-        STORAGE_PATHS.PEDIGREE_DOCUMENTS,
-        FILE_VALIDATION.IMAGE
-      );
+      // Step 1: Upload files to Supabase (images use IMAGE validation, PDFs use DOCUMENT)
+      const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+      const pdfFiles = files.filter((f) => f.type === "application/pdf");
 
-      const successfulUploads = results.filter((r) => r.success && r.url);
-      if (successfulUploads.length === 0) {
-        throw new Error("Failed to upload images. Please try again.");
+      const imageResults = imageFiles.length > 0
+        ? await uploadMultipleFiles(imageFiles, STORAGE_PATHS.PEDIGREE_DOCUMENTS, FILE_VALIDATION.IMAGE)
+        : [];
+      const pdfResults = pdfFiles.length > 0
+        ? await uploadMultipleFiles(pdfFiles, STORAGE_PATHS.PEDIGREE_DOCUMENTS, FILE_VALIDATION.DOCUMENT)
+        : [];
+
+      const successfulImages = imageResults.filter((r) => r.success && r.url);
+      const successfulPdfs = pdfResults.filter((r) => r.success && r.url);
+
+      if (successfulImages.length + successfulPdfs.length === 0) {
+        throw new Error("Failed to upload files. Please try again.");
       }
 
-      const urls = successfulUploads.map((r) => r.url!);
-      setUploadedUrls(urls);
+      const imageUrls = successfulImages.map((r) => r.url!);
+      const pdfUrls = successfulPdfs.map((r) => r.url!);
+      setUploadedUrls([...imageUrls, ...pdfUrls]);
 
       // Step 2: Send to AI for scanning
       const response = await fetch(`/api/animals/${animalId}/pedigree/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrls: urls }),
+        body: JSON.stringify({ imageUrls, pdfUrls }),
       });
 
       if (!response.ok) {
@@ -353,9 +373,9 @@ export function ScanPedigreeDialog({
             <Alert>
               <Camera className="w-4 h-4" />
               <AlertDescription>
-                Take clear photos of each page/section of the pedigree
-                certificate. For best results, ensure good lighting and the text
-                is readable. You can upload up to 4 images.
+                Upload photos or a PDF of the pedigree certificate. For photos,
+                ensure good lighting and readable text. You can upload up to 4
+                files.
               </AlertDescription>
             </Alert>
 
@@ -369,7 +389,7 @@ export function ScanPedigreeDialog({
               <input
                 id="pedigree-scan-input"
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 multiple
                 capture="environment"
                 className="hidden"
@@ -377,10 +397,10 @@ export function ScanPedigreeDialog({
               />
               <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <p className="text-foreground font-medium mb-1">
-                Click to upload or take a photo
+                Click to upload photos or a PDF
               </p>
               <p className="text-sm text-muted-foreground">
-                JPG, PNG, or WEBP • Up to 5MB each • Max 4 images
+                JPG, PNG, WEBP or PDF • Up to 10MB each • Max 4 files
               </p>
             </div>
 
@@ -392,11 +412,20 @@ export function ScanPedigreeDialog({
                     key={index}
                     className="relative group rounded-lg overflow-hidden border border-primary/10"
                   >
-                    <img
-                      src={preview}
-                      alt={`Certificate page ${index + 1}`}
-                      className="w-full h-32 object-cover"
-                    />
+                    {preview.startsWith("pdf:") ? (
+                      <div className="w-full h-32 bg-surface-secondary flex flex-col items-center justify-center gap-2">
+                        <FileText className="w-10 h-10 text-destructive" />
+                        <span className="text-xs text-muted-foreground truncate px-2 max-w-full">
+                          {preview.replace("pdf:", "")}
+                        </span>
+                      </div>
+                    ) : (
+                      <img
+                        src={preview}
+                        alt={`Certificate page ${index + 1}`}
+                        className="w-full h-32 object-cover"
+                      />
+                    )}
                     <Button
                       variant="destructive"
                       size="icon"
@@ -409,7 +438,7 @@ export function ScanPedigreeDialog({
                       <X className="w-3 h-3" />
                     </Button>
                     <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 px-2">
-                      Page {index + 1}
+                      {preview.startsWith("pdf:") ? "PDF" : `Page ${index + 1}`}
                     </div>
                   </div>
                 ))}
@@ -709,7 +738,7 @@ export function ScanPedigreeDialog({
                 className="bg-gradient-brand hover:opacity-90 shadow-card"
               >
                 <Scan className="w-4 h-4 mr-2" />
-                Scan Pedigree ({files.length} image
+                Scan Pedigree ({files.length} file
                 {files.length !== 1 ? "s" : ""})
               </Button>
             </>

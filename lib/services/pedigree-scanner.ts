@@ -101,7 +101,7 @@ IMPORTANT RULES:
 5. The sex of each entry is determined by its position: positions ending in "sire" are male, positions ending in "dam" are female.
 6. Registration numbers vary by country - include exactly as shown.`;
 
-const USER_PROMPT = `Analyze this pedigree certificate image(s) and extract ALL animals in the family tree.
+const USER_PROMPT = `Analyze this pedigree certificate document(s) (images and/or PDFs) and extract ALL animals in the family tree.
 
 Return your response as valid JSON with this exact structure:
 {
@@ -131,12 +131,27 @@ Return your response as valid JSON with this exact structure:
 Extract every ancestor you can read from the document. Include ALL generations visible. Be thorough but accurate.`;
 
 /**
- * Scan pedigree certificate images and extract structured data
+ * Fetch a PDF from a URL and convert it to a base64 data URL
+ */
+async function fetchPdfAsBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString('base64');
+  return `data:application/pdf;base64,${base64}`;
+}
+
+/**
+ * Scan pedigree certificate images/PDFs and extract structured data
  * @param imageUrls Array of image URLs (Supabase storage URLs)
+ * @param pdfUrls Array of PDF URLs (Supabase storage URLs)
  * @returns Structured pedigree data
  */
 export async function scanPedigreeCertificate(
-  imageUrls: string[]
+  imageUrls: string[],
+  pdfUrls: string[] = []
 ): Promise<PedigreeScanResult> {
   if (!process.env.OPENAI_API_KEY) {
     return {
@@ -146,11 +161,12 @@ export async function scanPedigreeCertificate(
     };
   }
 
-  if (imageUrls.length === 0) {
+  const totalFiles = imageUrls.length + pdfUrls.length;
+  if (totalFiles === 0) {
     return {
       success: false,
       entries: [],
-      warnings: ['No images provided for scanning.'],
+      warnings: ['No images or PDFs provided for scanning.'],
     };
   }
 
@@ -164,6 +180,30 @@ export async function scanPedigreeCertificate(
       },
     }));
 
+    // Convert PDFs to base64 and add as file content parts
+    const pdfContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    for (const pdfUrl of pdfUrls) {
+      const base64DataUrl = await fetchPdfAsBase64(pdfUrl);
+      pdfContent.push({
+        type: 'file' as any,
+        file: {
+          filename: 'pedigree.pdf',
+          file_data: base64DataUrl,
+        },
+      } as any);
+    }
+
+    const allContent = [...imageContent, ...pdfContent];
+
+    // Build descriptive text based on what was uploaded
+    let contextText = USER_PROMPT;
+    if (totalFiles > 1) {
+      const parts: string[] = [];
+      if (imageUrls.length > 0) parts.push(`${imageUrls.length} image(s)`);
+      if (pdfUrls.length > 0) parts.push(`${pdfUrls.length} PDF(s)`);
+      contextText = `${USER_PROMPT}\n\nI'm providing ${parts.join(' and ')} of the same pedigree certificate (different sections/pages). Combine the information from all documents into one complete pedigree.`;
+    }
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -176,11 +216,9 @@ export async function scanPedigreeCertificate(
           content: [
             {
               type: 'text',
-              text: imageUrls.length > 1
-                ? `${USER_PROMPT}\n\nI'm providing ${imageUrls.length} images of the same pedigree certificate (different sections/pages). Combine the information from all images into one complete pedigree.`
-                : USER_PROMPT,
+              text: contextText,
             },
-            ...imageContent,
+            ...allContent,
           ],
         },
       ],
