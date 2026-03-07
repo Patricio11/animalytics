@@ -9,7 +9,8 @@ export function LandingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: "/breeders", label: "Find Breeders" },
+    { href: "/explore", label: "Animals" },
+    { href: "/breeders", label: "Breeders" },
     { href: "/marketplace", label: "Marketplace" },
     { href: "/#features", label: "Features", external: true },
     { href: "/#testimonials", label: "Reviews", external: true },
@@ -58,7 +59,7 @@ export function LandingHeader() {
             <Button variant="ghost" size="sm">Sign In</Button>
           </Link>
           <Link href="/auth/signup" className="hidden sm:block">
-            <Button size="sm" className="bg-gradient-brand hover:opacity-90">
+            <Button size="sm" className="bg-gradient-brand hover:opacity-90 border-none">
               Get Started
             </Button>
           </Link>
@@ -106,7 +107,7 @@ export function LandingHeader() {
                 <Button variant="outline" size="sm" className="w-full">Sign In</Button>
               </Link>
               <Link href="/auth/signup" className="flex-1">
-                <Button size="sm" className="w-full bg-gradient-brand hover:opacity-90">Get Started</Button>
+                <Button size="sm" className="w-full bg-gradient-brand hover:opacity-90 border-none">Get Started</Button>
               </Link>
             </div>
           </nav>
