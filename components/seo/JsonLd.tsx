@@ -169,6 +169,61 @@ export function BreederJsonLd({
   );
 }
 
+// Animal profile structured data
+export function AnimalJsonLd({
+  name,
+  description,
+  image,
+  breed,
+  sex,
+  dateOfBirth,
+  url,
+  breederName,
+  breederUrl,
+  isChampion,
+}: {
+  name: string;
+  description?: string;
+  image?: string | null;
+  breed?: string | null;
+  sex?: string | null;
+  dateOfBirth?: string | null;
+  url: string;
+  breederName?: string | null;
+  breederUrl?: string | null;
+  isChampion?: boolean | null;
+}) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://animalytics.co';
+
+  const jsonLd: any = {
+    '@context': 'https://schema.org',
+    '@type': 'Animal',
+    name,
+    url: `${baseUrl}${url}`,
+    ...(description && { description }),
+    ...(image && { image }),
+    ...(breed && { breed }),
+    ...(sex && { sex }),
+    ...(dateOfBirth && { birthDate: dateOfBirth }),
+    ...(isChampion && { award: 'Champion' }),
+  };
+
+  if (breederName) {
+    jsonLd.provider = {
+      '@type': 'Organization',
+      name: breederName,
+      ...(breederUrl && { url: `${baseUrl}${breederUrl}` }),
+    };
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 // BreadcrumbList structured data
 export function BreadcrumbJsonLd({
   items,

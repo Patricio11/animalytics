@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
 import { listings, breederProfiles } from '@/lib/db/schema';
+import { animals } from '@/lib/db/schema/animals';
 import { eq, and, isNotNull } from 'drizzle-orm';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -94,5 +95,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Sitemap: Failed to fetch breeders', error);
   }
 
-  return [...staticPages, ...listingPages, ...breederPages];
+  // Dynamic animal profiles
+  let animalPages: MetadataRoute.Sitemap = [];
+  try {
+    const publicAnimals = await db
+      .select({ id: animals.id, updatedAt: animals.updatedAt })
+      .from(animals)
+      .where(eq(animals.isActive, true));
+
+    animalPages = publicAnimals.map((animal) => ({
+      url: `${baseUrl}/animal/${animal.id}`,
+      lastModified: animal.updatedAt ? new Date(animal.updatedAt) : new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    console.error('Sitemap: Failed to fetch animals', error);
+  }
+
+  return [...staticPages, ...listingPages, ...breederPages, ...animalPages];
 }
