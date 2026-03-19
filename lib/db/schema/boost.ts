@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, boolean, integer, uuid, jsonb } from 'drizzle-orm/pg-core';
 import { listings } from './marketplace';
+import { breederProfiles } from './profiles';
 import { users } from './users';
 
 // ============================================================================
@@ -57,6 +58,33 @@ export const listingBoosts = pgTable('listing_boosts', {
 });
 
 // ============================================================================
+// PROFILE BOOSTS (Breeder profile featured on landing page)
+// ============================================================================
+
+export const profileBoosts = pgTable('profile_boosts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  profileId: uuid('profile_id').references(() => breederProfiles.id, { onDelete: 'cascade' }).notNull(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+
+  // Duration
+  startDate: timestamp('start_date').notNull(),
+  endDate: timestamp('end_date').notNull(),
+  durationDays: integer('duration_days').notNull(),
+
+  // Pricing
+  totalAmount: integer('total_amount').notNull(), // in cents
+  currency: text('currency').default('USD').notNull(),
+  walletTransactionId: uuid('wallet_transaction_id'),
+
+  // Status: active, completed, cancelled, expired
+  status: text('status').notNull().default('active'),
+
+  // Metadata
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -64,3 +92,5 @@ export type BoostPricing = typeof boostPricing.$inferSelect;
 export type NewBoostPricing = typeof boostPricing.$inferInsert;
 export type ListingBoost = typeof listingBoosts.$inferSelect;
 export type NewListingBoost = typeof listingBoosts.$inferInsert;
+export type ProfileBoost = typeof profileBoosts.$inferSelect;
+export type NewProfileBoost = typeof profileBoosts.$inferInsert;

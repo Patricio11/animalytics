@@ -242,6 +242,7 @@ export async function POST(
       .returning();
 
     // Update listing featured status only if system boost is included
+    const includesSystem = expandedPlatforms.includes('system');
     if (includesSystem) {
       await db
         .update(listings)

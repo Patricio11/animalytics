@@ -63,7 +63,18 @@ export async function GET(request: NextRequest) {
         sex: animals.sex,
         dateOfBirth: animals.dateOfBirth,
         color: animals.color,
-        profileImageUrl: animals.profileImageUrl,
+        profileImageUrl: sql<string | null>`COALESCE(
+          (SELECT file_url FROM animal_photos
+           WHERE animal_photos.animal_id = ${animals.id}
+           AND animal_photos.category = 'profile'
+           ORDER BY animal_photos.is_primary DESC, animal_photos.uploaded_at DESC
+           LIMIT 1),
+          (SELECT file_url FROM animal_photos
+           WHERE animal_photos.animal_id = ${animals.id}
+           ORDER BY animal_photos.uploaded_at DESC
+           LIMIT 1),
+          ${animals.profileImageUrl}
+        )`.as('profile_image_url'),
         isChampion: animals.isChampion,
         titles: animals.titles,
         registrationNumber: animals.registrationNumber,

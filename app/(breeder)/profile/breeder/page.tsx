@@ -17,6 +17,8 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
+  Rocket,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +33,7 @@ import { ProfileHeader } from "@/components/breeder/profile/ProfileHeader";
 import { ProfileStats } from "@/components/breeder/profile/ProfileStats";
 import { EditProfileDialog } from "@/components/breeder/profile/EditProfileDialog";
 import { ShareButton } from "@/components/shared/ShareButton";
+import { BoostProfileDialog } from "@/components/breeder/BoostProfileDialog";
 
 // Fetch breeder profile from API
 function useBreederProfile() {
@@ -55,6 +58,7 @@ export default function BreederProfilePage() {
   const queryClient = useQueryClient();
   const { data: profile, isLoading, error, refetch } = useBreederProfile();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isBoostDialogOpen, setIsBoostDialogOpen] = useState(false);
 
   // Toggle visibility mutation
   const toggleVisibilityMutation = useMutation({
@@ -269,6 +273,22 @@ export default function BreederProfilePage() {
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit Profile
+            </Button>
+            <Button
+              onClick={() => setIsBoostDialogOpen(true)}
+              className="bg-gradient-brand hover:opacity-90 shadow-card border-none"
+            >
+              {profile.isBoosted && profile.boostedUntil && new Date(profile.boostedUntil) > new Date() ? (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Boosted
+                </>
+              ) : (
+                <>
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Boost Profile
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -678,6 +698,13 @@ export default function BreederProfilePage() {
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         profile={profile}
+      />
+
+      {/* Boost Profile Dialog */}
+      <BoostProfileDialog
+        open={isBoostDialogOpen}
+        onOpenChange={setIsBoostDialogOpen}
+        onSuccess={() => refetch()}
       />
     </div>
   );

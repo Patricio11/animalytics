@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LandingHeader } from "@/components/layout/LandingHeader";
 import { HeroSearch } from "@/components/landing/HeroSearch";
-import { AnimalBrowseCard } from "@/components/animal/AnimalBrowseCard";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 import { authClient } from "@/lib/auth/client";
 import {
@@ -25,7 +24,10 @@ import {
   ShieldCheck,
   Lock,
   ChevronRight,
+  MapPin,
+  Zap,
 } from "lucide-react";
+import { VerifiedCheckmark } from "@/components/ui/verified-badge";
 import Link from "next/link";
 
 // Animation variants
@@ -51,18 +53,31 @@ export default function LandingPage() {
     }
   }, [session, isPending, router]);
 
-  // Fetch featured animals
-  const { data: animalsData } = useQuery({
-    queryKey: ["featured-animals"],
+  // Fetch featured marketplace listings
+  const { data: featuredListingsData } = useQuery({
+    queryKey: ["featured-listings"],
     queryFn: async () => {
-      const res = await fetch("/api/animals/public?limit=8");
+      const res = await fetch("/api/marketplace/listings/featured");
       if (!res.ok) return null;
       return res.json();
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const featuredAnimals = animalsData?.animals || [];
+  const featuredListings = featuredListingsData?.listings || [];
+
+  // Fetch featured (boosted) breeders
+  const { data: featuredBreedersData } = useQuery({
+    queryKey: ["featured-breeders"],
+    queryFn: async () => {
+      const res = await fetch("/api/breeders/featured");
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const featuredBreeders = featuredBreedersData?.breeders || [];
 
   const features = [
     {
@@ -230,9 +245,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Featured Animals Section */}
-      {featuredAnimals.length > 0 && (
-        <section className="py-16 bg-surface-secondary">
+      {/* Featured Listings Section */}
+      {featuredListings.length > 0 && (
+        <section className="py-20 bg-surface-secondary">
           <div className="container">
             <motion.div
               initial="hidden"
@@ -240,17 +255,21 @@ export default function LandingPage() {
               viewport={{ once: true, margin: "-100px" }}
               variants={fadeUp}
               transition={{ duration: 0.5 }}
-              className="flex items-center justify-between mb-8"
+              className="flex items-end justify-between mb-10"
             >
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold">Featured Animals</h2>
-                <p className="text-muted-foreground mt-1">
-                  Recently added from verified breeders
+                <Badge className="mb-3 bg-gradient-brand/10 text-primary border-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider">
+                  <Zap className="w-3 h-3 mr-1.5" />
+                  Marketplace
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-bold">Featured Listings</h2>
+                <p className="text-muted-foreground mt-2 max-w-lg">
+                  Hand-picked listings from top verified breeders — animals, stud services, and more.
                 </p>
               </div>
-              <Link href="/explore">
+              <Link href="/marketplace" className="hidden md:block">
                 <Button variant="ghost" className="text-primary">
-                  Browse All <ChevronRight className="w-4 h-4 ml-1" />
+                  Browse Marketplace <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>
             </motion.div>
@@ -262,25 +281,295 @@ export default function LandingPage() {
               variants={staggerContainer}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
             >
-              {featuredAnimals.slice(0, 8).map((animal: any) => (
-                <motion.div key={animal.id} variants={fadeUp}>
-                  <AnimalBrowseCard
-                    id={animal.id}
-                    name={animal.name}
-                    registeredName={animal.registeredName}
-                    breedName={animal.breedName}
-                    sex={animal.sex}
-                    dateOfBirth={animal.dateOfBirth}
-                    color={animal.color}
-                    profileImageUrl={animal.profileImageUrl}
-                    isChampion={animal.isChampion}
-                    breederName={animal.breederName}
-                    breederVerified={animal.breederVerified}
-                    breederLocation={animal.breederLocation}
-                  />
-                </motion.div>
-              ))}
+              {featuredListings.map((listing: any) => {
+                const img = listing.images?.[0];
+                const isPlaceholder = !img || img === '/placeholder-dog.jpg';
+                const catColors: Record<string, string> = {
+                  'dog-for-sale': 'bg-blue-500',
+                  'pups-for-sale': 'bg-emerald-500',
+                  'stud-dog': 'bg-violet-500',
+                  'reproductive-services': 'bg-amber-500',
+                  'frozen-semen': 'bg-cyan-500',
+                  'other': 'bg-slate-500',
+                };
+                const catIcons: Record<string, string> = {
+                  'dog-for-sale': '🐕', 'pups-for-sale': '🐶',
+                  'stud-dog': '👑', 'reproductive-services': '💉',
+                  'frozen-semen': '❄️', 'other': '📦',
+                };
+                const cat = listing.category?.replace(/_/g, '-') || 'other';
+                const locationStr = listing.breederLocation
+                  ? [listing.breederLocation.city, listing.breederLocation.state].filter(Boolean).join(', ')
+                  : listing.location || null;
+
+                return (
+                  <motion.div key={listing.id} variants={fadeUp} whileHover={{ y: -6, transition: { duration: 0.25 } }} className="group">
+                    <Link href={`/marketplace/${listing.slug || listing.id}?source=landing`} className="block h-full">
+                      <div className="relative h-full rounded-2xl overflow-hidden bg-white dark:bg-surface shadow-card group-hover:shadow-elevated transition-all duration-300" style={{ border: "1.5px solid transparent", backgroundClip: "padding-box" }}>
+                        {/* Gradient border */}
+                        <div className="absolute inset-0 rounded-2xl pointer-events-none z-20" style={{ padding: "1.5px", background: "linear-gradient(135deg, #7c3aed55, #2563eb55, #ec489955)", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }} />
+
+                        {/* Image */}
+                        <div className="aspect-[4/3] relative overflow-hidden">
+                          {isPlaceholder ? (
+                            <div className="w-full h-full flex items-center justify-center text-5xl" style={{ background: "linear-gradient(135deg, #7c3aed22, #2563eb22, #ec489922)" }}>
+                              {catIcons[cat] || '🐾'}
+                            </div>
+                          ) : (
+                            <img src={img} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          )}
+                          {/* Dark bottom fade */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+                          {/* Category badge */}
+                          <div className="absolute top-3 left-3 z-10">
+                            <span className={`inline-flex items-center gap-1 text-white text-[10px] font-bold px-2 py-1 rounded-full ${catColors[cat] || 'bg-slate-500'}`}>
+                              {catIcons[cat]} {cat.replace(/-/g, ' ')}
+                            </span>
+                          </div>
+
+                          {/* Boosted badge */}
+                          <div className="absolute top-3 right-3 z-10">
+                            <span className="inline-flex items-center gap-1 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg" style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb, #ec4899)" }}>
+                              <Zap className="w-2.5 h-2.5 fill-current" />
+                              Featured
+                            </span>
+                          </div>
+
+                          {/* Price overlay */}
+                          {listing.price && (
+                            <div className="absolute bottom-3 left-3 z-10">
+                              <span className="text-white font-bold text-sm bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-lg">
+                                {listing.currency === 'USD' ? '$' : listing.currency}{listing.price.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-4">
+                          <h3 className="font-bold text-sm leading-snug mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                            {listing.title}
+                          </h3>
+
+                          {listing.breed && (
+                            <p className="text-xs text-muted-foreground mb-2 truncate">{listing.breed}{listing.sex ? ` · ${listing.sex}` : ''}</p>
+                          )}
+
+                          {/* Badges */}
+                          <div className="flex gap-1 flex-wrap mb-3">
+                            {listing.healthCertified && (
+                              <span className="text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">Health Cert</span>
+                            )}
+                            {listing.championLines && (
+                              <span className="text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full">Champion Lines</span>
+                            )}
+                          </div>
+
+                          {/* Breeder row */}
+                          <div className="flex items-center gap-2 pt-2.5 border-t border-border/50">
+                            <div className="w-7 h-7 rounded-full bg-gradient-brand overflow-hidden shrink-0 flex items-center justify-center">
+                              {listing.breederLogo
+                                ? <img src={listing.breederLogo} alt="" className="w-full h-full object-cover" />
+                                : <span className="text-white text-[10px] font-bold">{(listing.breederName || 'B').charAt(0)}</span>
+                              }
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-medium truncate">{listing.breederName || 'Breeder'}</span>
+                                {listing.breederVerified && <VerifiedCheckmark isVerified />}
+                              </div>
+                              {locationStr && (
+                                <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                                  <MapPin className="w-2.5 h-2.5 shrink-0" />
+                                  <span className="truncate">{locationStr}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </motion.div>
+
+            <div className="md:hidden mt-6 text-center">
+              <Link href="/marketplace">
+                <Button variant="outline" className="text-primary border-primary/30">
+                  Browse Marketplace <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Featured Breeders Section */}
+      {featuredBreeders.length > 0 && (
+        <section className="py-20 bg-surface relative overflow-hidden">
+          {/* Gradient background accent */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary-blue/3 to-transparent pointer-events-none" />
+
+          <div className="container relative">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={fadeUp}
+              transition={{ duration: 0.5 }}
+              className="flex items-end justify-between mb-10"
+            >
+              <div>
+                <Badge className="mb-3 bg-gradient-brand/10 text-primary border-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider">
+                  <Zap className="w-3 h-3 mr-1.5" />
+                  Featured Breeders
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-bold">
+                  Meet Our Top Breeders
+                </h2>
+                <p className="text-muted-foreground mt-2 max-w-lg">
+                  Verified, trusted breeders hand-picked for their excellence, health standards, and dedication.
+                </p>
+              </div>
+              <Link href="/breeders" className="hidden md:block">
+                <Button variant="ghost" className="text-primary">
+                  All Breeders <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={staggerContainer}
+              className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+            >
+              {featuredBreeders.map((breeder: any) => {
+                const locationStr = breeder.location
+                  ? [breeder.location.city, breeder.location.state].filter(Boolean).join(", ")
+                  : null;
+                const rating = parseFloat(breeder.averageRating || "0");
+
+                return (
+                  <motion.div
+                    key={breeder.id}
+                    variants={fadeUp}
+                    whileHover={{ y: -6, transition: { duration: 0.25 } }}
+                    className="group"
+                  >
+                    <Link
+                      href={`/breeders/${breeder.slug}?source=landing-featured`}
+                      className="block h-full"
+                    >
+                      <div className="relative h-full rounded-2xl overflow-hidden shadow-card group-hover:shadow-elevated transition-all duration-300 bg-white dark:bg-surface">
+                        {/* Gradient border overlay */}
+                        <div className="absolute inset-0 rounded-2xl pointer-events-none z-20" style={{ padding: "1.5px", background: "linear-gradient(135deg, #7c3aed55, #2563eb55, #ec489955)", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }} />
+                        {/* Boosted badge */}
+                        <div className="absolute top-3 right-3 z-10">
+                          <span className="inline-flex items-center gap-1 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg" style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb, #ec4899)" }}>
+                            <Zap className="w-2.5 h-2.5 fill-current" />
+                            Featured
+                          </span>
+                        </div>
+
+                        {/* Banner / color block */}
+                        <div className="h-24 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #7c3aed22, #2563eb22, #ec489922)" }}>
+                          {breeder.bannerUrl ? (
+                            <img
+                              src={breeder.bannerUrl}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #7c3aed33 0%, #2563eb22 50%, #ec489933 100%)" }} />
+                          )}
+                          {/* Shimmer line */}
+                          <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, #7c3aed55, #2563eb55, #ec489955, transparent)" }} />
+                        </div>
+
+                        <div className="px-5 pb-5">
+                          {/* Avatar */}
+                          <div className="-mt-8 mb-3">
+                            <div className="w-16 h-16 rounded-2xl border-4 border-white dark:border-surface bg-gradient-brand shadow-lg overflow-hidden">
+                              {breeder.logoUrl ? (
+                                <img src={breeder.logoUrl} alt={breeder.displayName} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white text-xl font-bold">
+                                  {breeder.displayName.charAt(0)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Name + verified */}
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <h3 className="font-bold text-base leading-tight group-hover:text-primary transition-colors line-clamp-1">
+                              {breeder.displayName}
+                            </h3>
+                            {breeder.kycVerified && <VerifiedCheckmark isVerified />}
+                          </div>
+
+                          {/* Tagline */}
+                          {breeder.tagline && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 mb-2">
+                              {breeder.tagline}
+                            </p>
+                          )}
+
+                          {/* Location */}
+                          {locationStr && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+                              <MapPin className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{locationStr}</span>
+                            </div>
+                          )}
+
+                          {/* Breeds */}
+                          {breeder.primaryBreeds?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {breeder.primaryBreeds.slice(0, 2).map((breed: string) => (
+                                <span key={breed} className="text-[10px] font-medium bg-primary/8 text-primary px-2 py-0.5 rounded-full">
+                                  {breed}
+                                </span>
+                              ))}
+                              {breeder.primaryBreeds.length > 2 && (
+                                <span className="text-[10px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                                  +{breeder.primaryBreeds.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Stats row */}
+                          <div className="flex items-center gap-4 pt-3 border-t border-border/50 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                              <span className="font-semibold text-foreground">{rating.toFixed(1)}</span>
+                              <span>({breeder.totalReviews})</span>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-foreground">{breeder.animalCount ?? 0}</span>
+                              {" "}animals
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+
+            <div className="md:hidden mt-6 text-center">
+              <Link href="/breeders">
+                <Button variant="outline" className="text-primary border-primary/30">
+                  All Breeders <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </section>
       )}

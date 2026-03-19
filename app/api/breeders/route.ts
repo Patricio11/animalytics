@@ -48,7 +48,16 @@ export async function GET(request: NextRequest) {
         displayName: breederProfiles.displayName,
         slug: breederProfiles.slug,
         tagline: breederProfiles.tagline,
-        logoUrl: breederProfiles.logoUrl,
+        logoUrl: sql<string | null>`COALESCE(
+          NULLIF(${breederProfiles.logoUrl}, ''),
+          (SELECT file_url FROM animal_photos
+           JOIN animals ON animals.id = animal_photos.animal_id
+           WHERE animals.user_id = ${breederProfiles.userId}
+           AND animal_photos.category = 'profile'
+           AND animals.is_active = true
+           ORDER BY animal_photos.is_primary DESC
+           LIMIT 1)
+        )`.as('logo_url'),
         bannerUrl: breederProfiles.bannerUrl,
         location: breederProfiles.location,
         userPreferences: users.preferences,

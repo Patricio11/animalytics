@@ -84,6 +84,10 @@ export const breederProfiles = pgTable('breeder_profiles', {
   premiumExpiresAt: timestamp('premium_expires_at'),
   featuredProfile: boolean('featured_profile').default(false),
 
+  // Profile boost (paid landing-page feature)
+  isBoosted: boolean('is_boosted').default(false),
+  boostedUntil: timestamp('boosted_until'),
+
   // Statistics (auto-updated)
   totalSales: integer('total_sales').default(0),
   totalListings: integer('total_listings').default(0),

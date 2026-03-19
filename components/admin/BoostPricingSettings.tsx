@@ -28,6 +28,7 @@ import { Plus, Edit2, Trash2, DollarSign, Loader2 } from "lucide-react";
 
 const PLATFORM_OPTIONS = [
   { value: "system", label: "Animalytics System", icon: "⚡", group: "system" },
+  { value: "profile_boost", label: "Profile Boost (Landing Page)", icon: "🚀", group: "system" },
   { value: "facebook", label: "Facebook", icon: "📘", group: "social" },
   { value: "instagram", label: "Instagram", icon: "📷", group: "social" },
   { value: "tiktok", label: "TikTok", icon: "🎵", group: "social" },

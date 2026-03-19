@@ -102,11 +102,18 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSa
 
   return (
     <Card className={cn(
-      "shadow-card border-0 hover:shadow-elevated transition-all duration-200",
-      listing.featured && "border-2 border-primary/20 bg-gradient-subtle",
-      isBoosted && "ring-2 ring-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5"
+      "shadow-card border-0 hover:shadow-elevated transition-all duration-300 overflow-hidden",
+      listing.featured && !isBoosted && "border border-primary/20",
+      isBoosted && "border-0 relative"
     )}>
-      <CardContent className="p-0">
+      {/* Boosted: night gradient border using pseudo-layer */}
+      {isBoosted && (
+        <div className="absolute inset-0 rounded-lg p-[2px] bg-gradient-to-br from-violet-500 via-primary-blue to-primary-pink pointer-events-none z-10" style={{ WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }} />
+      )}
+      {isBoosted && (
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-primary-blue/5 to-primary-pink/5 pointer-events-none z-0 rounded-lg" />
+      )}
+      <CardContent className="p-0 relative z-[1]">
         {/* Image */}
         <Link href={detailUrl}>
           <div className="relative aspect-video overflow-hidden rounded-t-lg bg-surface-secondary">
@@ -115,7 +122,11 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSa
               alt={listing.title}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             />
-            {listing.featured && (
+            {/* Boosted glow overlay on image */}
+            {isBoosted && (
+              <div className="absolute inset-0 bg-gradient-to-t from-violet-900/30 via-transparent to-transparent" />
+            )}
+            {listing.featured && !isBoosted && (
               <div className="absolute top-3 left-3">
                 <Badge className="bg-gradient-brand text-white shadow-card">
                   <Star className="w-3 h-3 mr-1 fill-current" />
@@ -133,7 +144,7 @@ export function ListingCard({ listing, onInterested, isPublicView, isOwner, isSa
                 {statusStyle.label}
               </Badge>
               {isBoosted && (
-                <Badge className="bg-gradient-brand text-white shadow-card">
+                <Badge className="border-0 text-white shadow-lg" style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb, #ec4899)" }}>
                   <Zap className="w-3 h-3 mr-1 fill-current" />
                   Boosted
                 </Badge>
