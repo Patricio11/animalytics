@@ -18,7 +18,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PawPrint, ArrowLeft, ArrowRight, Check, ChevronsUpDown, Upload, X, ImageIcon, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { PawPrint, ArrowLeft, ArrowRight, Check, ChevronsUpDown, Upload, X, ImageIcon, Loader2, Globe, User } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -125,8 +126,8 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
     ownerId: "",
     ownerName: "",
     ownerRegistrationNumber: "",
-    sireMode: "manual",
-    damMode: "manual",
+    sireMode: "select",
+    damMode: "select",
     sireId: "",
     damId: "",
     sireRegistrationNumber: "",
@@ -207,8 +208,8 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
         ownerId: '',
         ownerName: '',
         ownerRegistrationNumber: '',
-        sireMode: 'manual',
-        damMode: 'manual',
+        sireMode: 'select',
+        damMode: 'select',
         sireId: '',
         damId: '',
         sireRegistrationNumber: '',
@@ -233,6 +234,13 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
   
   // Fetch user's animals for parent selection (no breeding filter - all active animals can be parents)
   const { data: allAnimals } = useAnimals({ isActive: true });
+
+  // Global search toggle state (separate per parent field)
+  const [sireSearchGlobal, setSireSearchGlobal] = useState(false);
+  const [damSearchGlobal, setDamSearchGlobal] = useState(false);
+
+  // Fetch all system animals (for global search mode)
+  const { data: globalAnimals } = useAnimals({ isActive: true, global: true });
   
   // Create animal mutation
   const createAnimalMutation = useCreateAnimal();
@@ -274,11 +282,12 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
   
   // Filter animals for sire selection (males only, old enough to breed)
   const availableSires = useMemo(() => {
-    if (!allAnimals) return [];
-    
-    return allAnimals.filter((animal: any) => {
+    const source = sireSearchGlobal ? (globalAnimals || allAnimals) : allAnimals;
+    if (!source) return [];
+
+    return source.filter((animal: any) => {
       const isMale = animal.sex === 'male';
-      
+
       // Check age - must be at least 6 months old to be a parent
       let isOldEnough = true;
       if (animal.dateOfBirth) {
@@ -286,18 +295,21 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
         const ageInMonths = (new Date().getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
         isOldEnough = ageInMonths >= 6;
       }
-      
+
       return isMale && isOldEnough;
     });
-  }, [allAnimals]);
+  }, [allAnimals, globalAnimals, sireSearchGlobal]);
   
   // Filter animals for dam selection (females only, old enough to breed)
   const availableDams = useMemo(() => {
     if (!allAnimals) return [];
     
-    return allAnimals.filter((animal: any) => {
+    const source = damSearchGlobal ? (globalAnimals || allAnimals) : allAnimals;
+    if (!source) return [];
+
+    return source.filter((animal: any) => {
       const isFemale = animal.sex === 'female';
-      
+
       // Check age - must be at least 6 months old to be a parent
       let isOldEnough = true;
       if (animal.dateOfBirth) {
@@ -305,10 +317,10 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
         const ageInMonths = (new Date().getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
         isOldEnough = ageInMonths >= 6;
       }
-      
+
       return isFemale && isOldEnough;
     });
-  }, [allAnimals]);
+  }, [allAnimals, globalAnimals, damSearchGlobal]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -1043,11 +1055,10 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                 <legend className="text-sm font-semibold px-2 text-primary">Sire (Father) *</legend>
                 
                 {/* Mode Selection */}
-                <RadioGroup 
-                  value={formData.sireMode} 
+                <RadioGroup
+                  value={formData.sireMode}
                   onValueChange={(value: 'manual' | 'select') => {
                     updateFormData("sireMode", value);
-                    // Clear fields when switching modes
                     if (value === 'manual') {
                       updateFormData("sireId", "");
                     } else {
@@ -1059,19 +1070,102 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                 >
                   <div className="flex gap-4">
                     <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="select" id="sire-select" />
+                      <Label htmlFor="sire-select" className="font-normal cursor-pointer">
+                        Select from animals ({availableSires.length})
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
                       <RadioGroupItem value="manual" id="sire-manual" />
                       <Label htmlFor="sire-manual" className="font-normal cursor-pointer">
                         Enter manually
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="select" id="sire-select" />
-                      <Label htmlFor="sire-select" className="font-normal cursor-pointer">
-                        Select from my animals ({availableSires.length})
-                      </Label>
-                    </div>
                   </div>
                 </RadioGroup>
+
+                {/* Select mode — global search toggle + combobox */}
+                {formData.sireMode === 'select' && (
+                  <div className="space-y-3">
+                    {/* Scope toggle */}
+                    <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-background px-3 py-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        {sireSearchGlobal ? <Globe className="w-4 h-4 text-primary" /> : <User className="w-4 h-4 text-muted-foreground" />}
+                        <span className={sireSearchGlobal ? "text-primary font-medium" : "text-muted-foreground"}>
+                          {sireSearchGlobal ? "Searching all animals in system" : "Searching my animals only"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground">System-wide</Label>
+                        <Switch
+                          checked={sireSearchGlobal}
+                          onCheckedChange={(checked) => {
+                            setSireSearchGlobal(checked);
+                            updateFormData("sireId", "");
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Combobox */}
+                    <div className="space-y-1">
+                      <Label>Select Sire *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between bg-background border-primary/20"
+                          >
+                            {formData.sireId ? (
+                              availableSires.find((a: any) => a.id === formData.sireId)?.name || "Select sire..."
+                            ) : (
+                              "Select sire..."
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search sires..." className="h-9" />
+                            <CommandList>
+                              {availableSires.length === 0 ? (
+                                <CommandEmpty className="py-6 text-center text-sm">
+                                  {sireSearchGlobal ? "No male animals found in the system." : "No male animals found. Try switching to system-wide search."}
+                                </CommandEmpty>
+                              ) : (
+                                <CommandGroup>
+                                  {availableSires.map((animal: any) => (
+                                    <CommandItem
+                                      key={animal.id}
+                                      value={[animal.name, animal.registeredName, animal.breed?.name, animal.breeder?.name].filter(Boolean).join(' ')}
+                                      onSelect={() => updateFormData("sireId", animal.id)}
+                                      className="px-3 py-3"
+                                    >
+                                      <Check className={cn("mr-3 h-4 w-4 shrink-0", formData.sireId === animal.id ? "opacity-100" : "opacity-0")} />
+                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                        <span className="font-medium truncate">{animal.name}</span>
+                                        {animal.registeredName && (
+                                          <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>
+                                        )}
+                                        {animal.breed?.name && (
+                                          <span className="text-xs text-muted-foreground/70 truncate">{animal.breed.name}</span>
+                                        )}
+                                        {sireSearchGlobal && animal.breeder?.name && (
+                                          <span className="text-xs text-primary/70 truncate">by {animal.breeder.name}</span>
+                                        )}
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                )}
 
                 {/* Manual Entry */}
                 {formData.sireMode === 'manual' && (
@@ -1099,62 +1193,6 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                   </div>
                 )}
 
-                {/* Select from Animals */}
-                {formData.sireMode === 'select' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="sireId">Select Sire *</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between bg-background border-primary/20"
-                        >
-                          {formData.sireId ? (
-                            availableSires.find((a: any) => a.id === formData.sireId)?.name || "Select sire..."
-                          ) : (
-                            "Select sire..."
-                          )}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[400px] p-0">
-                        <Command>
-                          <CommandInput placeholder="Search sires..." className="h-9" />
-                          <CommandList>
-                            {availableSires.length === 0 ? (
-                              <CommandEmpty className="py-6 text-center text-sm">No male animals found. Add a male animal first.</CommandEmpty>
-                            ) : (
-                              <CommandGroup>
-                                {availableSires.map((animal: any) => (
-                                  <CommandItem
-                                    key={animal.id}
-                                    value={animal.id}
-                                    onSelect={() => updateFormData("sireId", animal.id)}
-                                    className="px-3 py-3"
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-3 h-4 w-4 shrink-0",
-                                        formData.sireId === animal.id ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    <div className="flex flex-col gap-1 min-w-0">
-                                      <span className="font-medium truncate">{animal.name}</span>
-                                      {animal.registeredName && (
-                                        <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>
-                                      )}
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            )}
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                )}
               </fieldset>
               )}
 
@@ -1162,13 +1200,12 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
               {isBreeder && (
               <fieldset className="border border-primary/20 rounded-lg p-4 bg-muted/20">
                 <legend className="text-sm font-semibold px-2 text-primary">Dam (Mother) *</legend>
-                
+
                 {/* Mode Selection */}
-                <RadioGroup 
-                  value={formData.damMode} 
+                <RadioGroup
+                  value={formData.damMode}
                   onValueChange={(value: 'manual' | 'select') => {
                     updateFormData("damMode", value);
-                    // Clear fields when switching modes
                     if (value === 'manual') {
                       updateFormData("damId", "");
                     } else {
@@ -1180,15 +1217,15 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                 >
                   <div className="flex gap-4">
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="manual" id="dam-manual" />
-                      <Label htmlFor="dam-manual" className="font-normal cursor-pointer">
-                        Enter manually
+                      <RadioGroupItem value="select" id="dam-select" />
+                      <Label htmlFor="dam-select" className="font-normal cursor-pointer">
+                        Select from animals ({availableDams.length})
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="select" id="dam-select" />
-                      <Label htmlFor="dam-select" className="font-normal cursor-pointer">
-                        Select from my animals ({availableDams.length})
+                      <RadioGroupItem value="manual" id="dam-manual" />
+                      <Label htmlFor="dam-manual" className="font-normal cursor-pointer">
+                        Enter manually
                       </Label>
                     </div>
                   </div>
@@ -1220,60 +1257,86 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                   </div>
                 )}
 
-                {/* Select from Animals */}
+                {/* Select mode — global search toggle + combobox */}
                 {formData.damMode === 'select' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="damId">Select Dam *</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between bg-background border-primary/20"
-                        >
-                          {formData.damId ? (
-                            availableDams.find((a: any) => a.id === formData.damId)?.name || "Select dam..."
-                          ) : (
-                            "Select dam..."
-                          )}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[400px] p-0">
-                        <Command>
-                          <CommandInput placeholder="Search dams..." className="h-9" />
-                          <CommandList>
-                            {availableDams.length === 0 ? (
-                              <CommandEmpty className="py-6 text-center text-sm">No female animals found. Add a female animal first.</CommandEmpty>
+                  <div className="space-y-3">
+                    {/* Scope toggle */}
+                    <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-background px-3 py-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        {damSearchGlobal ? <Globe className="w-4 h-4 text-primary" /> : <User className="w-4 h-4 text-muted-foreground" />}
+                        <span className={damSearchGlobal ? "text-primary font-medium" : "text-muted-foreground"}>
+                          {damSearchGlobal ? "Searching all animals in system" : "Searching my animals only"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground">System-wide</Label>
+                        <Switch
+                          checked={damSearchGlobal}
+                          onCheckedChange={(checked) => {
+                            setDamSearchGlobal(checked);
+                            updateFormData("damId", "");
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Combobox */}
+                    <div className="space-y-1">
+                      <Label>Select Dam *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between bg-background border-primary/20"
+                          >
+                            {formData.damId ? (
+                              availableDams.find((a: any) => a.id === formData.damId)?.name || "Select dam..."
                             ) : (
-                              <CommandGroup>
-                                {availableDams.map((animal: any) => (
-                                  <CommandItem
-                                    key={animal.id}
-                                    value={animal.id}
-                                    onSelect={() => updateFormData("damId", animal.id)}
-                                    className="px-3 py-3"
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-3 h-4 w-4 shrink-0",
-                                        formData.damId === animal.id ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    <div className="flex flex-col gap-1 min-w-0">
-                                      <span className="font-medium truncate">{animal.name}</span>
-                                      {animal.registeredName && (
-                                        <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>
-                                      )}
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
+                              "Select dam..."
                             )}
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search dams..." className="h-9" />
+                            <CommandList>
+                              {availableDams.length === 0 ? (
+                                <CommandEmpty className="py-6 text-center text-sm">
+                                  {damSearchGlobal ? "No female animals found in the system." : "No female animals found. Try switching to system-wide search."}
+                                </CommandEmpty>
+                              ) : (
+                                <CommandGroup>
+                                  {availableDams.map((animal: any) => (
+                                    <CommandItem
+                                      key={animal.id}
+                                      value={[animal.name, animal.registeredName, animal.breed?.name, animal.breeder?.name].filter(Boolean).join(' ')}
+                                      onSelect={() => updateFormData("damId", animal.id)}
+                                      className="px-3 py-3"
+                                    >
+                                      <Check className={cn("mr-3 h-4 w-4 shrink-0", formData.damId === animal.id ? "opacity-100" : "opacity-0")} />
+                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                        <span className="font-medium truncate">{animal.name}</span>
+                                        {animal.registeredName && (
+                                          <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>
+                                        )}
+                                        {animal.breed?.name && (
+                                          <span className="text-xs text-muted-foreground/70 truncate">{animal.breed.name}</span>
+                                        )}
+                                        {damSearchGlobal && animal.breeder?.name && (
+                                          <span className="text-xs text-primary/70 truncate">by {animal.breeder.name}</span>
+                                        )}
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </div>
                 )}
               </fieldset>
