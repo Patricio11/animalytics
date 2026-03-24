@@ -124,7 +124,7 @@ export default function PublicProfileClient({ params }: PublicProfilePageProps) 
               <CardContent className="p-0">
                 <div 
                   className={cn(
-                    "relative aspect-video overflow-hidden rounded-t-lg",
+                    "relative aspect-video overflow-hidden rounded-t-lg bg-black/5",
                     primaryPhoto ? "cursor-pointer group" : ""
                   )}
                   onClick={() => {
@@ -138,7 +138,7 @@ export default function PublicProfileClient({ params }: PublicProfilePageProps) 
                       <img
                         src={primaryPhoto}
                         alt={animal.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
                         <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
