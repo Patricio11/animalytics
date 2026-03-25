@@ -50,6 +50,7 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
   const pdfRef = useRef<HTMLDivElement>(null);
   const treeRef = useRef<HTMLDivElement>(null);
   const [editingAnimal, setEditingAnimal] = useState<PedigreeNode | null>(null);
+  const [editPosition, setEditPosition] = useState<'sire' | 'dam' | undefined>(undefined);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
   const [viewingAnimal, setViewingAnimal] = useState<PedigreeNode | null>(null);
@@ -131,9 +132,17 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
   }, [calculateLines, node]);
 
   // Handlers
-  const handleEditClick = (animal: PedigreeNode | null | undefined) => {
+  const handleEditClick = (animal: PedigreeNode | null | undefined, position?: string, generation?: number) => {
     if (animal && !animal.isManualEntry) {
-      setEditingAnimal(animal);
+      if (generation === 1 && (position === 'sire' || position === 'dam')) {
+        // For direct parents: edit who fills that position for the ROOT animal
+        setEditingAnimal(node);
+        setEditPosition(position);
+      } else {
+        // For grandparents+: edit that ancestor's own parents (deep tree editing)
+        setEditingAnimal(animal);
+        setEditPosition(undefined);
+      }
       setEditDialogOpen(true);
     }
   };
@@ -160,6 +169,7 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
   const handleEditSuccess = () => {
     setEditDialogOpen(false);
     setEditingAnimal(null);
+    setEditPosition(undefined);
     onUpdate?.();
   };
 
@@ -435,8 +445,11 @@ export function PedigreeTreeHorizontal({ node, generations = 3, onUpdate, isOwne
           onOpenChange={setEditDialogOpen}
           animalId={editingAnimal.id}
           animalName={editingAnimal.name}
-          currentDamId={editingAnimal.dam?.id}
-          currentSireId={editingAnimal.sire?.id}
+          currentSireId={editingAnimal.sire?.isManualEntry ? undefined : editingAnimal.sire?.id}
+          currentDamId={editingAnimal.dam?.isManualEntry ? undefined : editingAnimal.dam?.id}
+          manualSire={editingAnimal.sire?.isManualEntry ? editingAnimal.sire : undefined}
+          manualDam={editingAnimal.dam?.isManualEntry ? editingAnimal.dam : undefined}
+          editPosition={editPosition}
           onSuccess={handleEditSuccess}
         />
       )}
@@ -524,7 +537,7 @@ interface HCardProps {
   position: string;
   label?: string;
   compact?: boolean;
-  onEdit?: (animal: PedigreeNode | null | undefined) => void;
+  onEdit?: (animal: PedigreeNode | null | undefined, position: string, generation: number) => void;
   onAddManual?: (position: string, generation: number, label: string) => void;
   onEditManual?: (animal: PedigreeNode, position: string, generation: number, label: string) => void;
   onDelete?: (animalId: string, entryId: string, name: string) => void;
@@ -604,7 +617,7 @@ function HCard({
   const handleClick = () => onCardClick?.(animal);
   const handleEditButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (canEditSystem) onEdit(animal);
+    if (canEditSystem) onEdit(animal, position, generation);
     else if (canEditManual) onEditManual(animal, position, generation, label || position);
   };
 

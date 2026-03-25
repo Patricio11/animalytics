@@ -22,6 +22,30 @@ import { Switch } from "@/components/ui/switch";
 import { PawPrint, ArrowLeft, ArrowRight, Check, ChevronsUpDown, Upload, X, ImageIcon, Loader2, Globe, User } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+
+function getAnimalPhoto(animal: any): string | null {
+  if (!animal?.photos?.length) return animal?.profileImageUrl || null;
+  const primary = animal.photos.find((p: any) => p.category === 'profile' && p.isPrimary);
+  const anyProfile = animal.photos.find((p: any) => p.category === 'profile');
+  return primary?.fileUrl || anyProfile?.fileUrl || animal.photos[0]?.fileUrl || animal.profileImageUrl || null;
+}
+
+function AnimalAvatar({ animal, size = 8 }: { animal: any; size?: number }) {
+  const photo = getAnimalPhoto(animal);
+  const initials = (animal?.name || '?')[0].toUpperCase();
+  const sizeClass = `w-${size} h-${size}`;
+  if (photo) {
+    return (
+      <img src={photo} alt={animal.name} className={cn(sizeClass, "rounded-full object-cover shrink-0")}
+        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+    );
+  }
+  return (
+    <div className={cn(sizeClass, "rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs font-semibold text-primary")}>
+      {initials}
+    </div>
+  );
+}
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/upload";
 import { STORAGE_PATHS } from "@/lib/supabase";
@@ -1115,13 +1139,17 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                           <Button
                             variant="outline"
                             role="combobox"
-                            className="w-full justify-between bg-background border-primary/20"
+                            className="w-full justify-between bg-background border-primary/20 h-auto py-2"
                           >
-                            {formData.sireId ? (
-                              availableSires.find((a: any) => a.id === formData.sireId)?.name || "Select sire..."
-                            ) : (
-                              "Select sire..."
-                            )}
+                            {formData.sireId ? (() => {
+                              const s = availableSires.find((a: any) => a.id === formData.sireId);
+                              return s ? (
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <AnimalAvatar animal={s} size={6} />
+                                  <span className="truncate font-medium">{s.name}{s.registeredName ? ` — ${s.registeredName}` : ''}</span>
+                                </div>
+                              ) : "Select sire...";
+                            })() : "Select sire..."}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
@@ -1140,10 +1168,11 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                                       key={animal.id}
                                       value={[animal.name, animal.registeredName, animal.breed?.name, animal.breeder?.name].filter(Boolean).join(' ')}
                                       onSelect={() => updateFormData("sireId", animal.id)}
-                                      className="px-3 py-3"
+                                      className="px-3 py-2"
                                     >
-                                      <Check className={cn("mr-3 h-4 w-4 shrink-0", formData.sireId === animal.id ? "opacity-100" : "opacity-0")} />
-                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                      <Check className={cn("mr-2 h-4 w-4 shrink-0", formData.sireId === animal.id ? "opacity-100" : "opacity-0")} />
+                                      <AnimalAvatar animal={animal} size={8} />
+                                      <div className="flex flex-col gap-0.5 min-w-0 ml-2">
                                         <span className="font-medium truncate">{animal.name}</span>
                                         {animal.registeredName && (
                                           <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>
@@ -1288,13 +1317,17 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                           <Button
                             variant="outline"
                             role="combobox"
-                            className="w-full justify-between bg-background border-primary/20"
+                            className="w-full justify-between bg-background border-primary/20 h-auto py-2"
                           >
-                            {formData.damId ? (
-                              availableDams.find((a: any) => a.id === formData.damId)?.name || "Select dam..."
-                            ) : (
-                              "Select dam..."
-                            )}
+                            {formData.damId ? (() => {
+                              const d = availableDams.find((a: any) => a.id === formData.damId);
+                              return d ? (
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <AnimalAvatar animal={d} size={6} />
+                                  <span className="truncate font-medium">{d.name}{d.registeredName ? ` — ${d.registeredName}` : ''}</span>
+                                </div>
+                              ) : "Select dam...";
+                            })() : "Select dam..."}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
@@ -1313,10 +1346,11 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                                       key={animal.id}
                                       value={[animal.name, animal.registeredName, animal.breed?.name, animal.breeder?.name].filter(Boolean).join(' ')}
                                       onSelect={() => updateFormData("damId", animal.id)}
-                                      className="px-3 py-3"
+                                      className="px-3 py-2"
                                     >
-                                      <Check className={cn("mr-3 h-4 w-4 shrink-0", formData.damId === animal.id ? "opacity-100" : "opacity-0")} />
-                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                      <Check className={cn("mr-2 h-4 w-4 shrink-0", formData.damId === animal.id ? "opacity-100" : "opacity-0")} />
+                                      <AnimalAvatar animal={animal} size={8} />
+                                      <div className="flex flex-col gap-0.5 min-w-0 ml-2">
                                         <span className="font-medium truncate">{animal.name}</span>
                                         {animal.registeredName && (
                                           <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>

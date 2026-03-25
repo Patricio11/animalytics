@@ -45,7 +45,7 @@ export function PedigreeTab({ animalId, animalName, animalUserId }: PedigreeTabP
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [scanDialogOpen, setScanDialogOpen] = useState(false);
   const [generations, setGenerations] = useState(4);
-  const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('vertical');
+  const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('horizontal');
   const [activeSubTab, setActiveSubTab] = useState('certificate');
 
   // Fetch pedigree data

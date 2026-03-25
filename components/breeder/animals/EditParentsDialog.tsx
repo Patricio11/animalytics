@@ -11,14 +11,52 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, AlertTriangle, ChevronsUpDown, Check, X } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, AlertCircle, AlertTriangle, Check, ChevronsUpDown, Database, FileEdit, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { AddPedigreeEntryDialog } from "@/components/breeder/animals/AddPedigreeEntryDialog";
+
+function getAnimalPhoto(animal: any): string | null {
+  if (!animal?.photos?.length) return animal?.profileImageUrl || null;
+  const primary = animal.photos.find((p: any) => p.category === 'profile' && p.isPrimary);
+  const anyProfile = animal.photos.find((p: any) => p.category === 'profile');
+  return primary?.fileUrl || anyProfile?.fileUrl || animal.photos[0]?.fileUrl || animal.profileImageUrl || null;
+}
+
+function AnimalAvatar({ animal, size = 8 }: { animal: any; size?: number }) {
+  const photo = getAnimalPhoto(animal);
+  const initials = (animal?.name || '?')[0].toUpperCase();
+  const sizeClass = `w-${size} h-${size}`;
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt={animal.name}
+        className={cn(sizeClass, "rounded-full object-cover shrink-0")}
+        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+      />
+    );
+  }
+  return (
+    <div className={cn(sizeClass, "rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs font-semibold text-primary")}>
+      {initials}
+    </div>
+  );
+}
 
 interface EditParentsDialogProps {
   open: boolean;
@@ -27,9 +65,267 @@ interface EditParentsDialogProps {
   animalName: string;
   currentDamId?: string;
   currentSireId?: string;
-  manualSire?: any; // Manual pedigree entry for sire
-  manualDam?: any; // Manual pedigree entry for dam
+  manualSire?: any;
+  manualDam?: any;
+  editPosition?: 'sire' | 'dam'; // if set, show only that section
   onSuccess?: () => void;
+}
+
+function ParentSection({
+  label,
+  requiredSex,
+  animalId,
+  allAnimals,
+  isLoadingAnimals,
+  currentSystemId,
+  manualEntry,
+  onSystemSelect,
+  onManualChange,
+}: {
+  label: string;
+  requiredSex: "male" | "female";
+  animalId: string;
+  allAnimals: any[];
+  isLoadingAnimals: boolean;
+  currentSystemId: string | null;
+  manualEntry: any;
+  onSystemSelect: (id: string | null) => void;
+  onManualChange: (data: any) => void;
+}) {
+  const defaultTab = currentSystemId ? "system" : manualEntry ? "manual" : "system";
+  const [tab, setTab] = useState<"system" | "manual">(defaultTab);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(currentSystemId);
+  const [manual, setManual] = useState({
+    registeredName: manualEntry?.registeredName || "",
+    registrationNumber: manualEntry?.registrationNumber || "",
+    name: manualEntry?.name || "",
+    color: manualEntry?.color || "",
+    sex: requiredSex,
+    dateOfBirth: manualEntry?.dateOfBirth || "",
+    microchipNumber: manualEntry?.microchipNumber || "",
+    notes: manualEntry?.notes || "",
+  });
+
+  // Re-sync when dialog re-opens
+  useEffect(() => {
+    setSelectedId(currentSystemId);
+    setTab(currentSystemId ? "system" : manualEntry ? "manual" : "system");
+    setManual({
+      registeredName: manualEntry?.registeredName || "",
+      registrationNumber: manualEntry?.registrationNumber || "",
+      name: manualEntry?.name || "",
+      color: manualEntry?.color || "",
+      sex: requiredSex,
+      dateOfBirth: manualEntry?.dateOfBirth || "",
+      microchipNumber: manualEntry?.microchipNumber || "",
+      notes: manualEntry?.notes || "",
+    });
+  }, [currentSystemId, manualEntry, requiredSex]);
+
+  const filtered = allAnimals.filter(
+    (a: any) => a.sex === requiredSex && a.id !== animalId
+  );
+  const selectedAnimal = filtered.find((a: any) => a.id === selectedId);
+
+  const updateManual = (field: string, value: string) => {
+    const updated = { ...manual, [field]: value };
+    setManual(updated);
+    onManualChange(updated);
+  };
+
+  const handleSystemSelect = (id: string) => {
+    setSelectedId(id);
+    onSystemSelect(id);
+    setPopoverOpen(false);
+  };
+
+  const handleTabChange = (v: string) => {
+    setTab(v as "system" | "manual");
+    if (v === "system") {
+      onManualChange(null);
+    } else {
+      onSystemSelect(null);
+      setSelectedId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <Label className="text-base font-semibold">{label}</Label>
+
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="system" className="gap-2">
+            <Database className="w-4 h-4" />
+            Select from System
+          </TabsTrigger>
+          <TabsTrigger value="manual" className="gap-2">
+            <FileEdit className="w-4 h-4" />
+            Manual Entry
+          </TabsTrigger>
+        </TabsList>
+
+        {/* System Animal Selection */}
+        <TabsContent value="system" className="space-y-3 mt-3">
+          {/* Global search indicator */}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Globe className="w-3.5 h-3.5 text-primary" />
+            <span>Searching all animals in the system</span>
+          </div>
+
+          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                role="combobox"
+                className="w-full justify-between bg-background border-primary/20 h-auto py-2"
+                disabled={isLoadingAnimals}
+              >
+                {isLoadingAnimals ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading animals...</>
+                ) : selectedAnimal ? (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <AnimalAvatar animal={selectedAnimal} size={6} />
+                    <span className="truncate font-medium">{selectedAnimal.name}{selectedAnimal.registeredName ? ` — ${selectedAnimal.registeredName}` : ""}</span>
+                  </div>
+                ) : (
+                  `Select ${label.toLowerCase()}...`
+                )}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[500px] p-0">
+              <Command>
+                <CommandInput placeholder={`Search ${requiredSex === "male" ? "sires" : "dams"}...`} className="h-9" />
+                <CommandList>
+                  {filtered.length === 0 ? (
+                    <CommandEmpty className="py-6 text-center text-sm">
+                      No {requiredSex} animals found.
+                    </CommandEmpty>
+                  ) : (
+                    <CommandGroup>
+                      {filtered.map((animal: any) => (
+                        <CommandItem
+                          key={animal.id}
+                          value={[animal.name, animal.registeredName, animal.breed?.name].filter(Boolean).join(" ")}
+                          onSelect={() => handleSystemSelect(animal.id)}
+                          className="px-3 py-2"
+                        >
+                          <Check className={cn("mr-2 h-4 w-4 shrink-0", selectedId === animal.id ? "opacity-100" : "opacity-0")} />
+                          <AnimalAvatar animal={animal} size={8} />
+                          <div className="flex flex-col gap-0.5 min-w-0 ml-2">
+                            <span className="font-medium truncate">{animal.name}</span>
+                            {animal.registeredName && (
+                              <span className="text-xs text-muted-foreground truncate">{animal.registeredName}</span>
+                            )}
+                            <div className="flex gap-2 text-xs text-muted-foreground">
+                              {animal.breed?.name && <span>{animal.breed.name}</span>}
+                              {animal.sex && <span className="capitalize">• {animal.sex}</span>}
+                              {animal.breeder?.name && <span>• by {animal.breeder.name}</span>}
+                            </div>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
+          {selectedId && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 w-full"
+              onClick={() => { setSelectedId(null); onSystemSelect(null); }}
+            >
+              Remove {label}
+            </Button>
+          )}
+        </TabsContent>
+
+        {/* Manual Entry Form */}
+        <TabsContent value="manual" className="space-y-3 mt-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor={`${label}-regname`}>Registered Name <span className="text-destructive">*</span></Label>
+              <Input
+                id={`${label}-regname`}
+                value={manual.registeredName}
+                onChange={(e) => updateManual("registeredName", e.target.value)}
+                placeholder="Full registered name"
+                className="border-primary/20"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`${label}-regno`}>Registration Number <span className="text-destructive">*</span></Label>
+              <Input
+                id={`${label}-regno`}
+                value={manual.registrationNumber}
+                onChange={(e) => updateManual("registrationNumber", e.target.value)}
+                placeholder="Reg. number"
+                className="border-primary/20"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`${label}-name`}>Call Name</Label>
+              <Input
+                id={`${label}-name`}
+                value={manual.name}
+                onChange={(e) => updateManual("name", e.target.value)}
+                placeholder="Everyday name"
+                className="border-primary/20"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`${label}-color`}>Color <span className="text-destructive">*</span></Label>
+              <Input
+                id={`${label}-color`}
+                value={manual.color}
+                onChange={(e) => updateManual("color", e.target.value)}
+                placeholder="Coat color"
+                className="border-primary/20"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`${label}-dob`}>Date of Birth</Label>
+              <Input
+                id={`${label}-dob`}
+                type="date"
+                value={manual.dateOfBirth}
+                onChange={(e) => updateManual("dateOfBirth", e.target.value)}
+                className="border-primary/20"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`${label}-chip`}>Microchip</Label>
+              <Input
+                id={`${label}-chip`}
+                value={manual.microchipNumber}
+                onChange={(e) => updateManual("microchipNumber", e.target.value)}
+                placeholder="Microchip number"
+                className="border-primary/20"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`${label}-notes`}>Notes</Label>
+            <Textarea
+              id={`${label}-notes`}
+              value={manual.notes}
+              onChange={(e) => updateManual("notes", e.target.value)}
+              placeholder="Additional information..."
+              className="border-primary/20 min-h-[60px]"
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
 
 export function EditParentsDialog({
@@ -41,449 +337,166 @@ export function EditParentsDialog({
   currentSireId,
   manualSire,
   manualDam,
+  editPosition,
   onSuccess,
 }: EditParentsDialogProps) {
   const { toast } = useToast();
-  const [damId, setDamId] = useState<string | null>(null);
-  const [sireId, setSireId] = useState<string | null>(null);
-  const [damPopoverOpen, setDamPopoverOpen] = useState(false);
-  const [sirePopoverOpen, setSirePopoverOpen] = useState(false);
-  const [addPedigreeDialogOpen, setAddPedigreeDialogOpen] = useState(false);
-  const [addPedigreeConfig, setAddPedigreeConfig] = useState<{
-    position: string;
-    generation: number;
-    label: string;
-    requiredSex: "male" | "female";
-  } | null>(null);
 
-  // Fetch all animals from API
-  const { data: animalsData, isLoading: isLoadingAnimals } = useQuery({
-    queryKey: ["animals"],
-    queryFn: async () => {
-      const response = await fetch("/api/animals");
-      if (!response.ok) {
-        throw new Error("Failed to fetch animals");
-      }
-      const json = await response.json();
-      // API returns { success: true, data: [...] }
-      return json.data || json.animals || json;
-    },
-    enabled: open, // Only fetch when dialog is open
-  });
+  const [sireId, setSireId] = useState<string | null>(currentSireId || null);
+  const [damId, setDamId] = useState<string | null>(currentDamId || null);
+  const [sireManual, setSireManual] = useState<any>(null);
+  const [damManual, setDamManual] = useState<any>(null);
 
-  // Extract animals array from response
-  const allAnimals = Array.isArray(animalsData) ? animalsData : [];
-
-  // Filter animals by sex
-  const dams = allAnimals.filter(
-    (a: any) => a.sex === "female" && a.id !== animalId
-  );
-
-  const sires = allAnimals.filter(
-    (a: any) => a.sex === "male" && a.id !== animalId
-  );
-
-  // Get selected animal names
-  const selectedDam = dams.find((a: any) => a.id === damId);
-  const selectedSire = sires.find((a: any) => a.id === sireId);
-
-  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setDamId(currentDamId || null);
       setSireId(currentSireId || null);
+      setDamId(currentDamId || null);
+      setSireManual(null);
+      setDamManual(null);
     }
-  }, [open, currentDamId, currentSireId]);
+  }, [open, currentSireId, currentDamId]);
 
-  // Update parents mutation
-  const updateParentsMutation = useMutation({
+  // Fetch all animals system-wide so any animal can be selected as a parent
+  const { data: animalsData, isLoading: isLoadingAnimals } = useQuery({
+    queryKey: ["animals", "global"],
+    queryFn: async () => {
+      const response = await fetch("/api/animals?global=true");
+      if (!response.ok) throw new Error("Failed to fetch animals");
+      const json = await response.json();
+      return json.data || json.animals || json;
+    },
+    enabled: open,
+  });
+  const allAnimals: any[] = Array.isArray(animalsData) ? animalsData : [];
+
+  // Save mutation — handles system link + manual entries
+  const saveMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/animals/${animalId}/pedigree`, {
+      // Update system-linked parents
+      const res = await fetch(`/api/animals/${animalId}/pedigree`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          damId: damId || null,
-          sireId: sireId || null,
-        }),
+        body: JSON.stringify({ sireId: sireId || null, damId: damId || null }),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update parents");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to update parents");
       }
 
-      return response.json();
+      // Save sire manual entry if provided
+      if (sireManual?.registeredName && !sireId) {
+        await fetch(`/api/animals/${animalId}/pedigree/manual`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ position: "sire", generation: 1, sex: "male", ...sireManual }),
+        });
+      }
+
+      // Save dam manual entry if provided
+      if (damManual?.registeredName && !damId) {
+        await fetch(`/api/animals/${animalId}/pedigree/manual`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ position: "dam", generation: 1, sex: "female", ...damManual }),
+        });
+      }
     },
     onSuccess: () => {
-      toast({
-        title: "Parents updated",
-        description: "The pedigree has been updated successfully.",
-      });
+      toast({ title: "Parents updated", description: "Pedigree updated successfully." });
       onSuccess?.();
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateParentsMutation.mutate();
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Parents</DialogTitle>
+          <DialogTitle>
+            {editPosition === 'sire' ? 'Edit Sire (Father)' : editPosition === 'dam' ? 'Edit Dam (Mother)' : 'Edit Parents'}
+          </DialogTitle>
           <DialogDescription>
-            Update the sire (father) and dam (mother) for {animalName}
+            {editPosition === 'sire'
+              ? `Change or remove the sire (father) for ${animalName}`
+              : editPosition === 'dam'
+              ? `Change or remove the dam (mother) for ${animalName}`
+              : `Update the sire (father) and dam (mother) for ${animalName}`}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6 py-4">
-            {/* Loading State */}
-            {isLoadingAnimals && (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Loading animals...</span>
-              </div>
+        {isLoadingAnimals ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading animals...</span>
+          </div>
+        ) : (
+          <div className="space-y-6 py-2">
+            {(!editPosition || editPosition === 'sire') && (
+              <ParentSection
+                label="Sire (Father)"
+                requiredSex="male"
+                animalId={animalId}
+                allAnimals={allAnimals}
+                isLoadingAnimals={isLoadingAnimals}
+                currentSystemId={sireId}
+                manualEntry={manualSire}
+                onSystemSelect={(id) => setSireId(id)}
+                onManualChange={(data) => setSireManual(data)}
+              />
             )}
 
-            {!isLoadingAnimals && (
-              <>
-                {/* Sire (Father) Section - FIRST */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold">
-                      Sire (Father)
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => {
-                        setAddPedigreeConfig({
-                          position: "sire",
-                          generation: 1,
-                          label: "Sire",
-                          requiredSex: "male",
-                        });
-                        setAddPedigreeDialogOpen(true);
-                      }}
-                    >
-                      {currentSireId || manualSire ? "✏️ Edit Sire" : "+ Add Sire"}
-                    </Button>
-                  </div>
+            {!editPosition && <Separator />}
 
-                  {/* Show manual sire info if exists and no system sire selected */}
-                  {manualSire && !sireId && (
-                    <div className="p-3 bg-muted/50 rounded-md border border-primary/20">
-                      <p className="text-sm font-medium">{manualSire.registeredName || manualSire.name}</p>
-                      {manualSire.registrationNumber && (
-                        <p className="text-xs text-muted-foreground">Reg: {manualSire.registrationNumber}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1">Manual Entry</p>
-                    </div>
-                  )}
+            {(!editPosition || editPosition === 'dam') && (
+              <ParentSection
+                label="Dam (Mother)"
+                requiredSex="female"
+                animalId={animalId}
+                allAnimals={allAnimals}
+                isLoadingAnimals={isLoadingAnimals}
+                currentSystemId={damId}
+                manualEntry={manualDam}
+                onSystemSelect={(id) => setDamId(id)}
+                onManualChange={(data) => setDamManual(data)}
+              />
+            )}
 
-                  <Popover open={sirePopoverOpen} onOpenChange={setSirePopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between bg-background border-primary/20"
-                      >
-                        {selectedSire ? selectedSire.name : "Select sire from system (optional)"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[500px] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search sires..." className="h-9" />
-                        <CommandList>
-                          {sires.length === 0 ? (
-                            <CommandEmpty className="py-6 text-center text-sm">
-                              No male animals found. Add a male animal first.
-                            </CommandEmpty>
-                          ) : (
-                            <CommandGroup>
-                              {/* None option */}
-                              <CommandItem
-                                value="none"
-                                onSelect={() => {
-                                  setSireId(null);
-                                  setSirePopoverOpen(false);
-                                }}
-                                className="px-3 py-3"
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-3 h-4 w-4 shrink-0",
-                                    !sireId ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <span className="text-muted-foreground">No sire selected</span>
-                              </CommandItem>
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                The system will validate that these parent assignments don't create circular relationships in the pedigree tree.
+              </AlertDescription>
+            </Alert>
 
-                              {sires.map((sire: any) => (
-                                <CommandItem
-                                  key={sire.id}
-                                  value={`${sire.name}-${sire.id}`}
-                                  onSelect={() => {
-                                    setSireId(sire.id);
-                                    setSirePopoverOpen(false);
-                                  }}
-                                  className="px-3 py-3"
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-3 h-4 w-4 shrink-0",
-                                      sireId === sire.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col gap-1 min-w-0">
-                                    <span className="font-medium truncate">{sire.name}</span>
-                                    {sire.registeredName && (
-                                      <span className="text-xs text-muted-foreground truncate">
-                                        {sire.registeredName}
-                                      </span>
-                                    )}
-                                    {sire.breed?.name && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {sire.breed.name}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          )}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  {sireId && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSireId(null)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Clear sire
-                    </Button>
-                  )}
-                </div>
-
-                {/* Dam (Mother) Section - SECOND */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold">
-                      Dam (Mother)
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => {
-                        setAddPedigreeConfig({
-                          position: "dam",
-                          generation: 1,
-                          label: "Dam",
-                          requiredSex: "female",
-                        });
-                        setAddPedigreeDialogOpen(true);
-                      }}
-                    >
-                      {currentDamId || manualDam ? "✏️ Edit Dam" : "+ Add Dam"}
-                    </Button>
-                  </div>
-
-                  {/* Show manual dam info if exists and no system dam selected */}
-                  {manualDam && !damId && (
-                    <div className="p-3 bg-muted/50 rounded-md border border-primary/20">
-                      <p className="text-sm font-medium">{manualDam.registeredName || manualDam.name}</p>
-                      {manualDam.registrationNumber && (
-                        <p className="text-xs text-muted-foreground">Reg: {manualDam.registrationNumber}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1">Manual Entry</p>
-                    </div>
-                  )}
-
-                  <Popover open={damPopoverOpen} onOpenChange={setDamPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between bg-background border-primary/20"
-                      >
-                        {selectedDam ? selectedDam.name : "Select dam from system (optional)"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[500px] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search dams..." className="h-9" />
-                        <CommandList>
-                          {dams.length === 0 ? (
-                            <CommandEmpty className="py-6 text-center text-sm">
-                              No female animals found. Add a female animal first.
-                            </CommandEmpty>
-                          ) : (
-                            <CommandGroup>
-                              {/* None option */}
-                              <CommandItem
-                                value="none"
-                                onSelect={() => {
-                                  setDamId(null);
-                                  setDamPopoverOpen(false);
-                                }}
-                                className="px-3 py-3"
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-3 h-4 w-4 shrink-0",
-                                    !damId ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <span className="text-muted-foreground">No dam selected</span>
-                              </CommandItem>
-
-                              {dams.map((dam: any) => (
-                                <CommandItem
-                                  key={dam.id}
-                                  value={`${dam.name}-${dam.id}`}
-                                  onSelect={() => {
-                                    setDamId(dam.id);
-                                    setDamPopoverOpen(false);
-                                  }}
-                                  className="px-3 py-3"
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-3 h-4 w-4 shrink-0",
-                                      damId === dam.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col gap-1 min-w-0">
-                                    <span className="font-medium truncate">{dam.name}</span>
-                                    {dam.registeredName && (
-                                      <span className="text-xs text-muted-foreground truncate">
-                                        {dam.registeredName}
-                                      </span>
-                                    )}
-                                    {dam.breed?.name && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {dam.breed.name}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          )}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  {damId && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDamId(null)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Clear dam
-                    </Button>
-                  )}
-                </div>
-
-                {/* Info Alert */}
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className="text-sm">
-                    The system will validate that these parent assignments don't create
-                    circular relationships in the pedigree tree.
-                  </AlertDescription>
-                </Alert>
-
-                {/* Error Display */}
-                {updateParentsMutation.isError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      {updateParentsMutation.error?.message ||
-                        "Failed to update parents"}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </>
+            {saveMutation.isError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{saveMutation.error?.message || "Failed to update parents"}</AlertDescription>
+              </Alert>
             )}
           </div>
+        )}
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={updateParentsMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={updateParentsMutation.isPending || isLoadingAnimals}
-              className="bg-gradient-brand hover:opacity-90"
-            >
-              {updateParentsMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saveMutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || isLoadingAnimals}
+            className="bg-gradient-brand hover:opacity-90"
+          >
+            {saveMutation.isPending ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-
-      {/* Add Pedigree Entry Dialog */}
-      {addPedigreeConfig && (
-        <AddPedigreeEntryDialog
-          open={addPedigreeDialogOpen}
-          onOpenChange={setAddPedigreeDialogOpen}
-          animalId={animalId}
-          position={addPedigreeConfig.position}
-          generation={addPedigreeConfig.generation}
-          positionLabel={addPedigreeConfig.label}
-          requiredSex={addPedigreeConfig.requiredSex}
-          existingEntry={
-            addPedigreeConfig.position === "sire" ? manualSire :
-            addPedigreeConfig.position === "dam" ? manualDam :
-            undefined
-          }
-          onSuccess={() => {
-            setAddPedigreeDialogOpen(false);
-            setAddPedigreeConfig(null);
-            onSuccess?.();
-          }}
-        />
-      )}
     </Dialog>
   );
 }
