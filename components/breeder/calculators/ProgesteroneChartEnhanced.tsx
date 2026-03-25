@@ -114,13 +114,14 @@ export function ProgesteroneChartEnhanced({
     const { cx, cy, payload } = props;
     if (!payload) return null;
 
-    // Color based on phase
+    // Color based on phase — calibrated to VIDAS reference chart
     let color = '#8b5cf6';
-    if (payload.level < 3) color = '#9ca3af';
-    else if (payload.level < 10) color = '#a855f7';
-    else if (payload.level < 15) color = '#ef4444';
-    else if (payload.level < 25) color = '#10b981';
-    else color = '#0ea5e9';
+    if (payload.level < 3)  color = '#9ca3af'; // Baseline
+    else if (payload.level < 10) color = '#a855f7'; // LH Rise
+    else if (payload.level < 15) color = '#ef4444'; // Ovulation (OV = 10)
+    else if (payload.level < 18) color = '#10b981'; // 1st Mating Fresh
+    else if (payload.level < 25) color = '#22c55e'; // Fertile Window
+    else color = '#0ea5e9';                          // Optimal Frozen
 
     return (
       <circle
