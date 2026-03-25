@@ -362,7 +362,7 @@ export async function POST(request: NextRequest) {
         // Create in-app notification
         await createBreedingWindowNotification({
           userId: session.user.id,
-          bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
+          bitchName,
           day: calculatedDay,
           progesteroneLevel: normalizedValue,
           heatCycleId,
@@ -378,7 +378,7 @@ export async function POST(request: NextRequest) {
       try {
         await createDailyTestNotification({
           userId: session.user.id,
-          bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
+          bitchName,
           day: calculatedDay,
           lastLevel: normalizedValue,
           heatCycleId,
@@ -393,7 +393,7 @@ export async function POST(request: NextRequest) {
       try {
         await createOvulationNotification({
           userId: session.user.id,
-          bitchName: heatCycle.bitchId, // TODO: Fetch actual bitch name
+          bitchName,
           day: calculatedDay,
           heatCycleId,
         });

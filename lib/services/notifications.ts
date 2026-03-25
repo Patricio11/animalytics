@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { heatCycleReminders, users, breederProfiles, kycVerifications } from '@/lib/db/schema';
+import { heatCycleReminders, users, breederProfiles, kycVerifications, heatCycles, animals } from '@/lib/db/schema';
 import { eq, and, lte, isNull } from 'drizzle-orm';
 import {
   sendProgesteroneReminderEmail,
@@ -265,9 +265,14 @@ export async function processPendingReminders(): Promise<{
         // Use public phone from profile, fallback to KYC phone
         const phone = breeder.publicPhone || breeder.kycPhone || undefined;
 
-        // TODO: Get bitch name from heat cycle
-        // For now, use placeholder
-        const bitchName = 'Your Bitch'; // This should be fetched from the heat cycle
+        // Fetch bitch name from heat cycle
+        const [heatCycleData] = await db
+          .select({ bitchName: animals.name })
+          .from(heatCycles)
+          .leftJoin(animals, eq(heatCycles.bitchId, animals.id))
+          .where(eq(heatCycles.id, reminder.heatCycleId))
+          .limit(1);
+        const bitchName = heatCycleData?.bitchName || 'Your dog';
 
         // Send notification
         const results = await sendNotification({
