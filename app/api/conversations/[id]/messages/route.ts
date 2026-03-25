@@ -309,7 +309,7 @@ export async function POST(
       // Send email notification to recipient
       if (recipient?.email) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || 'https://animalytics.co';
-        const messagesPath = recipientUserRole === 'pet_owner' ? '/buyer/messages' : '/messages';
+        const messagesPath = recipientUserRole === 'pet_owner' ? '/pet-owner/messages' : '/messages';
         const conversationUrl = `${baseUrl}${messagesPath}?conversation=${conversationId}`;
 
         sendNewMessageEmail(recipient.email, {
