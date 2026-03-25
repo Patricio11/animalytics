@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const limit = Number(searchParams.get('limit') || '100');
 
-    let query = db
+    const allBreeds = await db
       .select({
         id: breeds.id,
         name: breeds.name,
@@ -25,14 +25,8 @@ export async function GET(request: NextRequest) {
         description: breeds.description,
         imageUrl: breeds.imageUrl,
       })
-      .from(breeds);
-
-    // Apply search filter
-    if (search) {
-      query = query.where(ilike(breeds.name, `%${search}%`));
-    }
-
-    const allBreeds = await query
+      .from(breeds)
+      .where(search ? ilike(breeds.name, `%${search}%`) : undefined)
       .orderBy(asc(breeds.name))
       .limit(limit);
 

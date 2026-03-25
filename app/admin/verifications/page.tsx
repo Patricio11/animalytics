@@ -113,7 +113,7 @@ export default function AdminVerificationsPage() {
     if (!selectedVerification) return;
     reviewMutation.mutate({
       id: selectedVerification.id,
-      status: reviewAction,
+      status: reviewAction === 'approve' ? 'approved' : 'rejected',
       notes: reviewNotes,
     });
   };

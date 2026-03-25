@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { clinics, officialClinics } from '@/lib/db/schema';
+import { veterinaryClinics, officialClinics } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth/server';
 import { eq, and } from 'drizzle-orm';
 
 /**
- * GET /api/clinics/all
- * Get both personal clinics and verified official clinics for the breeder
+ * GET /api/veterinaryClinics/all
+ * Get both personal veterinaryClinics and verified official veterinaryClinics for the breeder
  */
 export async function GET(request: NextRequest) {
   try {
     const session = await requireAuth();
 
-    // Fetch user's personal clinics
+    // Fetch user's personal veterinaryClinics
     const personalClinics = await db
       .select()
-      .from(clinics)
-      .where(eq(clinics.userId, session.user.id));
+      .from(veterinaryClinics)
+      .where(eq(veterinaryClinics.userId, session.user.id));
 
-    // Fetch verified official clinics
+    // Fetch verified official veterinaryClinics
     const verifiedClinics = await db
       .select()
       .from(officialClinics)
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         )
       );
 
-    // Format personal clinics
+    // Format personal veterinaryClinics
     const formattedPersonalClinics = personalClinics.map((clinic) => ({
       id: clinic.id,
       clinicName: clinic.clinicName,
@@ -40,15 +40,15 @@ export async function GET(request: NextRequest) {
       city: clinic.city,
       state: clinic.state,
       isPrimary: clinic.isPrimary,
-      isPersonal: true, // Flag to identify personal clinics
+      isPersonal: true, // Flag to identify personal veterinaryClinics
       isOfficial: false,
     }));
 
-    // Format official clinics
+    // Format official veterinaryClinics
     const formattedOfficialClinics = verifiedClinics.map((clinic) => ({
       id: clinic.id,
       clinicName: clinic.clinicName,
-      veterinarianName: null, // Official clinics don't have a single vet name
+      veterinarianName: null, // Official veterinaryClinics don't have a single vet name
       email: clinic.email,
       phone: clinic.phone,
       address: clinic.address,
@@ -56,13 +56,13 @@ export async function GET(request: NextRequest) {
       state: clinic.state,
       isPrimary: false,
       isPersonal: false,
-      isOfficial: true, // Flag to identify official clinics
+      isOfficial: true, // Flag to identify official veterinaryClinics
       isVerified: clinic.isVerified,
       emergencyAvailable: clinic.emergencyAvailable,
       emergencyPhone: clinic.emergencyPhone,
     }));
 
-    // Combine both lists (personal clinics first, then official)
+    // Combine both lists (personal veterinaryClinics first, then official)
     const allClinics = [
       ...formattedPersonalClinics,
       ...formattedOfficialClinics,
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      clinics: allClinics,
+      veterinaryClinics: allClinics,
       counts: {
         personal: formattedPersonalClinics.length,
         official: formattedOfficialClinics.length,
@@ -78,9 +78,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching clinics:', error);
+    console.error('Error fetching veterinaryClinics:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch clinics' },
+      { error: 'Failed to fetch veterinaryClinics' },
       { status: 500 }
     );
   }

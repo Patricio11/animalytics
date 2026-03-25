@@ -347,7 +347,7 @@ export default function PetOwnerDashboard() {
                   <div className="text-center py-8 text-muted-foreground">
                     <Package className="h-10 w-10 mx-auto mb-2 opacity-50" />
                     <p>No active purchases</p>
-                    <Button variant="link" asChild className="mt-2">
+                    <Button variant="ghost" asChild className="mt-2">
                       <Link href="/marketplace">Browse Marketplace</Link>
                     </Button>
                   </div>

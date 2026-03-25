@@ -17,7 +17,7 @@ import { z } from 'zod';
 // ============================================================================
 
 const updateTaskSchema = z.object({
-  taskType: z
+  type: z
     .enum(['feeding', 'exercise', 'grooming', 'weight', 'cleaning', 'event'])
     .optional(),
   animalId: z.string().optional(),
@@ -25,7 +25,6 @@ const updateTaskSchema = z.object({
   notes: z.string().optional(),
   taskData: z.any().optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
-  isCompleted: z.boolean().optional(),
   completedAt: z.string().optional(),
 });
 
@@ -101,7 +100,7 @@ export async function PATCH(
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))

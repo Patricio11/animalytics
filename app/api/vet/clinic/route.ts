@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
           id: users.id,
           email: users.email,
           name: users.name,
-          image: users.image,
+          avatar: users.avatar,
         },
       })
       .from(clinicStaff)

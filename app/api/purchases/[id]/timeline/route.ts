@@ -78,7 +78,7 @@ export async function GET(
             .select({
               id: users.id,
               name: users.name,
-              image: users.image,
+              avatar: users.avatar,
             })
             .from(users)
             .where(eq(users.id, event.actorId))

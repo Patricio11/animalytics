@@ -23,7 +23,6 @@ export async function GET(
         sex: true,
         dateOfBirth: true,
         color: true,
-        colorHex: true,
         weight: true,
         height: true,
         profileImageUrl: true,
@@ -38,7 +37,6 @@ export async function GET(
           columns: {
             id: true,
             name: true,
-            category: true,
           },
         },
         photos: {

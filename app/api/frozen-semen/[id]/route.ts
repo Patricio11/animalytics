@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { frozenSemen } from '@/lib/db/schema/animals';
+import { frozenSemen, frozenSemenUsage } from '@/lib/db/schema/animals';
 import { auth } from '@/lib/auth/config';
 import {
   successResponse,
@@ -9,7 +9,7 @@ import {
   validationErrorResponse,
   serverErrorResponse,
 } from '@/lib/api/response';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 
 // ============================================================================
@@ -19,17 +19,17 @@ import { z } from 'zod';
 const updateFrozenSemenSchema = z.object({
   batchIdentifier: z.string().optional(),
   collectionDate: z.string().optional(),
-  collectionClinic: z.string().optional(),
+  clinic: z.string().optional(),
   storageLocation: z.string().optional(),
-  numberOfStraws: z.number().int().positive().optional(),
+  strawCount: z.number().int().positive().optional(),
   strawsRemaining: z.number().int().min(0).optional(),
   qualityRating: z.enum(['excellent', 'good', 'fair', 'poor']).optional(),
-  motility: z.number().min(0).max(100).optional(),
+  motility: z.string().optional(),
   concentration: z.number().positive().optional(),
-  morphology: z.number().min(0).max(100).optional(),
-  volume: z.number().positive().optional(),
-  storageNotes: z.string().optional(),
-  isActive: z.boolean().optional(),
+  morphology: z.string().optional(),
+  volume: z.string().optional(),
+  notes: z.string().optional(),
+  isAvailable: z.boolean().optional(),
 });
 
 // ============================================================================
@@ -57,16 +57,6 @@ export async function GET(
             breed: true,
           },
         },
-        usageHistory: {
-          with: {
-            bitch: {
-              with: {
-                breed: true,
-              },
-            },
-          },
-          orderBy: (history, { desc }) => [desc(history.usageDate)],
-        },
       },
     });
 
@@ -74,7 +64,14 @@ export async function GET(
       return notFoundResponse('Frozen semen batch not found');
     }
 
-    return successResponse(batch);
+    // Fetch usage history separately (no direct relation defined)
+    const usageHistory = await db
+      .select()
+      .from(frozenSemenUsage)
+      .where(eq(frozenSemenUsage.frozenSemenId, id))
+      .orderBy(desc(frozenSemenUsage.usageDate));
+
+    return successResponse({ ...batch, usageHistory });
   } catch (error) {
     console.error('Error fetching frozen semen batch:', error);
     return serverErrorResponse('Failed to fetch frozen semen batch');
@@ -114,7 +111,7 @@ export async function PATCH(
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -134,7 +131,7 @@ export async function PATCH(
         ]);
       }
     } else if (validatedData.strawsRemaining !== undefined) {
-      if (validatedData.strawsRemaining > existing.numberOfStraws) {
+      if (validatedData.strawsRemaining > existing.strawCount) {
         return validationErrorResponse([
           {
             field: 'strawsRemaining',

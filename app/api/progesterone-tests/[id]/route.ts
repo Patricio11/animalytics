@@ -10,12 +10,12 @@ import { eq, and } from 'drizzle-orm';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session
     const session = await auth.api.getSession({ headers: request.headers });
-    
+
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -24,7 +24,7 @@ export async function GET(
     }
 
     const userId = session.user.id;
-    const testId = params.id;
+    const { id: testId } = await params;
 
     // Fetch test with animal data
     const [test] = await db
@@ -94,12 +94,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session
     const session = await auth.api.getSession({ headers: request.headers });
-    
+
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -108,7 +108,7 @@ export async function PATCH(
     }
 
     const userId = session.user.id;
-    const testId = params.id;
+    const { id: testId } = await params;
     const body = await request.json();
 
     // Verify ownership
@@ -176,12 +176,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session
     const session = await auth.api.getSession({ headers: request.headers });
-    
+
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -190,7 +190,7 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    const testId = params.id;
+    const { id: testId } = await params;
 
     // Verify ownership and delete
     const [deletedTest] = await db

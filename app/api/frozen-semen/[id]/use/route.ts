@@ -59,7 +59,7 @@ export async function POST(
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -84,11 +84,10 @@ export async function POST(
       .values({
         frozenSemenId: id,
         bitchId: validatedData.bitchId,
-        userId: session.user.id,
         usageDate: validatedData.usageDate,
         strawsUsed: validatedData.strawsUsed,
         breedingMethod: validatedData.breedingMethod,
-        veterinarian: validatedData.veterinarian,
+        veterinarianName: validatedData.veterinarian,
         clinic: validatedData.clinic,
         notes: validatedData.notes,
       })

@@ -44,7 +44,7 @@ export async function GET(
           id: users.id,
           email: users.email,
           name: users.name,
-          image: users.image,
+          avatar: users.avatar,
         },
       })
       .from(clinicStaff)

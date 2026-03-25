@@ -24,12 +24,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Soft delete by setting deletedAt timestamp
-    const deletedAt = new Date().toISOString();
-    
+    // Soft delete by marking as inactive
     await db
       .update(animals)
-      .set({ deletedAt })
+      .set({ isActive: false })
       .where(inArray(animals.id, animalIds));
 
     return NextResponse.json({

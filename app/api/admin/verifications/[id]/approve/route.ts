@@ -14,7 +14,7 @@ import { notifyVerificationStatusChange } from '@/lib/services/verification-noti
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({
@@ -38,7 +38,7 @@ export async function POST(
     }
 
     const adminId = session.user.id;
-    const verificationId = params.id;
+    const { id: verificationId } = await params;
     const body = await request.json();
     const { reviewNotes } = body;
 

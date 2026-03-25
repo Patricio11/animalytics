@@ -5,7 +5,7 @@ const f = createUploadthing();
 
 export const ourFileRouter = {
   // Animal images - profile photos, gallery photos
-  animalImage: f({ image: { maxFileSize: "30MB", maxFileCount: 1 } })
+  animalImage: f({ image: { maxFileSize: "32MB", maxFileCount: 1 } })
     .middleware(async ({ req }) => {
       const session = await auth.api.getSession({ headers: req.headers });
       if (!session) throw new Error("Unauthorized");
@@ -18,7 +18,7 @@ export const ourFileRouter = {
     }),
 
   // Animal documents - health records, pedigrees, certificates
-  animalDocument: f({ pdf: { maxFileSize: "30MB", maxFileCount: 1 } })
+  animalDocument: f({ pdf: { maxFileSize: "32MB", maxFileCount: 1 } })
     .middleware(async ({ req }) => {
       const session = await auth.api.getSession({ headers: req.headers });
       if (!session) throw new Error("Unauthorized");
@@ -31,7 +31,7 @@ export const ourFileRouter = {
     }),
 
   // Multiple images - for gallery uploads
-  animalGallery: f({ image: { maxFileSize: "30MB", maxFileCount: 10 } })
+  animalGallery: f({ image: { maxFileSize: "32MB", maxFileCount: 10 } })
     .middleware(async ({ req }) => {
       const session = await auth.api.getSession({ headers: req.headers });
       if (!session) throw new Error("Unauthorized");
@@ -45,8 +45,8 @@ export const ourFileRouter = {
 
   // KYC documents - identity verification
   kycDocument: f({
-    image: { maxFileSize: "10MB", maxFileCount: 1 },
-    pdf: { maxFileSize: "10MB", maxFileCount: 1 },
+    image: { maxFileSize: "8MB", maxFileCount: 1 },
+    pdf: { maxFileSize: "8MB", maxFileCount: 1 },
   })
     .middleware(async ({ req }) => {
       const session = await auth.api.getSession({ headers: req.headers });
@@ -60,7 +60,7 @@ export const ourFileRouter = {
     }),
 
   // Breeder profile images - logo, banner
-  breederProfileImage: f({ image: { maxFileSize: "10MB", maxFileCount: 1 } })
+  breederProfileImage: f({ image: { maxFileSize: "8MB", maxFileCount: 1 } })
     .middleware(async ({ req }) => {
       const session = await auth.api.getSession({ headers: req.headers });
       if (!session) throw new Error("Unauthorized");

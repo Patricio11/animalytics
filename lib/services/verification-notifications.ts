@@ -76,14 +76,12 @@ export async function createVerificationNotification({
   // Create notification in database
   await db.insert(notifications).values({
     userId,
-    type: type as any, // Cast to notification type enum
+    type: type as any, // Cast to notification type enum — verification types extend the base enum
+    category: 'system',
     title,
     message,
     actionUrl,
-    metadata: {
-      verificationId,
-      ...metadata,
-    },
+    metadata: JSON.stringify({ verificationId, ...metadata }),
     read: false,
   });
 

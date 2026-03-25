@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const result = await escrowService.create({
       purchaseId: purchase.id,
       listingId: purchase.listingId,
-      petOwnerId: purchase.petOwnerId,
+      buyerId: purchase.petOwnerId,
       sellerId: purchase.sellerId,
       amount: purchase.totalAmount,
       currency: purchase.currency,

@@ -111,7 +111,7 @@ export async function POST(
       description: `Purchase #${purchase.id.substring(0, 8)}`,
       metadata: {
         purchaseId: purchase.id,
-        petOwnerId: purchase.petOwnerId,
+        buyerId: purchase.petOwnerId,
         sellerId: purchase.sellerId,
         listingId: purchase.listingId,
       },
@@ -149,7 +149,7 @@ export async function POST(
       await escrowService.create({
         purchaseId: purchase.id,
         listingId: purchase.listingId,
-        petOwnerId: purchase.petOwnerId,
+        buyerId: purchase.petOwnerId,
         sellerId: purchase.sellerId,
         amount: purchase.totalAmount,
         currency: purchase.currency,

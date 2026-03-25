@@ -40,7 +40,7 @@ export async function POST(
     const updated = await db
       .update(tasks)
       .set({
-        isCompleted: true,
+        status: 'completed',
         completedAt: new Date(),
         updatedAt: new Date(),
       })

@@ -30,7 +30,7 @@ const createFrozenSemenSchema = z.object({
   morphology: z.number().min(0).max(100).optional(),
   volume: z.number().positive().optional(),
   storageNotes: z.string().optional(),
-  isActive: z.boolean().optional(),
+  isAvailable: z.boolean().optional(),
 });
 
 // ============================================================================
@@ -58,14 +58,14 @@ export async function GET(request: NextRequest) {
       if (status === 'available') {
         whereConditions.push(
           and(
-            eq(frozenSemen.isActive, true),
+            eq(frozenSemen.isAvailable, true),
             sql`${frozenSemen.strawsRemaining} > 0`
           )
         );
       } else if (status === 'low_stock') {
         whereConditions.push(
           and(
-            eq(frozenSemen.isActive, true),
+            eq(frozenSemen.isAvailable, true),
             sql`${frozenSemen.strawsRemaining} > 0`,
             sql`${frozenSemen.strawsRemaining} <= 5`
           )
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return validationErrorResponse(
-        validation.error.errors.map((err) => ({
+        validation.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }))
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         strawsRemaining,
         qualityRating: qualityRating || 'good',
-        isActive: validatedData.isActive ?? true,
+        isAvailable: validatedData.isAvailable ?? true,
       })
       .returning();
 
