@@ -54,7 +54,7 @@ export async function createEscrow(params: CreateEscrowParams): Promise<EscrowRe
       .values({
         orderId: params.purchaseId,
         listingId: params.listingId,
-        buyerId: params.buyerId,
+        petOwnerId: params.buyerId,
         sellerId: params.sellerId,
         amount: params.amount,
         currency: params.currency,
@@ -114,7 +114,7 @@ export async function holdEscrowFunds(escrowId: string): Promise<EscrowResult> {
 
     // Create transaction record for the buyer (debit)
     await createTransaction({
-      userId: escrow.buyerId,
+      userId: escrow.petOwnerId,
       type: 'escrow_hold',
       amount: escrow.amount as number,
       currency: escrow.currency,
@@ -260,7 +260,7 @@ export async function refundEscrow(params: RefundEscrowParams): Promise<EscrowRe
 
     // Create transaction record for buyer (refund)
     await createTransaction({
-      userId: escrow.buyerId,
+      userId: escrow.petOwnerId,
       type: 'refund',
       amount: escrow.amount as number,
       currency: escrow.currency,
@@ -328,7 +328,7 @@ export async function checkAutoRelease(purchaseId: string): Promise<boolean> {
   }
 
   const conditions = {
-    buyerConfirmed: purchase.buyerConfirmedReceipt || false,
+    buyerConfirmed: purchase.petOwnerConfirmedReceipt || false,
     sellerConfirmed: purchase.sellerConfirmedHandover || false,
     autoReleaseDate: purchase.autoReleaseDate ? new Date(purchase.autoReleaseDate) : undefined,
     disputeResolved: purchase.isDisputed ? false : undefined,

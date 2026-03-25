@@ -377,7 +377,7 @@ export async function createPaymentCompletedNotification(params: {
 }) {
   return createNotification({
     userId: params.sellerId,
-    type: 'system',
+    type: 'payment_received',
     title: '💰 Payment Received!',
     message: `${params.buyerName} has paid ${new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -406,7 +406,7 @@ export async function createItemDispatchedNotification(params: {
 }) {
   return createNotification({
     userId: params.buyerId,
-    type: 'system',
+    type: 'sale_completed',
     title: '📦 Item Dispatched!',
     message: `Your purchase "${params.listingTitle}" has been dispatched and is on its way.`,
     actionUrl: `/purchases/${params.purchaseId}`,
@@ -430,7 +430,7 @@ export async function createPurchaseCompletedNotification(params: {
 }) {
   return createNotification({
     userId: params.sellerId,
-    type: 'system',
+    type: 'sale_completed',
     title: '✅ Purchase Completed!',
     message: `${params.buyerName} has confirmed receipt of "${params.listingTitle}". Funds will be released from escrow.`,
     actionUrl: `/purchases/${params.purchaseId}`,

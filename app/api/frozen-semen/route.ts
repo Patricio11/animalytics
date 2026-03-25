@@ -20,16 +20,16 @@ const createFrozenSemenSchema = z.object({
   sourceAnimalId: z.string().min(1, 'Source animal is required'),
   batchIdentifier: z.string().min(1, 'Batch identifier is required'),
   collectionDate: z.string().min(1, 'Collection date is required'),
-  collectionClinic: z.string().optional(),
+  clinic: z.string().optional(),
   storageLocation: z.string().optional(),
-  numberOfStraws: z.number().int().positive('Number of straws must be positive'),
+  strawCount: z.number().int().positive('Number of straws must be positive'),
   strawsRemaining: z.number().int().min(0, 'Straws remaining cannot be negative').optional(),
   qualityRating: z.enum(['excellent', 'good', 'fair', 'poor']).optional(),
   motility: z.number().min(0).max(100).optional(),
   concentration: z.number().positive().optional(),
   morphology: z.number().min(0).max(100).optional(),
   volume: z.number().positive().optional(),
-  storageNotes: z.string().optional(),
+  notes: z.string().optional(),
   isAvailable: z.boolean().optional(),
 });
 
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       } else if (status === 'depleted') {
         whereConditions.push(sql`${frozenSemen.strawsRemaining} = 0`);
       } else if (status === 'inactive') {
-        whereConditions.push(eq(frozenSemen.isActive, false));
+        whereConditions.push(eq(frozenSemen.isAvailable, false));
       }
     }
 
@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
 
     const validatedData = validation.data;
 
-    // If strawsRemaining not provided, default to numberOfStraws
-    const strawsRemaining = validatedData.strawsRemaining ?? validatedData.numberOfStraws;
+    // If strawsRemaining not provided, default to strawCount
+    const strawsRemaining = validatedData.strawsRemaining ?? validatedData.strawCount;
 
     // Auto-calculate quality rating if lab parameters provided
     let qualityRating = validatedData.qualityRating;
@@ -155,11 +155,21 @@ export async function POST(request: NextRequest) {
     const newBatch = await db
       .insert(frozenSemen)
       .values({
-        ...validatedData,
         userId: session.user.id,
+        sourceAnimalId: validatedData.sourceAnimalId,
+        batchIdentifier: validatedData.batchIdentifier,
+        collectionDate: validatedData.collectionDate,
+        clinic: validatedData.clinic,
+        storageLocation: validatedData.storageLocation,
+        strawCount: validatedData.strawCount,
         strawsRemaining,
         qualityRating: qualityRating || 'good',
         isAvailable: validatedData.isAvailable ?? true,
+        notes: validatedData.notes,
+        motility: validatedData.motility !== undefined ? String(validatedData.motility) : undefined,
+        concentration: validatedData.concentration,
+        morphology: validatedData.morphology !== undefined ? String(validatedData.morphology) : undefined,
+        volume: validatedData.volume !== undefined ? String(validatedData.volume) : undefined,
       })
       .returning();
 

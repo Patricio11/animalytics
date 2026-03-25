@@ -25,7 +25,7 @@ const updateTaskSchema = z.object({
   notes: z.string().optional(),
   taskData: z.any().optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
-  completedAt: z.string().optional(),
+  completedAt: z.string().optional().transform(v => v ? new Date(v) : undefined),
 });
 
 // ============================================================================

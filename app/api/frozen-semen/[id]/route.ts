@@ -120,9 +120,9 @@ export async function PATCH(
 
     const validatedData = validation.data;
 
-    // Validate strawsRemaining doesn't exceed numberOfStraws
-    if (validatedData.strawsRemaining !== undefined && validatedData.numberOfStraws !== undefined) {
-      if (validatedData.strawsRemaining > validatedData.numberOfStraws) {
+    // Validate strawsRemaining doesn't exceed strawCount
+    if (validatedData.strawsRemaining !== undefined && validatedData.strawCount !== undefined) {
+      if (validatedData.strawsRemaining > validatedData.strawCount) {
         return validationErrorResponse([
           {
             field: 'strawsRemaining',

@@ -195,7 +195,7 @@ export const mockMarketplaceListings: MarketplaceListing[] = [
   // Reproductive Services
   {
     id: 'listing-5',
-    category: 'reproductive-services',
+    category: 'other',
     animalId: 'animal2',
     animalName: 'Max',
     breederId: 'owner1',

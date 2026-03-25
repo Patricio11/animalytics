@@ -118,7 +118,7 @@ export function SeasonHistoryTab({ animalId, animalName, animalSex }: SeasonHist
       .map((s: Season) => s.durationDays!);
     
     const avgDuration = durations.length > 0
-      ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+      ? Math.round(durations.reduce((a: number, b: number) => a + b, 0) / durations.length)
       : null;
 
     // Predict next season

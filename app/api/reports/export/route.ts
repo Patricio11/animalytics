@@ -18,7 +18,7 @@ import { z } from 'zod';
 
 const exportReportSchema = z.object({
   reportId: z.string().min(1, 'Report ID is required'),
-  format: z.enum(['csv', 'pdf'], { required_error: 'Export format is required' }),
+  format: z.enum(['csv', 'pdf']),
 });
 
 // ============================================================================
@@ -70,10 +70,11 @@ export async function POST(request: NextRequest) {
       .insert(exportHistory)
       .values({
         userId: session.user.id,
-        reportId: report.id,
-        format,
+        reportGenerationId: report.id,
+        exportType: report.reportType,
+        exportFormat: format,
         fileName,
-        filePath,
+        fileUrl: filePath,
         fileSize: 0, // Would be calculated after actual file generation
       })
       .returning();

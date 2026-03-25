@@ -78,7 +78,7 @@ async function getStripe(): Promise<Stripe> {
 
   // Check if we need to refresh credentials
   if (stripeCache.instance && now - stripeCache.timestamp < CACHE_TTL) {
-    return stripeCache.instance;
+    return stripeCache.instance!;
   }
 
   // Fetch credentials from database
@@ -96,7 +96,7 @@ async function getStripe(): Promise<Stripe> {
     timestamp: now,
   };
 
-  return stripeCache.instance;
+  return stripeCache.instance!;
 }
 
 /**

@@ -40,7 +40,7 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
     litterHistory: {
       totalLitters: data.litters?.length || 0,
       totalPuppies: data.litters?.reduce((sum, l) => sum + (l.puppyCount || 0), 0) || 0,
-      successfulLitters: data.litters?.filter(l => !l.complications).length || 0,
+      successfulLitters: data.litters?.filter(l => !l.hasComplications).length || 0,
       averageLitterSize: data.litters && data.litters.length > 0
         ? data.litters.reduce((sum, l) => sum + (l.puppyCount || 0), 0) / data.litters.length
         : 0
@@ -230,9 +230,9 @@ export function ConceptionRatingStep({ data, onUpdate, onPrevious }: ConceptionR
             <div>
               <div className="text-sm text-muted-foreground mb-1">Semen Quality</div>
               <Badge className={cn(
-                data.quality === 'excellent' ? 'bg-chart-3' :
-                data.quality === 'good' ? 'bg-chart-4' :
-                data.quality === 'fair' ? 'bg-chart-2' :
+                (data.quality as string) === 'excellent' ? 'bg-chart-3' :
+                (data.quality as string) === 'good' ? 'bg-chart-4' :
+                (data.quality as string) === 'fair' ? 'bg-chart-2' :
                 'bg-destructive',
                 'text-white capitalize'
               )}>

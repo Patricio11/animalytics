@@ -139,14 +139,8 @@ export default function VerificationPage() {
       {/* Verification Status Card */}
       {verificationRequest && (
         <VerificationStatusCard
-          status={verificationRequest.status}
-          submittedAt={verificationRequest.submittedAt}
-          reviewedAt={verificationRequest.reviewedAt}
-          verifiedAt={verificationRequest.verifiedAt}
-          expiresAt={verificationRequest.expiresAt}
-          rejectionReason={verificationRequest.rejectionReason}
-          adminFeedback={verificationRequest.adminFeedback}
-          verificationId={verificationRequest.id}
+          verificationRequest={verificationRequest}
+          onStartVerification={handleStartVerification}
         />
       )}
 

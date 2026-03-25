@@ -39,6 +39,7 @@ export const mockOwners: Owner[] = [
 export const mockAnimals: Animal[] = [
   {
     id: 'animal1',
+    userId: 'mock-user-1',
     name: 'Luna',
     type: 'bitch',
     breed: 'Golden Retriever',
@@ -103,6 +104,7 @@ export const mockAnimals: Animal[] = [
   },
   {
     id: 'animal2',
+    userId: 'mock-user-1',
     name: 'Max',
     type: 'dog',
     breed: 'German Shepherd',
@@ -176,6 +178,7 @@ export const mockAnimals: Animal[] = [
   },
   {
     id: 'animal3',
+    userId: 'mock-user-1',
     name: 'Bella',
     type: 'bitch',
     breed: 'Labrador Retriever',
@@ -212,6 +215,7 @@ export const mockAnimals: Animal[] = [
   },
   {
     id: 'animal4',
+    userId: 'mock-user-1',
     name: 'Rocky',
     type: 'dog',
     breed: 'Rottweiler',

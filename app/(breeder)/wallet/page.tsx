@@ -44,6 +44,9 @@ const mockWallet = {
   totalTransactions: 42,
   pendingBalance: {
     USD: 25000, // $250.00 in escrow
+    EUR: 0,
+    GBP: 0,
+    ZAR: 0,
   },
 };
 

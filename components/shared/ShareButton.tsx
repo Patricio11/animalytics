@@ -135,7 +135,7 @@ export function ShareButton({
           <span>Share via Email</span>
         </DropdownMenuItem>
 
-        {navigator.share && (
+        {typeof (navigator as any).share === 'function' && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleNativeShare}>

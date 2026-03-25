@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
       .values({
         listingId,
         animalId: listing.animalId,
-        buyerId: petOwnerId,
+        petOwnerId,
         sellerId: listing.userId,
         purchasePrice,
         currency: listing.currency || 'USD',
