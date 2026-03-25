@@ -129,6 +129,25 @@ export function NotificationDetailModal({
           const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
           const isUUID = (v: unknown) => typeof v === 'string' && UUID_REGEX.test(v);
           const isIdKey = (k: string) => k === 'id' || k.endsWith('Id');
+          // Human-friendly labels with optional units
+          const LABEL_MAP: Record<string, string> = {
+            bitchName: 'Bitch',
+            animalName: 'Animal',
+            day: 'Cycle Day',
+            lastLevel: 'Last Reading (ng/mL)',
+            progesteroneLevel: 'Progesterone (ng/mL)',
+            whelpingDate: 'Whelping Date',
+            daysUntil: 'Days Until Whelping',
+            vaccineName: 'Vaccine',
+            dueDate: 'Due Date',
+            breedingMethod: 'Breeding Method',
+            amount: 'Amount',
+            currency: 'Currency',
+            itemName: 'Item',
+            testType: 'Test Type',
+          };
+          const formatLabel = (key: string) =>
+            LABEL_MAP[key] ?? key.replace(/([A-Z])/g, ' $1').trim().replace(/^./, c => c.toUpperCase());
           const entries = Object.entries(JSON.parse(notification.metadata))
             .filter(([k, v]) => !isIdKey(k) && !isUUID(v));
           if (entries.length === 0) return null;
@@ -138,9 +157,7 @@ export function NotificationDetailModal({
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {entries.map(([key, value]: [string, any]) => (
                   <div key={key}>
-                    <span className="text-muted-foreground capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}:
-                    </span>
+                    <span className="text-muted-foreground">{formatLabel(key)}:</span>
                     <span className="ml-2 font-medium text-foreground">
                       {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                     </span>
