@@ -23,69 +23,70 @@ export interface NextTestRecommendation {
 }
 
 /**
- * Detect phase based on progesterone level (ng/mL)
- * Based on Mini VIDAS Progesterone Timing Chart
+ * Detect phase based on progesterone level (VIDAS ng/mL)
+ * Calibrated to reference chart:
+ *   LH Rise = 3 ng/mL | OV = 10 ng/mL | 1st Fresh = 15–18 | Optimal Frozen = 25–35 (peak 28)
  */
 export function detectPhase(level: number): PhaseInfo {
-  if (level < 1.5) {
+  if (level < 3) {
     return {
-      phase: "Anestrus",
-      color: "gray",
+      phase: "Baseline",
+      color: "#9ca3af",
       icon: "⚪",
-      description: "Out of heat",
+      description: "Before LH rise — not yet in fertile phase",
       bgClass: "bg-gray-500/10",
       borderClass: "border-gray-500/20",
       textClass: "text-gray-700"
     };
-  } else if (level >= 1.5 && level < 4) {
+  } else if (level < 10) {
     return {
-      phase: "LH Surge",
-      color: "pink",
+      phase: "LH Rise",
+      color: "#a855f7",
       icon: "🟣",
-      description: "Hormone surge beginning",
-      bgClass: "bg-pink-500/10",
-      borderClass: "border-pink-500/20",
-      textClass: "text-pink-700"
+      description: "LH surge detected — ovulation approaching",
+      bgClass: "bg-purple-500/10",
+      borderClass: "border-purple-500/20",
+      textClass: "text-purple-700"
     };
-  } else if (level >= 4 && level < 9) {
+  } else if (level < 15) {
     return {
-      phase: "Estimated Ovulation",
-      color: "red",
+      phase: "Ovulation (OV)",
+      color: "#ef4444",
       icon: "🔴",
-      description: "Ovulation occurring",
+      description: "Ovulation occurring (OV = 10 ng/mL) — eggs maturing",
       bgClass: "bg-red-500/10",
       borderClass: "border-red-500/20",
       textClass: "text-red-700"
     };
-  } else if (level >= 9 && level < 15) {
+  } else if (level < 18) {
     return {
-      phase: "Egg Maturation",
-      color: "yellow",
-      icon: "🟡",
-      description: "Eggs maturing",
-      bgClass: "bg-yellow-500/10",
-      borderClass: "border-yellow-500/20",
-      textClass: "text-yellow-700"
-    };
-  } else if (level >= 15 && level < 25) {
-    return {
-      phase: "Fertile Range",
-      color: "lightgreen",
+      phase: "1st Mating – Fresh",
+      color: "#10b981",
       icon: "🟢",
-      description: "Optimal breeding time",
+      description: "Optimal for natural breeding or fresh AI",
+      bgClass: "bg-green-500/10",
+      borderClass: "border-green-500/20",
+      textClass: "text-green-700"
+    };
+  } else if (level < 25) {
+    return {
+      phase: "Fertile Window",
+      color: "#22c55e",
+      icon: "🟢",
+      description: "Fertile window — consider 2nd fresh mating",
       bgClass: "bg-green-500/10",
       borderClass: "border-green-500/20",
       textClass: "text-green-700"
     };
   } else {
     return {
-      phase: "Late Stage Fertility",
-      color: "darkgreen",
-      icon: "🟢",
-      description: "Breeding window closing",
-      bgClass: "bg-emerald-500/10",
-      borderClass: "border-emerald-500/20",
-      textClass: "text-emerald-700"
+      phase: "Optimal – Frozen AI",
+      color: "#0ea5e9",
+      icon: "❄️",
+      description: "Optimal for frozen semen AI — peak fertility at 28 ng/mL",
+      bgClass: "bg-sky-500/10",
+      borderClass: "border-sky-500/20",
+      textClass: "text-sky-700"
     };
   }
 }
@@ -98,23 +99,23 @@ export function calculateNextTest(
   progesteroneLevel: number,
   currentDate: Date
 ): NextTestRecommendation {
-  if (progesteroneLevel < 4) {
+  if (progesteroneLevel < 3) {
     return {
       days: 3,
       date: addDays(currentDate, 3),
-      reason: "Level below 4 ng/mL - test in 3 days"
+      reason: "Below LH rise threshold — test in 3 days"
     };
-  } else if (progesteroneLevel >= 4 && progesteroneLevel < 10) {
+  } else if (progesteroneLevel < 10) {
     return {
       days: 2,
       date: addDays(currentDate, 2),
-      reason: "Approaching ovulation - test every 2 days"
+      reason: "LH rise detected — test every 2 days until OV (10 ng/mL)"
     };
   } else {
     return {
       days: 1,
       date: addDays(currentDate, 1),
-      reason: "Fertile range - test daily"
+      reason: "Ovulation / fertile range — test daily"
     };
   }
 }
@@ -144,23 +145,19 @@ export function isOptimalBreedingTime(
 
 /**
  * Estimate ovulation day based on progesterone readings
- * Ovulation typically occurs when progesterone crosses 4-9 ng/mL
+ * Per VIDAS reference chart: OV = 10 ng/mL (VIDAS 33 nmol, IDEXX 15-25 nmol)
+ * LH rise at 3 ng/mL → ovulation ~2-3 days later at 10 ng/mL
  */
 export function estimateOvulationDay(
   readings: Array<{ day: number; progesteroneLevel: number }>
 ): number | null {
-  // Find the first reading that crosses into ovulation range (4-9 ng/mL)
-  const ovulationReading = readings.find(
-    r => r.progesteroneLevel >= 4 && r.progesteroneLevel < 9
-  );
-  
-  if (ovulationReading) {
-    return ovulationReading.day;
-  }
-  
-  // If no exact match, find when it crosses 4 ng/mL
-  const crossingReading = readings.find(r => r.progesteroneLevel >= 4);
-  return crossingReading?.day ?? null;
+  // OV occurs at ~10 ng/mL — find the first reading that reaches this threshold
+  const ovulationReading = readings.find(r => r.progesteroneLevel >= 10);
+  if (ovulationReading) return ovulationReading.day;
+
+  // Fallback: find when level first crosses LH rise threshold (3 ng/mL)
+  const lhReading = readings.find(r => r.progesteroneLevel >= 3);
+  return lhReading?.day ?? null;
 }
 
 /**
@@ -306,68 +303,70 @@ export function getPhaseInfo(level: number, day: number, testDate?: Date) {
     return `${action} (${dayName}, ${dateStr})`;
   };
 
-  if (level < 1.5) {
+  // Phases calibrated to VIDAS reference chart:
+  // LH Rise = 3 ng/mL | OV = 10 ng/mL | 1st Fresh = 15–18 | Optimal Frozen = 25–35 (peak 28)
+  if (level < 3) {
     return {
-      phase: 'Anestrus',
+      phase: 'Baseline',
       color: 'text-gray-600',
       bg: 'bg-gray-100 dark:bg-gray-900/20',
       icon: '⚪',
-      description: 'Out of heat - Not yet started',
-      nextAction: formatNextAction(2, 'Retest in 2-3 days'),
-    };
-  } else if (level < 4) {
-    return {
-      phase: 'Early Heat',
-      color: 'text-blue-600',
-      bg: 'bg-blue-100 dark:bg-blue-900/20',
-      icon: '🔵',
-      description: 'Baseline established',
+      description: 'Before LH rise — monitor every few days',
       nextAction: formatNextAction(3, 'Next test in 3 days'),
     };
   } else if (level < 10) {
     return {
-      phase: 'LH has been reached',
+      phase: 'LH Rise',
       color: 'text-purple-600',
       bg: 'bg-purple-100 dark:bg-purple-900/20',
       icon: '🟣',
-      description: 'LH has been reached and therefore it is rising',
+      description: 'LH surge detected (LH Rise = 3 ng/mL) — ovulation approaching in 2-3 days',
       nextAction: formatNextAction(2, 'Test every 2 days'),
     };
   } else if (level < 15) {
     return {
-      phase: 'Rising Fast',
-      color: 'text-orange-600',
-      bg: 'bg-orange-100 dark:bg-orange-900/20',
-      icon: '🟠',
-      description: 'Approaching ovulation',
-      nextAction: formatNextAction(1, 'Test daily - Ovulation imminent'),
-    };
-  } else if (level < 25) {
-    return {
-      phase: 'Breeding Window - Natural/Fresh AI',
-      color: 'text-green-600',
-      bg: 'bg-green-100 dark:bg-green-900/20',
-      icon: '🟢',
-      description: 'Optimal range for natural breeding or fresh AI',
-      nextAction: formatNextAction(1, 'Test daily - Consider breeding now'),
-    };
-  } else if (level < 35) {
-    return {
-      phase: 'Peak - Frozen AI',
+      phase: 'Ovulation (OV)',
       color: 'text-red-600',
       bg: 'bg-red-100 dark:bg-red-900/20',
       icon: '🔴',
-      description: 'Optimal range for frozen semen AI',
-      nextAction: formatNextAction(1, 'Test daily - Breed within 24-48 hours'),
+      description: 'Ovulation occurring (OV = 10 ng/mL) — eggs maturing, 1st mating in ~3 days',
+      nextAction: formatNextAction(1, 'Test daily — 1st mating window approaching'),
+    };
+  } else if (level < 18) {
+    return {
+      phase: '1st Mating – Fresh',
+      color: 'text-green-600',
+      bg: 'bg-green-100 dark:bg-green-900/20',
+      icon: '🟢',
+      description: 'Optimal for natural breeding or fresh AI (VIDAS 15–18 ng/mL)',
+      nextAction: formatNextAction(1, 'Test daily — Breed now with fresh semen'),
+    };
+  } else if (level < 25) {
+    return {
+      phase: 'Fertile Window',
+      color: 'text-green-700',
+      bg: 'bg-green-100 dark:bg-green-900/20',
+      icon: '🟢',
+      description: 'Fertile window — 2nd fresh mating or continue monitoring for frozen',
+      nextAction: formatNextAction(1, 'Test daily — Consider 2nd mating'),
+    };
+  } else if (level < 35) {
+    return {
+      phase: 'Optimal – Frozen AI',
+      color: 'text-sky-600',
+      bg: 'bg-sky-100 dark:bg-sky-900/20',
+      icon: '❄️',
+      description: 'Optimal for frozen semen AI — peak fertility at 28 ng/mL (VIDAS 89 nmol)',
+      nextAction: formatNextAction(1, 'Test daily — Breed within 24-48 hours with frozen'),
     };
   } else {
     return {
-      phase: 'Post-Ovulation',
+      phase: 'Post-Optimal',
       color: 'text-pink-600',
       bg: 'bg-pink-100 dark:bg-pink-900/20',
       icon: '🌸',
       description: 'Past optimal breeding window',
-      nextAction: testDate ? 'Continue monitoring if breeding occurred' : 'Continue monitoring if breeding occurred',
+      nextAction: 'Continue monitoring if breeding occurred',
     };
   }
 }
