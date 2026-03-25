@@ -26,7 +26,7 @@ import {
   useMarkAllAsRead,
   useDeleteNotification,
 } from '@/lib/hooks/useNotifications';
-import { NOTIFICATION_CONFIGS } from '@/lib/types/notification';
+import { NOTIFICATION_CONFIGS, sanitizeNotificationTitle } from '@/lib/types/notification';
 import type { Notification } from '@/lib/types/notification';
 import { NotificationDetailModal } from './NotificationDetailModal';
 
@@ -237,7 +237,7 @@ function NotificationItems({
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 mb-0.5">
                 <p className={`font-semibold text-sm ${!n.read ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  {n.title}
+                  {sanitizeNotificationTitle(n.title)}
                 </p>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {n.priority === 'urgent' && (

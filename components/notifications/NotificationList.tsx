@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useMarkAsRead, useArchiveNotification, useDeleteNotification } from '@/lib/hooks/useNotifications';
-import { NOTIFICATION_CONFIGS } from '@/lib/types/notification';
+import { NOTIFICATION_CONFIGS, sanitizeNotificationTitle } from '@/lib/types/notification';
 import type { Notification } from '@/lib/types/notification';
 import { NotificationDetailModal } from '@/components/notifications/NotificationDetailModal';
 import Link from 'next/link';
@@ -99,7 +99,7 @@ export function NotificationList({
                       'font-semibold text-gray-900 dark:text-white',
                       compact ? 'text-sm' : 'text-base'
                     )}>
-                      {notification.title}
+                      {sanitizeNotificationTitle(notification.title)}
                     </p>
                   </div>
 

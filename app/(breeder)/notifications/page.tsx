@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification } from '@/lib/hooks/useNotifications';
+import { sanitizeNotificationTitle } from '@/lib/types/notification';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -102,7 +103,7 @@ export default function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h3 className={`font-semibold ${!n.read ? 'text-foreground' : 'text-muted-foreground'}`}>
-                        {n.title}
+                        {sanitizeNotificationTitle(n.title)}
                       </h3>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {!n.read && <div className="hidden" />}

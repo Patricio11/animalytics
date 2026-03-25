@@ -619,3 +619,12 @@ export const NOTIFICATION_CONFIGS: Record<NotificationType, NotificationConfig> 
     actionLabel: 'View Schedule',
   },
 };
+
+// ============================================================================
+// UTILITY: strip UUIDs accidentally embedded in notification titles
+// ============================================================================
+const UUID_INLINE = /\s*[-–]\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+export function sanitizeNotificationTitle(title: string): string {
+  return title.replace(UUID_INLINE, '').trim();
+}

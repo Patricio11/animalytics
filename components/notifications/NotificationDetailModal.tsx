@@ -13,6 +13,7 @@ import { Calendar, ExternalLink, Trash2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useMarkAsRead, useDeleteNotification } from "@/lib/hooks/useNotifications";
+import { sanitizeNotificationTitle } from "@/lib/types/notification";
 
 interface NotificationDetailModalProps {
   notification: any;
@@ -100,7 +101,7 @@ export function NotificationDetailModal({
 
             {/* Title and Badges */}
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-2xl mb-2">{notification.title}</DialogTitle>
+              <DialogTitle className="text-2xl mb-2">{sanitizeNotificationTitle(notification.title)}</DialogTitle>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className={getPriorityColor(notification.priority)}>
                   {notification.priority}
@@ -124,23 +125,31 @@ export function NotificationDetailModal({
         </DialogDescription>
 
         {/* Metadata */}
-        {notification.metadata && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">Additional Information</h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {Object.entries(JSON.parse(notification.metadata)).map(([key, value]: [string, any]) => (
-                <div key={key}>
-                  <span className="text-muted-foreground capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}:
-                  </span>
-                  <span className="ml-2 font-medium text-foreground">
-                    {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                  </span>
-                </div>
-              ))}
+        {notification.metadata && (() => {
+          const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          const isUUID = (v: unknown) => typeof v === 'string' && UUID_REGEX.test(v);
+          const isIdKey = (k: string) => k === 'id' || k.endsWith('Id');
+          const entries = Object.entries(JSON.parse(notification.metadata))
+            .filter(([k, v]) => !isIdKey(k) && !isUUID(v));
+          if (entries.length === 0) return null;
+          return (
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+              <h4 className="text-sm font-semibold mb-2 text-muted-foreground">Additional Information</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {entries.map(([key, value]: [string, any]) => (
+                  <div key={key}>
+                    <span className="text-muted-foreground capitalize">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}:
+                    </span>
+                    <span className="ml-2 font-medium text-foreground">
+                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Timestamp */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
