@@ -97,8 +97,8 @@ export async function PATCH(
       if (newDay < 1) {
         return errorResponse('Test date cannot be before the heat cycle start date', 400);
       }
-      if (newDay > 30) {
-        return errorResponse('Test date is too far from the start date (max 30 days)', 400);
+      if (newDay > 60) {
+        return errorResponse('Test date is too far from the start date (max 60 days)', 400);
       }
 
       // Check for duplicate on new day (excluding current reading)

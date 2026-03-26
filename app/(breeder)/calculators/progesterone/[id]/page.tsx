@@ -685,9 +685,12 @@ export default function CycleDetailPage({ params }: PageProps) {
               } else {
                 const errorData = await response.json();
                 console.error('Failed to add reading:', response.status, errorData);
+                // Show the most specific error message available
+                const firstIssue = Array.isArray(errorData.errors) && errorData.errors[0]?.message;
+                const description = firstIssue || errorData.error || errorData.message || 'Failed to add reading.';
                 toast({
                   title: "Error",
-                  description: errorData.error || errorData.message || 'Failed to add reading.',
+                  description,
                   variant: "destructive",
                 });
               }
