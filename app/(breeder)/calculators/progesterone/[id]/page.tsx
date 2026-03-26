@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Activity, 
+  Activity,
   ArrowLeft,
   Calendar,
   TrendingUp,
@@ -31,10 +31,8 @@ import {
   Settings,
   Trash2,
   Edit,
-  MoreVertical,
   Heart,
 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -366,80 +364,65 @@ export default function CycleDetailPage({ params }: PageProps) {
                     <p className="text-sm">No readings yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {cycle.readings
                       .sort((a: any, b: any) => b.day - a.day)
                       .map((reading: any) => (
                         <Card key={reading.id} className="shadow-card bg-surface-secondary border-0">
                           <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <Badge variant="outline" className="font-mono">
-                                    Day {reading.day}
-                                  </Badge>
-                                  <span className="text-sm text-muted-foreground">
-                                    {format(new Date(reading.testDate), 'MMM dd, yyyy')}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">Level</p>
-                                    <p className="text-2xl font-bold text-purple-600">
-                                      {parseFloat(reading.progesteroneLevel).toFixed(1)} ng/mL
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">Phase</p>
-                                    <Badge 
-                                      style={{ backgroundColor: reading.phaseColor || '#9ca3af' }}
-                                      className="text-white"
-                                    >
-                                      {reading.phase || 'Unknown'}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">Laboratory</p>
-                                    <p className="text-sm font-medium">{reading.laboratory || 'VIDAS'}</p>
-                                  </div>
-                                </div>
-                                {reading.notes && (
-                                  <p className="text-sm text-muted-foreground mt-2 italic">
-                                    {reading.notes}
-                                  </p>
-                                )}
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="font-mono">
+                                  Day {reading.day}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(reading.testDate), 'MMM dd, yyyy')}
+                                </span>
                               </div>
                               {cycle.status === 'active' && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm">
-                                      <MoreVertical className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        setSelectedReading(reading);
-                                        setShowEditReadingForm(true);
-                                      }}
-                                    >
-                                      <Edit className="w-4 h-4 mr-2" />
-                                      Edit Reading
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      className="text-destructive"
-                                      onClick={() => {
-                                        setReadingToDelete(reading.id);
-                                        setShowDeleteDialog(true);
-                                      }}
-                                    >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Delete Reading
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <div className="flex items-center gap-0.5 -mt-1 -mr-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                    onClick={() => {
+                                      setSelectedReading(reading);
+                                      setShowEditReadingForm(true);
+                                    }}
+                                  >
+                                    <Edit className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                    onClick={() => {
+                                      setReadingToDelete(reading.id);
+                                      setShowDeleteDialog(true);
+                                    }}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
                               )}
                             </div>
+                            <p className="text-2xl font-bold text-purple-600 mb-2">
+                              {parseFloat(reading.progesteroneLevel).toFixed(1)} ng/mL
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                style={{ backgroundColor: reading.phaseColor || '#9ca3af' }}
+                                className="text-white text-xs"
+                              >
+                                {reading.phase || 'Unknown'}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">{reading.laboratory || 'VIDAS'}</span>
+                            </div>
+                            {reading.notes && (
+                              <p className="text-xs text-muted-foreground mt-2 italic line-clamp-2">
+                                {reading.notes}
+                              </p>
+                            )}
                           </CardContent>
                         </Card>
                       ))}
@@ -704,7 +687,7 @@ export default function CycleDetailPage({ params }: PageProps) {
                 console.error('Failed to add reading:', response.status, errorData);
                 toast({
                   title: "Error",
-                  description: `Failed to add reading: ${errorData.message || 'Unknown error'}`,
+                  description: errorData.error || errorData.message || 'Failed to add reading.',
                   variant: "destructive",
                 });
               }
