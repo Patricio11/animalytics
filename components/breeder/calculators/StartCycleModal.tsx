@@ -17,21 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { AnimalCombobox } from '@/components/ui/animal-combobox';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Calendar, AlertCircle, Loader2 } from 'lucide-react';
@@ -41,9 +27,9 @@ interface Animal {
   id: string;
   name: string;
   registeredName?: string;
-  breed?: {
-    name: string;
-  };
+  breed?: string | { name: string };
+  profileImageUrl?: string | null;
+  sex?: string;
   dateOfBirth?: string;
 }
 
@@ -69,8 +55,6 @@ export function StartCycleModal({
   const [selectedBitch, setSelectedBitch] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [breedingMethod, setBreedingMethod] = useState<string>('natural_ai');
-  const [bitchComboboxOpen, setBitchComboboxOpen] = useState(false);
-
   const selectedAnimal = animals.find((a) => a.id === selectedBitch);
   const firstTestDate = startDate ? addDays(new Date(startDate), 4) : null;
   const daysSinceStart = startDate
@@ -108,71 +92,23 @@ export function StartCycleModal({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Bitch Selection - Searchable */}
+          {/* Bitch Selection */}
           <div className="space-y-2">
             <Label htmlFor="bitch">Select Bitch *</Label>
-            <Popover open={bitchComboboxOpen} onOpenChange={setBitchComboboxOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={bitchComboboxOpen}
-                  className="w-full justify-between"
-                >
-                  {selectedBitch
-                    ? animals.find((animal) => animal.id === selectedBitch)?.name
-                    : "Search and select a bitch..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Search bitches..." />
-                  <CommandList>
-                    <CommandEmpty>No female dogs found.</CommandEmpty>
-                    <CommandGroup>
-                      {animals.map((animal) => (
-                        <CommandItem
-                          key={animal.id}
-                          value={animal.name}
-                          onSelect={() => {
-                            setSelectedBitch(animal.id);
-                            setBitchComboboxOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedBitch === animal.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-medium">{animal.name}</span>
-                            {animal.breed && (
-                              <span className="text-xs text-muted-foreground">
-                                {animal.breed.name}
-                              </span>
-                            )}
-                            {animal.registeredName && (
-                              <span className="text-xs text-muted-foreground">
-                                {animal.registeredName}
-                              </span>
-                            )}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            {selectedAnimal && (
-              <p className="text-xs text-muted-foreground">
-                {selectedAnimal.registeredName && (
-                  <>Registered: {selectedAnimal.registeredName}</>
-                )}
-              </p>
-            )}
+            <AnimalCombobox
+              animals={animals.map((a) => ({
+                id: a.id,
+                name: a.name,
+                registeredName: a.registeredName,
+                breed: typeof a.breed === 'string' ? a.breed : a.breed?.name,
+                profileImageUrl: a.profileImageUrl,
+                sex: a.sex,
+              }))}
+              value={selectedBitch}
+              onValueChange={setSelectedBitch}
+              placeholder="Search and select a bitch..."
+              emptyText="No female dogs found."
+            />
           </div>
 
           {/* Start Date */}

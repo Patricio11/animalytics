@@ -84,7 +84,7 @@ export default function ProgesteronePage() {
       id: a.id,
       name: a.name,
       breed: a.breed?.name || 'Unknown Breed', // Flatten breed object to string
-      profilePhotoUrl: a.profilePhotoUrl,
+      profileImageUrl: a.profilePhotoUrl || a.profileImageUrl,
       registeredName: a.registeredName,
       sex: a.sex,
     })) || [];
