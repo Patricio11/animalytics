@@ -6,6 +6,7 @@ import { breederProfiles } from '@/lib/db/schema/profiles';
 import { petOwnerProfiles } from '@/lib/db/schema/pet-owner-profiles';
 import { eq } from 'drizzle-orm';
 import { detectUserLocation, getRegionalPreferencesFromLocation, getClientIp } from '@/lib/utils/location';
+import { notifyAdminsOfNewUser } from '@/lib/services/notification-creator';
 
 /**
  * POST /api/auth/save-signup-preferences
@@ -54,6 +55,14 @@ export async function POST(request: NextRequest) {
           })
           .where(eq(users.id, user.id));
         console.log('✅ User role updated');
+
+        // Notify admins of the new registration (fire and forget)
+        notifyAdminsOfNewUser({
+          newUserId: user.id,
+          newUserName: user.name || 'Unknown',
+          newUserEmail: user.email,
+          newUserRole: role,
+        }).catch((err) => console.error('Failed to notify admins of new user:', err));
       } catch (roleError) {
         console.error('Failed to update user role:', roleError);
       }

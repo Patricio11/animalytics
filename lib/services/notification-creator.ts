@@ -443,3 +443,45 @@ export async function createPurchaseCompletedNotification(params: {
     },
   });
 }
+
+// ============================================================================
+// ADMIN NOTIFICATION CREATORS
+// ============================================================================
+
+/**
+ * Notify all admin users that a new user has registered
+ */
+export async function notifyAdminsOfNewUser(params: {
+  newUserId: string;
+  newUserName: string;
+  newUserEmail: string;
+  newUserRole: string;
+}) {
+  const { users } = await import('@/lib/db/schema/users');
+  const { eq } = await import('drizzle-orm');
+
+  const admins = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.role, 'admin'));
+
+  await Promise.all(
+    admins.map((admin) =>
+      createNotification({
+        userId: admin.id,
+        type: 'system_announcement',
+        title: '👤 New User Registered',
+        message: `${params.newUserName} (${params.newUserEmail}) just signed up as a ${params.newUserRole.replace('_', ' ')}.`,
+        actionUrl: `/admin/users/${params.newUserId}`,
+        actionLabel: 'View User',
+        relatedEntityType: 'user',
+        relatedEntityId: params.newUserId,
+        metadata: {
+          userName: params.newUserName,
+          userEmail: params.newUserEmail,
+          userRole: params.newUserRole,
+        },
+      })
+    )
+  );
+}
