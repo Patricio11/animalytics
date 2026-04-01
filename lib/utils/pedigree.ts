@@ -120,7 +120,14 @@ export async function fetchPedigree(
 
   console.log(`🔍 Depth ${depth}, checking paths:`, { damPath, sirePath, hasManualDam: manualEntries.has(damPath), hasManualSire: manualEntries.has(sirePath) });
 
-  // Fetch dam - check manual entries first, then linked animals
+  // For linked parents (not the root), fetch their own manual entries
+  // so that ancestors entered on a parent's pedigree auto-populate here
+  let nodeManualEntries: Map<string, PedigreeNode> | null = null;
+  if (depth > 0 && (!animal.damId || !animal.sireId) && depth + 1 < maxGens) {
+    nodeManualEntries = await fetchManualEntries(nodeId!);
+  }
+
+  // Fetch dam - check root manual entries first, then system link, then parent's own manual entries
   let dam: PedigreeNode | null = null;
   if (manualEntries.has(damPath)) {
     console.log(`✅ Found manual dam at ${damPath}:`, manualEntries.get(damPath)?.name);
@@ -128,9 +135,12 @@ export async function fetchPedigree(
   } else if (animal.damId) {
     console.log(`🔄 Recursing for dam: ${animal.damId}`);
     dam = await fetchPedigree(animal.damId, depth + 1, maxGens, rootAnimalId, damPath, manualEntries);
+  } else if (nodeManualEntries?.has('dam')) {
+    console.log(`✅ Found parent's own manual dam for ${damPath}:`, nodeManualEntries.get('dam')?.name);
+    dam = nodeManualEntries.get('dam')!;
   }
 
-  // Fetch sire - check manual entries first, then linked animals
+  // Fetch sire - check root manual entries first, then system link, then parent's own manual entries
   let sire: PedigreeNode | null = null;
   if (manualEntries.has(sirePath)) {
     console.log(`✅ Found manual sire at ${sirePath}:`, manualEntries.get(sirePath)?.name);
@@ -138,6 +148,9 @@ export async function fetchPedigree(
   } else if (animal.sireId) {
     console.log(`🔄 Recursing for sire: ${animal.sireId}`);
     sire = await fetchPedigree(animal.sireId, depth + 1, maxGens, rootAnimalId, sirePath, manualEntries);
+  } else if (nodeManualEntries?.has('sire')) {
+    console.log(`✅ Found parent's own manual sire for ${sirePath}:`, nodeManualEntries.get('sire')?.name);
+    sire = nodeManualEntries.get('sire')!;
   }
 
   return {
