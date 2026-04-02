@@ -42,7 +42,7 @@ export interface ProgesteroneChartProps {
 
 // ============================================================================
 // PHASE ZONES — calibrated to VIDAS reference chart
-// LH Rise = 3 ng/mL | OV = 10 ng/mL | 1st Fresh = 15–18 | Optimal = 25–35 (peak 28)
+// LH Rise = 3 ng/mL | OV = 10 ng/mL | 1st Fresh = 15–18 | Optimal = 25–40 (peak 28)
 // ============================================================================
 
 const PHASE_ZONES = [
@@ -51,7 +51,7 @@ const PHASE_ZONES = [
   { min: 10, max: 15, label: 'Ovulation (OV)',      color: '#ef4444', opacity: 0.10 },
   { min: 15, max: 18, label: '1st Mating – Fresh',  color: '#10b981', opacity: 0.14 },
   { min: 18, max: 25, label: 'Fertile Window',      color: '#22c55e', opacity: 0.10 },
-  { min: 25, max: 36, label: 'Optimal – Frozen AI', color: '#0ea5e9', opacity: 0.12 },
+  { min: 25, max: 41, label: 'Optimal – Frozen AI', color: '#0ea5e9', opacity: 0.12 },
 ];
 
 // Milestone reference cards (matching screenshot label boxes)
@@ -226,8 +226,8 @@ export function ProgesteroneChart({
     return { maxLevel, latest, total: readings.length };
   }, [readings]);
 
-  // Y-axis always shows at least 35 so the Optimal Frozen zone is visible
-  const yMax = stats ? Math.max(Math.ceil(stats.maxLevel * 1.15), 35) : 35;
+  // Y-axis always shows at least 40 so the Optimal Frozen zone is visible
+  const yMax = stats ? Math.max(Math.ceil(stats.maxLevel * 1.15), 40) : 40;
 
   // ── Empty state ──────────────────────────────────────────────────────────
   if (!readings.length) {
@@ -355,10 +355,10 @@ export function ProgesteroneChart({
               />
             ))}
 
-            {/* ── Breeding window highlight (15–35) ────────────────────── */}
+            {/* ── Breeding window highlight (15–40) ────────────────────── */}
             {showBreedingWindow && (
               <ReferenceArea
-                y1={15} y2={Math.min(35, yMax)}
+                y1={15} y2={Math.min(40, yMax)}
                 fill="#10b981" fillOpacity={0.05}
                 stroke="#10b981" strokeOpacity={0.2} strokeDasharray="4 4"
               />
@@ -533,7 +533,7 @@ export function ProgesteroneChart({
                   <span className="text-xs whitespace-nowrap">
                     <span className="font-medium text-foreground">{zone.label}</span>
                     <span className="text-muted-foreground">
-                      {' '}({zone.min}–{zone.max === 36 ? '35+' : zone.max} ng/mL)
+                      {' '}({zone.min}–{zone.max === 41 ? '40+' : zone.max} ng/mL)
                     </span>
                   </span>
                 </div>
@@ -544,7 +544,7 @@ export function ProgesteroneChart({
             <div className="mt-4 p-3 rounded-lg"
               style={{ backgroundColor: '#0ea5e915', border: '2px solid #0ea5e940' }}>
               <p className="text-xs font-semibold text-sky-700 dark:text-sky-300 mb-1">
-                ❄️ OPTIMAL — Frozen AI window (25–35 ng/mL · peak at 28 N/G · VIDAS 89 N/Mols)
+                ❄️ OPTIMAL — Frozen AI window (25–40 ng/mL · peak at 28 N/G · VIDAS 89 N/Mols)
               </p>
               <p className="text-xs text-muted-foreground">
                 1× Mating frozen semen · 2nd mating fresh semen · IDEXX 70+ N/Mols at peak

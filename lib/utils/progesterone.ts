@@ -25,7 +25,7 @@ export interface NextTestRecommendation {
 /**
  * Detect phase based on progesterone level (VIDAS ng/mL)
  * Calibrated to reference chart:
- *   LH Rise = 3 ng/mL | OV = 10 ng/mL | 1st Fresh = 15–18 | Optimal Frozen = 25–35 (peak 28)
+ *   LH Rise = 3 ng/mL | OV = 10 ng/mL | 1st Fresh = 15–18 | Optimal Frozen = 25–40 (peak 28)
  */
 export function detectPhase(level: number): PhaseInfo {
   if (level < 3) {
@@ -124,7 +124,7 @@ export function calculateNextTest(
  * Check if progesterone level indicates breeding window is open
  */
 export function isBreedingWindowOpen(progesteroneLevel: number): boolean {
-  return progesteroneLevel >= 15 && progesteroneLevel <= 35;
+  return progesteroneLevel >= 15 && progesteroneLevel <= 40;
 }
 
 /**
@@ -138,8 +138,8 @@ export function isOptimalBreedingTime(
     // Optimal for natural/AI fresh/chilled: 15-25 ng/mL
     return progesteroneLevel >= 15 && progesteroneLevel < 25;
   } else {
-    // Optimal for frozen semen: 25-35 ng/mL
-    return progesteroneLevel >= 25 && progesteroneLevel <= 35;
+    // Optimal for frozen semen: 25-40 ng/mL
+    return progesteroneLevel >= 25 && progesteroneLevel <= 40;
   }
 }
 
@@ -304,7 +304,7 @@ export function getPhaseInfo(level: number, day: number, testDate?: Date) {
   };
 
   // Phases calibrated to VIDAS reference chart:
-  // LH Rise = 3 ng/mL | OV = 10 ng/mL | 1st Fresh = 15–18 | Optimal Frozen = 25–35 (peak 28)
+  // LH Rise = 3 ng/mL | OV = 10 ng/mL | 1st Fresh = 15–18 | Optimal Frozen = 25–40 (peak 28)
   if (level < 3) {
     return {
       phase: 'Baseline',
@@ -350,7 +350,7 @@ export function getPhaseInfo(level: number, day: number, testDate?: Date) {
       description: 'Fertile window — 2nd fresh mating or continue monitoring for frozen',
       nextAction: formatNextAction(1, 'Test daily — Consider 2nd mating'),
     };
-  } else if (level < 35) {
+  } else if (level <= 40) {
     return {
       phase: 'Optimal – Frozen AI',
       color: 'text-sky-600',
@@ -365,7 +365,7 @@ export function getPhaseInfo(level: number, day: number, testDate?: Date) {
       color: 'text-pink-600',
       bg: 'bg-pink-100 dark:bg-pink-900/20',
       icon: '🌸',
-      description: 'Past optimal breeding window',
+      description: 'Past optimal breeding window — above 40 ng/mL',
       nextAction: 'Continue monitoring if breeding occurred',
     };
   }

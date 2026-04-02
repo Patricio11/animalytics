@@ -69,8 +69,8 @@ export function AddReadingModal({
   const normalizedLevel = !isNaN(level) ? convertToVidasStandard(level, laboratory) : 0;
   const phaseInfo = !isNaN(level) ? getPhaseInfo(normalizedLevel, calculatedDay, testDate) : null;
   
-  // Check if in breeding window (P4: 15-35 ng/mL normalized)
-  const isInBreedingWindow = !isNaN(normalizedLevel) && normalizedLevel >= 15 && normalizedLevel <= 35;
+  // Check if in breeding window (P4: 15-40 ng/mL normalized)
+  const isInBreedingWindow = !isNaN(normalizedLevel) && normalizedLevel >= 15 && normalizedLevel <= 40;
 
   const handleSubmit = async () => {
     if (testDate && progesteroneLevel) {

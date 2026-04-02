@@ -350,7 +350,7 @@ export function ProgesteroneChartEnhanced({
                 {/* Optimal Frozen Zone */}
                 <ReferenceArea
                   y1={25}
-                  y2={35}
+                  y2={40}
                   fill="#0ea5e9"
                   fillOpacity={0.15}
                   label={{

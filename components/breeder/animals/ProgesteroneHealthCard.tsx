@@ -96,7 +96,7 @@ export function ProgesteroneHealthCard({ animalId, animalName }: ProgesteroneHea
 
   // Check if in breeding window
   const isInBreedingWindow = latestReading 
-    ? parseFloat(latestReading.progesteroneLevel) >= 15 && parseFloat(latestReading.progesteroneLevel) <= 35
+    ? parseFloat(latestReading.progesteroneLevel) >= 15 && parseFloat(latestReading.progesteroneLevel) <= 40
     : false;
 
   // Days since last cycle
@@ -207,7 +207,7 @@ export function ProgesteroneHealthCard({ animalId, animalName }: ProgesteroneHea
           <Alert className="border-green-500 bg-green-50 dark:bg-green-900/20">
             <AlertCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-sm text-green-800 dark:text-green-200">
-              <strong>Breeding Window Open</strong> - P4 level is optimal for breeding (15-35 ng/mL)
+              <strong>Breeding Window Open</strong> - P4 level is optimal for breeding (15-40 ng/mL)
             </AlertDescription>
           </Alert>
         )}

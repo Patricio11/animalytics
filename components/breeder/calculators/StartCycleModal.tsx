@@ -145,7 +145,7 @@ export function StartCycleModal({
               {breedingMethod === 'chilled_ai' &&
                 'Optimal window: 20-30 ng/mL progesterone'}
               {breedingMethod === 'frozen_ai' &&
-                'Optimal window: 25-35 ng/mL progesterone'}
+                'Optimal window: 25-40 ng/mL progesterone'}
             </p>
           </div>
 

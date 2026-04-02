@@ -105,7 +105,7 @@ export const PROGESTERONE_PHASES: PhaseReferenceValues[] = [
   {
     phase: 'Optimal - Frozen Semen',
     description: 'Best time for frozen semen AI',
-    vidasNgMl: { min: 25, max: 35 },
+    vidasNgMl: { min: 25, max: 40 },
     vidasNmolL: { min: 80, max: 110 },
     idexxNmolL: { min: 70, max: 120 },
     color: '#0ea5e9',
@@ -162,7 +162,7 @@ export const BREEDING_RECOMMENDATIONS: BreedingRecommendation[] = [
   },
   {
     phase: 'Optimal Frozen',
-    vidasRange: '25-35 ng/mL',
+    vidasRange: '25-40 ng/mL',
     idexxRange: '70-120 nmol/L',
     recommendation: '1x Frozen semen, 2nd mating fresh',
     priority: 'urgent',
@@ -191,7 +191,7 @@ export function getBreedingRecommendation(vidasNgMl: number): BreedingRecommenda
   if (vidasNgMl >= 10 && vidasNgMl < 12) return BREEDING_RECOMMENDATIONS[1]; // Ovulation
   if (vidasNgMl >= 15 && vidasNgMl <= 18) return BREEDING_RECOMMENDATIONS[2]; // 1st Mating Fresh
   if (vidasNgMl >= 28 && vidasNgMl <= 30) return BREEDING_RECOMMENDATIONS[3]; // Fertile Peak
-  if (vidasNgMl >= 25 && vidasNgMl <= 35) return BREEDING_RECOMMENDATIONS[4]; // Optimal Frozen
+  if (vidasNgMl >= 25 && vidasNgMl <= 40) return BREEDING_RECOMMENDATIONS[4]; // Optimal Frozen
   return null;
 }
 
