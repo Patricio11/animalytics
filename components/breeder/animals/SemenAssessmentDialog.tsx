@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -238,12 +239,10 @@ export function SemenAssessmentDialog({
             <Label htmlFor="date">
               Assessment Date <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={date ? new Date(date + 'T00:00:00') : undefined}
+              onDateChange={(d) => setDate(d ? format(d, 'yyyy-MM-dd') : '')}
+              maxDate={new Date()}
               className="bg-background border-primary/20"
             />
             {errors.date && (

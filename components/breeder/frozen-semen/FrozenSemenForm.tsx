@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -161,11 +162,9 @@ export function FrozenSemenForm({ existingBatch, onSave, onCancel }: FrozenSemen
         {/* Collection Date */}
         <div className="space-y-2">
           <Label htmlFor="collection-date">Collection Date *</Label>
-          <Input
-            id="collection-date"
-            type="date"
-            value={formData.collectionDate}
-            onChange={(e) => updateField('collectionDate', e.target.value)}
+          <DatePicker
+            date={formData.collectionDate ? new Date(formData.collectionDate + 'T00:00:00') : undefined}
+            onDateChange={(d) => updateField('collectionDate', d ? format(d, 'yyyy-MM-dd') : '')}
             className={`bg-background border-primary/20 focus:border-primary ${errors.collectionDate ? 'border-destructive' : ''}`}
           />
           {errors.collectionDate && (

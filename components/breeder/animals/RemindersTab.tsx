@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Bell, BellOff, Calendar, Edit, Trash2, Syringe, Stethoscope, Activity, Utensils } from "lucide-react";
@@ -274,9 +275,9 @@ export function RemindersTab({ animalId, animalSex, reminders, isOwner }: Remind
 
               <div className="space-y-2">
                 <Label htmlFor="next-date">Next Date</Label>
-                <Input
-                  id="next-date"
-                  type="date"
+                <DatePicker
+                  date={undefined}
+                  onDateChange={() => {}}
                   className="bg-background border-primary/20"
                   disabled={!settings.enabled}
                 />

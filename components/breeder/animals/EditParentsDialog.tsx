@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -293,11 +295,9 @@ function ParentSection({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`${label}-dob`}>Date of Birth</Label>
-              <Input
-                id={`${label}-dob`}
-                type="date"
-                value={manual.dateOfBirth}
-                onChange={(e) => updateManual("dateOfBirth", e.target.value)}
+              <DatePicker
+                date={manual.dateOfBirth ? new Date(manual.dateOfBirth + 'T00:00:00') : undefined}
+                onDateChange={(d) => updateManual("dateOfBirth", d ? format(d, 'yyyy-MM-dd') : '')}
                 className="border-primary/20"
               />
             </div>

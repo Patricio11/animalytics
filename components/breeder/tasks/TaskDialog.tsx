@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -433,11 +434,9 @@ export function TaskDialog({
             <Label htmlFor="date">
               Date <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+            <DatePicker
+              date={date ? new Date(date + 'T00:00:00') : undefined}
+              onDateChange={(d) => setDate(d ? format(d, 'yyyy-MM-dd') : '')}
               className="bg-background border-primary/20"
             />
             {errors.date && <p className="text-sm text-destructive">{errors.date}</p>}

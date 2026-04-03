@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -146,12 +147,10 @@ export function SeasonDialog({
             <Label htmlFor="start-date">
               Start Date <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="start-date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={startDate ? new Date(startDate + 'T00:00:00') : undefined}
+              onDateChange={(d) => setStartDate(d ? format(d, 'yyyy-MM-dd') : '')}
+              maxDate={new Date()}
               className="bg-background border-primary/20"
             />
             {errors.startDate && (
@@ -165,13 +164,11 @@ export function SeasonDialog({
           {/* End Date */}
           <div className="space-y-2">
             <Label htmlFor="end-date">End Date (Optional)</Label>
-            <Input
-              id="end-date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              min={startDate}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={endDate ? new Date(endDate + 'T00:00:00') : undefined}
+              onDateChange={(d) => setEndDate(d ? format(d, 'yyyy-MM-dd') : '')}
+              minDate={startDate ? new Date(startDate + 'T00:00:00') : undefined}
+              maxDate={new Date()}
               className="bg-background border-primary/20"
             />
             {errors.endDate && (

@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -627,12 +629,11 @@ export function ScanPedigreeDialog({
                                 <Label className="text-xs">
                                   Date of Birth
                                 </Label>
-                                <Input
-                                  type="date"
-                                  value={entry.dateOfBirth || ""}
-                                  onChange={(e) =>
+                                <DatePicker
+                                  date={entry.dateOfBirth ? new Date(entry.dateOfBirth + 'T00:00:00') : undefined}
+                                  onDateChange={(d) =>
                                     updateEntry(index, {
-                                      dateOfBirth: e.target.value,
+                                      dateOfBirth: d ? format(d, 'yyyy-MM-dd') : '',
                                     })
                                   }
                                   className="h-8 text-sm"

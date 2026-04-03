@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { AnimalCombobox } from '@/components/ui/animal-combobox';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Calendar, AlertCircle, Loader2 } from 'lucide-react';
 import { format, addDays, differenceInDays } from 'date-fns';
@@ -114,12 +115,10 @@ export function StartCycleModal({
           {/* Start Date */}
           <div className="space-y-2">
             <Label htmlFor="startDate">Heat Start Date (Day 1) *</Label>
-            <Input
-              id="startDate"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={startDate ? new Date(startDate + 'T00:00:00') : undefined}
+              onDateChange={(d) => setStartDate(d ? format(d, 'yyyy-MM-dd') : '')}
+              maxDate={new Date()}
             />
             <p className="text-xs text-muted-foreground">
               Select the first day you noticed heat signs (bleeding, swelling)

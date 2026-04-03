@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -146,13 +147,11 @@ export function HeatCycleStartCard({ animals, onStartCycle, isLoading }: HeatCyc
           <p className="text-xs text-muted-foreground">
             When did you first notice bleeding/discharge? This is Day 1 - no progesterone test needed yet. (You can select past dates if you forgot to record)
           </p>
-          <Input
-            id="start-date"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
-            min={new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // Allow up to 30 days back
+          <DatePicker
+            date={startDate ? new Date(startDate + 'T00:00:00') : undefined}
+            onDateChange={(d) => setStartDate(d ? format(d, 'yyyy-MM-dd') : '')}
+            maxDate={new Date()}
+            minDate={new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)}
             className={cn(
               "bg-background border-primary/20 hover:border-primary transition-colors",
               startDate && "border-chart-3"

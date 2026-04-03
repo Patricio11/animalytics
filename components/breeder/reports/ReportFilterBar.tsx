@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar as CalendarIcon, X } from "lucide-react";
@@ -92,32 +93,22 @@ export function ReportFilterBar({
               <Label htmlFor="start-date" className="text-sm font-medium">
                 Start Date
               </Label>
-              <div className="relative">
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-background border-primary/20 focus:border-primary"
-                />
-                <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              </div>
+              <DatePicker
+                date={startDate ? new Date(startDate + 'T00:00:00') : undefined}
+                onDateChange={(d) => setStartDate(d ? format(d, 'yyyy-MM-dd') : '')}
+                className="bg-background border-primary/20 focus:border-primary"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="end-date" className="text-sm font-medium">
                 End Date
               </Label>
-              <div className="relative">
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-background border-primary/20 focus:border-primary"
-                />
-                <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              </div>
+              <DatePicker
+                date={endDate ? new Date(endDate + 'T00:00:00') : undefined}
+                onDateChange={(d) => setEndDate(d ? format(d, 'yyyy-MM-dd') : '')}
+                className="bg-background border-primary/20 focus:border-primary"
+              />
             </div>
 
             {/* Animal Filter */}

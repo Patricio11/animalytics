@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
@@ -300,11 +302,9 @@ export default function VerificationWizardPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                  <DatePicker
+                    date={formData.dateOfBirth ? new Date(formData.dateOfBirth + 'T00:00:00') : undefined}
+                    onDateChange={(d) => setFormData({ ...formData, dateOfBirth: d ? format(d, 'yyyy-MM-dd') : '' })}
                   />
                 </div>
                 <div className="space-y-2">

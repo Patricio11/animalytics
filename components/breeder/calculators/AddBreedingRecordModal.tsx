@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -133,12 +134,10 @@ export function AddBreedingRecordModal({
           {/* Breeding Date */}
           <div className="space-y-2">
             <Label htmlFor="breedingDate">Breeding Date *</Label>
-            <Input
-              id="breedingDate"
-              type="date"
-              value={breedingDate}
-              onChange={(e) => setBreedingDate(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
+            <DatePicker
+              date={breedingDate ? new Date(breedingDate + 'T00:00:00') : undefined}
+              onDateChange={(d) => setBreedingDate(d ? format(d, 'yyyy-MM-dd') : '')}
+              maxDate={new Date()}
             />
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="w-3 h-3" />

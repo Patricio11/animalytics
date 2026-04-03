@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -472,11 +474,9 @@ export function AddPedigreeEntryDialog({
               {/* Date of Birth */}
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={manualFormData.dateOfBirth}
-                  onChange={(e) => updateManualFormData("dateOfBirth", e.target.value)}
+                <DatePicker
+                  date={manualFormData.dateOfBirth ? new Date(manualFormData.dateOfBirth + 'T00:00:00') : undefined}
+                  onDateChange={(d) => updateManualFormData("dateOfBirth", d ? format(d, 'yyyy-MM-dd') : '')}
                   className="border-primary/20 focus:border-primary"
                 />
               </div>

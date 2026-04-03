@@ -6,6 +6,7 @@ import { useUpdateAnimal } from "@/lib/api/queries/animals";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -316,25 +317,13 @@ export function EditAnimalDialog({ open, onOpenChange, animalId, animalData }: E
           {/* Date of Birth */}
           <div className="space-y-2">
             <Label htmlFor="edit-dateOfBirth">Date of Birth *</Label>
-            <div className="relative">
-              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-              <Input
-                id="edit-dateOfBirth"
-                type="date"
-                value={formData.dateOfBirth ? format(formData.dateOfBirth, "yyyy-MM-dd") : ""}
-                onChange={(e) => {
-                  const dateValue = e.target.value;
-                  if (dateValue) {
-                    updateFormData("dateOfBirth", new Date(dateValue));
-                  } else {
-                    updateFormData("dateOfBirth", undefined);
-                  }
-                }}
-                max={format(new Date(), "yyyy-MM-dd")}
-                min="1990-01-01"
-                className="pl-10 bg-background border-primary/20 focus:border-primary [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:hover:bg-primary/10 [&::-webkit-calendar-picker-indicator]:rounded [&::-webkit-calendar-picker-indicator]:p-1"
-              />
-            </div>
+            <DatePicker
+              date={formData.dateOfBirth}
+              onDateChange={(d) => updateFormData("dateOfBirth", d)}
+              maxDate={new Date()}
+              minDate={new Date("1990-01-01T00:00:00")}
+              className="bg-background border-primary/20 focus:border-primary"
+            />
             {formData.dateOfBirth && (
               <p className="text-xs text-muted-foreground">
                 Selected: {format(formData.dateOfBirth, "MMMM d, yyyy")}

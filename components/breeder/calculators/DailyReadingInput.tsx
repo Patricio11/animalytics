@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle } from "lucide-react";
@@ -104,14 +105,9 @@ export function DailyReadingInput({
           <Label htmlFor={`date-${day}`} className="text-xs font-medium text-muted-foreground">
             Test Date
           </Label>
-          <Input
-            id={`date-${day}`}
-            type="date"
-            value={date ? date.toISOString().split('T')[0] : ''}
-            onChange={(e) => {
-              const newDate = e.target.value ? new Date(e.target.value) : undefined;
-              onDateChange(newDate);
-            }}
+          <DatePicker
+            date={date}
+            onDateChange={(d) => onDateChange(d)}
             className={cn(
               "bg-background transition-all duration-300",
               getInputBorderClass()

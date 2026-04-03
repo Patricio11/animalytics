@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -233,12 +234,10 @@ export function ProgesteroneTestForm({
           <Label htmlFor="test-date" className="text-sm font-semibold">
             Test Date *
           </Label>
-          <Input
-            id="test-date"
-            type="date"
-            value={testDate}
-            onChange={(e) => setTestDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
+          <DatePicker
+            date={testDate ? new Date(testDate + 'T00:00:00') : undefined}
+            onDateChange={(d) => setTestDate(d ? format(d, 'yyyy-MM-dd') : '')}
+            maxDate={new Date()}
             className="bg-background border-primary/20"
           />
         </div>

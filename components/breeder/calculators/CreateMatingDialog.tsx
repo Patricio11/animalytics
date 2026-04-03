@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -467,18 +468,11 @@ export function CreateMatingDialog({
               <CalendarIcon className="w-4 h-4" />
               Mating Date <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="mating-date"
-              type="date"
-              value={format(matingDate, 'yyyy-MM-dd')}
-              onChange={(e) => {
-                const date = new Date(e.target.value);
-                if (!isNaN(date.getTime())) {
-                  setMatingDate(date);
-                }
-              }}
+            <DatePicker
+              date={matingDate}
+              onDateChange={(d) => { if (d) setMatingDate(d); }}
               className="h-11"
-              max={format(new Date(), 'yyyy-MM-dd')}
+              maxDate={new Date()}
             />
             {errors.matingDate && (
               <p className="text-sm text-destructive">{errors.matingDate}</p>
