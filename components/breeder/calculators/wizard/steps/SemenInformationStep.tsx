@@ -124,12 +124,10 @@ export function SemenInformationStep({ data, onUpdate, onNext, onPrevious }: Sem
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="collection-date">Collection Date</Label>
-              <Input
-                id="collection-date"
-                type="date"
-                value={collectionDate}
-                onChange={(e) => setCollectionDate(e.target.value)}
-                max={format(new Date(), 'yyyy-MM-dd')}
+              <DatePicker
+                date={collectionDate ? new Date(collectionDate + 'T00:00:00') : undefined}
+                onDateChange={(d) => setCollectionDate(d ? format(d, 'yyyy-MM-dd') : '')}
+                maxDate={new Date()}
                 className="bg-background border-primary/20"
               />
               {daysSinceCollection !== null && (

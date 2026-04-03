@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
@@ -114,11 +116,9 @@ export function AddLitterDialog({
             <Label htmlFor="date">
               Litter Date <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => updateFormData("date", e.target.value)}
+            <DatePicker
+              date={formData.date ? new Date(formData.date + 'T00:00:00') : undefined}
+              onDateChange={(d) => updateFormData("date", d ? format(d, 'yyyy-MM-dd') : '')}
               className="border-primary/20 focus:border-primary"
             />
           </div>
