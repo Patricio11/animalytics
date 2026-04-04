@@ -1,8 +1,10 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { 
-  heatCycles, 
-  heatCycleProgesteroneReadings 
+import {
+  heatCycles,
+  heatCycleProgesteroneReadings,
+  breedingRecords,
+  animals,
 } from '@/lib/db/schema';
 import { auth } from '@/lib/auth/config';
 import {
@@ -13,7 +15,7 @@ import {
   serverErrorResponse,
 } from '@/lib/api/response';
 import { eq, and } from 'drizzle-orm';
-import { differenceInDays } from 'date-fns';
+import { addDays, differenceInDays, format } from 'date-fns';
 import { z } from 'zod';
 import {
   detectPhase,
@@ -31,6 +33,8 @@ const updateReadingSchema = z.object({
   progesteroneLevel: z.number().min(0).max(50).optional(),
   laboratory: z.enum(['VIDAS', 'IDEXX', 'IDEXX_LAB', 'IMMULITE', 'CHEMILUMINESCENCE', 'RIA', 'OTHER']).optional(),
   notes: z.string().optional(),
+  markAsMating: z.boolean().optional(),
+  markAsLastMating: z.boolean().optional(),
 });
 
 /**
@@ -149,6 +153,75 @@ export async function PATCH(
       .where(eq(heatCycleProgesteroneReadings.id, id))
       .returning();
 
+    // Handle mating markers on edit
+    const { markAsMating, markAsLastMating } = updates as any;
+    let breedingRecordCreated = false;
+    let pregnancyTasksResult: any = null;
+
+    if (markAsMating || markAsLastMating) {
+      try {
+        const readingTestDate = updates.testDate ?? existingReading.testDate;
+        const readingLevel = updates.progesteroneLevel?.toString() ?? existingReading.progesteroneLevel;
+
+        const [breedingRecord] = await db
+          .insert(breedingRecords)
+          .values({
+            heatCycleId: existingReading.heatCycleId,
+            breederId: session.user.id,
+            breedingDate: readingTestDate,
+            breedingDay: newDay,
+            breedingMethod: 'natural',
+            progesteroneLevelAtBreeding: readingLevel,
+            isLastMating: markAsLastMating || false,
+            notes: markAsLastMating
+              ? 'Last mating - pregnancy screening tasks will be generated'
+              : 'Mating recorded from progesterone reading edit',
+          })
+          .returning();
+
+        breedingRecordCreated = true;
+
+        if (markAsLastMating) {
+          // Set estimated whelping date (60 days from last mating)
+          const estimatedWhelp = addDays(new Date(readingTestDate), 60);
+          await db
+            .update(heatCycles)
+            .set({ estimatedWhelpingDate: estimatedWhelp.toISOString() })
+            .where(eq(heatCycles.id, existingReading.heatCycleId));
+
+          // Reset flag on ALL breeding records for this cycle so tasks can regenerate
+          await db
+            .update(breedingRecords)
+            .set({
+              isLastMating: false,
+              pregnancyScreeningTasksGenerated: false,
+            })
+            .where(
+              and(
+                eq(breedingRecords.heatCycleId, existingReading.heatCycleId),
+                eq(breedingRecords.breederId, session.user.id)
+              )
+            );
+
+          // Mark THIS breeding as last mating
+          await db
+            .update(breedingRecords)
+            .set({ isLastMating: true })
+            .where(eq(breedingRecords.id, breedingRecord.id));
+
+          // Generate pregnancy screening tasks
+          const { generatePregnancyScreeningTasks } = await import('@/lib/services/pregnancy-screening-tasks');
+          pregnancyTasksResult = await generatePregnancyScreeningTasks(breedingRecord.id, session.user.id);
+
+          if (pregnancyTasksResult.success) {
+            console.log(`✅ Generated ${pregnancyTasksResult.tasksCreated} pregnancy tasks from reading edit`);
+          }
+        }
+      } catch (breedingError) {
+        console.error('Error creating breeding record from edit:', breedingError);
+      }
+    }
+
     // Recalculate heat cycle estimates
     const allReadings = await db
       .select({
@@ -195,6 +268,11 @@ export async function PATCH(
     return successResponse({
       reading: updatedReading,
       message: 'Reading updated successfully',
+      breedingRecordCreated,
+      isLastMating: markAsLastMating || false,
+      pregnancyTasksGenerated: pregnancyTasksResult?.success || false,
+      pregnancyTasksCount: pregnancyTasksResult?.tasksCreated || 0,
+      pregnancyTasks: pregnancyTasksResult?.tasks || [],
     });
 
   } catch (error) {

@@ -319,7 +319,7 @@ export function useUpdateProgesteroneReading() {
   return useMutation<
     any,
     Error,
-    { readingId: string; data: { testDate?: string; progesteroneLevel?: number; laboratory?: string; notes?: string } }
+    { readingId: string; data: { testDate?: string; progesteroneLevel?: number; laboratory?: string; notes?: string; markAsMating?: boolean; markAsLastMating?: boolean } }
   >({
     mutationFn: async ({ readingId, data }) => {
       const response = await fetch(`/api/progesterone-readings/${readingId}`, {

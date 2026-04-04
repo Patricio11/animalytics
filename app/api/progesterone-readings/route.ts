@@ -227,13 +227,20 @@ export async function POST(request: NextRequest) {
         
         breedingRecordId = breedingRecord.id;
 
-        // If marked as last mating, auto-generate pregnancy screening tasks
+        // If marked as last mating, auto-generate pregnancy screening tasks + set whelping date
         if (markAsLastMating) {
           try {
+            // Set estimated whelping date on the heat cycle (60 days from last mating)
+            const estimatedWhelpingDate = addDays(new Date(testDate), 60);
+            await db
+              .update(heatCycles)
+              .set({ estimatedWhelpingDate: estimatedWhelpingDate.toISOString() })
+              .where(eq(heatCycles.id, heatCycleId));
+
             const { generatePregnancyScreeningTasks } = await import('@/lib/services/pregnancy-screening-tasks');
             const result = await generatePregnancyScreeningTasks(breedingRecord.id, session.user.id);
             pregnancyTasksResult = result;
-            
+
             if (result.success) {
               console.log(`✅ Generated ${result.tasksCreated} pregnancy screening tasks for breeding ${breedingRecord.id}`);
             } else {

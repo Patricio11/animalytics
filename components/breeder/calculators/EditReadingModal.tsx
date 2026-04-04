@@ -35,11 +35,17 @@ interface Reading {
   notes?: string;
 }
 
+interface BreedingRecordInfo {
+  isMating: boolean;
+  isLastMating: boolean;
+}
+
 interface EditReadingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reading: Reading | null;
   startDate: string;
+  existingBreedingRecord?: BreedingRecordInfo | null;
   onSubmit: (data: { testDate: string; progesteroneLevel: number; laboratory?: string; notes?: string; markAsMating?: boolean; markAsLastMating?: boolean }) => Promise<void>;
   isSubmitting?: boolean;
 }
@@ -49,6 +55,7 @@ export function EditReadingModal({
   onOpenChange,
   reading,
   startDate,
+  existingBreedingRecord,
   onSubmit,
   isSubmitting = false,
 }: EditReadingModalProps) {
@@ -69,10 +76,16 @@ export function EditReadingModal({
       setProgesteroneLevel(reading.progesteroneLevel.toString());
       setLaboratory((reading.laboratory || 'VIDAS') as ProgesteroneMachine);
       setNotes(reading.notes || '');
-      setMarkAsMating(false);
-      setMarkAsLastMating(false);
+      // Pre-populate mating state from existing breeding record
+      if (existingBreedingRecord) {
+        setMarkAsMating(existingBreedingRecord.isMating && !existingBreedingRecord.isLastMating);
+        setMarkAsLastMating(existingBreedingRecord.isLastMating);
+      } else {
+        setMarkAsMating(false);
+        setMarkAsLastMating(false);
+      }
     }
-  }, [reading]);
+  }, [reading, existingBreedingRecord]);
 
   // Calculate which day this test date represents
   const calculatedDay = testDate

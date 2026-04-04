@@ -713,6 +713,15 @@ export default function CycleDetailPage({ params }: PageProps) {
           onOpenChange={setShowEditReadingForm}
           reading={selectedReading}
           startDate={typeof cycle.startDate === 'string' ? cycle.startDate : cycle.startDate.toISOString().split('T')[0]}
+          existingBreedingRecord={(() => {
+            if (!selectedReading || !breedingRecords?.length) return null;
+            const readingDate = typeof selectedReading.testDate === 'string'
+              ? selectedReading.testDate
+              : selectedReading.testDate?.toISOString?.()?.split('T')[0];
+            const match = breedingRecords.find((br: any) => br.breedingDate === readingDate || br.breedingDay === selectedReading.day);
+            if (!match) return null;
+            return { isMating: true, isLastMating: !!match.isLastMating };
+          })()}
           isSubmitting={updateReading.isPending}
           onSubmit={async (data) => {
             if (selectedReading) {
@@ -723,12 +732,27 @@ export default function CycleDetailPage({ params }: PageProps) {
                   progesteroneLevel: data.progesteroneLevel,
                   laboratory: data.laboratory,
                   notes: data.notes,
+                  markAsMating: data.markAsMating,
+                  markAsLastMating: data.markAsLastMating,
                 },
               });
               await refetch();
               queryClient.invalidateQueries({ queryKey: ['heat-cycles'] });
+              queryClient.invalidateQueries({ queryKey: ['breeding-records'] });
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
               setShowEditReadingForm(false);
               setSelectedReading(null);
+              if (data.markAsLastMating) {
+                toast({
+                  title: "🎯 Last Mating Recorded",
+                  description: "Pregnancy screening tasks have been generated. Check your Upcoming Tasks.",
+                });
+              } else if (data.markAsMating) {
+                toast({
+                  title: "✅ Mating Recorded",
+                  description: "Breeding record created from this reading.",
+                });
+              }
             }
           }}
         />

@@ -1,14 +1,15 @@
 /**
  * Pregnancy Screening Task Generator Service
- * 
+ *
  * Automatically generates pregnancy screening tasks after the LAST MATING ONLY.
- * 
+ *
  * Timeline:
- * - Day 28: Ultrasound + Blood Test (Hematology) + Progesterone
+ * - Day 24-28: Ultrasound + Blood Test (Hematology) + Progesterone
  * - Day 30: Progesterone plateau check
  * - Day 45: Mid-pregnancy checkup
  * - Day 50: X-ray for puppy count
- * - Day 55: Pre-whelping checkup
+ * - Day 55: Pre-whelping preparation
+ * - Day 58: Whelping watch begins (expected whelping Day 58-64)
  */
 
 import { db } from '@/lib/db';
@@ -48,41 +49,49 @@ export interface TaskGenerationResult {
 const PREGNANCY_SCREENING_TIMELINE: PregnancyScreeningTask[] = [
   {
     type: 'ultrasound',
-    title: 'Day 28: Pregnancy Confirmation',
-    description: 'CRITICAL: Comprehensive pregnancy confirmation visit. Includes: (1) Ultrasound scan to visualize pregnancy, (2) Blood Test (Hematology), (3) Progesterone test. This is the primary pregnancy confirmation at 28 days post-LAST MATING.',
-    daysPostMating: 28, // Day 28 - Ultrasound + Blood Test + Progesterone
+    title: 'Pregnancy Scan & Blood Work Due',
+    description: 'Between 24 and 28 days post-mating — book an ultrasound scan, hematology (blood test), and progesterone test to confirm pregnancy and check hormone levels.',
+    daysPostMating: 25, // Day 25 — middle of the 24-28 window
     priority: 'high',
     eventType: 'pregnancy_ultrasound',
   },
   {
     type: 'checkup',
-    title: 'Day 30: Progesterone Plateau Check',
-    description: 'Follow-up progesterone test to confirm plateau. If P4 plateaus at 21-28 ng/mL = PREGNANT (hormone sustaining pregnancy). If P4 drops below 5 ng/mL = NOT PREGNANT (no implantation). This verifies the Day 28 results.',
-    daysPostMating: 30, // Day 30 - PROG test to check plateau
+    title: 'Progesterone Plateau Check',
+    description: 'Day 30 progesterone follow-up. If P4 plateaus at 21-28 ng/mL = PREGNANT (hormone sustaining pregnancy). If P4 drops below 5 ng/mL = NOT PREGNANT (no implantation).',
+    daysPostMating: 30,
     priority: 'high',
     eventType: 'pregnancy_checkup',
   },
   {
     type: 'checkup',
     title: 'Mid-Pregnancy Checkup',
-    description: 'Mid-pregnancy veterinary checkup. Monitor bitch health and fetal development.',
-    daysPostMating: 45, // Day 45 checkup
+    description: 'Mid-pregnancy veterinary visit. Monitor the bitch\'s health, weight, nutrition, and fetal development.',
+    daysPostMating: 45,
     priority: 'medium',
     eventType: 'pregnancy_checkup',
   },
   {
     type: 'xray',
     title: 'X-Ray for Puppy Count',
-    description: 'X-ray to count puppies and assess skeletal development. Best done after day 45 when bones are calcified.',
-    daysPostMating: 50, // Day 50 for x-ray
+    description: 'X-ray to count puppies and assess skeletal development. Bones are calcified enough for accurate count after day 45.',
+    daysPostMating: 50,
     priority: 'medium',
     eventType: 'pregnancy_xray',
   },
   {
     type: 'checkup',
-    title: 'Pre-Whelping Checkup',
-    description: 'Final checkup before whelping. Prepare for delivery and assess readiness. Expected whelping: ~63 days from ovulation.',
-    daysPostMating: 55, // Day 55, about 1 week before whelping
+    title: 'Pre-Whelping Preparation',
+    description: 'Final vet checkup before whelping. Confirm presentation, prepare whelping area, and ensure emergency supplies are ready.',
+    daysPostMating: 55,
+    priority: 'high',
+    eventType: 'pregnancy_checkup',
+  },
+  {
+    type: 'checkup',
+    title: 'Whelping Watch — Expected Due Date',
+    description: 'Whelping is expected between day 58 and 64 from the last mating. Monitor closely for signs of labour: temperature drop, nesting behaviour, loss of appetite, restlessness.',
+    daysPostMating: 60, // Middle of the 58-64 window
     priority: 'high',
     eventType: 'pregnancy_checkup',
   },
@@ -209,8 +218,8 @@ export async function generatePregnancyScreeningTasks(
           userId,
           animalId: bitch.id,
           type: 'event',
-          title: `${screeningTask.title} - ${bitch.name}`,
-          description: `${screeningTask.description}\n\nDays post-mating: ${screeningTask.daysPostMating}\nLast mating date: ${format(lastMatingDate, 'MMM dd, yyyy')}`,
+          title: `${screeningTask.title} — ${bitch.name}`,
+          description: `${bitch.name} was mated on ${format(lastMatingDate, 'MMMM d, yyyy')}. ${screeningTask.description}\n\nDue: Day ${screeningTask.daysPostMating} post-mating (${format(dueDate, 'EEEE, MMMM d, yyyy')})`,
           dueDate: format(dueDate, 'yyyy-MM-dd'),
           dueTime: '09:00', // Default to 9 AM
           priority: screeningTask.priority,
@@ -230,7 +239,7 @@ export async function generatePregnancyScreeningTasks(
               generatedDate: new Date().toISOString(),
             },
           },
-          notes: `Auto-generated pregnancy screening task for ${bitch.name}. Last mating: ${format(lastMatingDate, 'MMM dd, yyyy')}`,
+          notes: `${bitch.name} — last mating ${format(lastMatingDate, 'MMM dd, yyyy')}. Auto-generated pregnancy task.`,
         })
         .returning();
 
