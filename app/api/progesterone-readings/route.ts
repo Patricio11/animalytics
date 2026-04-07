@@ -209,6 +209,19 @@ export async function POST(request: NextRequest) {
     let pregnancyTasksResult: any = null;
     if (markAsMating || markAsLastMating) {
       try {
+        // If marking as last mating, first unmark any existing last mating in this cycle
+        if (markAsLastMating) {
+          await db
+            .update(breedingRecords)
+            .set({ isLastMating: false })
+            .where(
+              and(
+                eq(breedingRecords.heatCycleId, heatCycleId),
+                eq(breedingRecords.breederId, session.user.id)
+              )
+            );
+        }
+
         const [breedingRecord] = await db
           .insert(breedingRecords)
           .values({
@@ -219,12 +232,12 @@ export async function POST(request: NextRequest) {
             breedingMethod: 'natural', // Default, can be updated later
             progesteroneLevelAtBreeding: normalizedValue.toString(), // Use normalized value
             isLastMating: markAsLastMating,
-            notes: markAsLastMating 
-              ? 'Last mating - pregnancy screening tasks will be generated' 
+            notes: markAsLastMating
+              ? 'Last mating - pregnancy screening tasks will be generated'
               : 'Mating recorded from progesterone reading',
           })
           .returning();
-        
+
         breedingRecordId = breedingRecord.id;
 
         // If marked as last mating, auto-generate pregnancy screening tasks + set whelping date

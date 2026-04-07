@@ -1,15 +1,10 @@
 /**
  * Pregnancy Screening Task Generator Service
  *
- * Automatically generates pregnancy screening tasks after the LAST MATING ONLY.
+ * Automatically generates a pregnancy scan task after the LAST MATING ONLY.
  *
  * Timeline:
- * - Day 24-28: Ultrasound + Blood Test (Hematology) + Progesterone
- * - Day 30: Progesterone plateau check
- * - Day 45: Mid-pregnancy checkup
- * - Day 50: X-ray for puppy count
- * - Day 55: Pre-whelping preparation
- * - Day 58: Whelping watch begins (expected whelping Day 58-64)
+ * - Day 28: Pregnancy scan + blood work (ultrasound, hematology, progesterone)
  */
 
 import { db } from '@/lib/db';
@@ -50,50 +45,10 @@ const PREGNANCY_SCREENING_TIMELINE: PregnancyScreeningTask[] = [
   {
     type: 'ultrasound',
     title: 'Pregnancy Scan & Blood Work Due',
-    description: 'Between 24 and 28 days post-mating — book an ultrasound scan, hematology (blood test), and progesterone test to confirm pregnancy and check hormone levels.',
-    daysPostMating: 25, // Day 25 — middle of the 24-28 window
+    description: 'Day 28 post-mating — book an ultrasound scan and blood work (hematology + progesterone) to confirm pregnancy.',
+    daysPostMating: 28,
     priority: 'high',
     eventType: 'pregnancy_ultrasound',
-  },
-  {
-    type: 'checkup',
-    title: 'Progesterone Plateau Check',
-    description: 'Day 30 progesterone follow-up. If P4 plateaus at 21-28 ng/mL = PREGNANT (hormone sustaining pregnancy). If P4 drops below 5 ng/mL = NOT PREGNANT (no implantation).',
-    daysPostMating: 30,
-    priority: 'high',
-    eventType: 'pregnancy_checkup',
-  },
-  {
-    type: 'checkup',
-    title: 'Mid-Pregnancy Checkup',
-    description: 'Mid-pregnancy veterinary visit. Monitor the bitch\'s health, weight, nutrition, and fetal development.',
-    daysPostMating: 45,
-    priority: 'medium',
-    eventType: 'pregnancy_checkup',
-  },
-  {
-    type: 'xray',
-    title: 'X-Ray for Puppy Count',
-    description: 'X-ray to count puppies and assess skeletal development. Bones are calcified enough for accurate count after day 45.',
-    daysPostMating: 50,
-    priority: 'medium',
-    eventType: 'pregnancy_xray',
-  },
-  {
-    type: 'checkup',
-    title: 'Pre-Whelping Preparation',
-    description: 'Final vet checkup before whelping. Confirm presentation, prepare whelping area, and ensure emergency supplies are ready.',
-    daysPostMating: 55,
-    priority: 'high',
-    eventType: 'pregnancy_checkup',
-  },
-  {
-    type: 'checkup',
-    title: 'Whelping Watch — Expected Due Date',
-    description: 'Whelping is expected between day 58 and 64 from the last mating. Monitor closely for signs of labour: temperature drop, nesting behaviour, loss of appetite, restlessness.',
-    daysPostMating: 60, // Middle of the 58-64 window
-    priority: 'high',
-    eventType: 'pregnancy_checkup',
   },
 ];
 
@@ -129,17 +84,7 @@ export async function generatePregnancyScreeningTasks(
       };
     }
 
-    // 2. Check if tasks already generated
-    if (breedingRecord.pregnancyScreeningTasksGenerated) {
-      return {
-        success: false,
-        tasksCreated: 0,
-        tasks: [],
-        error: 'Pregnancy screening tasks already generated for this breeding',
-      };
-    }
-
-    // 3. Get heat cycle and bitch information
+    // 2. Get heat cycle and bitch information
     const [heatCycle] = await db
       .select()
       .from(heatCycles)
@@ -172,18 +117,8 @@ export async function generatePregnancyScreeningTasks(
       };
     }
 
-    // 4. DELETE any existing pregnancy screening tasks for this heat cycle
-    // This prevents duplicates if user marks different breedings as "last mating"
-    await db
-      .delete(tasks)
-      .where(
-        and(
-          eq(tasks.userId, userId),
-          eq(tasks.generatedBy, 'pregnancy_screening_generator')
-        )
-      );
-
-    // Also delete tasks from any other breeding records in this heat cycle
+    // 4. DELETE any existing pregnancy screening tasks for ALL breedings in this heat cycle
+    // This prevents duplicates when user re-marks or changes last mating
     const allBreedingsInCycle = await db
       .select({ id: breedingRecords.id })
       .from(breedingRecords)
@@ -198,6 +133,12 @@ export async function generatePregnancyScreeningTasks(
             eq(tasks.generationBatchId, `pregnancy_${breeding.id}`)
           )
         );
+
+      // Reset the generated flag
+      await db
+        .update(breedingRecords)
+        .set({ pregnancyScreeningTasksGenerated: false })
+        .where(eq(breedingRecords.id, breeding.id));
     }
 
     // 5. Generate tasks based on timeline (ONLY for LAST MATING)

@@ -638,25 +638,12 @@ export default function CycleDetailPage({ params }: PageProps) {
                 
                 // Show success message with mating info
                 if (result.isLastMating && result.pregnancyTasksGenerated) {
-                  // Show detailed success message for last mating with tasks
-                  const tasksList = result.pregnancyTasks?.map((task: any) => 
-                    `• ${task.title} - ${new Date(task.dueDate).toLocaleDateString()}`
-                  ).join('\n') || '';
-                  
+                  const task = result.pregnancyTasks?.[0];
                   toast({
                     title: "🎯 Last Mating Recorded!",
-                    description: (
-                      <div className="space-y-2">
-                        <p className="font-semibold">✅ Reading saved successfully</p>
-                        <p className="text-sm">📋 {result.pregnancyTasksCount} pregnancy screening tasks created:</p>
-                        <ul className="text-xs space-y-1 pl-4">
-                          {result.pregnancyTasks?.map((task: any, idx: number) => (
-                            <li key={idx}>• {task.title} - {new Date(task.dueDate).toLocaleDateString()}</li>
-                          ))}
-                        </ul>
-                        <p className="text-xs text-muted-foreground mt-2">Check your Upcoming Tasks to view all pregnancy screening appointments.</p>
-                      </div>
-                    ),
+                    description: task
+                      ? `Pregnancy scan & blood work task created for ${new Date(task.dueDate).toLocaleDateString()}. Check your Upcoming Tasks.`
+                      : "Pregnancy screening task created. Check your Upcoming Tasks.",
                   });
                 } else if (result.isLastMating) {
                   toast({

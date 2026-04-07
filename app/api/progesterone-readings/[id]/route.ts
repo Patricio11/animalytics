@@ -163,23 +163,50 @@ export async function PATCH(
         const readingTestDate = updates.testDate ?? existingReading.testDate;
         const readingLevel = updates.progesteroneLevel?.toString() ?? existingReading.progesteroneLevel;
 
-        const [breedingRecord] = await db
-          .insert(breedingRecords)
-          .values({
-            heatCycleId: existingReading.heatCycleId,
-            breederId: session.user.id,
-            breedingDate: readingTestDate,
-            breedingDay: newDay,
-            breedingMethod: 'natural',
-            progesteroneLevelAtBreeding: readingLevel,
-            isLastMating: markAsLastMating || false,
-            notes: markAsLastMating
-              ? 'Last mating - pregnancy screening tasks will be generated'
-              : 'Mating recorded from progesterone reading edit',
-          })
-          .returning();
+        // Check if a breeding record already exists for this day in this cycle
+        const [existingBreeding] = await db
+          .select()
+          .from(breedingRecords)
+          .where(
+            and(
+              eq(breedingRecords.heatCycleId, existingReading.heatCycleId),
+              eq(breedingRecords.breederId, session.user.id),
+              eq(breedingRecords.breedingDay, newDay)
+            )
+          )
+          .limit(1);
 
-        breedingRecordCreated = true;
+        let breedingRecord;
+        if (existingBreeding) {
+          // Update existing breeding record
+          [breedingRecord] = await db
+            .update(breedingRecords)
+            .set({
+              breedingDate: readingTestDate,
+              progesteroneLevelAtBreeding: readingLevel,
+              isLastMating: markAsLastMating || false,
+            })
+            .where(eq(breedingRecords.id, existingBreeding.id))
+            .returning();
+        } else {
+          // Create new breeding record
+          [breedingRecord] = await db
+            .insert(breedingRecords)
+            .values({
+              heatCycleId: existingReading.heatCycleId,
+              breederId: session.user.id,
+              breedingDate: readingTestDate,
+              breedingDay: newDay,
+              breedingMethod: 'natural',
+              progesteroneLevelAtBreeding: readingLevel,
+              isLastMating: markAsLastMating || false,
+              notes: markAsLastMating
+                ? 'Last mating - pregnancy screening tasks will be generated'
+                : 'Mating recorded from progesterone reading edit',
+            })
+            .returning();
+          breedingRecordCreated = true;
+        }
 
         if (markAsLastMating) {
           // Set estimated whelping date (60 days from last mating)
@@ -189,13 +216,10 @@ export async function PATCH(
             .set({ estimatedWhelpingDate: estimatedWhelp.toISOString() })
             .where(eq(heatCycles.id, existingReading.heatCycleId));
 
-          // Reset flag on ALL breeding records for this cycle so tasks can regenerate
+          // Unmark all other breeding records in this cycle as last mating
           await db
             .update(breedingRecords)
-            .set({
-              isLastMating: false,
-              pregnancyScreeningTasksGenerated: false,
-            })
+            .set({ isLastMating: false })
             .where(
               and(
                 eq(breedingRecords.heatCycleId, existingReading.heatCycleId),
@@ -209,7 +233,7 @@ export async function PATCH(
             .set({ isLastMating: true })
             .where(eq(breedingRecords.id, breedingRecord.id));
 
-          // Generate pregnancy screening tasks
+          // Generate pregnancy screening tasks (this deletes old ones first)
           const { generatePregnancyScreeningTasks } = await import('@/lib/services/pregnancy-screening-tasks');
           pregnancyTasksResult = await generatePregnancyScreeningTasks(breedingRecord.id, session.user.id);
 
@@ -218,7 +242,7 @@ export async function PATCH(
           }
         }
       } catch (breedingError) {
-        console.error('Error creating breeding record from edit:', breedingError);
+        console.error('Error handling breeding record from edit:', breedingError);
       }
     }
 
