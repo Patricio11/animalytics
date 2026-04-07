@@ -246,27 +246,84 @@ export default function CycleDetailPage({ params }: PageProps) {
         {cycle.status === 'active' && cycle.readings && cycle.readings.length > 0 && (() => {
           const lastReading = cycle.readings[0];
           const lastLevel = parseFloat(String(lastReading.progesteroneLevel));
-          return lastLevel >= 15 && (
-            <Card className="shadow-card bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-green-500">
-                    <Activity className="w-6 h-6 text-white" />
+          const lastMating = breedingRecords?.find((br: any) => br.isLastMating);
+          const anyMating = breedingRecords?.[0];
+
+          if (lastMating) {
+            // Mating done — show mating summary instead of breeding window
+            return (
+              <Card className="shadow-card bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-full bg-blue-500">
+                      <Heart className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                        ✅ Last Mating Done
+                      </h3>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Mated on Day {lastMating.breedingDay} ({format(new Date(lastMating.breedingDate), 'MMMM d, yyyy')})
+                        {lastMating.progesteroneLevelAtBreeding && ` at ${parseFloat(lastMating.progesteroneLevelAtBreeding).toFixed(1)} ng/mL`}
+                        {' · '}{(lastMating.breedingMethod || 'natural').replace('_', ' ')}
+                      </p>
+                      {cycle.estimatedWhelpingDate && (
+                        <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                          👶 Expected whelping: {format(new Date(cycle.estimatedWhelpingDate), 'MMMM d, yyyy')}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-1">
-                      🎯 Breeding Window Detected!
-                    </h3>
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      Progesterone level: {lastLevel.toFixed(1)} ng/mL
-                      {lastLevel >= 15 && lastLevel < 25 && ' - Optimal for natural breeding or AI'}
-                      {lastLevel >= 25 && ' - Optimal for frozen semen AI'}
-                    </p>
+                </CardContent>
+              </Card>
+            );
+          } else if (anyMating) {
+            return (
+              <Card className="shadow-card bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-full bg-green-500">
+                      <Heart className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-1">
+                        🔵 Mating Recorded
+                      </h3>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        Mated on Day {anyMating.breedingDay} ({format(new Date(anyMating.breedingDate), 'MMMM d, yyyy')})
+                        {anyMating.progesteroneLevelAtBreeding && ` at ${parseFloat(anyMating.progesteroneLevelAtBreeding).toFixed(1)} ng/mL`}
+                        {' · '}{(anyMating.breedingMethod || 'natural').replace('_', ' ')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
+                </CardContent>
+              </Card>
+            );
+          } else if (lastLevel >= 15) {
+            // No mating recorded — show breeding window
+            return (
+              <Card className="shadow-card bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-full bg-green-500">
+                      <Activity className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-1">
+                        🎯 Breeding Window Detected!
+                      </h3>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        Progesterone level: {lastLevel.toFixed(1)} ng/mL
+                        {lastLevel >= 15 && lastLevel < 25 && ' - Optimal for natural breeding or AI'}
+                        {lastLevel >= 25 && ' - Optimal for frozen semen AI'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+          return null;
         })()}
 
         {/* Cycle Summary Card */}
