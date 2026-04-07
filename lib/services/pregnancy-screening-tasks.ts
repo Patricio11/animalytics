@@ -152,7 +152,12 @@ export async function generatePregnancyScreeningTasks(
 
     for (const screeningTask of PREGNANCY_SCREENING_TIMELINE) {
       const dueDate = addDays(lastMatingDate, screeningTask.daysPostMating);
-      
+      const dayOfWeek = dueDate.getDay(); // 0=Sun, 6=Sat
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const weekendNote = isWeekend
+        ? `\n\n⚠️ This falls on a ${dayOfWeek === 6 ? 'Saturday' : 'Sunday'}. You can edit this task to move it to the Friday before or Monday after.`
+        : '';
+
       const [newTask] = await db
         .insert(tasks)
         .values({
@@ -160,7 +165,7 @@ export async function generatePregnancyScreeningTasks(
           animalId: bitch.id,
           type: 'event',
           title: `${screeningTask.title} — ${bitch.name}`,
-          description: `${bitch.name} was mated on ${format(lastMatingDate, 'MMMM d, yyyy')}. ${screeningTask.description}\n\nDue: Day ${screeningTask.daysPostMating} post-mating (${format(dueDate, 'EEEE, MMMM d, yyyy')})`,
+          description: `${bitch.name} was mated on ${format(lastMatingDate, 'MMMM d, yyyy')}. ${screeningTask.description}\n\nDue: Day ${screeningTask.daysPostMating} post-mating (${format(dueDate, 'EEEE, MMMM d, yyyy')})${weekendNote}`,
           dueDate: format(dueDate, 'yyyy-MM-dd'),
           dueTime: '09:00', // Default to 9 AM
           priority: screeningTask.priority,

@@ -337,24 +337,69 @@ export default function ProgesteronePage() {
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Status</p>
-                              <p className="text-lg font-semibold text-purple-600">
-                                {cycle.readings && cycle.readings.length > 0
-                                  ? cycle.readings[0].phase
-                                  : 'No readings'}
-                              </p>
+                              {(() => {
+                                const lastMating = cycle.breedingRecords?.find((br: any) => br.isLastMating);
+                                const anyMating = cycle.breedingRecords?.[0];
+                                if (lastMating) {
+                                  return (
+                                    <>
+                                      <p className="text-lg font-semibold text-green-600">
+                                        ✅ Last Mating Done
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {format(new Date(lastMating.breedingDate), 'MMM dd, yyyy')} · {(lastMating.breedingMethod || 'natural').replace('_', ' ')}
+                                      </p>
+                                    </>
+                                  );
+                                } else if (anyMating) {
+                                  return (
+                                    <>
+                                      <p className="text-lg font-semibold text-blue-600">
+                                        🔵 Mating Recorded
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {format(new Date(anyMating.breedingDate), 'MMM dd, yyyy')} · {(anyMating.breedingMethod || 'natural').replace('_', ' ')}
+                                      </p>
+                                    </>
+                                  );
+                                } else {
+                                  return (
+                                    <p className="text-lg font-semibold text-purple-600">
+                                      {cycle.readings && cycle.readings.length > 0
+                                        ? cycle.readings[0].phase
+                                        : 'No readings'}
+                                    </p>
+                                  );
+                                }
+                              })()}
                             </div>
                           </div>
                           
-                          {cycle.estimatedOvulationDay && (
-                            <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                              <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
-                                🎯 Estimated Ovulation: Day {cycle.estimatedOvulationDay}
-                                {cycle.estimatedWhelpingDate && (
-                                  <span className="ml-4">
-                                    👶 Expected Whelping: {format(new Date(cycle.estimatedWhelpingDate), 'MMM dd, yyyy')}
-                                  </span>
-                                )}
-                              </p>
+                          {(cycle.estimatedOvulationDay || cycle.estimatedWhelpingDate || cycle.breedingRecords?.some((br: any) => br.isLastMating)) && (
+                            <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex flex-wrap gap-x-6 gap-y-1">
+                              {cycle.estimatedOvulationDay && (
+                                <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                                  🎯 Estimated Ovulation: Day {cycle.estimatedOvulationDay}
+                                </p>
+                              )}
+                              {cycle.estimatedWhelpingDate && (
+                                <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                                  👶 Expected Whelping: {format(new Date(cycle.estimatedWhelpingDate), 'MMM dd, yyyy')}
+                                </p>
+                              )}
+                              {(() => {
+                                const lastMating = cycle.breedingRecords?.find((br: any) => br.isLastMating);
+                                if (lastMating) {
+                                  const scanDate = new Date(lastMating.breedingDate);
+                                  scanDate.setDate(scanDate.getDate() + 28);
+                                  return (
+                                    <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                                      🔬 Scan Due: {format(scanDate, 'MMM dd, yyyy')}
+                                    </p>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </div>
                           )}
                         </CardContent>
