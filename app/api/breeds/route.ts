@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { breeds } from '@/lib/db/schema/animals';
-import { asc, ilike, sql } from 'drizzle-orm';
+import { asc, ilike, sql, eq } from 'drizzle-orm';
+import { DOG_BREEDS } from '@/lib/data/dog-breeds';
+import { auth } from '@/lib/auth/config';
 
 // ============================================================================
 // GET /api/breeds
@@ -12,7 +14,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
-    const limit = Number(searchParams.get('limit') || '100');
+    const limit = Number(searchParams.get('limit') || '500');
 
     const allBreeds = await db
       .select({
@@ -54,6 +56,59 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching breeds:', error);
     return NextResponse.json(
       { error: 'Failed to fetch breeds' },
+      { status: 500 }
+    );
+  }
+}
+
+// ============================================================================
+// POST /api/breeds/seed
+// ============================================================================
+// Admin-only: Seed any missing breeds from the DOG_BREEDS list
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get existing breed names
+    const existingBreeds = await db
+      .select({ name: breeds.name })
+      .from(breeds);
+    const existingNames = new Set(existingBreeds.map(b => b.name.toLowerCase()));
+
+    // Find missing breeds
+    const missingBreeds = DOG_BREEDS.filter(
+      name => !existingNames.has(name.toLowerCase())
+    );
+
+    if (missingBreeds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'All breeds already exist',
+        added: 0,
+        total: existingBreeds.length,
+      });
+    }
+
+    // Insert missing breeds
+    await db.insert(breeds).values(
+      missingBreeds.map(name => ({ name }))
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: `Added ${missingBreeds.length} missing breeds`,
+      added: missingBreeds.length,
+      addedBreeds: missingBreeds,
+      total: existingBreeds.length + missingBreeds.length,
+    });
+  } catch (error) {
+    console.error('Error seeding breeds:', error);
+    return NextResponse.json(
+      { error: 'Failed to seed breeds' },
       { status: 500 }
     );
   }
