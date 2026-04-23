@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Pencil, Trash2, Check, Clock, AlertCircle, Utensils, Dumbbell, Scissors, Scale, Sparkles, Calendar as CalendarIcon, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { stripUUIDs } from "@/lib/utils/sanitize-text";
 import type { TaskType, TaskStatus, TaskPriority } from "@/lib/types/task";
 
 interface TaskCardProps {
@@ -243,9 +244,9 @@ export function TaskCard({ task, onEdit, onDelete, onToggleComplete, onView }: T
                   {format(new Date(task.date), 'MMM dd, yyyy')}
                 </div>
 
-                {task.notes && (
+                {task.notes && stripUUIDs(task.notes) && (
                   <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                    {task.notes}
+                    {stripUUIDs(task.notes)}
                   </p>
                 )}
               </div>

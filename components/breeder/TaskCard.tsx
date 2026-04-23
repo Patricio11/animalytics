@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Clock, AlertTriangle, CheckCircle, Calendar, Eye, Pencil } from "lucide-react";
 import { format, isAfter, isBefore, addDays } from "date-fns";
+import { stripUUIDs } from "@/lib/utils/sanitize-text";
 
 interface TaskCardProps {
   id: string;
@@ -110,8 +111,8 @@ export function TaskCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {description && (
-          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{description}</p>
+        {description && stripUUIDs(description) && (
+          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{stripUUIDs(description)}</p>
         )}
 
         <div className="flex items-center justify-between">

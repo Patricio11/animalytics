@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { cn } from "@/lib/utils";
+import { stripUUIDs } from "@/lib/utils/sanitize-text";
 import type { TaskType, TaskStatus, TaskPriority } from "@/lib/types/task";
 
 interface TaskViewModalProps {
@@ -284,7 +285,7 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
           </div>
 
           {/* Notes */}
-          {task.notes && (
+          {task.notes && stripUUIDs(task.notes) && (
             <>
               <Separator />
               <div>
@@ -293,14 +294,14 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
                   Notes
                 </h3>
                 <p className="text-sm text-foreground leading-relaxed bg-muted/30 p-4 rounded-lg border border-muted">
-                  {task.notes}
+                  {stripUUIDs(task.notes)}
                 </p>
               </div>
             </>
           )}
 
           {/* Description (for old task format) */}
-          {task.description && !task.notes && (
+          {task.description && !task.notes && stripUUIDs(task.description) && (
             <>
               <Separator />
               <div>
@@ -309,7 +310,7 @@ export function TaskViewModal({ open, onOpenChange, task, onEdit }: TaskViewModa
                   Description
                 </h3>
                 <p className="text-sm text-foreground leading-relaxed bg-muted/30 p-4 rounded-lg border border-muted">
-                  {task.description}
+                  {stripUUIDs(task.description)}
                 </p>
               </div>
             </>

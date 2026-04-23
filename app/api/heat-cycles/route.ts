@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
         dueDate: format(firstTestDate, 'yyyy-MM-dd'),
         dueTime: '09:00',
         priority: 'high',
-        notes: `Heat cycle started on ${format(new Date(startDate), 'MMM dd, yyyy')}. Heat Cycle ID: ${heatCycle.id}`,
+        notes: `${bitchName} — heat cycle started on ${format(new Date(startDate), 'MMM dd, yyyy')}.`,
         taskData: {
           eventType: 'progesterone_test',
           progesteroneTestData: {

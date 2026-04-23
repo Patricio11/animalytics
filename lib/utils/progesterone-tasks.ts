@@ -62,7 +62,7 @@ export async function createProgesteroneTestTask(params: CreateProgesteroneTaskP
     dueDate: format(nextTest.date, 'yyyy-MM-dd'),
     dueTime: '09:00', // Default to 9 AM
     priority: 'high' as const,
-    notes: `Heat cycle day ${cycleDay + nextTest.days}${heatCycleId ? `. Heat Cycle ID: ${heatCycleId}` : ''}`,
+    notes: `${bitchName} — heat cycle day ${cycleDay + nextTest.days}.`,
     taskData: {
       eventType: 'progesterone_test',
       title: `Progesterone Test - Day ${cycleDay + nextTest.days}`,
