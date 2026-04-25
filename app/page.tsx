@@ -172,9 +172,9 @@ export default function LandingPage() {
       <LandingHeader />
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 lg:pt-16 lg:pb-28 overflow-hidden min-h-[85vh] flex items-center">
-        {/* Background Image */}
-        <div className="absolute inset-0">
+      <section className="relative pt-12 pb-20 lg:pt-16 lg:pb-28 min-h-[85vh] flex items-center isolate z-10">
+        {/* Background Image — clipped here, not on the whole section, so search dropdowns can overflow */}
+        <div className="absolute inset-0 overflow-hidden -z-10">
           <img
             src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1920&h=1080&fit=crop&crop=center&q=80"
             alt=""
@@ -184,19 +184,19 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
           {/* Brand color tint */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary-blue/10 via-transparent to-primary-pink/10" />
-        </div>
 
-        {/* Animated floating shapes */}
-        <motion.div
-          animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-20 left-10 w-32 h-32 bg-primary-blue/10 rounded-full blur-2xl hidden lg:block"
-        />
-        <motion.div
-          animate={{ y: [0, 20, 0], rotate: [0, -5, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-20 right-10 w-40 h-40 bg-primary-pink/10 rounded-full blur-2xl hidden lg:block"
-        />
+          {/* Animated floating shapes (inside clipped container so they don't overflow) */}
+          <motion.div
+            animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-20 left-10 w-32 h-32 bg-primary-blue/10 rounded-full blur-2xl hidden lg:block"
+          />
+          <motion.div
+            animate={{ y: [0, 20, 0], rotate: [0, -5, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute bottom-20 right-10 w-40 h-40 bg-primary-pink/10 rounded-full blur-2xl hidden lg:block"
+          />
+        </div>
 
         <div className="container relative z-10">
           <motion.div
