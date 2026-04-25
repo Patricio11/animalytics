@@ -39,7 +39,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className={`grid w-full grid-cols-2 gap-1 bg-surface shadow-card ${isAdmin ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
+          <TabsList className={`grid w-full grid-cols-3 gap-1 bg-surface shadow-card h-auto ${isAdmin ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
             <TabsTrigger value="profile" data-testid="tab-profile" className="text-xs sm:text-sm">
               <User className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Profile</span>

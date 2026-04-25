@@ -398,33 +398,33 @@ export default function TasksPage() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-surface shadow-card">
-            <TabsTrigger value="pending" className="text-xs sm:text-sm">
+          <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-5 bg-surface shadow-card h-auto p-1 gap-1 justify-start sm:justify-center">
+            <TabsTrigger value="pending" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               Pending
               <Badge variant="secondary" className="ml-1 text-xs">
                 {categorizedTasks.pending.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="progesterone" className="text-xs sm:text-sm">
+            <TabsTrigger value="progesterone" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               <Droplet className="w-3 h-3 mr-1" />
               Tests
               <Badge className="ml-1 text-xs bg-gradient-to-r from-pink-500 to-purple-600 text-white border-0">
                 {categorizedTasks.progesterone.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="overdue" className="text-xs sm:text-sm">
+            <TabsTrigger value="overdue" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               Overdue
               <Badge variant="destructive" className="ml-1 text-xs">
                 {categorizedTasks.overdue.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="due-soon" className="text-xs sm:text-sm">
+            <TabsTrigger value="due-soon" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               Due Soon
               <Badge className="ml-1 text-xs bg-chart-4 text-white">
                 {categorizedTasks.dueSoon.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="completed" className="text-xs sm:text-sm">
+            <TabsTrigger value="completed" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               Completed
               <Badge className="ml-1 text-xs bg-chart-3 text-white">
                 {categorizedTasks.completed.length}
