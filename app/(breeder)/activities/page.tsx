@@ -195,11 +195,10 @@ export default function Activities() {
         <TabsContent value="activities" className="space-y-6">
           {/* Category Tabs */}
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1">
+            <TabsList className="flex w-full overflow-x-auto lg:grid lg:grid-cols-7 gap-1 h-auto p-1 justify-start lg:justify-center">
               {categoryTabs.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value} className="text-xs sm:text-sm">
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                <TabsTrigger key={tab.value} value={tab.value} className="text-xs sm:text-sm whitespace-nowrap shrink-0 lg:shrink">
+                  {tab.label}
                   <Badge variant="secondary" className="ml-1 text-xs">
                     {tab.count}
                   </Badge>

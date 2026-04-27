@@ -451,8 +451,8 @@ export default function SellerSalesPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-lg">
-            <TabsTrigger value="pending" className="relative">
+          <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-4 sm:max-w-lg h-auto p-1 gap-1 justify-start sm:justify-center">
+            <TabsTrigger value="pending" className="relative whitespace-nowrap shrink-0 sm:shrink">
               Pending
               {pendingSales.length > 0 && (
                 <Badge variant="destructive" className="ml-2 h-5 px-1.5">
@@ -460,7 +460,7 @@ export default function SellerSalesPage() {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="active">
+            <TabsTrigger value="active" className="whitespace-nowrap shrink-0 sm:shrink">
               Active
               {activeSales.length > 0 && (
                 <Badge variant="secondary" className="ml-2 h-5 px-1.5">
@@ -468,8 +468,8 @@ export default function SellerSalesPage() {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+            <TabsTrigger value="completed" className="whitespace-nowrap shrink-0 sm:shrink">Completed</TabsTrigger>
+            <TabsTrigger value="cancelled" className="whitespace-nowrap shrink-0 sm:shrink">Cancelled</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pending" className="space-y-4">
