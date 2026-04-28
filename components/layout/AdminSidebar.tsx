@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   BadgeCheck,
   PawPrint,
+  Flag,
 } from "lucide-react";
 import {
   Sidebar,
@@ -58,6 +59,12 @@ const adminNavItems = [
     url: "/admin/marketplace",
     icon: ShieldCheck,
     description: "Moderate listings",
+  },
+  {
+    title: "Feature Flags",
+    url: "/admin/feature-flags",
+    icon: Flag,
+    description: "Enable or disable platform features",
   },
   {
     title: "Settings",

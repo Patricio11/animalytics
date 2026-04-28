@@ -15,8 +15,17 @@ import {
   SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 import { useRealtimeMessaging } from "@/hooks/useRealtimeMessaging";
+import { useFeatureFlags, type FeatureFlagKey } from "@/lib/hooks/useFeatureFlags";
 
-const menuItems = [
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: any;
+  badge?: boolean;
+  flag?: FeatureFlagKey;
+};
+
+const menuItems: MenuItem[] = [
   {
     title: "Dashboard",
     url: "/pet-owner/dashboard",
@@ -36,22 +45,26 @@ const menuItems = [
     title: "Marketplace",
     url: "/marketplace",
     icon: Store,
+    flag: "marketplace",
   },
   {
     title: "Messages",
     url: "/pet-owner/messages",
     icon: MessageSquare,
-    badge: true, // Will show unread count
+    badge: true,
+    flag: "messaging",
   },
   {
     title: "My Purchases",
     url: "/pet-owner/purchases",
     icon: ShoppingBag,
+    flag: "marketplace",
   },
   {
     title: "Saved Listings",
     url: "/pet-owner/saved",
     icon: Heart,
+    flag: "wishlist",
   },
 ];
 
@@ -80,10 +93,14 @@ const secondaryItems = [
 
 export function PetOwnerSidebar() {
   const pathname = usePathname();
+  const { data: flags } = useFeatureFlags();
 
   // Real-time messaging updates using SSE
   // For pet owners: show all messages (both as pet owner and seller)
   const { unreadCount } = useRealtimeMessaging();
+
+  const isFlagAllowed = (flag?: FeatureFlagKey) => !flag || flags?.[flag] !== false;
+  const filteredMenuItems = menuItems.filter((item) => isFlagAllowed(item.flag));
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-surface shadow-card">
@@ -104,7 +121,7 @@ export function PetOwnerSidebar() {
           <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3 py-2 uppercase tracking-wider">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1 group-data-[collapsible=icon]:gap-2">
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url || pathname.startsWith(item.url + '/')} tooltip={item.title}>
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>

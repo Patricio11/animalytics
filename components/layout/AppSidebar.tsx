@@ -16,8 +16,17 @@ import {
   SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 import { useRealtimeMessagingConditional } from "@/hooks/useRealtimeMessaging";
+import { useFeatureFlags, type FeatureFlagKey } from "@/lib/hooks/useFeatureFlags";
 
-const menuItems = [
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: any;
+  badge?: boolean;
+  flag?: FeatureFlagKey;
+};
+
+const menuItems: MenuItem[] = [
   {
     title: "Dashboard",
     url: "/dashboard",
@@ -32,17 +41,14 @@ const menuItems = [
     title: "Pedigree",
     url: "/pedigree",
     icon: GitBranch,
+    flag: "pedigree",
   },
   {
     title: "Mating Calculator",
     url: "/calculators",
     icon: Calculator,
+    flag: "calculators",
   },
-  // {
-  //   title: "Reports",
-  //   url: "/reports",
-  //   icon: Activity,
-  // },
   {
     title: "Tasks",
     url: "/tasks",
@@ -52,54 +58,48 @@ const menuItems = [
     title: "Marketplace",
     url: "/marketplace",
     icon: ShoppingBag,
+    flag: "marketplace",
   },
   {
     title: "Messages",
     url: "/messages",
     icon: MessageSquare,
     badge: true,
+    flag: "messaging",
   },
   {
     title: "My Purchases",
     url: "/purchases",
     icon: ShoppingBag,
+    flag: "marketplace",
   },
   {
     title: "Saved Listings",
     url: "/saved",
     icon: Heart,
+    flag: "wishlist",
   },
   {
     title: "My Sales",
     url: "/sales",
     icon: DollarSign,
+    flag: "marketplace",
   },
 ];
 
-const secondaryItems = [
-  // TODO: Implement Wallet feature
-  // {
-  //   title: "Wallet",
-  //   url: "/wallet",
-  //   icon: Wallet,
-  // },
-
+const secondaryItems: MenuItem[] = [
   {
     title: "Verification",
     url: "/verification",
     icon: BadgeCheck,
+    flag: "verification",
   },
   {
     title: "Breeders",
     url: "/breeders",
     icon: Users,
+    flag: "breeders_directory",
   },
-  // TODO: Implement Documents feature
-  // {
-  //   title: "Documents",
-  //   url: "/documents",
-  //   icon: FileText,
-  // },
   {
     title: "Settings",
     url: "/settings",
@@ -109,9 +109,13 @@ const secondaryItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { data: flags } = useFeatureFlags();
   const [hasPurchases, setHasPurchases] = useState(false);
   const [hasSales, setHasSales] = useState(false);
   const [hasSavedListings, setHasSavedListings] = useState(false);
+
+  // Helper: check if a menu item is allowed by its feature flag (defaults to true)
+  const isFlagAllowed = (flag?: FeatureFlagKey) => !flag || flags?.[flag] !== false;
 
   // Real-time messaging updates using SSE
   // For breeders: only show buyer messages (when they're purchasing from others)
@@ -152,22 +156,25 @@ export function AppSidebar() {
     checkUserData();
   }, []);
 
-  // Filter menu items - only show if user has relevant data
+  // Filter menu items - hide if feature flag disabled OR if user has no relevant data
   const filteredMenuItems = menuItems.filter(item => {
+    if (!isFlagAllowed(item.flag)) return false;
     if (item.title === 'Messages') {
-      return hasConversations; // Only show if breeder has conversations
+      return hasConversations;
     }
     if (item.title === 'My Purchases') {
-      return hasPurchases; // Only show if breeder has purchases (as buyer)
+      return hasPurchases;
     }
     if (item.title === 'My Sales') {
-      return hasSales; // Only show if breeder has sales (as seller)
+      return hasSales;
     }
     if (item.title === 'Saved Listings') {
-      return hasSavedListings; // Only show if breeder has saved listings
+      return hasSavedListings;
     }
-    return true; // Show all other items
+    return true;
   });
+
+  const filteredSecondaryItems = secondaryItems.filter(item => isFlagAllowed(item.flag));
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-surface shadow-card">
@@ -211,7 +218,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3 py-2 uppercase tracking-wider">Tools</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1 group-data-[collapsible=icon]:gap-2">
-              {secondaryItems.map((item) => (
+              {filteredSecondaryItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>

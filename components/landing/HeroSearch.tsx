@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef, FormEvent } from "react";
+import { useState, useEffect, useRef, useMemo, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, PawPrint, Users, ShoppingBag, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFeatureFlags } from "@/lib/hooks/useFeatureFlags";
 
 type Category = "animals" | "breeders" | "marketplace";
 
-const categories: { id: Category; label: string; icon: React.ElementType; path: string; placeholder: string }[] = [
-  { id: "animals", label: "Animals", icon: PawPrint, path: "/explore", placeholder: "Breed, name or keyword..." },
-  { id: "breeders", label: "Breeders", icon: Users, path: "/breeders", placeholder: "Breeder name or specialty..." },
-  { id: "marketplace", label: "Marketplace", icon: ShoppingBag, path: "/marketplace", placeholder: "Puppies, stud dogs, services..." },
+const ALL_CATEGORIES: { id: Category; label: string; icon: React.ElementType; path: string; placeholder: string; flag: string }[] = [
+  { id: "animals", label: "Animals", icon: PawPrint, path: "/explore", placeholder: "Breed, name or keyword...", flag: "public_animals" },
+  { id: "breeders", label: "Breeders", icon: Users, path: "/breeders", placeholder: "Breeder name or specialty...", flag: "breeders_directory" },
+  { id: "marketplace", label: "Marketplace", icon: ShoppingBag, path: "/marketplace", placeholder: "Puppies, stud dogs, services...", flag: "marketplace" },
 ];
 
 // Popular locations for suggestions
@@ -54,6 +55,14 @@ interface HeroSearchProps {
 
 export function HeroSearch({ className, defaultCategory = "animals" }: HeroSearchProps) {
   const router = useRouter();
+  const { data: flags } = useFeatureFlags();
+
+  // Filter categories based on feature flags. Defaults to enabled while flags load.
+  const categories = useMemo(
+    () => ALL_CATEGORIES.filter((c) => flags?.[c.flag as keyof typeof flags] !== false),
+    [flags]
+  );
+
   const [category, setCategory] = useState<Category>(defaultCategory);
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
@@ -63,7 +72,17 @@ export function HeroSearch({ className, defaultCategory = "animals" }: HeroSearc
   const searchRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLDivElement>(null);
 
-  const activeCategory = categories.find((c) => c.id === category)!;
+  // If the active category was disabled, fall back to the first enabled one
+  useEffect(() => {
+    if (categories.length > 0 && !categories.find((c) => c.id === category)) {
+      setCategory(categories[0].id);
+    }
+  }, [categories, category]);
+
+  const activeCategory = categories.find((c) => c.id === category) ?? categories[0];
+
+  // If no categories are enabled, render nothing
+  if (!activeCategory) return null;
 
   // Breed suggestions for search field
   const { data: breedData, isLoading: breedsLoading } = useBreedSuggestions(

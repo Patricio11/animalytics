@@ -4,17 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import { useFeatureFlags } from "@/lib/hooks/useFeatureFlags";
 
 export function LandingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: flags } = useFeatureFlags();
 
   const navLinks = [
-    { href: "/explore", label: "Animals" },
-    { href: "/breeders", label: "Breeders" },
-    { href: "/marketplace", label: "Marketplace" },
+    { href: "/explore", label: "Animals", flag: "public_animals" as const },
+    { href: "/breeders", label: "Breeders", flag: "breeders_directory" as const },
+    { href: "/marketplace", label: "Marketplace", flag: "marketplace" as const },
     { href: "/#features", label: "Features", external: true },
     { href: "/#testimonials", label: "Reviews", external: true },
-  ];
+  ].filter((link) => !link.flag || flags?.[link.flag] !== false);
 
   return (
     <header className="border-b bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60 sticky top-0 z-50">
