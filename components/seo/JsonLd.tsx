@@ -12,6 +12,7 @@ export function OrganizationJsonLd() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': `${baseUrl}/#organization`,
     name: 'Animalytics',
     url: baseUrl,
     logo: `${baseUrl}/animalytics.png`,
@@ -20,8 +21,85 @@ export function OrganizationJsonLd() {
       '@type': 'ContactPoint',
       email: 'support@animalytics.co',
       contactType: 'customer service',
+      availableLanguage: ['English'],
+      areaServed: 'Worldwide',
     },
+    // Add LinkedIn / X / Facebook URLs here when the brand goes live
     sameAs: [],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
+// Service structured data — describes the core offering, links to Organization
+export function ServiceJsonLd() {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://animalytics.co';
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    '@id': `${baseUrl}/#service`,
+    name: 'Animalytics — Breeding & Animal Management Platform',
+    serviceType: 'Breeding management software',
+    description:
+      'A complete platform for professional dog breeders to manage breeding records, track heat cycles and progesterone readings, build pedigree trees, list animals on the marketplace, and connect with buyers worldwide.',
+    provider: {
+      '@type': 'Organization',
+      '@id': `${baseUrl}/#organization`,
+      name: 'Animalytics',
+      url: baseUrl,
+    },
+    areaServed: {
+      '@type': 'GeoShape',
+      addressCountry: 'Worldwide',
+    },
+    audience: {
+      '@type': 'Audience',
+      audienceType: 'Professional dog breeders and pet owners',
+    },
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Breeder Tools',
+      itemListElement: [
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Pedigree Tree & AI Pedigree Scanner',
+            description: 'Build multi-generation pedigree trees, manually or via AI extraction from paper certificates.',
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Progesterone & Heat Cycle Tracking',
+            description: 'Track progesterone readings, detect ovulation, calculate breeding windows and predict whelping dates.',
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Mating & Conception Calculator',
+            description: 'Plan matings with compatibility analysis, then rate conception likelihood with our scoring tool.',
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Marketplace & Verified Breeder Directory',
+            description: 'List puppies, stud services and frozen semen. Browse verified breeders worldwide.',
+          },
+        },
+      ],
+    },
   };
 
   return (

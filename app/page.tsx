@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LandingHeader } from "@/components/layout/LandingHeader";
 import { HeroSearch } from "@/components/landing/HeroSearch";
-import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
+import { FaqSection } from "@/components/landing/FaqSection";
+import { OrganizationJsonLd, WebsiteJsonLd, ServiceJsonLd } from "@/components/seo/JsonLd";
 import { authClient } from "@/lib/auth/client";
 import {
   PawPrint,
@@ -169,6 +170,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background">
       <OrganizationJsonLd />
       <WebsiteJsonLd />
+      <ServiceJsonLd />
       <LandingHeader />
 
       {/* Hero Section */}
@@ -765,6 +767,9 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* FAQ Section — FAQPage JSON-LD inlined for rich snippets */}
+      <FaqSection />
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-brand">
