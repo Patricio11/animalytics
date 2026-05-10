@@ -5,6 +5,12 @@ import { TaskCard } from "@/components/breeder/tasks/TaskCard";
 import { TaskDialog } from "@/components/breeder/tasks/TaskDialog";
 import { TaskViewModal } from "@/components/breeder/tasks/TaskViewModal";
 import { PuppyFeedingGenerator } from "@/components/breeder/tasks/PuppyFeedingGenerator";
+import { TasksHero } from "@/components/breeder/tasks/TasksHero";
+import { TasksEmptyState } from "@/components/breeder/tasks/TasksEmptyState";
+import { AnimatedCount } from "@/components/breeder/tasks/AnimatedCount";
+import { TasksCalendar } from "@/components/breeder/tasks/TasksCalendar";
+import { TasksDaySheet } from "@/components/breeder/tasks/TasksDaySheet";
+import { TasksViewToggle, type TasksView } from "@/components/breeder/tasks/TasksViewToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,11 +18,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby, Loader2, AlertCircle as AlertCircleIcon, Droplet } from "lucide-react";
+import { CheckSquare, Plus, Search, Clock, AlertTriangle, CheckCircle, Baby, Loader2, AlertCircle as AlertCircleIcon, Droplet, Sun } from "lucide-react";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useCompleteTask } from "@/lib/api/queries/tasks";
 import { useAnimals } from "@/lib/api/queries/animals";
+import { useAuth } from "@/lib/auth/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSearchParams, useRouter } from "next/navigation";
+import { fireConfetti, fireBigCelebration } from "@/lib/utils/confetti";
+import { isToday, format, isSameDay } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TasksPage() {
   const searchParams = useSearchParams();
@@ -28,7 +38,12 @@ export default function TasksPage() {
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showPuppyGenerator, setShowPuppyGenerator] = useState(false);
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("today");
+  const [view, setView] = useState<TasksView>("calendar");
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [showDaySheet, setShowDaySheet] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [viewingTask, setViewingTask] = useState<any | undefined>();
   const [showTaskView, setShowTaskView] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
@@ -38,14 +53,62 @@ export default function TasksPage() {
   const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useTasks();
   const { data: animalsData } = useAnimals();
 
-  // Check for progesterone filter from URL
+  // Check for progesterone filter + view from URL
   useEffect(() => {
     const filter = searchParams.get('filter');
     if (filter === 'progesterone') {
       setActiveTab('progesterone');
       setFilterType('event');
     }
+    const v = searchParams.get('view');
+    if (v === 'calendar' || v === 'list') setView(v);
   }, [searchParams]);
+
+  // Reflect view changes back into the URL so refresh keeps the chosen mode
+  // Calendar is the default, so only `?view=list` is added explicitly.
+  const handleViewChange = (next: TasksView) => {
+    setView(next);
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === 'list') params.set('view', 'list');
+    else params.delete('view');
+    const qs = params.toString();
+    router.replace(`/tasks${qs ? `?${qs}` : ''}`, { scroll: false });
+  };
+
+  // Drag-to-reschedule handler — uses the existing PATCH route via updateTask
+  const handleTaskMoved = async (taskId: string, newDate: Date) => {
+    const newDateStr = format(newDate, 'yyyy-MM-dd');
+    const isOnWeekend = newDate.getDay() === 0 || newDate.getDay() === 6;
+
+    try {
+      await updateTaskMutation.mutateAsync({
+        id: taskId,
+        data: { dueDate: newDateStr },
+      });
+      toast({
+        title: 'Task rescheduled',
+        description: `Moved to ${format(newDate, 'EEEE, MMM d')}${isOnWeekend ? ' (weekend)' : ''}.`,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to reschedule',
+        description: 'Please try again.',
+      });
+    }
+  };
+
+  // Open the day sheet for a specific calendar cell
+  const handleSelectDay = (date: Date) => {
+    setSelectedDay(date);
+    setShowDaySheet(true);
+  };
+
+  // Tasks for the selected day (sheet uses unfiltered list since user clicked a specific date)
+  const tasksForSelectedDay = useMemo(() => {
+    if (!selectedDay || !tasksData) return [];
+    return tasksData.filter((t: any) => t.dueDate && isSameDay(new Date(t.dueDate), selectedDay));
+  }, [selectedDay, tasksData]);
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
@@ -159,8 +222,23 @@ export default function TasksPage() {
 
   const handleToggleComplete = async (taskId: string | { id: string }) => {
     const id = typeof taskId === 'string' ? taskId : taskId.id;
+
+    // Was this task incomplete before? (so we only celebrate transitions to "complete")
+    const beforeTask = (tasksData || []).find((t: any) => t.id === id);
+    const wasIncomplete = beforeTask && !beforeTask.completedAt;
+
     try {
       await completeTaskMutation.mutateAsync(id);
+
+      if (wasIncomplete) {
+        // Was this the last incomplete task for today? Big celebration. Otherwise small burst.
+        const remainingToday = categorizedTasks.today.filter((t: any) => t.id !== id).length;
+        if (categorizedTasks.today.length > 0 && remainingToday === 0) {
+          fireBigCelebration();
+        } else {
+          fireConfetti();
+        }
+      }
     } catch (error) {
       console.error('Failed to complete task:', error);
     }
@@ -219,7 +297,16 @@ export default function TasksPage() {
     // Filter progesterone tasks
     const progesteroneTasks = filteredTasks.filter((t: any) => isProgesteroneTask(t));
 
+    // Today = anything due today (incomplete) + anything overdue (still actionable today)
+    const todayTasks = filteredTasks.filter((t: any) => {
+      if (t.completedAt) return false;
+      if (!t.dueDate) return false;
+      const due = new Date(t.dueDate);
+      return isToday(due) || due <= now;
+    });
+
     return {
+      today: todayTasks,
       pending: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) > now),
       overdue: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) <= now),
       dueSoon: filteredTasks.filter((t: any) => !t.completedAt && new Date(t.dueDate) <= threeDaysFromNow && new Date(t.dueDate) > now),
@@ -269,33 +356,6 @@ export default function TasksPage() {
     recurring: !!task.recurringPattern,
   });
 
-  const taskStats = [
-    {
-      label: "Total Tasks",
-      value: tasksData?.length || 0,
-      icon: CheckSquare,
-      color: "text-foreground"
-    },
-    {
-      label: "Pending",
-      value: taskCounts.pending,
-      icon: Clock,
-      color: "text-chart-4"
-    },
-    {
-      label: "Overdue",
-      value: taskCounts.overdue,
-      icon: AlertTriangle,
-      color: "text-destructive"
-    },
-    {
-      label: "Completed",
-      value: taskCounts.completed,
-      icon: CheckCircle,
-      color: "text-chart-3"
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-surface-secondary">
       <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
@@ -325,27 +385,12 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {taskStats.map((stat, index) => {
-            const IconComponent = stat.icon;
-            return (
-              <Card key={index} className="hover-elevate shadow-card bg-surface border-0">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center gap-3">
-                    <div className={`${stat.color} p-2 rounded-lg bg-gradient-subtle`}>
-                      <IconComponent className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</div>
-                      <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {/* Hero — greeting, streak, weekly chart */}
+        <TasksHero
+          tasks={tasksData || []}
+          userName={user?.name}
+          overdueCount={taskCounts.overdue}
+        />
 
         {/* Puppy Feeding Generator */}
         {showPuppyGenerator && (
@@ -353,6 +398,11 @@ export default function TasksPage() {
             onGenerateTasks={handleGeneratePuppyTasks}
           />
         )}
+
+        {/* View toggle — list vs calendar */}
+        <div className="flex justify-end">
+          <TasksViewToggle value={view} onChange={handleViewChange} />
+        </div>
 
         {/* Filters */}
         <Card className="shadow-card bg-surface border-0">
@@ -396,41 +446,71 @@ export default function TasksPage() {
           </CardContent>
         </Card>
 
-        {/* Main Content */}
+        {/* Main Content — calendar or list */}
+        {view === 'calendar' ? (
+          <TasksCalendar
+            tasks={filteredTasks}
+            onSelectDay={handleSelectDay}
+            onTaskMoved={handleTaskMoved}
+          />
+        ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-5 bg-surface shadow-card h-auto p-1 gap-1 justify-start sm:justify-center">
+          <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-6 bg-surface shadow-card h-auto p-1 gap-1 justify-start sm:justify-center">
+            <TabsTrigger value="today" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
+              <Sun className="w-3 h-3 mr-1" />
+              Today
+              <Badge className="ml-1 text-xs bg-gradient-brand text-white border-0 min-w-[1.5rem]">
+                <AnimatedCount value={categorizedTasks.today.length} />
+              </Badge>
+            </TabsTrigger>
             <TabsTrigger value="pending" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               Pending
-              <Badge variant="secondary" className="ml-1 text-xs">
-                {categorizedTasks.pending.length}
+              <Badge variant="secondary" className="ml-1 text-xs min-w-[1.5rem]">
+                <AnimatedCount value={categorizedTasks.pending.length} />
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="progesterone" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               <Droplet className="w-3 h-3 mr-1" />
               Tests
-              <Badge className="ml-1 text-xs bg-gradient-to-r from-pink-500 to-purple-600 text-white border-0">
-                {categorizedTasks.progesterone.length}
+              <Badge className="ml-1 text-xs bg-gradient-to-r from-pink-500 to-purple-600 text-white border-0 min-w-[1.5rem]">
+                <AnimatedCount value={categorizedTasks.progesterone.length} />
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="overdue" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               Overdue
-              <Badge variant="destructive" className="ml-1 text-xs">
-                {categorizedTasks.overdue.length}
+              <Badge variant="destructive" className="ml-1 text-xs min-w-[1.5rem]">
+                <AnimatedCount value={categorizedTasks.overdue.length} />
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="due-soon" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               Due Soon
-              <Badge className="ml-1 text-xs bg-chart-4 text-white">
-                {categorizedTasks.dueSoon.length}
+              <Badge className="ml-1 text-xs bg-chart-4 text-white min-w-[1.5rem]">
+                <AnimatedCount value={categorizedTasks.dueSoon.length} />
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="completed" className="text-xs sm:text-sm whitespace-nowrap shrink-0 sm:shrink">
               Completed
-              <Badge className="ml-1 text-xs bg-chart-3 text-white">
-                {categorizedTasks.completed.length}
+              <Badge className="ml-1 text-xs bg-chart-3 text-white min-w-[1.5rem]">
+                <AnimatedCount value={categorizedTasks.completed.length} />
               </Badge>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="today" className="space-y-4">
+            {categorizedTasks.today.map((task: any) => (
+              <TaskCard
+                key={task.id}
+                task={transformTask(task) as any}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleComplete={handleToggleComplete}
+                onView={handleView}
+              />
+            ))}
+            {categorizedTasks.today.length === 0 && (
+              <TasksEmptyState kind="today" onCreateTask={handleCreateNew} />
+            )}
+          </TabsContent>
 
           <TabsContent value="pending" className="space-y-4">
             {categorizedTasks.pending.map((task: any) => (
@@ -444,11 +524,7 @@ export default function TasksPage() {
               />
             ))}
             {categorizedTasks.pending.length === 0 && (
-              <div className="text-center py-12">
-                <CheckSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No pending tasks</h3>
-                <p className="text-muted-foreground">All caught up!</p>
-              </div>
+              <TasksEmptyState kind="pending" onCreateTask={handleCreateNew} />
             )}
           </TabsContent>
 
@@ -463,13 +539,7 @@ export default function TasksPage() {
                 onView={handleView}
               />
             ))}
-            {categorizedTasks.progesterone.length === 0 && (
-              <div className="text-center py-12">
-                <Droplet className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No progesterone tests scheduled</h3>
-                <p className="text-muted-foreground">Start a heat cycle to schedule tests</p>
-              </div>
-            )}
+            {categorizedTasks.progesterone.length === 0 && <TasksEmptyState kind="tests" />}
           </TabsContent>
 
           <TabsContent value="overdue" className="space-y-4">
@@ -483,13 +553,7 @@ export default function TasksPage() {
                 onView={handleView}
               />
             ))}
-            {categorizedTasks.overdue.length === 0 && (
-              <div className="text-center py-12">
-                <AlertTriangle className="w-12 h-12 text-chart-3 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No overdue tasks</h3>
-                <p className="text-muted-foreground">You&apos;re staying on top of your schedule!</p>
-              </div>
-            )}
+            {categorizedTasks.overdue.length === 0 && <TasksEmptyState kind="overdue" />}
           </TabsContent>
 
           <TabsContent value="due-soon" className="space-y-4">
@@ -503,13 +567,7 @@ export default function TasksPage() {
                 onView={handleView}
               />
             ))}
-            {categorizedTasks.dueSoon.length === 0 && (
-              <div className="text-center py-12">
-                <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No tasks due soon</h3>
-                <p className="text-muted-foreground">You have some breathing room.</p>
-              </div>
-            )}
+            {categorizedTasks.dueSoon.length === 0 && <TasksEmptyState kind="due-soon" />}
           </TabsContent>
 
           <TabsContent value="completed" className="space-y-4">
@@ -523,16 +581,37 @@ export default function TasksPage() {
                 onView={handleView}
               />
             ))}
-            {categorizedTasks.completed.length === 0 && (
-              <div className="text-center py-12">
-                <CheckCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No completed tasks</h3>
-                <p className="text-muted-foreground">Completed tasks will appear here.</p>
-              </div>
-            )}
+            {categorizedTasks.completed.length === 0 && <TasksEmptyState kind="completed" />}
           </TabsContent>
         </Tabs>
+        )}
       </div>
+
+      {/* Day detail sheet — opened by clicking a day in calendar view */}
+      <TasksDaySheet
+        open={showDaySheet}
+        onOpenChange={setShowDaySheet}
+        date={selectedDay}
+        tasks={tasksForSelectedDay}
+        transformTask={transformTask}
+        onEdit={(task) => {
+          setShowDaySheet(false);
+          handleEdit(task);
+        }}
+        onDelete={handleDelete}
+        onToggleComplete={handleToggleComplete}
+        onView={(task) => {
+          setShowDaySheet(false);
+          handleView(task);
+        }}
+        onCreateTask={(date) => {
+          setShowDaySheet(false);
+          // Pre-fill the create dialog with the selected date
+          setEditingTask({ dueDate: format(date, 'yyyy-MM-dd') });
+          setDialogMode('create');
+          setDialogOpen(true);
+        }}
+      />
 
       {/* Task Dialog */}
       <TaskDialog

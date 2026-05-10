@@ -186,6 +186,16 @@ export function TaskDialog({
 
     if (!date) newErrors.date = 'Date is required';
 
+    // When creating, block past dates (allow today and future)
+    if (mode === 'create' && date) {
+      const picked = new Date(date + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (picked < today) {
+        newErrors.date = 'Date cannot be in the past';
+      }
+    }
+
     switch (taskType) {
       case 'feeding':
         if (!animalId) newErrors.animalId = 'Please select an animal';
@@ -438,6 +448,8 @@ export function TaskDialog({
               date={date ? new Date(date + 'T00:00:00') : undefined}
               onDateChange={(d) => setDate(d ? format(d, 'yyyy-MM-dd') : '')}
               className="bg-background border-primary/20"
+              // When creating, block past dates. When editing, allow any date so existing past tasks stay editable.
+              minDate={mode === 'create' ? new Date() : undefined}
             />
             {errors.date && <p className="text-sm text-destructive">{errors.date}</p>}
           </div>
