@@ -332,8 +332,8 @@ export default function AdminUserDetailPage({
                   )}
                 </div>
               </div>
-              {/* Notify User Button */}
-              {user.createdByAdmin && !user.credentialsNotifiedAt && (
+              {/* Send / Resend Credentials Button — always available for admin-created users */}
+              {user.createdByAdmin && (
                 <div className="ml-auto">
                   <Button
                     onClick={() => notifyUserMutation.mutate()}
@@ -341,7 +341,11 @@ export default function AdminUserDetailPage({
                     className="bg-gradient-brand"
                   >
                     <Send className="w-4 h-4 mr-2" />
-                    {notifyUserMutation.isPending ? 'Sending...' : 'Notify User'}
+                    {notifyUserMutation.isPending
+                      ? 'Sending...'
+                      : user.credentialsNotifiedAt
+                      ? 'Resend Credentials'
+                      : 'Send Credentials'}
                   </Button>
                 </div>
               )}

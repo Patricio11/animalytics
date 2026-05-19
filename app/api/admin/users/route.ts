@@ -161,6 +161,8 @@ export async function POST(request: NextRequest) {
       specializations,
       isVerified = false,
       breedIds,
+      // When false, skip the welcome email — admin can send it later via "Send / Resend Credentials"
+      sendWelcomeEmail = true,
     } = body;
 
     // Validate required fields
@@ -208,7 +210,8 @@ export async function POST(request: NextRequest) {
         emailVerified: true, // Admin-created users have verified email (admin vouches)
         createdByAdmin: true,
         temporaryPassword: hashedPassword, // Store hashed password
-        credentialsNotifiedAt: new Date(), // Will send email now
+        // Only stamp the notification time if we're actually sending it now
+        credentialsNotifiedAt: sendWelcomeEmail ? new Date() : null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -237,8 +240,9 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
-    // Send welcome email with login credentials
+    // Send welcome email with login credentials (only if requested by admin)
     const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3000'}/auth/signin`;
+    if (sendWelcomeEmail) {
     try {
       await sendEmail({
         to: email,
@@ -322,6 +326,9 @@ export async function POST(request: NextRequest) {
       console.error('❌ Failed to send welcome email:', emailError);
       // Don't fail user creation if email fails
     }
+    } else {
+      console.log(`ℹ️  Welcome email skipped for ${email} — admin opted out. Use "Send / Resend Credentials" to send later.`);
+    }
 
     // Save breed preferences if user is a breeder and selected breeds
     if (role === 'breeder' && breedIds && Array.isArray(breedIds) && breedIds.length > 0) {
@@ -366,8 +373,11 @@ export async function POST(request: NextRequest) {
       credentials: {
         email: newUser.email,
         temporaryPassword,
-        message: 'User created successfully. Click "Notify User" to send welcome email with credentials.',
+        message: sendWelcomeEmail
+          ? 'User created and welcome email sent.'
+          : 'User created. Welcome email was NOT sent — use "Send / Resend Credentials" to send it later.',
       },
+      welcomeEmailSent: sendWelcomeEmail,
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating user:', error);

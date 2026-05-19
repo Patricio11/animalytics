@@ -118,6 +118,7 @@ export default function AdminUsersPage() {
     organization: "",
     licenseNumber: "",
     isVerified: false,
+    sendWelcomeEmail: true,
   });
 
   // Fetch breeds for breed selector
@@ -406,6 +407,7 @@ export default function AdminUsersPage() {
                 organization: "",
                 licenseNumber: "",
                 isVerified: false,
+                sendWelcomeEmail: true,
               });
               setNewUserCredentials(null);
               setShowCreateDialog(true);
@@ -852,6 +854,26 @@ export default function AdminUsersPage() {
                   <Label htmlFor="isVerified" className="cursor-pointer">
                     Mark as verified
                   </Label>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border border-border/60">
+                  <input
+                    type="checkbox"
+                    id="sendWelcomeEmail"
+                    checked={formData.sendWelcomeEmail}
+                    onChange={(e) => setFormData({ ...formData, sendWelcomeEmail: e.target.checked })}
+                    className="rounded mt-1"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="sendWelcomeEmail" className="cursor-pointer font-medium">
+                      Send welcome email with login credentials
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formData.sendWelcomeEmail
+                        ? "The user will receive an email with their temporary password right after creation."
+                        : "No email will be sent now. You can send it later via \"Send / Resend Credentials\" on the user detail page."}
+                    </p>
+                  </div>
                 </div>
 
                 <DialogFooter>
