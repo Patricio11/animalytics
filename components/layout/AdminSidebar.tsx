@@ -12,6 +12,7 @@ import {
   BadgeCheck,
   PawPrint,
   Flag,
+  Mail,
 } from "lucide-react";
 import {
   Sidebar,
@@ -65,6 +66,12 @@ const adminNavItems = [
     url: "/admin/feature-flags",
     icon: Flag,
     description: "Enable or disable platform features",
+  },
+  {
+    title: "Email Templates",
+    url: "/admin/email-templates",
+    icon: Mail,
+    description: "Edit every email the platform sends",
   },
   {
     title: "Settings",

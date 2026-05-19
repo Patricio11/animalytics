@@ -26,3 +26,4 @@ export * from './clinic-staff';
 export * from './vet-invitations';
 export * from './boost';
 export * from './feature-flags';
+export * from './email-templates';

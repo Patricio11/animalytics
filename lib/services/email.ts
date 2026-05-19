@@ -253,6 +253,24 @@ export async function sendWelcomeCredentialsEmail(
   }
 ): Promise<boolean> {
   const { name, temporaryPassword, loginUrl } = data;
+
+  // Try the admin-editable template first; fall back to the hardcoded default below
+  try {
+    const { renderEmailTemplate } = await import('@/lib/services/email-templates');
+    const rendered = await renderEmailTemplate('welcome_credentials', {
+      name,
+      email: to,
+      temporaryPassword,
+      loginUrl,
+    });
+    if (rendered) {
+      return sendEmail({ to, subject: rendered.subject, html: rendered.html });
+    }
+  } catch (err) {
+    // If the template lookup blows up, keep onboarding working with the default below
+    console.error('Welcome template lookup failed, using hardcoded default:', err);
+  }
+
   const html = `<!DOCTYPE html>
 <html>
 <head>
