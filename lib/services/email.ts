@@ -240,6 +240,105 @@ export async function sendNewMessageEmail(
   });
 }
 
+/**
+ * Send welcome email with login credentials to an admin-created user.
+ * Used by both the create-user flow and the bulk-notify flow.
+ */
+export async function sendWelcomeCredentialsEmail(
+  to: string,
+  data: {
+    name: string;
+    temporaryPassword: string;
+    loginUrl: string;
+  }
+): Promise<boolean> {
+  const { name, temporaryPassword, loginUrl } = data;
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .credentials-box { background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .credential-item { margin: 15px 0; }
+    .credential-label { font-weight: bold; color: #667eea; }
+    .credential-value { font-family: monospace; background: #f3f4f6; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 5px; }
+    .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+    .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+    .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Welcome to Animalytics!</h1>
+      <p>Your account has been created and is ready to use</p>
+    </div>
+    <div class="content">
+      <p>Hello ${name},</p>
+      <p>Your Animalytics account has been set up by our admin team. We're excited to have you join our platform!</p>
+      <div class="credentials-box">
+        <h3 style="margin-top: 0; color: #667eea;">Your Login Credentials</h3>
+        <div class="credential-item">
+          <div class="credential-label">Email:</div>
+          <div class="credential-value">${to}</div>
+        </div>
+        <div class="credential-item">
+          <div class="credential-label">Temporary Password:</div>
+          <div class="credential-value">${temporaryPassword}</div>
+        </div>
+      </div>
+      <div class="warning">
+        <strong>Important Security Notice:</strong><br>
+        Please change your password immediately after your first login. This temporary password is only for initial access.
+      </div>
+      <div style="text-align: center;">
+        <a href="${loginUrl}" class="button">Login to Your Account</a>
+      </div>
+      <h3>What's Next?</h3>
+      <ul>
+        <li>Log in using the credentials above</li>
+        <li>Change your password in account settings</li>
+        <li>Complete your profile information</li>
+        <li>Start managing your animals and breeding programs</li>
+      </ul>
+      <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+      <p>Best regards,<br>The Animalytics Team</p>
+    </div>
+    <div class="footer">
+      <p>This email was sent because an admin created an account for you on Animalytics.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `Welcome to Animalytics!
+
+Hello ${name},
+
+Your Animalytics account has been created and is ready to use.
+
+Login Credentials:
+Email: ${to}
+Temporary Password: ${temporaryPassword}
+
+IMPORTANT: Please change your password immediately after your first login.
+
+Login here: ${loginUrl}
+
+Best regards,
+The Animalytics Team`;
+
+  return sendEmail({
+    to,
+    subject: 'Welcome to Animalytics - Your Account is Ready!',
+    html,
+    text,
+  });
+}
+
 // ============================================================================
 // EMAIL TEMPLATES
 // ============================================================================

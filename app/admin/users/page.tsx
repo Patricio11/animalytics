@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BulkSendWelcomeDialog } from "@/components/admin/BulkSendWelcomeDialog";
 import {
   Table,
   TableBody,
@@ -99,6 +100,7 @@ export default function AdminUsersPage() {
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showBulkWelcomeDialog, setShowBulkWelcomeDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -398,25 +400,35 @@ export default function AdminUsersPage() {
               Manage system users and their roles
             </p>
           </div>
-          <Button
-            onClick={() => {
-              setFormData({
-                name: "",
-                email: "",
-                role: "breeder",
-                organization: "",
-                licenseNumber: "",
-                isVerified: false,
-                sendWelcomeEmail: false,
-              });
-              setNewUserCredentials(null);
-              setShowCreateDialog(true);
-            }}
-            className="bg-gradient-brand hover:opacity-90"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Create User
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkWelcomeDialog(true)}
+              className="hover:bg-primary/10 hover:border-primary"
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Send Welcome Emails
+            </Button>
+            <Button
+              onClick={() => {
+                setFormData({
+                  name: "",
+                  email: "",
+                  role: "breeder",
+                  organization: "",
+                  licenseNumber: "",
+                  isVerified: false,
+                  sendWelcomeEmail: false,
+                });
+                setNewUserCredentials(null);
+                setShowCreateDialog(true);
+              }}
+              className="bg-gradient-brand hover:opacity-90"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Create User
+            </Button>
+          </div>
         </div>
 
         {/* Filters and Search */}
@@ -647,6 +659,13 @@ export default function AdminUsersPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Bulk Send Welcome Emails Dialog */}
+        <BulkSendWelcomeDialog
+          open={showBulkWelcomeDialog}
+          onOpenChange={setShowBulkWelcomeDialog}
+          onComplete={fetchUsers}
+        />
 
         {/* Create User Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
