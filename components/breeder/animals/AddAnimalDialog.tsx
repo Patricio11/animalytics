@@ -629,11 +629,10 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
           </div>
         </div>
 
-        {/* Step Content */}
+        {/* Step Content — all steps stay mounted so inputs and nested component state persist across back/next */}
         <div className="space-y-6">
           {/* Step 1: Basic Information & Photo */}
-          {currentStep === 1 && (
-            <div className="space-y-6">
+          <div className={cn("space-y-6", currentStep !== 1 && "hidden")}>
               <div>
                 <h3 className="text-lg font-semibold mb-1">Basic Information</h3>
                 <p className="text-sm text-muted-foreground">Add a photo and essential details</p>
@@ -823,11 +822,9 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                 )}
               </div>
             </div>
-          )}
 
           {/* Step 2: Physical Details */}
-          {currentStep === 2 && (
-            <div className="space-y-4">
+          <div className={cn("space-y-4", currentStep !== 2 && "hidden")}>
               <div>
                 <h3 className="text-lg font-semibold mb-2">Physical Details</h3>
                 <p className="text-sm text-muted-foreground">Essential information about your animal</p>
@@ -884,11 +881,9 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                 />
               </div>
             </div>
-          )}
 
           {/* Step 3: Registration & Parentage */}
-          {currentStep === 3 && (
-            <div className="space-y-4">
+          <div className={cn("space-y-4", currentStep !== 3 && "hidden")}>
               <div>
                 <h3 className="text-lg font-semibold mb-2">Registration & Parentage</h3>
                 <p className="text-sm text-muted-foreground">Official registration and parent information</p>
@@ -1376,11 +1371,9 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
               </fieldset>
               )}
             </div>
-          )}
 
           {/* Step 4: Additional Information */}
-          {currentStep === 4 && (
-            <div className="space-y-4">
+          <div className={cn("space-y-4", currentStep !== 4 && "hidden")}>
               <div>
                 <h3 className="text-lg font-semibold mb-2">Additional Information</h3>
                 <p className="text-sm text-muted-foreground">Location is required for your animal profile</p>
@@ -1440,7 +1433,6 @@ export function AddAnimalDialog({ open, onOpenChange, mode = 'create', animalId,
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {/* Navigation */}
