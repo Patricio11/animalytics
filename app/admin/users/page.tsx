@@ -118,7 +118,7 @@ export default function AdminUsersPage() {
     organization: "",
     licenseNumber: "",
     isVerified: false,
-    sendWelcomeEmail: true,
+    sendWelcomeEmail: false,
   });
 
   // Fetch breeds for breed selector
@@ -407,7 +407,7 @@ export default function AdminUsersPage() {
                 organization: "",
                 licenseNumber: "",
                 isVerified: false,
-                sendWelcomeEmail: true,
+                sendWelcomeEmail: false,
               });
               setNewUserCredentials(null);
               setShowCreateDialog(true);
