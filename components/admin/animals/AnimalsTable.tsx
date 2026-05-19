@@ -3,14 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Eye, Edit, Trash2, MoreVertical, ArrowUpDown, User } from "lucide-react";
+import { Eye, Edit, Trash2, MoreVertical, User, MapPin, Hash } from "lucide-react";
 import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { AdminAddAnimalDialog } from "@/components/admin/AdminAddAnimalDialog";
@@ -45,6 +37,15 @@ interface AnimalsTableProps {
   onFiltersChange: (filters: AnimalFilters) => void;
   selectedAnimals: string[];
   onSelectionChange: (ids: string[]) => void;
+}
+
+function getAge(dateOfBirth: string | null) {
+  if (!dateOfBirth) return "Unknown";
+  const dob = new Date(dateOfBirth);
+  const years = differenceInYears(new Date(), dob);
+  const months = differenceInMonths(new Date(), dob) % 12;
+  if (years === 0) return `${months}mo`;
+  return `${years}y ${months}mo`;
 }
 
 export function AnimalsTable({
@@ -62,43 +63,23 @@ export function AnimalsTable({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [animalToEdit, setAnimalToEdit] = useState<Animal | null>(null);
 
-  const handleSort = (column: 'name' | 'breed' | 'dateOfBirth' | 'createdAt') => {
-    const newOrder = filters.sortBy === column && filters.sortOrder === 'asc' ? 'desc' : 'asc';
-    onFiltersChange({
-      ...filters,
-      sortBy: column,
-      sortOrder: newOrder,
-    });
-  };
-
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      onSelectionChange(animals.map(a => a.id));
-    } else {
-      onSelectionChange([]);
-    }
+    onSelectionChange(checked ? animals.map((a) => a.id) : []);
   };
 
   const handleSelectOne = (id: string, checked: boolean) => {
-    if (checked) {
-      onSelectionChange([...selectedAnimals, id]);
-    } else {
-      onSelectionChange(selectedAnimals.filter(aid => aid !== id));
-    }
+    onSelectionChange(checked ? [...selectedAnimals, id] : selectedAnimals.filter((aid) => aid !== id));
   };
 
   const handleDelete = async () => {
     if (!animalToDelete) return;
-
     try {
       await deleteAnimal(animalToDelete.id);
-      
       toast({
         title: "Animal Deleted",
         description: `${animalToDelete.name} has been deleted successfully.`,
       });
-
-      queryClient.invalidateQueries({ queryKey: ['admin-animals'] });
+      queryClient.invalidateQueries({ queryKey: ["admin-animals"] });
       setDeleteDialogOpen(false);
       setAnimalToDelete(null);
     } catch (error) {
@@ -110,216 +91,167 @@ export function AnimalsTable({
     }
   };
 
-  const getAge = (dateOfBirth: string | null) => {
-    if (!dateOfBirth) return 'Unknown';
-    
-    const dob = new Date(dateOfBirth);
-    const years = differenceInYears(new Date(), dob);
-    const months = differenceInMonths(new Date(), dob) % 12;
-    
-    if (years === 0) {
-      return `${months}mo`;
-    }
-    return `${years}y ${months}mo`;
-  };
-
   const allSelected = animals.length > 0 && selectedAnimals.length === animals.length;
   const someSelected = selectedAnimals.length > 0 && selectedAnimals.length < animals.length;
 
+  if (animals.length === 0) {
+    return (
+      <div className="rounded-lg border border-border bg-surface p-12 text-center text-muted-foreground">
+        No animals found. Try adjusting your filters.
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="w-12">
+      {/* Select-all header */}
+      <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-muted/40 border border-border/60 mb-2">
+        <Checkbox
+          checked={allSelected}
+          onCheckedChange={handleSelectAll}
+          aria-label="Select all animals"
+          className={someSelected ? "data-[state=checked]:bg-primary/50" : ""}
+        />
+        <span className="text-sm font-medium text-muted-foreground">
+          {allSelected
+            ? "Deselect all"
+            : someSelected
+            ? `${selectedAnimals.length} selected`
+            : "Select all"}
+        </span>
+      </div>
+
+      {/* Animal cards */}
+      <div className="space-y-2">
+        {animals.map((animal) => {
+          const isSelected = selectedAnimals.includes(animal.id);
+          const sex = animal.sex === "male" ? "Male" : "Female";
+
+          const actionsMenu = (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="shrink-0">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push(`/admin/animals/${animal.id}`)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setAnimalToEdit(animal);
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    setAnimalToDelete(animal);
+                    setDeleteDialogOpen(true);
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+
+          return (
+            <div
+              key={animal.id}
+              className="group flex items-center gap-3 p-3 rounded-lg border bg-surface hover:bg-surface-secondary transition-colors cursor-pointer"
+              onClick={() => router.push(`/admin/animals/${animal.id}`)}
+            >
+              {/* Selection checkbox */}
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <Checkbox
-                  checked={allSelected}
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
-                  className={someSelected ? "data-[state=checked]:bg-primary/50" : ""}
+                  checked={isSelected}
+                  onCheckedChange={(checked) => handleSelectOne(animal.id, checked as boolean)}
+                  aria-label={`Select ${animal.name}`}
                 />
-              </TableHead>
-              <TableHead className="w-16">Photo</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort('name')}
-                  className="hover:bg-transparent p-0 h-auto font-semibold"
-                >
-                  Name
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort('breed')}
-                  className="hover:bg-transparent p-0 h-auto font-semibold"
-                >
-                  Breed
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>Sex & Age</TableHead>
-              <TableHead>Owner</TableHead>
-              <TableHead>Breeder</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Registration</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort('createdAt')}
-                  className="hover:bg-transparent p-0 h-auto font-semibold"
-                >
-                  Created
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="w-12"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {animals.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
-                  No animals found. Try adjusting your filters.
-                </TableCell>
-              </TableRow>
-            ) : (
-              animals.map((animal) => (
-                <TableRow key={animal.id} className="hover:bg-muted/30">
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedAnimals.includes(animal.id)}
-                      onCheckedChange={(checked) => handleSelectOne(animal.id, checked as boolean)}
-                      aria-label={`Select ${animal.name}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={animal.profileImageUrl || undefined} alt={animal.name} />
-                      <AvatarFallback>{animal.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <button
-                        onClick={() => router.push(`/admin/animals/${animal.id}`)}
-                        className="font-medium text-left hover:text-primary transition-colors"
-                      >
-                        {animal.registeredName || animal.name}
-                      </button>
-                      {animal.registeredName && animal.name && (
-                        <span className="text-xs text-muted-foreground italic">Call name: {animal.name}</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{animal.breed?.name || 'Unknown'}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <Badge variant={animal.sex === 'male' ? 'default' : 'secondary'} className="w-fit">
-                        {animal.sex === 'male' ? 'Male' : 'Female'}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {getAge(animal.dateOfBirth)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {animal.owner ? (
-                      <button
-                        onClick={() => router.push(`/admin/users/${animal.owner!.id}`)}
-                        className="flex items-center gap-2 hover:text-primary transition-colors"
-                      >
-                        <User className="w-3 h-3" />
-                        <span className="text-sm">{animal.owner.name || animal.owner.email}</span>
-                      </button>
-                    ) : animal.ownerName ? (
-                      <span className="text-sm text-muted-foreground">{animal.ownerName}</span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {animal.breederName ? (
-                      <span className="text-sm">{animal.breederName}</span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {animal.location ? (
-                      <span className="text-sm">{animal.location}</span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      {animal.registrationNumber && (
-                        <Badge variant="outline" className="text-xs w-fit">
-                          {animal.registrationNumber}
-                        </Badge>
-                      )}
-                      {animal.microchipNumber && (
-                        <span className="text-xs text-muted-foreground">
-                          MC: {animal.microchipNumber}
-                        </span>
-                      )}
-                      {!animal.registrationNumber && !animal.microchipNumber && (
-                        <span className="text-sm text-muted-foreground">-</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(animal.createdAt), 'MMM d, yyyy')}
+              </div>
+
+              {/* Avatar */}
+              <Avatar className="h-11 w-11 shrink-0">
+                <AvatarImage src={animal.profileImageUrl || undefined} alt={animal.name} />
+                <AvatarFallback className="bg-gradient-brand text-white text-xs">
+                  {animal.name?.charAt(0)?.toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+
+              {/* Name + badges + meta */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-medium text-foreground truncate">
+                    {animal.registeredName || animal.name}
+                  </p>
+                  <Badge
+                    variant={animal.sex === "male" ? "default" : "secondary"}
+                    className="text-[10px] shrink-0"
+                  >
+                    {sex}
+                  </Badge>
+                  {animal.breed?.name && (
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {animal.breed.name}
+                    </Badge>
+                  )}
+                  <span className="text-[11px] text-muted-foreground shrink-0">
+                    {getAge(animal.dateOfBirth)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-xs text-muted-foreground mt-1">
+                  {animal.registeredName && animal.name && (
+                    <span className="italic truncate">Call: {animal.name}</span>
+                  )}
+                  {animal.owner && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/admin/users/${animal.owner!.id}`);
+                      }}
+                      className="inline-flex items-center gap-1 hover:text-primary"
+                    >
+                      <User className="w-3 h-3" />
+                      {animal.owner.name || animal.owner.email}
+                    </button>
+                  )}
+                  {animal.location && (
+                    <span className="inline-flex items-center gap-1 truncate">
+                      <MapPin className="w-3 h-3" />
+                      {animal.location}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/admin/animals/${animal.id}`)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setAnimalToEdit(animal);
-                            setEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setAnimalToDelete(animal);
-                            setDeleteDialogOpen(true);
-                          }}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+                  )}
+                  {animal.registrationNumber && (
+                    <span className="inline-flex items-center gap-1">
+                      <Hash className="w-3 h-3" />
+                      {animal.registrationNumber}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Right meta — desktop only */}
+              <div className="hidden lg:flex flex-col items-end text-xs text-muted-foreground gap-0.5 shrink-0 min-w-[110px]">
+                <span>Added {format(new Date(animal.createdAt), "MMM d, yyyy")}</span>
+                {animal.breederName && <span className="truncate max-w-[160px]">Breeder: {animal.breederName}</span>}
+              </div>
+
+              {/* Actions */}
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                {actionsMenu}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -348,30 +280,30 @@ export function AnimalsTable({
             setEditDialogOpen(open);
             if (!open) {
               setAnimalToEdit(null);
-              queryClient.invalidateQueries({ queryKey: ['admin-animals'] });
+              queryClient.invalidateQueries({ queryKey: ["admin-animals"] });
             }
           }}
           userId={animalToEdit.userId}
-          userName={animalToEdit.owner?.name || animalToEdit.owner?.email || 'User'}
+          userName={animalToEdit.owner?.name || animalToEdit.owner?.email || "User"}
           animalId={animalToEdit.id}
           mode="edit"
           initialData={{
             name: animalToEdit.name,
-            registeredName: animalToEdit.registeredName || '',
-            type: animalToEdit.sex === 'male' ? 'dog' : 'bitch',
-            breed: animalToEdit.breed?.name || '',
+            registeredName: animalToEdit.registeredName || "",
+            type: animalToEdit.sex === "male" ? "dog" : "bitch",
+            breed: animalToEdit.breed?.name || "",
             breedId: animalToEdit.breed?.id,
             dateOfBirth: animalToEdit.dateOfBirth ? new Date(animalToEdit.dateOfBirth) : undefined,
             profilePhotoUrl: animalToEdit.profileImageUrl,
-            color: animalToEdit.color || '',
-            markings: animalToEdit.markings || '',
-            weight: animalToEdit.weight ? animalToEdit.weight.toString() : '',
-            height: animalToEdit.height ? animalToEdit.height.toString() : '',
-            microchipId: animalToEdit.microchipNumber || '',
-            registrationNumber: animalToEdit.registrationNumber || '',
-            description: animalToEdit.bio || '',
-            breederName: animalToEdit.breederName || '',
-            ownerName: animalToEdit.ownerName || '',
+            color: animalToEdit.color || "",
+            markings: animalToEdit.markings || "",
+            weight: animalToEdit.weight ? animalToEdit.weight.toString() : "",
+            height: animalToEdit.height ? animalToEdit.height.toString() : "",
+            microchipId: animalToEdit.microchipNumber || "",
+            registrationNumber: animalToEdit.registrationNumber || "",
+            description: animalToEdit.bio || "",
+            breederName: animalToEdit.breederName || "",
+            ownerName: animalToEdit.ownerName || "",
           }}
         />
       )}

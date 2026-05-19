@@ -31,14 +31,19 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Plus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { AnimalsFilters } from "@/components/admin/animals/AnimalsFilters";
 import { AnimalsTable } from "@/components/admin/animals/AnimalsTable";
+import { SelectBreederDialog } from "@/components/admin/SelectBreederDialog";
+import { AdminAddAnimalDialog } from "@/components/admin/AdminAddAnimalDialog";
 import { useAdminAnimals, bulkDeleteAnimals, type AnimalFilters } from "@/lib/api/queries/admin-animals";
 
 export default function AdminAnimalsPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<AnimalFilters>({
     page: 1,
     limit: 25,
@@ -48,6 +53,11 @@ export default function AdminAnimalsPage() {
   });
   const [selectedAnimals, setSelectedAnimals] = useState<string[]>([]);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+
+  // Add Animal flow — pick a breeder first, then open the full Add Animal dialog
+  const [showBreederPicker, setShowBreederPicker] = useState(false);
+  const [showAddAnimal, setShowAddAnimal] = useState(false);
+  const [pickedBreeder, setPickedBreeder] = useState<{ id: string; name: string } | null>(null);
 
   const { data, isLoading, isError } = useAdminAnimals(filters);
 
@@ -168,7 +178,7 @@ export default function AdminAnimalsPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gradient-brand shadow-md">
@@ -180,6 +190,13 @@ export default function AdminAnimalsPage() {
             Manage all animals in the system with advanced filtering and bulk actions
           </p>
         </div>
+        <Button
+          onClick={() => setShowBreederPicker(true)}
+          className="bg-gradient-brand hover:opacity-90 shrink-0"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Animal
+        </Button>
       </div>
 
       {/* Stats Dashboard */}
@@ -432,7 +449,7 @@ export default function AdminAnimalsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Multiple Animals</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{selectedAnimals.length}</strong> animal(s)? 
+              Are you sure you want to delete <strong>{selectedAnimals.length}</strong> animal(s)?
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -444,6 +461,33 @@ export default function AdminAnimalsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Animal flow — step 1: pick the breeder */}
+      <SelectBreederDialog
+        open={showBreederPicker}
+        onOpenChange={setShowBreederPicker}
+        onSelect={(breeder) => {
+          setPickedBreeder({ id: breeder.id, name: breeder.name });
+          setShowAddAnimal(true);
+        }}
+      />
+
+      {/* Add Animal flow — step 2: full add-animal dialog scoped to the picked breeder */}
+      {pickedBreeder && (
+        <AdminAddAnimalDialog
+          open={showAddAnimal}
+          onOpenChange={(open) => {
+            setShowAddAnimal(open);
+            if (!open) {
+              setPickedBreeder(null);
+              queryClient.invalidateQueries({ queryKey: ['admin-animals'] });
+            }
+          }}
+          userId={pickedBreeder.id}
+          userName={pickedBreeder.name}
+          mode="create"
+        />
+      )}
     </div>
   );
 }
