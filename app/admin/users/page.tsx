@@ -487,163 +487,135 @@ export default function AdminUsersPage() {
                 </p>
               </div>
             ) : (
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Organization</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Profile</TableHead>
-                      <TableHead>Last Login</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                              {user.avatar && <AvatarImage src={user.avatar} />}
-                              <AvatarFallback>
-                                {user.name?.slice(0, 2).toUpperCase() || '??'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{user.name}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getRoleBadgeVariant(user.role)}>
+              <div className="space-y-2">
+                {users.map((user) => {
+                  const actionsMenu = (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="shrink-0">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setFormData({
+                              name: user.name,
+                              email: user.email,
+                              role: user.role,
+                              organization: user.organization || "",
+                              licenseNumber: user.licenseNumber || "",
+                              isVerified: user.isVerified,
+                              sendWelcomeEmail: true,
+                            });
+                            setShowEditDialog(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit User
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleResendCredentials(user)}>
+                          <Send className="w-4 h-4 mr-2" />
+                          Send / Resend Credentials
+                        </DropdownMenuItem>
+                        {user.role === 'breeder' && user.breederProfileId && (
+                          <DropdownMenuItem onClick={() => handleToggleProfileVisibility(user)}>
+                            {user.breederProfileIsPublic ? (
+                              <>
+                                <EyeOff className="w-4 h-4 mr-2" />
+                                Make Profile Private
+                              </>
+                            ) : (
+                              <>
+                                <Globe className="w-4 h-4 mr-2" />
+                                Make Profile Public
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+
+                  return (
+                    <div
+                      key={user.id}
+                      className="group flex items-center gap-3 p-3 rounded-lg border bg-surface hover:bg-surface-secondary transition-colors cursor-pointer"
+                      onClick={() => router.push(`/admin/users/${user.id}`)}
+                    >
+                      {/* Avatar + name + email */}
+                      <Avatar className="h-10 w-10 shrink-0">
+                        {user.avatar && <AvatarImage src={user.avatar} />}
+                        <AvatarFallback>{user.name?.slice(0, 2).toUpperCase() || '??'}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-foreground truncate">{user.name}</p>
+                          <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs capitalize shrink-0">
                             {user.role}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">
-                            {user.organization || <span className="text-muted-foreground">—</span>}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {user.isVerified ? (
-                              <Badge variant="default" className="gap-1">
-                                <CheckCircle className="w-3 h-3" />
-                                Verified
+                          {user.isVerified ? (
+                            <Badge variant="default" className="gap-1 text-xs shrink-0">
+                              <CheckCircle className="w-3 h-3" />
+                              Verified
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="gap-1 text-xs shrink-0">
+                              <XCircle className="w-3 h-3" />
+                              Unverified
+                            </Badge>
+                          )}
+                          {user.role === 'breeder' && user.breederProfileId && (
+                            user.breederProfileIsPublic ? (
+                              <Badge variant="outline" className="gap-1 text-xs shrink-0">
+                                <Globe className="w-3 h-3" />
+                                Public
                               </Badge>
                             ) : (
-                              <Badge variant="secondary" className="gap-1">
-                                <XCircle className="w-3 h-3" />
-                                Unverified
+                              <Badge variant="outline" className="gap-1 text-xs shrink-0 text-muted-foreground">
+                                <EyeOff className="w-3 h-3" />
+                                Private
                               </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {user.role === 'breeder' && user.breederProfileId ? (
-                            <div className="flex items-center gap-2">
-                              {user.breederProfileIsPublic ? (
-                                <Badge variant="default" className="gap-1">
-                                  <Globe className="w-3 h-3" />
-                                  Public
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="gap-1">
-                                  <EyeOff className="w-3 h-3" />
-                                  Private
-                                </Badge>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">—</span>
+                            )
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {formatDate(user.lastLogin)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {formatDate(user.createdAt)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => router.push(`/admin/users/${user.id}`)}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setFormData({
-                                    name: user.name,
-                                    email: user.email,
-                                    role: user.role,
-                                    organization: user.organization || "",
-                                    licenseNumber: user.licenseNumber || "",
-                                    isVerified: user.isVerified,
-                                  });
-                                  setShowEditDialog(true);
-                                }}
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                Edit User
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleResendCredentials(user)}
-                              >
-                                <Send className="w-4 h-4 mr-2" />
-                                Send / Resend Credentials
-                              </DropdownMenuItem>
-                              {user.role === 'breeder' && user.breederProfileId && (
-                                <DropdownMenuItem
-                                  onClick={() => handleToggleProfileVisibility(user)}
-                                >
-                                  {user.breederProfileIsPublic ? (
-                                    <>
-                                      <EyeOff className="w-4 h-4 mr-2" />
-                                      Make Profile Private
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Globe className="w-4 h-4 mr-2" />
-                                      Make Profile Public
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setShowDeleteDialog(true);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete User
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </div>
+                        <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-xs text-muted-foreground mt-1">
+                          <span className="truncate">{user.email}</span>
+                          {user.organization && (
+                            <span className="hidden sm:inline truncate">· {user.organization}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Meta column — hidden on small screens to keep actions visible */}
+                      <div className="hidden lg:flex flex-col items-end text-xs text-muted-foreground gap-0.5 shrink-0 min-w-[120px]">
+                        <span>Joined {formatDate(user.createdAt)}</span>
+                        <span>Last login {formatDate(user.lastLogin)}</span>
+                      </div>
+
+                      {/* Actions — stays inside the row at every breakpoint */}
+                      <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                        {actionsMenu}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
