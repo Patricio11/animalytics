@@ -228,7 +228,11 @@ export default function AdminUsersPage() {
       const res = await fetch(`/api/admin/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          // Only send breedIds for breeders — backend ignores it for other roles anyway
+          breedIds: formData.role === 'breeder' ? selectedBreedIds : undefined,
+        }),
       });
 
       if (res.ok) {
@@ -514,7 +518,7 @@ export default function AdminUsersPage() {
                           View Details
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => {
+                          onClick={async () => {
                             setSelectedUser(user);
                             setFormData({
                               name: user.name,
@@ -525,7 +529,20 @@ export default function AdminUsersPage() {
                               isVerified: user.isVerified,
                               sendWelcomeEmail: true,
                             });
+                            // Load the user's current breed preferences so they're pre-selected
+                            setSelectedBreedIds([]);
                             setShowEditDialog(true);
+                            if (user.role === 'breeder') {
+                              try {
+                                const res = await fetch(`/api/admin/users/${user.id}`);
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  setSelectedBreedIds(data.user?.breedIds || []);
+                                }
+                              } catch {
+                                // Silent — admin can still re-select breeds manually
+                              }
+                            }
                           }}
                         >
                           <Edit className="w-4 h-4 mr-2" />
@@ -948,6 +965,33 @@ export default function AdminUsersPage() {
                 />
               </div>
 
+              {/* Breed Preferences — only for breeders */}
+              {formData.role === "breeder" && (
+                <div className="space-y-2 p-4 bg-muted/30 rounded-lg border border-primary/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Heart className="h-4 w-4 text-primary" />
+                    <Label>Breed Preferences</Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Add or remove the breeds this breeder works with
+                  </p>
+                  <BreedMultiSelect
+                    breeds={
+                      allBreeds?.map((breed) => ({
+                        id: breed.id,
+                        name: breed.name,
+                        sizeCategory: breed.sizeCategory,
+                      })) || []
+                    }
+                    selectedBreedIds={selectedBreedIds}
+                    onSelectionChange={setSelectedBreedIds}
+                    placeholder="Search and select breeds..."
+                    emptyText="No breeds found."
+                    disabled={breedsLoading}
+                  />
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -961,13 +1005,26 @@ export default function AdminUsersPage() {
                 </Label>
               </div>
 
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                  Cancel
+              <DialogFooter className="gap-2 sm:gap-0 sm:justify-between">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    if (selectedUser) router.push(`/admin/users/${selectedUser.id}`);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Open full editor →
                 </Button>
-                <Button onClick={handleUpdateUser}>
-                  Update User
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleUpdateUser}>
+                    Update User
+                  </Button>
+                </div>
               </DialogFooter>
             </div>
           </DialogContent>

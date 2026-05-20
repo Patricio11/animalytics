@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { animals } from '@/lib/db/schema/animals';
 import { listings } from '@/lib/db/schema/marketplace';
+import { breederProfiles } from '@/lib/db/schema/profiles';
+import { breederBreedPreferences } from '@/lib/db/schema/user-breed-preferences';
 import { eq, sql } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
@@ -100,12 +102,31 @@ export async function GET(
       .orderBy(sql`${listings.createdAt} DESC`)
       .limit(5);
 
+    // Get breed preferences + full breeder profile (if breeder)
+    let breedIds: string[] = [];
+    let breederProfile: any = null;
+    if (user.role === 'breeder') {
+      const [profile] = await db
+        .select()
+        .from(breederProfiles)
+        .where(eq(breederProfiles.userId, id))
+        .limit(1);
+      if (profile) {
+        breederProfile = profile;
+        const prefs = await db
+          .select({ breedId: breederBreedPreferences.breedId })
+          .from(breederBreedPreferences)
+          .where(eq(breederBreedPreferences.breederProfileId, profile.id));
+        breedIds = prefs.map((p) => p.breedId);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       user: {
         ...user,
-        // Don't send sensitive data
-        preferences: undefined,
+        breedIds,
+        breederProfile,
       },
       statistics: {
         animals: animalCount.count,
@@ -192,6 +213,55 @@ export async function PUT(
       .set(updateData)
       .where(eq(users.id, id))
       .returning();
+
+    // Sync breed preferences (only relevant for breeders)
+    // Accept breedIds: string[] from the body. Replaces the existing set.
+    if (Array.isArray(body.breedIds) && updatedUser.role === 'breeder') {
+      try {
+        // Find or create the breeder profile
+        let [profile] = await db
+          .select()
+          .from(breederProfiles)
+          .where(eq(breederProfiles.userId, id))
+          .limit(1);
+
+        if (!profile) {
+          const displayName = updatedUser.name || 'Breeder';
+          const slug = displayName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '') + '-' + id.substring(0, 8);
+          [profile] = await db
+            .insert(breederProfiles)
+            .values({
+              userId: id,
+              displayName,
+              slug,
+              isPublic: true,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .returning();
+        }
+
+        // Replace breed preferences atomically (delete + insert)
+        await db
+          .delete(breederBreedPreferences)
+          .where(eq(breederBreedPreferences.breederProfileId, profile.id));
+
+        if (body.breedIds.length > 0) {
+          await db.insert(breederBreedPreferences).values(
+            body.breedIds.map((breedId: string) => ({
+              breederProfileId: profile.id,
+              breedId,
+            }))
+          );
+        }
+      } catch (breedError) {
+        console.error('Failed to sync breed preferences:', breedError);
+        // Don't fail the whole update if breed sync fails
+      }
+    }
 
     return NextResponse.json({
       success: true,
