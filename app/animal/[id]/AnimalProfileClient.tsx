@@ -22,12 +22,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
   ArrowLeft, Share2, Edit, Heart, Award, Shield, Calendar,
-  Weight, Activity, Ruler, MapPin, Phone, Mail, Eye
+  Weight, Activity, Ruler, MapPin, Phone, Mail, Eye,
+  Building2, BadgeCheck, ExternalLink,
 } from "lucide-react";
 import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth/client";
 import { AnimalJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AnimalProfileClientProps {
   id: string;
@@ -526,6 +529,74 @@ export default function AnimalProfileClient({ id, initialTab = 'profile' }: Anim
                 ) : null}
               </CardContent>
             </Card>
+            {/* Breeder Card — normalises the two data shapes (public vs authed) */}
+            {(() => {
+              // Public endpoint: animal.breeder = { slug, displayName, location, bio }
+              // Authed endpoint: animal.owner.breederProfile = { slug, displayName, logoUrl, location, kycVerified }
+              const breeder =
+                animal.breeder ||
+                animal.owner?.breederProfile ||
+                null;
+              if (!breeder) return null;
+
+              const location = breeder.location as
+                | { city?: string; state?: string; country?: string }
+                | string
+                | undefined
+                | null;
+              const locationStr =
+                typeof location === 'string'
+                  ? location
+                  : [location?.city, location?.state, location?.country].filter(Boolean).join(', ');
+              const breederName = breeder.displayName || animal.owner?.name || 'Breeder';
+              const breederSlug = breeder.slug;
+              const logoUrl = (breeder as any).logoUrl as string | undefined;
+              const ownerAvatar = animal.owner?.avatar as string | undefined;
+
+              return (
+                <Card className="shadow-card bg-surface border-0">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Bred By</h3>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-12 w-12 shrink-0 border-2 border-primary/10">
+                        <AvatarImage src={logoUrl || ownerAvatar || undefined} alt={breederName} />
+                        <AvatarFallback className="bg-gradient-brand text-white text-sm">
+                          {breederName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-semibold text-foreground truncate">{breederName}</p>
+                          {(breeder as any).kycVerified && (
+                            <BadgeCheck className="w-4 h-4 text-blue-500 shrink-0" />
+                          )}
+                        </div>
+                        {locationStr && (
+                          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {locationStr}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {breederSlug && (
+                      <Link href={`/breeders/${breederSlug}`} className="block">
+                        <Button variant="outline" className="w-full hover:bg-primary/10 hover:border-primary">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          View Breeder Profile
+                        </Button>
+                      </Link>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
             {/* Actions Card */}
             <Card className="shadow-card bg-surface border-0">
               <CardContent className="p-6 space-y-4">
