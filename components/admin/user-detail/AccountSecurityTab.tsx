@@ -24,9 +24,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ShieldCheck, KeyRound, Send, Crown, AlertCircle, CheckCircle, XCircle, Save } from "lucide-react";
+import { ShieldCheck, KeyRound, Send, Crown, AlertCircle, CheckCircle, XCircle, Save, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { isPlaceholderEmail } from "@/lib/utils/placeholder-email";
 
 interface AccountSecurityTabProps {
   userId: string;
@@ -172,6 +173,15 @@ export function AccountSecurityTab({ userId, user }: AccountSecurityTabProps) {
               <KeyRound className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-semibold">Credentials</h2>
             </div>
+            {isPlaceholderEmail(user.email) && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  This user has a placeholder email. Update it to a real address in the <strong>Profile</strong> tab,
+                  then come back here to send credentials.
+                </p>
+              </div>
+            )}
             <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border">
               <div className="flex-1">
                 <p className="text-sm font-medium">
@@ -186,7 +196,11 @@ export function AccountSecurityTab({ userId, user }: AccountSecurityTabProps) {
                   Each send generates a fresh temporary password — safe to use as a "force password reset".
                 </p>
               </div>
-              <Button onClick={() => notify.mutate()} disabled={notify.isPending} className="bg-gradient-brand shrink-0">
+              <Button
+                onClick={() => notify.mutate()}
+                disabled={notify.isPending || isPlaceholderEmail(user.email)}
+                className="bg-gradient-brand shrink-0"
+              >
                 <Send className="w-4 h-4 mr-2" />
                 {notify.isPending
                   ? "Sending..."

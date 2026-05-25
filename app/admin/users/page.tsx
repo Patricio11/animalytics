@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BulkSendWelcomeDialog } from "@/components/admin/BulkSendWelcomeDialog";
+import { isPlaceholderEmail } from "@/lib/utils/placeholder-email";
 import {
   Table,
   TableBody,
@@ -121,6 +122,7 @@ export default function AdminUsersPage() {
     licenseNumber: "",
     isVerified: false,
     sendWelcomeEmail: false,
+    noEmailYet: false,
   });
 
   // Fetch breeds for breed selector
@@ -198,8 +200,8 @@ export default function AdminUsersPage() {
           password: data.credentials.temporaryPassword,
         });
         toast({
-          title: "Success",
-          description: "User created successfully",
+          title: data.hasPlaceholderEmail ? "User created with placeholder email" : "Success",
+          description: data.credentials.message || "User created successfully",
         });
         fetchUsers();
         // Don't close dialog yet - show credentials first
@@ -423,6 +425,7 @@ export default function AdminUsersPage() {
                   licenseNumber: "",
                   isVerified: false,
                   sendWelcomeEmail: false,
+                  noEmailYet: false,
                 });
                 setNewUserCredentials(null);
                 setShowCreateDialog(true);
@@ -623,9 +626,19 @@ export default function AdminUsersPage() {
                               </Badge>
                             )
                           )}
+                          {isPlaceholderEmail(user.email) && (
+                            <Badge variant="outline" className="gap-1 text-xs shrink-0 bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800">
+                              <Mail className="w-3 h-3" />
+                              No Email
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-xs text-muted-foreground mt-1">
-                          <span className="truncate">{user.email}</span>
+                          <span className="truncate">
+                            {isPlaceholderEmail(user.email)
+                              ? <span className="italic">Placeholder — needs a real email</span>
+                              : user.email}
+                          </span>
                           {user.organization && (
                             <span className="hidden sm:inline truncate">· {user.organization}</span>
                           )}
@@ -774,14 +787,33 @@ export default function AdminUsersPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">
+                      Email {!formData.noEmailYet && <span className="text-destructive">*</span>}
+                    </Label>
                     <Input
                       id="email"
                       type="email"
-                      value={formData.email}
+                      value={formData.noEmailYet ? "" : formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="john@example.com"
+                      placeholder={formData.noEmailYet ? "Will be added later" : "john@example.com"}
+                      disabled={formData.noEmailYet}
                     />
+                    <label className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.noEmailYet}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            noEmailYet: e.target.checked,
+                            // If admin opts to skip the email, they can't send the welcome email either
+                            sendWelcomeEmail: e.target.checked ? false : formData.sendWelcomeEmail,
+                          })
+                        }
+                        className="rounded"
+                      />
+                      I'll add the email later (creates a placeholder)
+                    </label>
                   </div>
                 </div>
 
@@ -870,6 +902,7 @@ export default function AdminUsersPage() {
                     id="sendWelcomeEmail"
                     checked={formData.sendWelcomeEmail}
                     onChange={(e) => setFormData({ ...formData, sendWelcomeEmail: e.target.checked })}
+                    disabled={formData.noEmailYet}
                     className="rounded mt-1"
                   />
                   <div className="flex-1">
@@ -877,7 +910,9 @@ export default function AdminUsersPage() {
                       Send welcome email with login credentials
                     </Label>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {formData.sendWelcomeEmail
+                      {formData.noEmailYet
+                        ? "Disabled — you can't email a placeholder address. Update the email later, then click \"Send Credentials\"."
+                        : formData.sendWelcomeEmail
                         ? "The user will receive an email with their temporary password right after creation."
                         : "No email will be sent now. You can send it later via \"Send / Resend Credentials\" on the user detail page."}
                     </p>

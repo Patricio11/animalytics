@@ -39,6 +39,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { AdminAddAnimalDialog } from "@/components/admin/AdminAddAnimalDialog";
+import { isPlaceholderEmail } from "@/lib/utils/placeholder-email";
 import { ProfileTab } from "@/components/admin/user-detail/ProfileTab";
 import { BreederProfileTab } from "@/components/admin/user-detail/BreederProfileTab";
 import { PreferencesTab } from "@/components/admin/user-detail/PreferencesTab";
@@ -221,11 +222,23 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                       Notified
                     </Badge>
                   )}
+                  {isPlaceholderEmail(user.email) && (
+                    <Badge variant="outline" className="gap-1 bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800">
+                      <Mail className="w-3 h-3" />
+                      No Email
+                    </Badge>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Mail className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{user.email}</span>
+                    <span className="truncate">
+                      {isPlaceholderEmail(user.email) ? (
+                        <span className="italic">Placeholder email — add a real one in the Profile tab</span>
+                      ) : (
+                        user.email
+                      )}
+                    </span>
                   </div>
                   {user.organization && (
                     <div className="flex items-center gap-2 text-muted-foreground">

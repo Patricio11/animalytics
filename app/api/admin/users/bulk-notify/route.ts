@@ -7,6 +7,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { hash } from 'bcrypt';
 import { sendWelcomeCredentialsEmail } from '@/lib/services/email';
 import { createAdminAuditLog } from '@/lib/services/admin-audit';
+import { isPlaceholderEmail } from '@/lib/utils/placeholder-email';
 
 async function getAdminSession() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -70,6 +71,16 @@ export async function POST(request: NextRequest) {
   const results: Array<{ id: string; email: string; success: boolean; error?: string }> = [];
 
   for (const target of targets) {
+    // Skip placeholder emails — they can't receive real mail
+    if (isPlaceholderEmail(target.email)) {
+      results.push({
+        id: target.id,
+        email: target.email,
+        success: false,
+        error: 'Placeholder email — update to a real address first',
+      });
+      continue;
+    }
     try {
       // Generate a fresh password per user (security: never reuse stored hash)
       const newPassword = generatePassword();

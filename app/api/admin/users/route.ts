@@ -8,6 +8,7 @@ import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
 import { hash } from 'bcrypt';
 import { sendEmail } from '@/lib/services/email';
+import { generatePlaceholderEmail, isPlaceholderEmail } from '@/lib/utils/placeholder-email';
 
 /**
  * Helper function to check if user is admin
@@ -152,7 +153,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      email,
+      email: rawEmail,
       name,
       role = 'breeder',
       organization,
@@ -163,29 +164,49 @@ export async function POST(request: NextRequest) {
       breedIds,
       // When false, skip the welcome email — admin can send it later via "Send / Resend Credentials"
       sendWelcomeEmail = true,
+      // When true, the admin doesn't have the breeder's email yet — generate a placeholder
+      noEmailYet = false,
     } = body;
 
     // Validate required fields
-    if (!email || !name) {
+    if (!name) {
       return NextResponse.json(
-        { error: 'Email and name are required' },
+        { error: 'Name is required' },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (existingUser.length > 0) {
+    // Resolve the email — either provided, or auto-generated placeholder
+    let email: string;
+    if (noEmailYet) {
+      email = generatePlaceholderEmail();
+    } else if (!rawEmail) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'Email is required (or check "No email yet" to add it later)' },
         { status: 400 }
       );
+    } else {
+      email = rawEmail;
     }
+
+    // Check if user already exists (skip the check for placeholders since they're random)
+    if (!isPlaceholderEmail(email)) {
+      const existingUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (existingUser.length > 0) {
+        return NextResponse.json(
+          { error: 'User with this email already exists' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Never send the welcome email to a placeholder address
+    const willSendWelcomeEmail = sendWelcomeEmail && !isPlaceholderEmail(email);
 
     // Generate temporary password
     const temporaryPassword = generatePassword();
@@ -211,7 +232,7 @@ export async function POST(request: NextRequest) {
         createdByAdmin: true,
         temporaryPassword: hashedPassword, // Store hashed password
         // Only stamp the notification time if we're actually sending it now
-        credentialsNotifiedAt: sendWelcomeEmail ? new Date() : null,
+        credentialsNotifiedAt: willSendWelcomeEmail ? new Date() : null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -240,9 +261,9 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
-    // Send welcome email with login credentials (only if requested by admin)
+    // Send welcome email with login credentials (only if requested AND email is real)
     const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3000'}/auth/signin`;
-    if (sendWelcomeEmail) {
+    if (willSendWelcomeEmail) {
     try {
       await sendEmail({
         to: email,
@@ -326,6 +347,8 @@ export async function POST(request: NextRequest) {
       console.error('❌ Failed to send welcome email:', emailError);
       // Don't fail user creation if email fails
     }
+    } else if (isPlaceholderEmail(email)) {
+      console.log(`ℹ️  Welcome email skipped — user has a placeholder email. Update it from the user detail page, then send credentials.`);
     } else {
       console.log(`ℹ️  Welcome email skipped for ${email} — admin opted out. Use "Send / Resend Credentials" to send later.`);
     }
@@ -367,17 +390,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const isPlaceholder = isPlaceholderEmail(newUser.email);
     return NextResponse.json({
       success: true,
       user: newUser,
       credentials: {
         email: newUser.email,
         temporaryPassword,
-        message: sendWelcomeEmail
+        message: isPlaceholder
+          ? 'User created with a placeholder email. Update the email from the user detail page, then send their credentials.'
+          : willSendWelcomeEmail
           ? 'User created and welcome email sent.'
           : 'User created. Welcome email was NOT sent — use "Send / Resend Credentials" to send it later.',
       },
-      welcomeEmailSent: sendWelcomeEmail,
+      welcomeEmailSent: willSendWelcomeEmail,
+      hasPlaceholderEmail: isPlaceholder,
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating user:', error);

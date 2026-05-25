@@ -3,7 +3,8 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { auth } from '@/lib/auth/config';
 import { headers } from 'next/headers';
-import { and, eq, isNull, desc } from 'drizzle-orm';
+import { and, eq, isNull, desc, notLike } from 'drizzle-orm';
+import { PLACEHOLDER_EMAIL_DOMAIN } from '@/lib/utils/placeholder-email';
 
 async function isAdmin() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -32,7 +33,9 @@ export async function GET() {
     .where(
       and(
         eq(users.createdByAdmin, true),
-        isNull(users.credentialsNotifiedAt)
+        isNull(users.credentialsNotifiedAt),
+        // Exclude users with placeholder emails — they need a real email before any send
+        notLike(users.email, `%@${PLACEHOLDER_EMAIL_DOMAIN}`)
       )
     )
     .orderBy(desc(users.createdAt));

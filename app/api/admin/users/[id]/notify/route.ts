@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { createAdminAuditLog } from '@/lib/services/admin-audit';
 import { sendEmail } from '@/lib/services/email';
 import { hash } from 'bcrypt';
+import { isPlaceholderEmail } from '@/lib/utils/placeholder-email';
 
 /**
  * Helper to check admin authorization
@@ -76,6 +77,17 @@ export async function POST(
     if (!targetUser.createdByAdmin) {
       return NextResponse.json(
         { error: 'This user was not created by admin and does not need notification' },
+        { status: 400 }
+      );
+    }
+
+    // Block sends to placeholder emails — admin must add a real email first
+    if (isPlaceholderEmail(targetUser.email)) {
+      return NextResponse.json(
+        {
+          error:
+            'This user has a placeholder email. Update their email to a real address from the Profile tab, then send credentials.',
+        },
         { status: 400 }
       );
     }
