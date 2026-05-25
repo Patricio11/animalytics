@@ -109,6 +109,8 @@ export default function AdminUsersPage() {
   const [newUserCredentials, setNewUserCredentials] = useState<{
     email: string;
     password: string;
+    welcomeEmailSent: boolean;
+    hasPlaceholderEmail: boolean;
   } | null>(null);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const [selectedBreedIds, setSelectedBreedIds] = useState<string[]>([]);
@@ -198,6 +200,8 @@ export default function AdminUsersPage() {
         setNewUserCredentials({
           email: data.credentials.email,
           password: data.credentials.temporaryPassword,
+          welcomeEmailSent: !!data.welcomeEmailSent,
+          hasPlaceholderEmail: !!data.hasPlaceholderEmail,
         });
         toast({
           title: data.hasPlaceholderEmail ? "User created with placeholder email" : "Success",
@@ -703,24 +707,56 @@ export default function AdminUsersPage() {
             <DialogHeader>
               <DialogTitle>Create New User</DialogTitle>
               <DialogDescription>
-                Add a new user to the system. They will receive login credentials via email.
+                Add a new user to the system. Choose whether to send the welcome email now or later.
               </DialogDescription>
             </DialogHeader>
 
             {newUserCredentials ? (
               <div className="space-y-4">
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-green-900 dark:text-green-100">User Created Successfully!</h4>
-                      <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                        A welcome email with login credentials has been sent to the user.
-                        You can also copy the credentials below.
-                      </p>
+                {newUserCredentials.welcomeEmailSent ? (
+                  // Welcome email was sent
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-green-900 dark:text-green-100">User Created Successfully!</h4>
+                        <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                          A welcome email with login credentials has been sent to the user.
+                          You can also copy the credentials below.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : newUserCredentials.hasPlaceholderEmail ? (
+                  // Placeholder email — no email sent, admin must update later
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Mail className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-amber-900 dark:text-amber-100">User Created — No Email Sent</h4>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                          The user has a placeholder email so no welcome email could be sent. Update the email
+                          address from the user detail page, then click <strong>Send Credentials</strong>.
+                          You can copy the temporary password below for safekeeping.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Admin opted out of the welcome email
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-blue-900 dark:text-blue-100">User Created — No Email Sent</h4>
+                        <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                          You opted out of the welcome email. Send it later from the user detail page using
+                          <strong> Send Credentials</strong>. The temporary password is shown below.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   <div>
