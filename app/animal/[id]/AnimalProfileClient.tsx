@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { notFound, useRouter } from "next/navigation";
-import { useAnimal } from "@/lib/api/queries/animals";
+import { useAnimal, usePublicAnimal } from "@/lib/api/queries/animals";
 import { ProfileTab } from "@/components/breeder/animals/ProfileTab";
 import { PhotosDocsTab } from "@/components/breeder/animals/PhotosDocsTab";
 import { FeedingPlanTab } from "@/components/breeder/animals/FeedingPlanTab";
@@ -38,10 +38,18 @@ export default function AnimalProfileClient({ id, initialTab = 'profile' }: Anim
   const router = useRouter();
 
   // Check authentication
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
+  const isAuthenticated = !!session?.user?.id;
 
-  // Fetch animal data from API
-  const { data: animal, isLoading, isError } = useAnimal(id);
+  // Authenticated viewers get the full record from /api/animals/[id];
+  // guests get the trimmed public view from /api/animals/[id]/public.
+  // We only enable each query in the right state to avoid 401 noise.
+  const authedQuery = useAnimal(isAuthenticated && !sessionLoading ? id : "");
+  const publicQuery = usePublicAnimal(id, !isAuthenticated && !sessionLoading);
+
+  const animal = isAuthenticated ? authedQuery.data : publicQuery.data;
+  const isLoading = sessionLoading || (isAuthenticated ? authedQuery.isLoading : publicQuery.isLoading);
+  const isError = isAuthenticated ? authedQuery.isError : publicQuery.isError;
 
   // Check if current user is the owner
   const isOwner = session?.user?.id && animal?.userId === session.user.id;
@@ -226,19 +234,28 @@ export default function AnimalProfileClient({ id, initialTab = 'profile' }: Anim
     : []; // Empty array if no photos
 
   // Determine available tabs based on animal type
-  const tabs = [
-    { value: 'profile', label: 'Profile', icon: Activity },
-    { value: 'health', label: 'Health', icon: Heart },
-    { value: 'pedigree', label: 'Pedigree', icon: Share2 },
-    { value: 'photos-docs', label: 'Photos & Docs', icon: Award },
-    { value: 'feeding', label: 'Feeding', icon: Calendar },
-    { value: 'semen', label: 'Semen', icon: Shield },
-    ...(animal.sex === 'female' ? [
-      { value: 'seasons', label: 'Seasons', icon: Heart },
-      { value: 'litters', label: 'Litter Details', icon: Activity },
-    ] : []),
-    { value: 'reminders', label: 'Reminders', icon: Calendar },
-  ];
+  // Guests see only public-facing tabs. Authenticated users get the full set.
+  const tabs = isAuthenticated
+    ? [
+        { value: 'profile', label: 'Profile', icon: Activity },
+        { value: 'health', label: 'Health', icon: Heart },
+        { value: 'pedigree', label: 'Pedigree', icon: Share2 },
+        { value: 'photos-docs', label: 'Photos & Docs', icon: Award },
+        { value: 'feeding', label: 'Feeding', icon: Calendar },
+        { value: 'semen', label: 'Semen', icon: Shield },
+        ...(animal.sex === 'female'
+          ? [
+              { value: 'seasons', label: 'Seasons', icon: Heart },
+              { value: 'litters', label: 'Litter Details', icon: Activity },
+            ]
+          : []),
+        { value: 'reminders', label: 'Reminders', icon: Calendar },
+      ]
+    : [
+        { value: 'profile', label: 'Profile', icon: Activity },
+        { value: 'pedigree', label: 'Pedigree', icon: Share2 },
+        { value: 'photos-docs', label: 'Photos & Docs', icon: Award },
+      ];
 
   const seoProfilePhoto = animal?.photos?.find((p: any) => p.category === 'profile');
   const seoImage = seoProfilePhoto?.fileUrl || animal?.photos?.[0]?.fileUrl || animal?.profileImageUrl || null;

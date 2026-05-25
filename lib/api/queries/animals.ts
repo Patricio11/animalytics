@@ -73,6 +73,14 @@ async function fetchAnimal(id: string) {
   return json.data;
 }
 
+/** Fetch the public-safe view of an animal — works without authentication. */
+async function fetchPublicAnimal(id: string) {
+  const response = await fetch(`/api/animals/${id}/public`);
+  if (!response.ok) throw new Error('Failed to fetch animal');
+  const json = await response.json();
+  return json.animal;
+}
+
 async function createAnimal(data: CreateAnimalData) {
   const response = await fetch('/api/animals', {
     method: 'POST',
@@ -140,6 +148,19 @@ export function useAnimal(id: string) {
     queryKey: ['animals', id],
     queryFn: () => fetchAnimal(id),
     enabled: !!id,
+  });
+}
+
+/**
+ * Public-safe animal fetch. Use when the viewer might not be authenticated
+ * (e.g. the public `/animal/[id]` page). Hits `/api/animals/[id]/public`
+ * which returns a trimmed, non-401 response.
+ */
+export function usePublicAnimal(id: string, enabled = true) {
+  return useQuery({
+    queryKey: ['animals', 'public', id],
+    queryFn: () => fetchPublicAnimal(id),
+    enabled: !!id && enabled,
   });
 }
 
