@@ -1320,7 +1320,7 @@ All permissions follow `resource:action` naming:
 | Breeder | breeder@test.com | breeder123 | John Smith |
 | Veterinarian | vet@test.com | vet123 | Dr. Sarah Johnson |
 | Admin | admin@test.com | admin123 | Admin User |
-| Event Organizer | organizer@test.com | organizer123 | Mike Wilson |
+| Event Organizer | organizer@test.com | organizer123 - Mike Wilson |
 
 **Quick Start Testing:**
 ```bash
